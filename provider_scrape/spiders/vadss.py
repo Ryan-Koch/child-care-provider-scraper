@@ -1,4 +1,5 @@
 import scrapy
+from ..items import ProviderItem, InspectionItem
 
 
 class VadssSpider(scrapy.Spider):
@@ -32,12 +33,6 @@ class VadssSpider(scrapy.Spider):
             )
         else:
             self.logger.error("couldn't find form")
-
-        # For now, we'll just yield a basic item indicating we visited the page.
-        yield {
-            'url': response.url,
-            'title': title,
-        }
 
     def get_submission_data(self, response, acceptable_names):
         form = response.xpath('//form[@action="/facility/search/cc2.cgi"]')
@@ -113,31 +108,31 @@ class VadssSpider(scrapy.Spider):
                         if not complaint_related_text:
                             complaint_related_text = complaint_related_td.xpath('normalize-space()').get() # General cleanup if other text found
 
-                    inspection = {
-                        'inspection_date': row.xpath('./td[1]/a/text()').get().strip() if row.xpath('./td[1]/a/text()').get() else None,
-                        'shsi': row.xpath('./td[2]/text()').get().strip() if row.xpath('./td[2]/text()').get() else None,
-                        'complaint_related': complaint_related_text.strip() if complaint_related_text else None,
-                        'violations': violations_text.strip() if violations_text else None
-                    }
+                    inspection = InspectionItem(
+                        date=row.xpath('./td[1]/a/text()').get().strip() if row.xpath('./td[1]/a/text()').get() else None,
+                        va_shsi=row.xpath('./td[2]/text()').get().strip() if row.xpath('./td[2]/text()').get() else None,
+                        va_complaint_related=complaint_related_text.strip() if complaint_related_text else None,
+                        va_violations=violations_text.strip() if violations_text else None
+                    )
                     inspection_data.append(inspection)
             return inspection_data
 
+        provider = ProviderItem(
+            provider_name=extract_with_xpath('//table[not(@class)]/tr[1]/td/b/text()'),
+            address=f"{extract_with_xpath('//table[not(@class)]/tr[1]/td/br/following-sibling::text()')} {extract_with_xpath('//table[not(@class)]/tr[2]/td/text()')}",
+            phone=extract_with_xpath('//table[not(@class)]/tr[3]/td/text()'),
+            provider_type=extract_with_xpath('//table[@class="cc_search"]/tr[1]/td[2]/span/span/font/u/text()'),
+            va_license_type=extract_with_xpath('//table[@class="cc_search"]/tr[2]/td[2]/span/span/font/u/text()'),
+            administrator=extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "Administrator:")]/following-sibling::td/text()'),
+            hours=extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "Business Hours:")]/following-sibling::td/text()'),
+            capacity=extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "Capacity:")]/following-sibling::td/text()'),
+            ages_served=extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "Ages:")]/following-sibling::td/text()'),
+            va_inspector=extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "Inspector:")]/following-sibling::td/text()'),
+            va_current_subsidy_provider=extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "Current Subsidy Provider")]/following-sibling::td/text()'),
+            license_number=extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "License/Facility ID#")]/following-sibling::td/text()'),
+            inspections=extract_inspection_data(),
+            provider_url=response.url,
+            source_state='VA'
+        )
 
-        provider =  {
-            'business_name': extract_with_xpath('//table[not(@class)]/tr[1]/td/b/text()'),
-            'address_street': extract_with_xpath('//table[not(@class)]/tr[1]/td/br/following-sibling::text()'),
-                    'address_city_zip': extract_with_xpath('//table[not(@class)]/tr[2]/td/text()'),
-                    'phone': extract_with_xpath('//table[not(@class)]/tr[3]/td/text()'),
-                    'facility_type': extract_with_xpath('//table[@class="cc_search"]/tr[1]/td[2]/span/span/font/u/text()'),
-                    'license_type': extract_with_xpath('//table[@class="cc_search"]/tr[2]/td[2]/span/span/font/u/text()'),
-                    'administrator': extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "Administrator:")]/following-sibling::td/text()'),
-                    'business_hours': extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "Business Hours:")]/following-sibling::td/text()'),
-                    'capacity': extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "Capacity:")]/following-sibling::td/text()'),
-                    'ages': extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "Ages:")]/following-sibling::td/text()'),
-                    'inspector': extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "Inspector:")]/following-sibling::td/text()'),
-                    'current_subsidy_provider': extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "Current Subsidy Provider")]/following-sibling::td/text()'),
-                    'license_id': extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "License/Facility ID#")]/following-sibling::td/text()'),
-                    'inspection_data': extract_inspection_data(),
-                }
-        print(provider)
         return provider
