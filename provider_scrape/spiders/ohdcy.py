@@ -62,11 +62,10 @@ class OhdcySpider(Spider):
             self.logger.info("Extracting data from links...")
             for i, link in enumerate(links):
                 self.logger.info(link)
-                if i < 3:
-                    yield Request(
-                        url=f"{self.base_url}{link}",
-                        callback=self.parse_provider_page
-                    )
+                yield Request(
+                    url=f"{self.base_url}{link}",
+                    callback=self.parse_provider_page
+                )
 
     def parse_provider_page(self, response):
         # Process the response after visiting each provider page

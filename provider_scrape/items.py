@@ -9,6 +9,10 @@ class InspectionItem(scrapy.Item):
     corrective_status = scrapy.Field()
     status_updated = scrapy.Field()
     report_url = scrapy.Field()
+    va_shsi = scrapy.Field()
+    va_complaint_related = scrapy.Field()
+    va_violations = scrapy.Field()
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
@@ -27,6 +31,9 @@ class ProviderItem(scrapy.Item):
     county = scrapy.Field()
     license_begin_date = scrapy.Field()
     license_expiration = scrapy.Field()
+    va_license_type = scrapy.Field()
+    va_inspector = scrapy.Field()
+    va_current_subsidy_provider = scrapy.Field()
 
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
