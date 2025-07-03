@@ -1,6 +1,7 @@
 import pytest
 from scrapy.http import HtmlResponse
-from provider_scrape.spiders.vadss import VadssSpider  # Replace with your actual spider path
+from provider_scrape.spiders.vadss import VadssSpider
+from provider_scrape.items import ProviderItem, InspectionItem
 
 def create_response(html_content, url='http://example.com'):
     """Helper function to create a Scrapy response from HTML content."""
@@ -137,32 +138,35 @@ def test_successful_extraction():
     spider = VadssSpider()
     extracted_data = spider.parse_provider_page(response)
 
-    assert extracted_data['business_name'] == '4 Rs Preschool'
-    assert extracted_data['address_street'] == '6745 Jefferson Street'
-    assert extracted_data['address_city_zip'] == 'HAYMARKET, VA  20169'
+    assert isinstance(extracted_data, ProviderItem)
+    assert extracted_data['provider_name'] == '4 Rs Preschool'
+    assert extracted_data['address'] == '6745 Jefferson Street HAYMARKET, VA  20169'
     assert extracted_data['phone'] == '(703) 754-2497'
-    assert extracted_data['facility_type'] == 'Child Day Center'
-    assert extracted_data['license_type'] == 'Two Year'
+    assert extracted_data['provider_type'] == 'Child Day Center'
+    assert extracted_data['va_license_type'] == 'Two Year'
     assert extracted_data['administrator'] == 'Robyn Frazier'
-    assert extracted_data['business_hours'] == '9:00 a.m. - 3:30 p.m.'
+    assert extracted_data['hours'] == '9:00 a.m. - 3:30 p.m.'
     assert extracted_data['capacity'] == '26'
-    assert extracted_data['ages'] == '3 years - 6 years 11 months'
-    assert extracted_data['inspector'] == 'Morgan Bryson: (540) 270-0057'
-    assert extracted_data['current_subsidy_provider'] == 'No'
-    assert extracted_data['license_id'] == '1106312'
+    assert extracted_data['ages_served'] == '3 years - 6 years 11 months'
+    assert extracted_data['va_inspector'] == 'Morgan Bryson: (540) 270-0057'
+    assert extracted_data['va_current_subsidy_provider'] == 'No'
+    assert extracted_data['license_number'] == '1106312'
 
     # Assertions for inspection data
-    assert len(extracted_data['inspection_data']) == 2
+    assert len(extracted_data['inspections']) == 2
+    inspections = extracted_data['inspections']
 
-    assert extracted_data['inspection_data'][0]['inspection_date'] == 'Jan. 30, 2025'
-    assert extracted_data['inspection_data'][0]['shsi'] == 'No'
-    assert extracted_data['inspection_data'][0]['complaint_related'] == 'No'
-    assert extracted_data['inspection_data'][0]['violations'] == 'No'
+    assert isinstance(inspections[0], InspectionItem)
+    assert inspections[0]['date'] == 'Jan. 30, 2025'
+    assert inspections[0]['va_shsi'] == 'No'
+    assert inspections[0]['va_complaint_related'] == 'No'
+    assert inspections[0]['va_violations'] == 'No'
 
-    assert extracted_data['inspection_data'][1]['inspection_date'] == 'Sept. 24, 2020'
-    assert extracted_data['inspection_data'][1]['shsi'] == 'Yes'
-    assert extracted_data['inspection_data'][1]['complaint_related'] == 'No'
-    assert extracted_data['inspection_data'][1]['violations'] == 'Yes'
+    assert isinstance(inspections[1], InspectionItem)
+    assert inspections[1]['date'] == 'Sept. 24, 2020'
+    assert inspections[1]['va_shsi'] == 'Yes'
+    assert inspections[1]['va_complaint_related'] == 'No'
+    assert inspections[1]['va_violations'] == 'Yes'
 
 def test_missing_fields():
     """Test case: Handling missing fields and missing inspection data."""
@@ -209,19 +213,19 @@ def test_missing_fields():
     spider = VadssSpider()
     extracted_data = spider.parse_provider_page(response)
 
-    assert extracted_data['business_name'] == '4 Rs Preschool'
-    assert extracted_data['address_street'] == 'N/A'
-    assert extracted_data['address_city_zip'] == 'HAYMARKET, VA  20169'
+    assert isinstance(extracted_data, ProviderItem)
+    assert extracted_data['provider_name'] == '4 Rs Preschool'
+    assert extracted_data['address'] == 'N/A HAYMARKET, VA  20169'
     assert extracted_data['phone'] == '(703) 754-2497'
-    assert extracted_data['facility_type'] == 'N/A'
-    assert extracted_data['license_type'] == 'N/A'
+    assert extracted_data['provider_type'] == 'N/A'
+    assert extracted_data['va_license_type'] == 'N/A'
     assert extracted_data['administrator'] == 'N/A'
-    assert extracted_data['business_hours'] == 'N/A'
+    assert extracted_data['hours'] == 'N/A'
     assert extracted_data['capacity'] == 'N/A'
-    assert extracted_data['ages'] == 'N/A'
-    assert extracted_data['inspector'] == 'N/A'
-    assert extracted_data['current_subsidy_provider'] == 'N/A'
-    assert extracted_data['license_id'] == '1106312'
+    assert extracted_data['ages_served'] == 'N/A'
+    assert extracted_data['va_inspector'] == 'N/A'
+    assert extracted_data['va_current_subsidy_provider'] == 'N/A'
+    assert extracted_data['license_number'] == '1106312'
 
     # Assert that inspection data is an empty list when missing
-    assert extracted_data['inspection_data'] == []
+    assert extracted_data['inspections'] == []
