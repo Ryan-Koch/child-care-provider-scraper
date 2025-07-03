@@ -2,7 +2,6 @@ __pycache__
 .ropeproject
 .idea
 .vscode
-*.txt
 .DS_Store
 .venv
 venv
