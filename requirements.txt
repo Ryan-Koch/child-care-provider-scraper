@@ -1,2 +1,4 @@
 scrapy
 pytest
+scrapy-playwright
+playwright>=1.42.0
