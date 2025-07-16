@@ -20,6 +20,7 @@ class ProviderItem(scrapy.Item):
     license_number = scrapy.Field()
     provider_type = scrapy.Field()
     status = scrapy.Field()
+    status_date = scrapy.Field()
     sutq_rating = scrapy.Field()
     address = scrapy.Field()
     phone = scrapy.Field()
@@ -28,12 +29,24 @@ class ProviderItem(scrapy.Item):
     capacity = scrapy.Field()
     hours = scrapy.Field()
     ages_served = scrapy.Field()
+    infant = scrapy.Field()
+    toddler = scrapy.Field()
+    preschool = scrapy.Field()
+    school = scrapy.Field()
     county = scrapy.Field()
+    scholarships_accepted = scrapy.Field()
     license_begin_date = scrapy.Field()
     license_expiration = scrapy.Field()
+    deficiencies = scrapy.Field()
+    # Virginia specific fields
     va_license_type = scrapy.Field()
     va_inspector = scrapy.Field()
     va_current_subsidy_provider = scrapy.Field()
+    # Texas specific fields
+    tx_rising_star = scrapy.Field()
+    tx_operation_id = scrapy.Field()
+    tx_agency_number = scrapy.Field()
+
 
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
