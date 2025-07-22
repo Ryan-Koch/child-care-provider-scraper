@@ -11,7 +11,7 @@ child care provider information.
 | Alaska                   | [ ]     | [ ]        | [ ]            |
 | Arizona                  | [ ]     | [ ]        | [ ]            |
 | Arkansas                 | [ ]     | [ ]        | [ ]            |
-| California               | [ ]     | [ ]        | [ ]            |
+| California               | [x]     | [x]        | [x]            |
 | Colorado                 | [ ]     | [ ]        | [ ]            |
 | Connecticut              | [ ]     | [ ]        | [ ]            |
 | Delaware                 | [ ]     | [ ]        | [ ]            |
