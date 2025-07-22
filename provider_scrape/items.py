@@ -18,6 +18,7 @@ class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
     provider_name = scrapy.Field()
     license_number = scrapy.Field()
+    license_holder = scrapy.Field()
     provider_type = scrapy.Field()
     status = scrapy.Field()
     status_date = scrapy.Field()
@@ -46,6 +47,21 @@ class ProviderItem(scrapy.Item):
     tx_rising_star = scrapy.Field()
     tx_operation_id = scrapy.Field()
     tx_agency_number = scrapy.Field()
+    # California specific fields
+    ca_regional_office = scrapy.Field()
+    ca_license_first_date = scrapy.Field()
+    ca_closed_date = scrapy.Field()
+    ca_citation_numbers = scrapy.Field()
+    ca_poc_dates = scrapy.Field()
+    ca_all_visit_dates = scrapy.Field()
+    ca_inspection_visit_dates = scrapy.Field()
+    ca_other_visit_dates = scrapy.Field()
+    ca_complaint_info = scrapy.Field()
+    ca_inspect_typea = scrapy.Field()
+    ca_inspect_typeb = scrapy.Field()
+    ca_other_typea = scrapy.Field()
+    ca_other_typeb = scrapy.Field()
+
 
 
     # These fields help with tracking and debugging.

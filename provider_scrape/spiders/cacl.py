@@ -2,6 +2,8 @@ import scrapy
 import csv
 from io import StringIO
 
+from ..items import ProviderItem
+
 class CaclSpider(scrapy.Spider):
     name = 'cacl'
     allowed_domains = ['www.ccld.dss.ca.gov']
@@ -42,4 +44,29 @@ class CaclSpider(scrapy.Spider):
         reader = csv.DictReader(csv_file)
 
         for row in reader:
-            yield dict(row)
+            provider = ProviderItem()
+            provider['provider_type'] = row['Facility Type']
+            provider['license_number'] = row['Facility Number']
+            provider['provider_name'] = row['Facility Name']
+            provider['license_holder'] = row['Licensee']
+            provider['administrator'] = row['Facility Administrator']
+            provider['phone'] = row['Facility Telephone Number']
+            provider['address'] = f"{row['Facility Address']}, {row['Facility City']}, {row['Facility State']} {row['Facility Zip']}"
+            provider['county'] = row['County Name']
+            provider['ca_regional_office'] = row['Regional Office']
+            provider['capacity'] = row['Facility Capacity']
+            provider['status'] = row['Facility Status']
+            # Have this as CA specific for now, might be able to map it better later
+            provider['ca_license_first_date'] = row['License First Date']
+            provider['ca_closed_date'] = row['Closed Date']
+            provider['ca_citation_numbers'] = row['Citation Numbers']
+            provider['ca_all_visit_dates'] = row['All Visit Dates']
+            provider['ca_inspection_visit_dates'] = row['Inspection Visit Dates']
+            provider['ca_other_visit_dates'] = row['Other Visit Dates']
+            provider['ca_complaint_info'] = row['Complaint Info- Date, #Sub Aleg, # Inc Aleg, # Uns Aleg, # TypeA, # TypeB ...']
+            provider['ca_inspect_typea'] = row['Inspect TypeA']
+            provider['ca_inspect_typeb'] = row['Inspect TypeB']
+            provider['ca_other_typea'] = row['Other TypeA']
+            provider['ca_other_typeb'] = row['Other TypeB']
+
+            yield provider
