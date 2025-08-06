@@ -6,7 +6,7 @@ from ..items import ProviderItem, InspectionItem
 
 
 class OhdcySpider(Spider):
-    name = "ohdcy"
+    name = "ohio"
     # allowed_domains = ["childcaresearch.ohio.gov"]
     start_urls = ["https://childcaresearch.ohio.gov/search?q=fVLNbtQwEM62%2bxf6KxDqASF64FKpVLTi2kNwt%2bpS2I2aCKkgDt54NmvhtSPH2ZIb74C4cOE1eAWOvAFvAjNuUypRdSKN7fnGX77xTNAKguAPGq1kq0voWCayC5gwM58bvbv9FmwpjT7c33tO3%2b42q5SrLBxqqJzlanc7riZKZqdQp%2bYj6ENdKdUhxic3ifaO0vFeAtxmM2alAyv5U8xZj61ZSAF2VM0nYLvMVNrVbSZd3XsnC2YErDYpaV1A94w7qfOVmFsnuRrxOfSGesq1K9fO8W6eGiEUSl4bK7pydQpjC2U2M0aFiV%2biHDaOeF2Op%2bMCLHIavXliKnsz0HkDXJWbL2FqLFxeY9zCymABGjXQvp9cyPkcDw%2bTAjISBCBKNpNKELyeWq7LwljnCTeiKRb%2bj2ltvACrZT5zdLp3LEGJ1Mqi3Bpwq2pPg7li8KlAGiQIT4CLxGHtD2IrF9zBqdRYZo4R0FuXjVD1cYVBca3i%2fmvJJ1Lhkw51WaGiDDqjaHDOOqMBiyPcMxajP2ZsmY2jdsSSITYi15K3hwgFrRa283JGeu3gVuv0%2by1vj%2f9run%2fWM65zeP%2bB5qt1qxGy9Gy%2fu0xs4XLjaDqvI95CUhB2bpeBtkF4L2gE497n0omQ9qM7BJKIsEuOCMI%2buZCqo9hdF71e35hU4kQOtKC1n4CCzIHwPL7EoPj26oDW3y%2b%2bCq%2bL%2ftS9GfnxJfrukX6DXEU%2b7%2fza%2bemRsEEaa1hX%2fgI%3d"]
     base_url = "https://childcaresearch.ohio.gov"

@@ -3,7 +3,7 @@ from ..items import ProviderItem, InspectionItem
 
 
 class VadssSpider(scrapy.Spider):
-    name = "vadss"
+    name = "virginia"
     allowed_domains = ["dss.virginia.gov"]
     start_urls = ["https://www.dss.virginia.gov/facility/search/cc2.cgi"]
 
