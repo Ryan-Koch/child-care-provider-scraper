@@ -19,7 +19,7 @@ child care provider information.
 | Georgia                  | [ ]     | [ ]        | [ ]            |
 | Hawaii                   | [ ]     | [ ]        | [ ]            |
 | Idaho                    | [ ]     | [ ]        | [ ]            |
-| Illinois                 | [ ]     | [ ]        | [ ]            |
+| Illinois                 | [x]     | [x]        | [x]            |
 | Indiana                  | [ ]     | [ ]        | [ ]            |
 | Iowa                     | [ ]     | [ ]        | [ ]            |
 | Kansas                   | [ ]     | [ ]        | [ ]            |

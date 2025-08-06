@@ -39,6 +39,7 @@ class ProviderItem(scrapy.Item):
     license_begin_date = scrapy.Field()
     license_expiration = scrapy.Field()
     deficiencies = scrapy.Field()
+    languages = scrapy.Field()
     # Virginia specific fields
     va_license_type = scrapy.Field()
     va_inspector = scrapy.Field()
@@ -61,6 +62,13 @@ class ProviderItem(scrapy.Item):
     ca_inspect_typeb = scrapy.Field()
     ca_other_typea = scrapy.Field()
     ca_other_typeb = scrapy.Field()
+    # IL specific
+    il_provider_id = scrapy.Field()
+    il_facility_type = scrapy.Field()
+    il_day_age_range = scrapy.Field()
+    il_night_age_range = scrapy.Field()
+    il_day_capacity = scrapy.Field()
+    il_night_capacity = scrapy.Field()
 
 
 
