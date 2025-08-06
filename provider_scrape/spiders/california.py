@@ -5,7 +5,7 @@ from io import StringIO
 from ..items import ProviderItem
 
 class CaclSpider(scrapy.Spider):
-    name = 'cacl'
+    name = 'california'
     allowed_domains = ['www.ccld.dss.ca.gov']
     start_urls = [
         'https://www.ccld.dss.ca.gov/transparencyapi/api/DownloadStateData?id=ChildCareCenters&GUID=8cdb2366-1db9-4977-bf5a-06ae048b824d',

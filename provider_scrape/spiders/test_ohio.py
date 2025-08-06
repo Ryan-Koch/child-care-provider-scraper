@@ -1,7 +1,7 @@
 
 import pytest
 from scrapy.http import HtmlResponse, Request
-from provider_scrape.spiders.ohdcy import OhdcySpider
+from provider_scrape.spiders.ohio import OhdcySpider
 from provider_scrape.items import ProviderItem, InspectionItem
 
 # Full HTML content for a provider page
@@ -113,18 +113,18 @@ def spider():
 
 def test_parse_provider_page_happy_path(spider):
     response = HtmlResponse(url="http://example.com/provider/12345", body=PROVIDER_HTML, encoding='utf-8')
-    
+
     # The spider yields a Request for inspections, so we need to capture that
     requests = list(spider.parse_provider_page(response))
-    
+
     # There should be one request for inspections and one provider item
     assert len(requests) == 2
-    
+
     provider_item_request = next(r for r in requests if isinstance(r, ProviderItem))
     inspection_request = next(r for r in requests if not isinstance(r, ProviderItem))
 
     provider = inspection_request.meta['provider']
-    
+
     assert provider['status'] == 'Active'
     assert provider['sutq_rating'] == 'Star 5'
     assert provider['license_number'] == '12345'
@@ -138,16 +138,16 @@ def test_parse_provider_page_happy_path(spider):
 
 def test_parse_provider_page_missing_fields(spider):
     response = HtmlResponse(url="http://example.com/provider/54321", body=PROVIDER_HTML_MISSING, encoding='utf-8')
-    
+
     requests = list(spider.parse_provider_page(response))
-    
+
     assert len(requests) == 2
 
     provider_item_request = next(r for r in requests if isinstance(r, ProviderItem))
     inspection_request = next(r for r in requests if not isinstance(r, ProviderItem))
 
     provider = inspection_request.meta['provider']
-    
+
     assert provider['status'] == 'Active'
     assert provider.get('sutq_rating') is None
     assert provider['license_number'] == '54321'
@@ -168,22 +168,22 @@ def test_parse_inspections(spider):
         encoding='utf-8',
         request=request
     )
-    
+
     # The spider yields a single item, which is the provider with inspections
     result_provider = next(spider.parse_inspections(response))
-    
+
     assert 'inspections' in result_provider
     inspections = result_provider['inspections']
-    
+
     assert len(inspections) == 2
-    
+
     assert inspections[0]['date'] == '06/01/2023'
     assert inspections[0]['type'] == 'Annual'
     assert inspections[0]['original_status'] == ''
     assert inspections[0]['corrective_status'] == 'Corrected'
     assert inspections[0]['status_updated'] == '06/15/2023'
     assert inspections[0]['report_url'] == '/report/1'
-    
+
     assert inspections[1]['date'] == '03/01/2023'
     assert inspections[1]['type'] == 'Complaint'
     assert inspections[1]['original_status'] == ''

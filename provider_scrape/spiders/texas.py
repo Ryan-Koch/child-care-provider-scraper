@@ -8,7 +8,7 @@ from ..items import ProviderItem, InspectionItem
 
 
 class TxhhsSpider(scrapy.Spider):
-    name = "txhhs"
+    name = "texas"
 
     custom_settings = {
         'DOWNLOAD_HANDLERS': {

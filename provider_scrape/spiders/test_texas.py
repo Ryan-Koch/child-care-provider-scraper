@@ -3,7 +3,7 @@ import pytest
 import json
 import base64
 from scrapy.http import Response, Request
-from provider_scrape.spiders.txhhs import TxhhsSpider
+from provider_scrape.spiders.texas import TxhhsSpider
 from provider_scrape.items import ProviderItem
 
 # Happy path CSV content
