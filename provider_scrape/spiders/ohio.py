@@ -116,14 +116,20 @@ class OhdcySpider(Spider):
                 else:
                     info = info_selector.xpath('./text()').get()
                     if label == "Number:":
-                        provider["license_number"] = info
+                        info = self.clean_whitespace_newlines(info) 
+                        provider["id_or_license_number"] = info
                     if label == "County:":
+                        info = self.clean_whitespace_newlines(info)
                         provider["county"] = info
                     if label == "License Begin Date:":
+                        info = self.clean_whitespace_newlines(info)
                         provider["license_begin_date"] = info
+                        info = self.clean_whitespace_newlines(info)
                     if label == "License Expiration Date:":
+                        info = self.clean_whitespace_newlines(info)
                         provider["license_expiration"] = info
                     if label == "Administrator(s):":
+                        info = self.clean_whitespace_newlines(info)
                         provider["administrator"] = info
             else:
                 info = ""
@@ -162,3 +168,10 @@ class OhdcySpider(Spider):
 
         provider.update({'inspections': inspections})
         yield provider
+
+
+    def clean_whitespace_newlines(self, text):
+        text = text.replace("\r", "")
+        text = text.replace("\n", "")
+        text = text.strip()
+        return text

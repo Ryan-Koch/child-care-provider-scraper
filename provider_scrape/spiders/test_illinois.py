@@ -29,7 +29,7 @@ class IllinoisSpiderTest(unittest.TestCase):
         # Check first provider
         provider1 = results[0]
         self.assertIsInstance(provider1, ProviderItem)
-        self.assertEqual(provider1['il_provider_id'], '12345')
+        self.assertEqual(provider1['id_or_license_number'], '12345')
         self.assertEqual(provider1['provider_name'], 'HAPPY KIDS DAYCARE')
         self.assertEqual(provider1['address'], '123 Main St, Springfield, CA 62704')
         self.assertEqual(provider1['county'], 'Sangamon')

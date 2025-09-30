@@ -28,7 +28,7 @@ class CaclSpiderTest(unittest.TestCase):
         provider1 = results[0]
         self.assertIsInstance(provider1, ProviderItem)
         self.assertEqual(provider1['provider_type'], 'CHILD CARE CENTER')
-        self.assertEqual(provider1['license_number'], '123456789')
+        self.assertEqual(provider1['id_or_license_number'], '123456789')
         self.assertEqual(provider1['provider_name'], 'HAPPY KIDS CENTER')
         self.assertEqual(provider1['license_holder'], 'HAPPY KIDS INC')
         self.assertEqual(provider1['administrator'], 'JOHN DOE')

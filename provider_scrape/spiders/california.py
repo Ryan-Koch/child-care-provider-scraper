@@ -46,7 +46,7 @@ class CaclSpider(scrapy.Spider):
         for row in reader:
             provider = ProviderItem()
             provider['provider_type'] = row['Facility Type']
-            provider['license_number'] = row['Facility Number']
+            provider['id_or_license_number'] = row['Facility Number']
             provider['provider_name'] = row['Facility Name']
             provider['license_holder'] = row['Licensee']
             provider['administrator'] = row['Facility Administrator']

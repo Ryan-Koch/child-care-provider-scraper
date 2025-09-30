@@ -41,7 +41,7 @@ def test_parse_csv_happy_path(spider):
 
     assert isinstance(provider, ProviderItem)
     assert provider['provider_url'] == 'https://childcare.hhs.texas.gov/Public/OperationDetails?operationId=12345'
-    assert provider['tx_operation_id'] == '12345'
+    assert provider['id_or_license_number'] == '12345'
     assert provider['tx_agency_number'] == '67890'
     assert provider['provider_name'] == 'Test Provider'
     assert provider['address'] == '123 Main St Anytown, TX 12345'
@@ -70,7 +70,7 @@ def test_parse_csv_missing_fields(spider):
 
     assert isinstance(provider, ProviderItem)
     assert provider['provider_url'] == 'https://childcare.hhs.texas.gov/Public/OperationDetails?operationId=54321'
-    assert provider['tx_operation_id'] == '54321'
+    assert provider['id_or_license_number'] == '54321'
     assert provider['tx_agency_number'] == ''
     assert provider['provider_name'] == 'Missing Info Provider'
     assert provider['address'] == ' ,  '

@@ -135,7 +135,7 @@ class TxhhsSpider(scrapy.Spider):
             for row in reader:
                 provider = ProviderItem()
                 provider['provider_url'] = base_url + row['Operation #']
-                provider['tx_operation_id'] = row['Operation #']
+                provider['id_or_license_number'] = row['Operation #']
                 provider['tx_agency_number'] = row['Agency Number']
                 provider['provider_name'] = row['Operation/Caregiver Name']
                 provider['address'] = f"{row['Address']} {row['City']}, {row['State']} {row['Zip']}"

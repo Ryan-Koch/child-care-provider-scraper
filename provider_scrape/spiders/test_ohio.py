@@ -127,7 +127,7 @@ def test_parse_provider_page_happy_path(spider):
 
     assert provider['status'] == 'Active'
     assert provider['sutq_rating'] == 'Star 5'
-    assert provider['license_number'] == '12345'
+    assert provider['id_or_license_number'] == '12345'
     assert provider['county'] == 'Franklin'
     assert provider['license_begin_date'] == '01/01/2020'
     assert provider['license_expiration'] == '12/31/2025'

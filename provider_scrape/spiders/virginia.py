@@ -129,7 +129,7 @@ class VadssSpider(scrapy.Spider):
             ages_served=extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "Ages:")]/following-sibling::td/text()'),
             va_inspector=extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "Inspector:")]/following-sibling::td/text()'),
             va_current_subsidy_provider=extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "Current Subsidy Provider")]/following-sibling::td/text()'),
-            license_number=extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "License/Facility ID#")]/following-sibling::td/text()'),
+            id_or_license_number=extract_with_xpath('//table[@class="cc_search"]/tr/td[contains(text(), "License/Facility ID#")]/following-sibling::td/text()'),
             inspections=extract_inspection_data(),
             provider_url=response.url,
             source_state='VA'
