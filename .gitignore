@@ -5,3 +5,16 @@ __pycache__
 .DS_Store
 .venv
 venv
+
+#state local data files
+california.json
+california.log
+illinois.json
+illinois.log
+ohio.json
+ohio.log
+texas.json
+texas.log
+virginia.json
+virginia.log
+
