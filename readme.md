@@ -7,8 +7,8 @@ child care provider information.
 
 | Name                     | Scraper | Unit Tests | Item Pipeline |
 |--------------------------|---------|------------|----------------|
-| Alabama                  | [ ]     | [ ]        | [ ]            |
-| Alaska                   | [ ]     | [ ]        | [ ]            |
+| Alabama                  | [x]     | [x]        | [x]            |
+| Alaska                   | [x]     | [x]        | [x]            |
 | Arizona                  | [ ]     | [ ]        | [ ]            |
 | Arkansas                 | [ ]     | [ ]        | [ ]            |
 | California               | [x]     | [x]        | [x]            |
