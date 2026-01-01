@@ -70,7 +70,16 @@ class ProviderItem(scrapy.Item):
     il_day_capacity = scrapy.Field()
     il_night_capacity = scrapy.Field()
 
-
+    # Alabama specific fields
+    al_quality_rating = scrapy.Field()
+    al_rating_expiration = scrapy.Field()
+    al_nighttime_hours = scrapy.Field()
+    al_nighttime_ages = scrapy.Field()
+    al_mailing_address = scrapy.Field()
+    al_accreditations = scrapy.Field()
+    al_adverse_actions = scrapy.Field()
+    al_substantiated_complaints = scrapy.Field()
+    al_deficiency_reports = scrapy.Field()
 
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
