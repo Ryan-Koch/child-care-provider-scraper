@@ -26,6 +26,7 @@ class ProviderItem(scrapy.Item):
     address = scrapy.Field()
     phone = scrapy.Field()
     email = scrapy.Field()
+    provider_website = scrapy.Field()
     administrator = scrapy.Field()
     capacity = scrapy.Field()
     hours = scrapy.Field()
@@ -80,6 +81,32 @@ class ProviderItem(scrapy.Item):
     al_adverse_actions = scrapy.Field()
     al_substantiated_complaints = scrapy.Field()
     al_deficiency_reports = scrapy.Field()
+
+    # Arkansas specific fields
+    ar_quality_rating = scrapy.Field()
+    ar_program_type = scrapy.Field()
+    ar_regulation_type = scrapy.Field()
+    ar_total_capacity = scrapy.Field()
+
+    # Colorado specific fields
+    co_quality_rating = scrapy.Field()
+    co_award_date = scrapy.Field()
+    co_governing_body = scrapy.Field()
+    co_cccap_fa_status_d1 = scrapy.Field()
+    co_cccap_authorization_status = scrapy.Field()
+    co_school_district = scrapy.Field()
+    co_ecc = scrapy.Field()
+    co_ccrr = scrapy.Field()
+    co_license_type = scrapy.Field()
+    co_licensed_to_serve = scrapy.Field()
+    co_special_needs = scrapy.Field()
+    co_accepting_new_children = scrapy.Field()
+    co_infant_openings = scrapy.Field()
+    co_toddler_openings = scrapy.Field()
+    co_preschool_openings = scrapy.Field()
+    co_school_age_openings = scrapy.Field()
+    co_head_start = scrapy.Field()
+    co_license_issue_date = scrapy.Field()
 
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
