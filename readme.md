@@ -5,14 +5,14 @@ child care provider information.
 
 # Progress tracking
 
-| Name                     | Scraper | Unit Tests | Item Pipeline |
+| Name                     | Scraper | Unit Tests | Item updated   |
 |--------------------------|---------|------------|----------------|
 | Alabama                  | [x]     | [x]        | [x]            |
 | Alaska                   | [x]     | [x]        | [x]            |
 | Arizona                  | [ ]     | [ ]        | [ ]            |
-| Arkansas                 | [ ]     | [ ]        | [ ]            |
+| Arkansas                 | [x]     | [x]        | [x]            |
 | California               | [x]     | [x]        | [x]            |
-| Colorado                 | [ ]     | [ ]        | [ ]            |
+| Colorado                 | [x]     | [x]        | [x]            |
 | Connecticut              | [ ]     | [ ]        | [ ]            |
 | Delaware                 | [ ]     | [ ]        | [ ]            |
 | Florida                  | [ ]     | [ ]        | [ ]            |
