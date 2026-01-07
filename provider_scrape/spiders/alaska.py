@@ -48,50 +48,96 @@ class AlaskaSpider(scrapy.Spider):
                 
                 # 3. Wait for Results
                 try:
-                    await page.wait_for_selector('table', timeout=20000)
-                    await page.wait_for_timeout(5000) # Wait for rows to render
+                    # Wait for pagination info to appear, confirming data load
+                    await page.wait_for_selector('.mud-table-page-number-information', timeout=30000)
+                    # Wait for actual data rows
+                    await page.wait_for_selector('tr.mud-table-row', timeout=30000)
+                    # Small buffer for rendering stability
+                    await page.wait_for_timeout(2000) 
                     self.logger.info("Results table loaded.")
                 except:
-                    self.logger.error("Results table did not load.")
+                    self.logger.error("Results table did not load or timed out.")
                     return
 
-                # 4. Extract Links and Names
-                content = await page.content()
-                sel = Selector(text=content)
-                
-                # Find all rows in the results table
-                rows = sel.css('table tr')
-                self.logger.info(f"Found {len(rows)} rows in the table.")
-                
-                for row in rows:
-                    link_node = row.css('a[href*="ProviderInfo"]')
-                    if not link_node:
-                        continue
+                while True:
+                    # 4. Extract Links and Names
+                    content = await page.content()
+                    sel = Selector(text=content)
+                    
+                    # Find all rows in the results table
+                    rows = sel.css('tr.mud-table-row')
+                    self.logger.info(f"Found {len(rows)} rows in the table.")
+                    
+                    for row in rows:
+                        link_node = row.css('a[href*="ProviderInfo"]')
+                        if not link_node:
+                            continue
+                            
+                        link = link_node.css('::attr(href)').get()
                         
-                    link = link_node.css('::attr(href)').get()
-                    
-                    # Try to get name from cells or the link text
-                    name = row.css('td:nth-child(1)::text').get()
-                    if not name or name.strip() == "" or name.strip().lower() == "details":
-                        name = row.css('td:nth-child(2)::text').get()
-                    if not name or name.strip() == "" or name.strip().lower() == "details":
-                        name = link_node.css('::text').get()
-                    
-                    if name and name.strip().lower() == "details":
-                        name = None
+                        # Try to get name from cells or the link text
+                        name = row.css('td:nth-child(1)::text').get()
+                        if not name or name.strip() == "" or name.strip().lower() == "details":
+                            name = row.css('td:nth-child(2)::text').get()
+                        if not name or name.strip() == "" or name.strip().lower() == "details":
+                            name = link_node.css('::text').get()
+                        
+                        if name and name.strip().lower() == "details":
+                            name = None
 
-                    yield response.follow(
-                        link,
-                        callback=self.parse_detail,
-                        meta={
-                            'playwright': True,
-                            'playwright_include_page': True,
-                            'playwright_context_args': {
-                                "ignore_https_errors": True,
-                            },
-                            'provider_name': name.strip() if name else None
-                        }
-                    )
+                        yield response.follow(
+                            link,
+                            callback=self.parse_detail,
+                            meta={
+                                'playwright': True,
+                                'playwright_include_page': True,
+                                'playwright_context_args': {
+                                    "ignore_https_errors": True,
+                                },
+                                'provider_name': name.strip() if name else None
+                            }
+                        )
+                    
+                    # Pagination Logic
+                    # Look for the button that likely represents "Next"
+                    # Based on the HTML provided:
+                    # <div class="mud-table-pagination-actions">
+                    #   <button ... disabled ...>First</button>
+                    #   <button ... disabled ...>Prev</button>
+                    #   <button ...>Next</button>
+                    #   <button ...>Last</button>
+                    # </div>
+                    # We want the 3rd button in that container generally, or select by icon.
+                    # Or simpler: The button that is NOT disabled and has an SVG path that looks like a right arrow.
+                    # The 3rd button has path "M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" which is a right arrow.
+                    
+                    # Let's try to find the "Next" button in the pagination actions container.
+                    # We will select the button that is the 3rd child of .mud-table-pagination-actions
+                    
+                    pagination_actions = page.locator('.mud-table-pagination-actions button')
+                    count = await pagination_actions.count()
+                    
+                    if count < 4:
+                        self.logger.info("Pagination buttons not found or insufficient.")
+                        break
+                        
+                    next_btn = pagination_actions.nth(2) # 0-indexed: 0=First, 1=Prev, 2=Next, 3=Last
+                    
+                    is_disabled = await next_btn.is_disabled()
+                    if is_disabled:
+                        self.logger.info("Next button is disabled. Reached last page.")
+                        break
+                    
+                    self.logger.info("Clicking Next page...")
+                    await next_btn.click()
+                    
+                    # Wait for table to update. 
+                    # We can wait for the '1-10 of 406' text to change, but capturing the exact text to wait for is tricky.
+                    # Waiting for a short timeout and then network idle is a reasonable proxy for Blazor updates.
+                    await page.wait_for_timeout(2000)
+                    # Optionally wait for loader if it appears
+                    # await page.wait_for_selector('.loader', state='hidden', timeout=5000)
+
             else:
                 self.logger.warning("Search button not found.")
 
@@ -116,7 +162,11 @@ class AlaskaSpider(scrapy.Spider):
             except:
                 self.logger.warning("Loader did not disappear on detail page.")
 
-            await page.wait_for_load_state("networkidle")
+            try:
+                await page.wait_for_load_state("networkidle", timeout=60000)
+            except Exception as e:
+                self.logger.warning(f"Network idle timeout on detail page: {e}")
+
             await page.wait_for_timeout(3000)
 
             content = await page.content()
