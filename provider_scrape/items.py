@@ -108,6 +108,18 @@ class ProviderItem(scrapy.Item):
     co_head_start = scrapy.Field()
     co_license_issue_date = scrapy.Field()
 
+    # New York specific fields
+    ny_facility_id = scrapy.Field()
+    ny_region_code = scrapy.Field()
+    ny_facility_opened_date = scrapy.Field()
+    ny_address_omitted = scrapy.Field()
+    ny_phone_number_omitted = scrapy.Field()
+    ny_phone_extension = scrapy.Field()
+    ny_school_district_name = scrapy.Field()
+    ny_capacity_description = scrapy.Field()
+    latitude = scrapy.Field()
+    longitude = scrapy.Field()
+
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
     source_state = scrapy.Field()
