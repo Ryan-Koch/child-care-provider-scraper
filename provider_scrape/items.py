@@ -24,6 +24,8 @@ class ProviderItem(scrapy.Item):
     status_date = scrapy.Field()
     sutq_rating = scrapy.Field()
     address = scrapy.Field()
+    latitude = scrapy.Field()
+    longitude = scrapy.Field()
     phone = scrapy.Field()
     email = scrapy.Field()
     provider_website = scrapy.Field()
@@ -41,6 +43,8 @@ class ProviderItem(scrapy.Item):
     license_expiration = scrapy.Field()
     deficiencies = scrapy.Field()
     languages = scrapy.Field()
+
+
     # Virginia specific fields
     va_license_type = scrapy.Field()
     va_inspector = scrapy.Field()
@@ -107,6 +111,17 @@ class ProviderItem(scrapy.Item):
     co_school_age_openings = scrapy.Field()
     co_head_start = scrapy.Field()
     co_license_issue_date = scrapy.Field()
+
+    # New York specific fields
+    ny_facility_id = scrapy.Field()
+    ny_region_code = scrapy.Field()
+    ny_facility_opened_date = scrapy.Field()
+    ny_address_omitted = scrapy.Field()
+    ny_phone_number_omitted = scrapy.Field()
+    ny_phone_extension = scrapy.Field()
+    ny_school_district_name = scrapy.Field()
+    ny_capacity_description = scrapy.Field()
+
 
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
