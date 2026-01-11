@@ -44,7 +44,7 @@ child care provider information.
 | Ohio                     | [x]     | [x]        | [x]            |
 | Oklahoma                 | [ ]     | [ ]        | [ ]            |
 | Oregon                   | [ ]     | [ ]        | [ ]            |
-| Pennsylvania             | [ ]     | [ ]        | [ ]            |
+| Pennsylvania             | [x]     | [x]        | [x]            |
 | Rhode Island             | [ ]     | [ ]        | [ ]            |
 | South Carolina           | [ ]     | [ ]        | [ ]            |
 | South Dakota             | [ ]     | [ ]        | [ ]            |
