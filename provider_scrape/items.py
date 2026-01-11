@@ -2,6 +2,7 @@
 
 import scrapy
 
+
 class InspectionItem(scrapy.Item):
     date = scrapy.Field()
     type = scrapy.Field()
@@ -43,7 +44,6 @@ class ProviderItem(scrapy.Item):
     license_expiration = scrapy.Field()
     deficiencies = scrapy.Field()
     languages = scrapy.Field()
-
 
     # Virginia specific fields
     va_license_type = scrapy.Field()
@@ -122,6 +122,13 @@ class ProviderItem(scrapy.Item):
     ny_school_district_name = scrapy.Field()
     ny_capacity_description = scrapy.Field()
 
+    # Pennsylvania specific fields
+    pa_stars_rating = scrapy.Field()
+    pa_certificate_status = scrapy.Field()
+    pa_school_district = scrapy.Field()
+    pa_meal_options = scrapy.Field()
+    pa_schedule = scrapy.Field()
+    pa_cost_table = scrapy.Field()
 
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
