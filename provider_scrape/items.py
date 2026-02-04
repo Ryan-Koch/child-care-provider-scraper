@@ -138,12 +138,6 @@ class ProviderItem(scrapy.Item):
     nm_meals = scrapy.Field()
     nm_schedule = scrapy.Field()
 
-    # Mississippi specific fields
-    ms_accepts_subsidy = scrapy.Field()
-    ms_services = scrapy.Field()
-    ms_investigations = scrapy.Field()
-    ms_monetary_penalties = scrapy.Field()
-
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
     source_state = scrapy.Field()
