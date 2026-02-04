@@ -37,7 +37,7 @@ child care provider information.
 | Nevada                   | [ ]     | [ ]        | [ ]            |
 | New Hampshire            | [ ]     | [ ]        | [ ]            |
 | New Jersey               | [ ]     | [ ]        | [ ]            |
-| New Mexico               | [ ]     | [ ]        | [ ]            |
+| New Mexico               | [x]     | [x]        | [x]            |
 | New York                 | [x]     | [x]        | [x]            |
 | North Carolina           | [ ]     | [ ]        | [ ]            |
 | North Dakota             | [ ]     | [ ]        | [ ]            |
