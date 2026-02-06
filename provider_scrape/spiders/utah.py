@@ -69,12 +69,7 @@ class UtahSpider(scrapy.Spider):
         # Note: The 'sort' parameter in the curl was ','. I'll leave it empty or minimal.
         # Original: page=0&size=10&sort=,&miles=1&latitude=0&longitude=0
         params = {
-            'page': page,
-            'size': 20, # Increased size to reduce pagination requests
             'sort': ',',
-            'miles': 1,
-            'latitude': 0,
-            'longitude': 0
         }
         query_string = urllib.parse.urlencode(params)
         url = f"{self.SEARCH_URL}?{query_string}"
