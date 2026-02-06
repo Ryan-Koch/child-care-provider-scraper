@@ -138,6 +138,15 @@ class ProviderItem(scrapy.Item):
     nm_meals = scrapy.Field()
     nm_schedule = scrapy.Field()
 
+    # Utah specific fields
+    ut_license_type = scrapy.Field()
+    ut_quality_rating = scrapy.Field()
+    ut_vacancies = scrapy.Field()
+    ut_licensed_since = scrapy.Field()
+    ut_environment = scrapy.Field()
+    ut_meals = scrapy.Field()
+    ut_school_district = scrapy.Field()
+
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
     source_state = scrapy.Field()

@@ -50,7 +50,7 @@ child care provider information.
 | South Dakota             | [ ]     | [ ]        | [ ]            |
 | Tennessee                | [ ]     | [ ]        | [ ]            |
 | Texas                    | [x]     | [x]        | [x]            |
-| Utah                     | [ ]     | [ ]        | [ ]            |
+| Utah                     | [x]     | [x]        | [x]            |
 | Vermont                  | [ ]     | [ ]        | [ ]            |
 | Virginia                 | [x]     | [x]        | [x]            |
 | Washington               | [ ]     | [ ]        | [ ]            |
