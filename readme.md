@@ -32,7 +32,7 @@ child care provider information.
 | Minnesota                | [ ]     | [ ]        | [ ]            |
 | Mississippi              | [ ]     | [ ]        | [ ]            |
 | Missouri                 | [ ]     | [ ]        | [ ]            |
-| Montana                  | [ ]     | [ ]        | [ ]            |
+| Montana                  | [x]     | [x]        | [x]            |
 | Nebraska                 | [ ]     | [ ]        | [ ]            |
 | Nevada                   | [ ]     | [ ]        | [ ]            |
 | New Hampshire            | [ ]     | [ ]        | [ ]            |
