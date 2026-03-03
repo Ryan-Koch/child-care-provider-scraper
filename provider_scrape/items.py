@@ -13,6 +13,7 @@ class InspectionItem(scrapy.Item):
     va_shsi = scrapy.Field()
     va_complaint_related = scrapy.Field()
     va_violations = scrapy.Field()
+    mt_inspector_name = scrapy.Field()
 
 
 class ProviderItem(scrapy.Item):
@@ -146,6 +147,9 @@ class ProviderItem(scrapy.Item):
     ut_environment = scrapy.Field()
     ut_meals = scrapy.Field()
     ut_school_district = scrapy.Field()
+
+    # Montana specific fields
+    mt_license_type = scrapy.Field()
 
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
