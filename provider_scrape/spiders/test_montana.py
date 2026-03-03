@@ -9,10 +9,51 @@ def spider():
     return MontanaSpider()
 
 def test_parse_detail_page_golden_path(spider):
-    # Load the actual mock HTML provided
-    html_path = os.path.join(os.path.dirname(__file__), '../../montana_detail.html')
-    with open(html_path, 'r', encoding='utf-8') as f:
-        html_content = f.read()
+    # Mock the necessary HTML structure
+    html_content = """
+    <html>
+    <body>
+        <div>
+            <span>Provider Name</span>
+            <div>2 Grandma's House</div>
+        </div>
+        <div>
+            <span>Provider Number</span>
+            <div>PV109736</div>
+        </div>
+        <div>
+            <span>Capacity</span>
+            <div>85</div>
+        </div>
+        <div>
+            <span>License Status</span>
+            <div>Active</div>
+        </div>
+        <div>
+            <span>Provider Type</span>
+            <div>Child Care Center</div>
+        </div>
+        <div>
+            <span>Min Age to Max Age</span>
+            <div>0 to 12</div>
+        </div>
+        <table class="slds-table">
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Inspector</th>
+                <th>File</th>
+            </tr>
+            <tr>
+                <td>6/24/2025</td>
+                <td>Complaint</td>
+                <td></td>
+                <td><a href="/report">View File</a></td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
 
     request = Request(
         url="https://mtdphhs.my.site.com/MAQCSChildCareLicensing/s/provider-detail?language=en_US&pid=123", 
