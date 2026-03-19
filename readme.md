@@ -26,7 +26,7 @@ child care provider information.
 | Kentucky                 | [ ]     | [ ]        | [ ]            |
 | Louisiana                | [ ]     | [ ]        | [ ]            |
 | Maine                    | [ ]     | [ ]        | [ ]            |
-| Maryland                 | [ ]     | [ ]        | [ ]            |
+| Maryland                 | [x]     | [x]        | [x]            |
 | Massachusetts            | [ ]     | [ ]        | [ ]            |
 | Michigan                 | [ ]     | [ ]        | [ ]            |
 | Minnesota                | [ ]     | [ ]        | [ ]            |
