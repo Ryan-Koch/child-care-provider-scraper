@@ -1,4 +1,7 @@
 scrapy
 pytest
+pytest-asyncio
 scrapy-playwright
 playwright>=1.42.0
+pypdfium2
+tesserocr
