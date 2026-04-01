@@ -80,55 +80,100 @@ class MarylandSpider(scrapy.Spider):
         "CONCURRENT_REQUESTS_PER_DOMAIN": 4,
     }
 
-    def parse(self, response):
-        """Submit the search form with defaults to get all providers."""
-        self.logger.info("Loaded search page, submitting form with defaults...")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.seen_fi = set()
+        # Track requested pages per county to keep pagination chains independent
+        self.requested_pages_by_county = {}
 
-        # Extract all options from multi-select dropdowns to search for everything
-        fac_types = response.css(
+    def parse(self, response):
+        """Extract form options, then launch a fresh session per county."""
+        self.logger.info("Loaded search page, extracting form options...")
+
+        self._fac_types = response.css(
             "#MainContent_ddlFacType option::attr(value)"
         ).getall()
-        license_statuses = response.css(
+        self._license_statuses = response.css(
             "#MainContent_ddlLicenseStatus option::attr(value)"
         ).getall()
         counties = response.css(
             "#MainContent_ddlCountyList option::attr(value)"
         ).getall()
-        cities = response.css(
+        self._cities = response.css(
             "#MainContent_ddlCityList option::attr(value)"
         ).getall()
 
         self.logger.info(
-            f"Form options: {len(fac_types)} types, {len(license_statuses)} statuses, "
-            f"{len(counties)} counties, {len(cities)} cities"
+            f"Form options: {len(self._fac_types)} types, "
+            f"{len(self._license_statuses)} statuses, "
+            f"{len(counties)} counties, {len(self._cities)} cities "
+            f"— launching one search per county"
         )
 
+        # Each county gets its own cookie jar (session) so concurrent searches
+        # don't overwrite each other's server-side state. We load the search
+        # page fresh for each county to get a clean ViewState + session.
+        for county in counties:
+            self.requested_pages_by_county[county] = set()
+            yield scrapy.Request(
+                "https://www.checkccmd.org/",
+                callback=self.parse_county_search,
+                cb_kwargs={"county_key": county},
+                meta={"cookiejar": county},
+                dont_filter=True,
+            )
+
+    def parse_county_search(self, response, county_key):
+        """Submit the search form for a single county."""
+        self.logger.info(f"[{county_key}] Submitting search...")
         yield scrapy.FormRequest.from_response(
             response,
             formdata={
-                "ctl00$MainContent$ddlFacType": fac_types,
-                "ctl00$MainContent$ddlLicenseStatus": license_statuses,
-                "ctl00$MainContent$ddlCountyList": counties,
-                "ctl00$MainContent$ddlCityList": cities,
+                "ctl00$MainContent$ddlFacType": self._fac_types,
+                "ctl00$MainContent$ddlLicenseStatus": self._license_statuses,
+                "ctl00$MainContent$ddlCountyList": [county_key],
+                "ctl00$MainContent$ddlCityList": self._cities,
                 "ctl00$MainContent$SearchButton": "SEARCH",
             },
             callback=self.parse_results,
+            cb_kwargs={"county_key": county_key},
+            meta={"cookiejar": county_key},
             dont_click=True,
+            dont_filter=True,
         )
 
-    def parse_results(self, response):
+    def parse_results(self, response, county_key=None):
         """Parse the search results page with pagination."""
-        total_text = response.css("#MainContent_lblTotalRows::text").get()
-        self.logger.info(f"Total providers: {total_text}")
+        pager_row = response.css("tr.dataPager")
+        current_page = 1
+        if pager_row:
+            current_page_text = pager_row.css("span::text").get()
+            if current_page_text and current_page_text.strip().isdigit():
+                current_page = int(current_page_text.strip())
 
-        # Extract provider detail links
+        total_text = response.css("#MainContent_lblTotalRows::text").get()
+        self.logger.info(f"[{county_key}] page {current_page} — Total: {total_text}")
+
+        # Extract provider detail links, deduplicating by facility ID
         rows = response.css("#grdResults tr.rowStyle")
-        self.logger.info(f"Found {len(rows)} provider rows on this page.")
+        self.logger.info(
+            f"[{county_key}] Found {len(rows)} provider rows on page {current_page}."
+        )
 
         for row in rows:
             cols = row.css("td")
             link = cols[0].css("a::attr(href)").get() if cols else None
             if link:
+                # Deduplicate by facility ID to avoid re-scraping detail pages
+                # when duplicate pagination chains cause the same page to be
+                # processed more than once.
+                fi_match = re.search(r"fi=(\d+)", link)
+                if fi_match:
+                    fi = fi_match.group(1)
+                    if fi in self.seen_fi:
+                        continue
+                    self.seen_fi.add(fi)
+
                 # Extract fields only available on the results page
                 address = cols[2].css("::text").get("").strip() if len(cols) > 2 else None
                 school_name = cols[4].css("::text").get("").strip() if len(cols) > 4 else None
@@ -144,52 +189,47 @@ class MarylandSpider(scrapy.Spider):
                     },
                 )
 
-        # Pagination - find next page via __doPostBack
-        pager_row = response.css("tr.dataPager")
+        # Pagination - find next page via __doPostBack.
+        # Track requested pages per county to keep chains independent.
+        requested_pages = self.requested_pages_by_county.get(county_key, set())
         if pager_row:
-            # Current page is shown as a span (not a link)
-            current_page_text = pager_row.css("span::text").get()
-            if current_page_text and current_page_text.strip().isdigit():
-                current_page = int(current_page_text.strip())
-                next_page = current_page + 1
+            next_page = current_page + 1
+            target_page = None
 
-                next_link = pager_row.css(f'a[href*="Page${next_page}"]')
-                if next_link:
-                    self.logger.info(f"Navigating to page {next_page}...")
-                    yield scrapy.FormRequest.from_response(
-                        response,
-                        formdata={
-                            "__EVENTTARGET": "ctl00$MainContent$grdResults",
-                            "__EVENTARGUMENT": f"Page${next_page}",
-                        },
-                        callback=self.parse_results,
-                        dont_click=True,
-                    )
-                else:
-                    # Check for "..." link which jumps to the next set of pages
-                    ellipsis_links = pager_row.css("a")
-                    for el_link in ellipsis_links:
-                        text = el_link.css("::text").get("").strip()
-                        href = el_link.attrib.get("href", "")
-                        if text == "..." and f"Page${next_page}" not in href:
-                            # The "..." after current page goes to next set
-                            match = re.search(r"Page\$(\d+)", href)
-                            if match:
-                                jump_page = int(match.group(1))
-                                if jump_page > current_page:
-                                    self.logger.info(
-                                        f"Jumping to page {jump_page} via '...' link..."
-                                    )
-                                    yield scrapy.FormRequest.from_response(
-                                        response,
-                                        formdata={
-                                            "__EVENTTARGET": "ctl00$MainContent$grdResults",
-                                            "__EVENTARGUMENT": f"Page${jump_page}",
-                                        },
-                                        callback=self.parse_results,
-                                        dont_click=True,
-                                    )
-                                    break
+            next_link = pager_row.css(f'a[href*="Page${next_page}"]')
+            if next_link:
+                target_page = next_page
+            else:
+                # Check for "..." link which jumps to the next set of pages
+                ellipsis_links = pager_row.css("a")
+                for el_link in ellipsis_links:
+                    text = el_link.css("::text").get("").strip()
+                    href = el_link.attrib.get("href", "")
+                    if text == "..." and f"Page${next_page}" not in href:
+                        match = re.search(r"Page\$(\d+)", href)
+                        if match:
+                            jump_page = int(match.group(1))
+                            if jump_page > current_page:
+                                target_page = jump_page
+                                break
+
+            if target_page and target_page not in requested_pages:
+                requested_pages.add(target_page)
+                self.logger.info(
+                    f"[{county_key}] Navigating to page {target_page}..."
+                )
+                yield scrapy.FormRequest.from_response(
+                    response,
+                    formdata={
+                        "__EVENTTARGET": "ctl00$MainContent$grdResults",
+                        "__EVENTARGUMENT": f"Page${target_page}",
+                    },
+                    callback=self.parse_results,
+                    cb_kwargs={"county_key": county_key},
+                    meta={"cookiejar": county_key},
+                    dont_click=True,
+                    dont_filter=True,
+                )
 
     def parse_detail(self, response, address=None, school_name=None, program_type=None):
         """Parse a provider detail page."""

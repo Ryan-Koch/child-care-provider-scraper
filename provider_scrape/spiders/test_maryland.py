@@ -254,7 +254,8 @@ def test_parse_results_page(spider):
         url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
     )
 
-    results = list(spider.parse_results(response))
+    spider.requested_pages_by_county["TestCounty"] = set()
+    results = list(spider.parse_results(response, county_key="TestCounty"))
 
     detail_requests = [r for r in results if not isinstance(r, scrapy.FormRequest)]
     form_requests = [r for r in results if isinstance(r, scrapy.FormRequest)]
@@ -274,6 +275,24 @@ def test_parse_results_page(spider):
     assert kwargs1["program_type"] == "CTR"
 
     assert len(form_requests) == 1
+
+
+def test_parse_results_deduplicates_on_reprocess(spider):
+    """Test that reprocessing the same results page skips duplicate detail/pagination."""
+    request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
+    response = HtmlResponse(
+        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
+    )
+
+    spider.requested_pages_by_county["TestCounty"] = set()
+
+    # First call processes normally
+    results1 = list(spider.parse_results(response, county_key="TestCounty"))
+    assert len(results1) == 3  # 2 detail + 1 pagination
+
+    # Second call: detail requests are skipped (seen fi), pagination is skipped (requested)
+    results2 = list(spider.parse_results(response, county_key="TestCounty"))
+    assert len(results2) == 0
 
 
 def test_parse_detail_page_missing_data(spider):
