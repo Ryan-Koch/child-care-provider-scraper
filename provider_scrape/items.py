@@ -14,6 +14,9 @@ class InspectionItem(scrapy.Item):
     va_complaint_related = scrapy.Field()
     va_violations = scrapy.Field()
     mt_inspector_name = scrapy.Field()
+    md_regulation = scrapy.Field()
+    md_finding = scrapy.Field()
+    md_inspection_status = scrapy.Field()
 
 
 class ProviderItem(scrapy.Item):
@@ -150,6 +153,14 @@ class ProviderItem(scrapy.Item):
 
     # Montana specific fields
     mt_license_type = scrapy.Field()
+
+    # Maryland specific fields
+    md_approved_education = scrapy.Field()
+    md_accreditation = scrapy.Field()
+    md_fatalities = scrapy.Field()
+    md_serious_injuries = scrapy.Field()
+    md_excels_level = scrapy.Field()
+    md_school_name = scrapy.Field()
 
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
