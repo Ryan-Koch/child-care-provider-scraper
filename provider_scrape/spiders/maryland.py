@@ -6,7 +6,8 @@ import re
 import pypdfium2 as pdfium
 import scrapy
 import tesserocr
-from provider_scrape.items import ProviderItem, InspectionItem
+
+from provider_scrape.items import InspectionItem, ProviderItem
 
 # tessdata path for tesserocr — bundled fast model
 TESSDATA_DIR = os.environ.get("TESSDATA_PREFIX", "/tmp/tessdata")
@@ -56,9 +57,7 @@ def _format_address(raw):
     """Format a raw OCR address string into 'street, city, state zip'."""
     # tesserocr returns: "325 N Howard Street Baltimore MD 21201"
     # Try to parse into components using the state code as anchor
-    match = re.match(
-        r"^(.+?)\s+(MD)\s+(\d{5}(?:-\d{4})?)$", raw.strip()
-    )
+    match = re.match(r"^(.+?)\s+(MD)\s+(\d{5}(?:-\d{4})?)$", raw.strip())
     if match:
         street_city = match.group(1).strip()
         state = match.group(2)
@@ -78,6 +77,7 @@ class MarylandSpider(scrapy.Spider):
         "DOWNLOAD_DELAY": 0.5,
         "CONCURRENT_REQUESTS": 4,
         "CONCURRENT_REQUESTS_PER_DOMAIN": 4,
+        "RETRY_TIMES": 10,
     }
 
     def __init__(self, *args, **kwargs):
@@ -175,9 +175,15 @@ class MarylandSpider(scrapy.Spider):
                     self.seen_fi.add(fi)
 
                 # Extract fields only available on the results page
-                address = cols[2].css("::text").get("").strip() if len(cols) > 2 else None
-                school_name = cols[4].css("::text").get("").strip() if len(cols) > 4 else None
-                program_type = cols[5].css("::text").get("").strip() if len(cols) > 5 else None
+                address = (
+                    cols[2].css("::text").get("").strip() if len(cols) > 2 else None
+                )
+                school_name = (
+                    cols[4].css("::text").get("").strip() if len(cols) > 4 else None
+                )
+                program_type = (
+                    cols[5].css("::text").get("").strip() if len(cols) > 5 else None
+                )
 
                 yield response.follow(
                     link,
@@ -215,9 +221,7 @@ class MarylandSpider(scrapy.Spider):
 
             if target_page and target_page not in requested_pages:
                 requested_pages.add(target_page)
-                self.logger.info(
-                    f"[{county_key}] Navigating to page {target_page}..."
-                )
+                self.logger.info(f"[{county_key}] Navigating to page {target_page}...")
                 yield scrapy.FormRequest.from_response(
                     response,
                     formdata={
@@ -250,7 +254,9 @@ class MarylandSpider(scrapy.Spider):
         item["provider_type"] = program_type
 
         # Closed/suspended providers use a different panel with *Op suffixed IDs
-        is_non_operating = response.css("#MainContent_PnlNonOperating").get() is not None
+        is_non_operating = (
+            response.css("#MainContent_PnlNonOperating").get() is not None
+        )
 
         if is_non_operating:
             item["provider_name"] = self._get_span_text(
