@@ -162,6 +162,12 @@ class ProviderItem(scrapy.Item):
     md_excels_level = scrapy.Field()
     md_school_name = scrapy.Field()
 
+    # Michigan specific fields
+    mi_license_status = scrapy.Field()
+    mi_licensee_address = scrapy.Field()
+    mi_services_provided = scrapy.Field()
+    mi_full_day = scrapy.Field()
+
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
     source_state = scrapy.Field()
