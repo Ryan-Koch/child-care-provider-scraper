@@ -16,7 +16,7 @@ child care provider information.
 | Connecticut              | [ ]     | [ ]        | [ ]            |
 | Delaware                 | [ ]     | [ ]        | [ ]            |
 | Florida                  | [ ]     | [ ]        | [ ]            |
-| Georgia                  | [ ]     | [ ]        | [ ]            |
+| Georgia                  | [x]     | [x]        | [x]            |
 | Hawaii                   | [ ]     | [ ]        | [ ]            |
 | Idaho                    | [ ]     | [ ]        | [ ]            |
 | Illinois                 | [x]     | [x]        | [x]            |
