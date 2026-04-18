@@ -29,7 +29,7 @@ child care provider information.
 | Maryland                 | [x]     | [x]        | [x]            |
 | Massachusetts            | [ ]     | [ ]        | [ ]            |
 | Michigan                 | [x]     | [x]        | [x]            |
-| Minnesota                | [ ]     | [ ]        | [ ]            |
+| Minnesota                | [x]     | [x]        | [x]            |
 | Mississippi              | [ ]     | [ ]        | [ ]            |
 | Missouri                 | [ ]     | [ ]        | [ ]            |
 | Montana                  | [x]     | [x]        | [x]            |
