@@ -25,6 +25,7 @@ def _make_response(url, body, meta=None):
 
 # ---- County list sanity ----
 
+
 def test_counties_count():
     assert len(COUNTIES) == 90
 
@@ -40,6 +41,7 @@ def test_counties_names_no_duplicates():
 
 
 # ---- _results_url ----
+
 
 def test_results_url_includes_both_co_and_con():
     url = _results_url(25, "Goodhue")
@@ -63,6 +65,7 @@ def test_results_url_encodes_special_characters():
 
 # ---- Spider args ----
 
+
 def test_default_county_delay_is_120():
     s = MinnesotaSpider()
     assert s.county_delay == 120.0
@@ -80,6 +83,7 @@ def test_counties_arg_filters_by_id():
 
 
 # ---- start_requests ----
+
 
 def test_start_requests_yields_one_request_per_county(spider):
     requests = list(spider.start_requests())
@@ -105,6 +109,7 @@ def test_start_requests_county_ids_in_meta(spider):
 
 # ---- _compose_address ----
 
+
 def test_compose_address_full():
     row = {
         "AddressLine1": "520 E 5th St",
@@ -126,10 +131,7 @@ def test_compose_address_with_secondary_line():
         "State": "MN",
         "Zip": "55066",
     }
-    assert (
-        _compose_address(row)
-        == "300 Red Wing Ave S, Unit 218, Red Wing, MN 55066"
-    )
+    assert _compose_address(row) == "300 Red Wing Ave S, Unit 218, Red Wing, MN 55066"
 
 
 def test_compose_address_missing_street_foster_care():
@@ -147,6 +149,7 @@ def test_compose_address_missing_street_foster_care():
 
 # ---- _parse_csv_body ----
 
+
 def _tsv(rows):
     return "\n".join("\t".join(r) for r in rows)
 
@@ -154,13 +157,29 @@ def _tsv(rows):
 def test_parse_csv_body_golden_path():
     header = CSV_COLUMNS
     row = [
-        "1073255", "Home and Community Based Services",
-        "5th Street House", "520 E 5th St", "", "",
-        "Wanamingo", "MN", "55983-0000", "Goodhue",
-        "(507) 824-2482", "Active", "Riverview Services Inc",
-        "4", "Satellite", "None", "",
+        "1073255",
+        "Home and Community Based Services",
+        "5th Street House",
+        "520 E 5th St",
+        "",
+        "",
+        "Wanamingo",
+        "MN",
+        "55983-0000",
+        "Goodhue",
+        "(507) 824-2482",
+        "Active",
+        "Riverview Services Inc",
+        "4",
+        "Satellite",
+        "None",
+        "",
         "Goodhue County Social Services",
-        "7/1/14", "6/1/24", "5/31/26", "No", "",
+        "7/1/14",
+        "6/1/24",
+        "5/31/26",
+        "No",
+        "",
     ]
     body = _tsv([header, row])
     parsed = _parse_csv_body(body)
@@ -234,6 +253,7 @@ def test_parse_csv_body_quoted_csv_with_trailing_comma():
 
 # ---- _row_to_item ----
 
+
 def _sample_row(**overrides):
     row = {
         "License Number": "1101850",
@@ -273,17 +293,17 @@ def test_row_to_item_golden_path():
     assert item["provider_type"] == "Child Care Center"
     assert item["provider_name"] == "AB.SEE Preschool & Early Learning Center"
     assert item["address"] == "300 Park St W, Cannon Falls, MN 55009-2429"
-    assert item["mn_county"] == "Goodhue"
+    assert item["county"] == "Goodhue"
     assert item["phone"] == "(507) 757-1110"
     assert item["status"] == "Active"
-    assert item["mn_license_holder"] == "AB.SEE Preschool & Early Learning Center LLC"
+    assert item["license_holder"] == "AB.SEE Preschool & Early Learning Center LLC"
     assert item["capacity"] == "42"
     assert item["mn_type_of_license"] == "Ages Served: Infants Toddlers Preschool"
     assert item["mn_restrictions"] == "None"
     assert item["mn_licensed_to_provide"] == "Services: Day Program"
-    assert item["mn_initial_effective_date"] == "6/29/20"
+    assert item["license_begin_date"] == "6/29/20"
     assert item["mn_last_renewed_date"] == "1/1/26"
-    assert item["mn_next_renewal_due"] == "12/31/26"
+    assert item["license_expiration"] == "12/31/26"
     assert item["mn_license_holder_onsite"] is None
     assert item["email"] == "info@absee.example.com"
 
@@ -315,7 +335,7 @@ def test_row_to_item_foster_care_no_address():
     assert item["capacity"] is None
     assert item["mn_restrictions"] is None
     assert item["mn_licensed_to_provide"] is None
-    assert item["mn_county"] == "Goodhue"
+    assert item["county"] == "Goodhue"
 
 
 def test_row_to_item_closed_status():

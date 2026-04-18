@@ -169,7 +169,6 @@ class ProviderItem(scrapy.Item):
     mi_full_day = scrapy.Field()
 
     # Minnesota specific fields
-    mn_county = scrapy.Field()
     mn_last_renewed_date = scrapy.Field()
     mn_licensed_to_provide = scrapy.Field()
     mn_restrictions = scrapy.Field()
