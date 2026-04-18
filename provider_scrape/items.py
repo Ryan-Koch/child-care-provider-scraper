@@ -168,6 +168,16 @@ class ProviderItem(scrapy.Item):
     mi_services_provided = scrapy.Field()
     mi_full_day = scrapy.Field()
 
+    # Minnesota specific fields
+    mn_last_renewed_date = scrapy.Field()
+    mn_licensed_to_provide = scrapy.Field()
+    mn_restrictions = scrapy.Field()
+    mn_setting = scrapy.Field()
+    mn_gender = scrapy.Field()
+    mn_license_info_misc = scrapy.Field()
+    mn_type_of_license = scrapy.Field()
+    mn_license_holder_onsite = scrapy.Field()
+
     # Georgia specific fields
     ga_quality_rated_level = scrapy.Field()
     ga_accepting_new_children = scrapy.Field()
