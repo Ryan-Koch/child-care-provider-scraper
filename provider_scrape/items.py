@@ -207,6 +207,24 @@ class ProviderItem(scrapy.Item):
     ga_transportation_notes = scrapy.Field()
     ga_school_break_notes = scrapy.Field()
 
+    # Washington specific fields
+    wa_provider_id = scrapy.Field()
+    wa_license_name = scrapy.Field()
+    wa_license_type = scrapy.Field()
+    wa_early_achievers_status = scrapy.Field()
+    wa_school_district = scrapy.Field()
+    wa_head_start = scrapy.Field()
+    wa_early_head_start = scrapy.Field()
+    wa_eceap = scrapy.Field()
+    wa_available_slots = scrapy.Field()
+    wa_slot_age_groups = scrapy.Field()
+    wa_food_program = scrapy.Field()
+    wa_subsidy = scrapy.Field()
+    wa_provider_status = scrapy.Field()
+    wa_languages_of_instruction = scrapy.Field()
+    wa_contacts = scrapy.Field()
+    wa_license_history = scrapy.Field()
+
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
     source_state = scrapy.Field()
