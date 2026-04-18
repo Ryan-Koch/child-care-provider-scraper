@@ -53,7 +53,7 @@ child care provider information.
 | Utah                     | [x]     | [x]        | [x]            |
 | Vermont                  | [ ]     | [ ]        | [ ]            |
 | Virginia                 | [x]     | [x]        | [x]            |
-| Washington               | [ ]     | [ ]        | [ ]            |
+| Washington               | [x]     | [x]        | [x]            |
 | West Virginia            | [ ]     | [ ]        | [ ]            |
 | Wisconsin                | [ ]     | [ ]        | [ ]            |
 | Wyoming                  | [ ]     | [ ]        | [ ]            |
