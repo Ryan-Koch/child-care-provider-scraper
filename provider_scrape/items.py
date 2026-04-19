@@ -17,6 +17,10 @@ class InspectionItem(scrapy.Item):
     md_regulation = scrapy.Field()
     md_finding = scrapy.Field()
     md_inspection_status = scrapy.Field()
+    # South Carolina specific
+    sc_alert_count = scrapy.Field()
+    sc_alert_resolved_count = scrapy.Field()
+    sc_deficiencies = scrapy.Field()
 
 
 class ProviderItem(scrapy.Item):
@@ -224,6 +228,15 @@ class ProviderItem(scrapy.Item):
     wa_languages_of_instruction = scrapy.Field()
     wa_contacts = scrapy.Field()
     wa_license_history = scrapy.Field()
+
+    # South Carolina specific fields
+    sc_provider_id = scrapy.Field()
+    sc_abc_quality_rating = scrapy.Field()
+    sc_abc_rating_history = scrapy.Field()
+    sc_program_participation = scrapy.Field()
+    sc_license_category = scrapy.Field()
+    sc_licensing_specialist_name = scrapy.Field()
+    sc_licensing_specialist_phone = scrapy.Field()
 
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
