@@ -39,7 +39,7 @@ child care provider information.
 | New Jersey               | [x]     | [x]        | [x]            |
 | New Mexico               | [x]     | [x]        | [x]            |
 | New York                 | [x]     | [x]        | [x]            |
-| North Carolina           | [ ]     | [ ]        | [ ]            |
+| North Carolina           | [x]     | [x]        | [x]            |
 | North Dakota             | [ ]     | [ ]        | [ ]            |
 | Ohio                     | [x]     | [x]        | [x]            |
 | Oklahoma                 | [ ]     | [ ]        | [ ]            |
