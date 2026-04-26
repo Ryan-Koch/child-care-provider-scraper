@@ -2,12 +2,32 @@
 LOG_LEVEL='INFO'
 # Max retries for each spider individually
 MAX_RETRIES=6
-# Default concurrency (can be overridden by first argument)
+# Default concurrency (override with -c)
 DEFAULT_CONCURRENCY=5
-CONCURRENCY=${1:-$DEFAULT_CONCURRENCY}
+CONCURRENCY=$DEFAULT_CONCURRENCY
 
-echo "Checking what spiders we have..."
-SPIDERS_TO_RUN=($(scrapy list))
+usage() {
+    echo "Usage: $0 [-c concurrency] [spider ...]" >&2
+    echo "  -c   number of spiders to run in parallel (default: $DEFAULT_CONCURRENCY)" >&2
+    echo "  spider names default to the output of 'scrapy list'" >&2
+}
+
+while getopts ":c:h" opt; do
+    case $opt in
+        c) CONCURRENCY=$OPTARG ;;
+        h) usage; exit 0 ;;
+        \?) usage; exit 1 ;;
+    esac
+done
+shift $((OPTIND - 1))
+
+if [ $# -gt 0 ]; then
+    SPIDERS_TO_RUN=("$@")
+    echo "Using provided spider list: ${SPIDERS_TO_RUN[*]}"
+else
+    echo "No spiders specified, discovering via scrapy list..."
+    SPIDERS_TO_RUN=($(scrapy list))
+fi
 echo "Found ${#SPIDERS_TO_RUN[@]} spiders to run: ${SPIDERS_TO_RUN[*]}"
 echo "Running with concurrency: $CONCURRENCY"
 
