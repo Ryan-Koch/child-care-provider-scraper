@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 from parsel import Selector
 
@@ -22,13 +20,149 @@ from provider_scrape.spiders.north_carolina import (
     parse_visits,
 )
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DETAILS_HTML = (PROJECT_ROOT / "north_carolina_details.html").read_text(
-    encoding="utf-8"
-)
-RESULTS_HTML = (PROJECT_ROOT / "north_carolina_results.html").read_text(
-    encoding="utf-8"
-)
+# DETAILS_HTML is a hand-trimmed fixture mirroring the real DCDEE detail page
+# for license 01000324 (ARMC Family Enrichment Center). It carries every
+# selector the parsers touch — basic info, two license blocks, special
+# features (services + ratios), owner, and five DCDEE visit rows including
+# one with a violation collapse panel.
+DETAILS_HTML = """
+<html><body>
+  <div class="accordionHeader">Basic Information</div>
+  <div>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptBasicFacilityInfo_LicenseNumberLabel_0">01000324</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptBasicFacilityInfo_FacilityNameLabel_0">ARMC FAMILY ENRICHMENT CENTER</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptBasicFacilityInfo_FacilityStreetLabel_0">981 KIRKPATRICK RD</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptBasicFacilityInfo_FacilityCityLabel_0">BURLINGTON</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptBasicFacilityInfo_FacilityStateLabel_0">NC</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptBasicFacilityInfo_FacilityZipLabel_0">27215</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptBasicFacilityInfo_CountyNameLabel_0">Alamance</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptBasicFacilityInfo_EmailLabel_0"><a href="mailto:armc@brighthorizons.com">armc<i class="fas fa-at"></i>brighthorizons.com</a></span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptBasicFacilityInfo_WebsiteLabel_0"></span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptBasicFacilityInfo_FacilityTypeLabel_0">Child Care Center</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptBasicFacilityInfo_PhoneLabel_0"><a href="tel:3365869767">(336) 586-9767</a></span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptBasicFacilityInfo_SubsidyLabel_0">Yes</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptBasicFacilityInfo_InspectionDateLabel_0">1/21/2026</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptBasicFacilityInfo_ClassDescriptionLabel_0">Superior</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptBasicFacilityInfo_SanitationScoreLabel_0">224</span>
+  </div>
+
+  <div class="accordionHeader">License Information</div>
+  <div>
+    <!-- Current license (idx 0) — no star rating block, by design. -->
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_lblLicenseType_0">Five Star Center License</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_lblFromDate_0">3/31/2026</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_lblAgeRange_0">0 through 3</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_lblFirstShiftCapacity_0">184</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_lblSecondShiftCapacity_0">0</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_lblThirdShiftCapacity_0">0</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_rptRestrictions_0_lblRestriction_0">Other - Meets all enhanced requirements and reduced ratios</span>
+
+    <!-- Previous license (idx 1) — carries the star rating that should
+         roll forward to the current entry in build_item. -->
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_lblLicenseType_1">Five Star Center License</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_lblFromDate_1">7/11/2017</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_lblAgeRange_1">0 through 6</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_lblFirstShiftCapacity_1">184</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_lblSecondShiftCapacity_1">0</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_lblThirdShiftCapacity_1">0</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_rptScores_1_lblProgramStandardsPoints_0">7</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_rptScores_1_lblProgramStandardsMaxPoints_0">7</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_rptScores_1_lblEducationalStandardsPoints_0">7</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_rptScores_1_lblEducationalStandardsMaxPoints_0">7</span>
+    <div class="col-md-6">
+      <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_rptScores_1_lblTotalScore_0">15</span>
+      out of 15
+    </div>
+    <span id="dnn_ctr1464_View_FacilityDetail_rptLicenseInfo_rptRestrictions_1_lblRestriction_0">Other - Meets all enhanced requirements and reduced ratios</span>
+  </div>
+
+  <div class="accordionHeader">Facility Special Features</div>
+  <div>
+    <div class="content">
+      <div class="row subheading-grey">
+        <div class="col-md-12">Additional Services &amp; Amenities</div>
+      </div>
+      <div class="content">
+        <div class="row border-bottom"><div class="col-md-12">Provides transportation</div></div>
+        <div class="row border-bottom"><div class="col-md-12">Accredited by a national organization*</div></div>
+      </div>
+      <div class="content">
+        <div class="row subheading-grey"><div class="col-md-12">Staff/Child Ratio Policy</div></div>
+        <div class="row border-bottom"><div class="col-md-6 border-right">Infants</div><div class="col-md-6">0 Adult(s)/0 Children</div></div>
+        <div class="row border-bottom"><div class="col-md-6 border-right">3 Year Olds</div><div class="col-md-6">0 Adult(s)/10 Children</div></div>
+        <div class="row border-bottom"><div class="col-md-6 border-right">4 Year Olds</div><div class="col-md-6">0 Adult(s)/13 Children</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordionHeader">Owner Information</div>
+  <div>
+    <span id="dnn_ctr1464_View_FacilityDetail_lblOwnerName">BRIGHT HORIZONS CHILDREN CENTERS, INC.</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_lblOwnerMailingAddress">200 TALCOTT AVE SOUTH<br>WATERTOWN,&nbsp;MA&nbsp;&nbsp;02472</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_lblOwnerPhone">(336) 586-9759</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_lblOwnerFax">(336) 586-9744</span>
+    <span id="dnn_ctr1464_View_FacilityDetail_lblOwnerEmail">armc<i class="fa fas fa-at"></i>brighthorizons.com</span>
+  </div>
+
+  <div class="accordionHeader">DCDEE Visits</div>
+  <div>
+    <div class="row border-left border-right border-bottom">
+      <div class="col-md-4 border-right">12/16/2025</div>
+      <div class="col-md-4 border-right">Unannounced</div>
+      <div class="col-md-4">No</div>
+    </div>
+    <div class="row border-left border-right border-bottom">
+      <div class="col-md-4 border-right">12/16/2025</div>
+      <div class="col-md-4 border-right">Unannounced</div>
+      <div class="col-md-4"><a href="#violationsList500974">Yes</a></div>
+    </div>
+    <div id="violationsList500974" class="collapse">
+      <div class="alert alert-secondary"><strong>Rule Violated:</strong>&nbsp;Incident reports were not completed each time a child was injured.</div>
+    </div>
+    <div class="row border-left border-right border-bottom">
+      <div class="col-md-4 border-right">7/21/2025</div>
+      <div class="col-md-4 border-right">Unannounced</div>
+      <div class="col-md-4">No</div>
+    </div>
+    <div class="row border-left border-right border-bottom">
+      <div class="col-md-4 border-right">2/18/2025</div>
+      <div class="col-md-4 border-right">Unannounced</div>
+      <div class="col-md-4">No</div>
+    </div>
+    <div class="row border-left border-right border-bottom">
+      <div class="col-md-4 border-right">10/4/2024</div>
+      <div class="col-md-4 border-right">Unannounced</div>
+      <div class="col-md-4">No</div>
+    </div>
+  </div>
+</body></html>
+"""
+
+# RESULTS_HTML is a hand-trimmed fixture covering only the bits the
+# pagination + row-count parsers read: the record-count label, the pager's
+# "X items in N pages" text, and ten alternating tbody rows.
+RESULTS_HTML = """
+<html><body>
+  <span id="dnn_ctr1464_View_lblRecordCount">79</span>
+  <table id="dnn_ctr1464_View_rgSearchResults_ctl00">
+    <thead>
+      <tr><td><div class="rgWrap rgInfoPart">&nbsp;<strong>79</strong> items in <strong>8</strong> pages</div></td></tr>
+    </thead>
+    <tbody>
+      <tr class="rgRow"    id="dnn_ctr1464_View_rgSearchResults_ctl00__0"><td>1</td></tr>
+      <tr class="rgAltRow" id="dnn_ctr1464_View_rgSearchResults_ctl00__1"><td>2</td></tr>
+      <tr class="rgRow"    id="dnn_ctr1464_View_rgSearchResults_ctl00__2"><td>3</td></tr>
+      <tr class="rgAltRow" id="dnn_ctr1464_View_rgSearchResults_ctl00__3"><td>4</td></tr>
+      <tr class="rgRow"    id="dnn_ctr1464_View_rgSearchResults_ctl00__4"><td>5</td></tr>
+      <tr class="rgAltRow" id="dnn_ctr1464_View_rgSearchResults_ctl00__5"><td>6</td></tr>
+      <tr class="rgRow"    id="dnn_ctr1464_View_rgSearchResults_ctl00__6"><td>7</td></tr>
+      <tr class="rgAltRow" id="dnn_ctr1464_View_rgSearchResults_ctl00__7"><td>8</td></tr>
+      <tr class="rgRow"    id="dnn_ctr1464_View_rgSearchResults_ctl00__8"><td>9</td></tr>
+      <tr class="rgAltRow" id="dnn_ctr1464_View_rgSearchResults_ctl00__9"><td>10</td></tr>
+    </tbody>
+  </table>
+</body></html>
+"""
 
 
 # ---- Tiny helpers ------------------------------------------------------------
