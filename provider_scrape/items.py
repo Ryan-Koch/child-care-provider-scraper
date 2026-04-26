@@ -21,6 +21,8 @@ class InspectionItem(scrapy.Item):
     sc_alert_count = scrapy.Field()
     sc_alert_resolved_count = scrapy.Field()
     sc_deficiencies = scrapy.Field()
+    # North Carolina specific
+    nc_violations = scrapy.Field()
 
 
 class ProviderItem(scrapy.Item):
@@ -276,6 +278,29 @@ class ProviderItem(scrapy.Item):
     nj_tuition_school_age_daily = scrapy.Field()
     nj_tuition_school_age_weekly = scrapy.Field()
     nj_tuition_school_age_monthly = scrapy.Field()
+
+    # North Carolina specific fields
+    nc_license_type = scrapy.Field()
+    nc_license_effective_date = scrapy.Field()
+    nc_star_rating_total_points = scrapy.Field()
+    nc_star_rating_max_points = scrapy.Field()
+    nc_program_standards_points = scrapy.Field()
+    nc_educational_standards_points = scrapy.Field()
+    nc_capacity_first_shift = scrapy.Field()
+    nc_capacity_second_shift = scrapy.Field()
+    nc_capacity_third_shift = scrapy.Field()
+    nc_license_restrictions = scrapy.Field()
+    nc_license_history = scrapy.Field()
+    nc_special_features = scrapy.Field()
+    nc_staff_child_ratios = scrapy.Field()
+    nc_owner_name = scrapy.Field()
+    nc_owner_mailing_address = scrapy.Field()
+    nc_owner_phone = scrapy.Field()
+    nc_owner_fax = scrapy.Field()
+    nc_owner_email = scrapy.Field()
+    nc_sanitation_inspection_date = scrapy.Field()
+    nc_sanitation_classification = scrapy.Field()
+    nc_sanitation_score = scrapy.Field()
 
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
