@@ -308,9 +308,23 @@ class NewJerseySpider(scrapy.Spider):
         # rather than bundled chromium — Cloudflare is much more willing to
         # hand out `cf_clearance` to real Chrome. Requires `playwright
         # install chrome` on the host.
+        #
+        # `headless: False` is required: even Chrome's new headless leaks
+        # enough fingerprint signals that CF will 200 the page load but
+        # 403 the XHR to GetProviders.aspx. On Linux servers, run via
+        # `xvfb-run` to provide a virtual display (run_spiders.sh does
+        # this automatically when xvfb-run is on PATH).
+        #
+        # `--ozone-platform=x11` forces Chrome to use X11 instead of
+        # Wayland. Without it, on a Wayland desktop Chrome connects to
+        # the real compositor (popping a window on the user's screen);
+        # on a server where xvfb-run only provides X11, Chrome would
+        # otherwise fail to start because its compiled-in Ozone default
+        # is Wayland. Harmless on X11-only systems and on macOS.
         "PLAYWRIGHT_LAUNCH_OPTIONS": {
-            "headless": True,
+            "headless": False,
             "channel": "chrome",
+            "args": ["--ozone-platform=x11"],
             "timeout": 30 * 1000,
         },
         "PLAYWRIGHT_CONTEXT_ARGS": {
