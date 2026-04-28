@@ -11,6 +11,8 @@ OUTPUT_DIR=$DEFAULT_OUTPUT_DIR
 # Default format (override with -f)
 DEFAULT_FORMAT="json"
 FORMAT=$DEFAULT_FORMAT
+# Space-separated list of spiders that require a virtual display
+XVFB_SPIDERS="new_jersey"
 
 usage() {
     echo "Usage: $0 [-c concurrency] [spider ...]" >&2
@@ -59,7 +61,9 @@ run_spider() {
     # the loop where we'll run a spider and do retries if needed.
     while [ $retry_count -lt $MAX_RETRIES ]; do
       echo "Crawling $spider_name..."
-      xvfb-run -a scrapy crawl $spider_name \
+      local cmd_prefix=()
+      grep -qw "$spider_name" <<< "$XVFB_SPIDERS" && cmd_prefix=(xvfb-run -a)
+      "${cmd_prefix[@]}" scrapy crawl $spider_name \
       -o "${OUTPUT_DIR}${spider_name}.${FORMAT}" \
       -s LOG_FILE="${OUTPUT_DIR}${log_file}" \
       -s LOG_LEVEL=$LOG_LEVEL \
@@ -83,7 +87,7 @@ run_spider() {
 export -f run_spider
 export LOG_LEVEL
 export MAX_RETRIES
-export OUTPUT_DIR FORMAT
+export OUTPUT_DIR FORMAT XVFB_SPIDERS
 
 # Main
 echo "Starting spiders run..."
