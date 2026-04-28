@@ -15,6 +15,17 @@ child care provider information.
 ## Running the spiders
 The spiders can be run directly using the `scrapy` command, for example one could do `scrapy crawl ohio -o ohio.json` to begin a run of the Ohio spider and output it to a file named `ohio.json`. There is also a script here called `run_spiders.sh` which can be used to run several spiders together in one go. It has a `-c` argument for concurrency (how many states we'll run at once) and takes a list of state spider names separated by spaces. Like in this example: `./run_spiders.sh ohio florida new_jersey texas new_york`. If you don't provide a concurrency argument like in that example it assumes 5 at a time.
 
+### Customizing your run of run_spiders.sh
+Check out the current usage, at the time of this update it's:
+```
+Usage: ./run_spiders.sh [-c concurrency] [spider ...]
+  -c   number of spiders to run in parallel (default: 5)
+  -d   directory to use for spider logging and output files (default: ./)
+  -f   file format to use for spider output can be json or csv (default: json)
+  spider names default to the output of 'scrapy list'
+```
+What this means is that you can add in options before the list of spiders to run (or you can provide no spiders and let it run on all of them). So an example command can look like: `./run_spider.sh -c 3 -d /some/path/you/can/write/to/ -f csv ohio new_jersey new_york texas north_carolina illinois` in the example we're setting the concurrency to 3, customizing the output path for output and logging, and choosing to use the CSV format. 
+
 ## Running Tests
 The project uses pytest, so one can simply run `pytest` to go through the whole run of it.
 
