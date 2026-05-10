@@ -523,20 +523,32 @@ class RhodeIslandSpider(scrapy.Spider):
         "PLAYWRIGHT_LAUNCH_OPTIONS": {
             "headless": False,
             "channel": "chrome",
-            # Window/DPR flags: in headed mode Playwright's `viewport`
-            # context arg has no effect on the actual window size. We
-            # pass `--window-size` and `--force-device-scale-factor` to
-            # Chrome directly. `--ozone-platform=x11` is added on Linux
-            # only — on macOS the flag is a no-op for Chrome's Cocoa
-            # backend but in some Chrome versions can interfere with
-            # subsequent arg parsing.
+            # Launch flags vary by OS:
+            #   Linux (server, xvfb-run): just `--ozone-platform=x11` so
+            #     Chrome uses the X11 backend provided by xvfb. We do NOT
+            #     pass `--window-size=1440,900` or
+            #     `--force-device-scale-factor=2` here — those were chosen
+            #     to make our fingerprint look like a Retina MacBook, but
+            #     on a Linux server with a 1280x1024 virtual display
+            #     they'd create internal inconsistency (Retina DPR on a
+            #     non-Retina virtual screen) that reCAPTCHA would weigh
+            #     against us.
+            #   macOS (dev / local run): the window/DPR flags align the
+            #     headed Chrome window with what a real Retina Mac
+            #     reports, which is what fixed the v3 score in our audit.
+            #     `--ozone-platform=x11` is meaningless on macOS (Chrome
+            #     uses Cocoa) and can interfere with later arg parsing,
+            #     so it's left off.
             "args": (
                 ["--ozone-platform=x11"]
                 if platform.system() == "Linux" else []
-            ) + [
-                "--window-size=1440,900",
-                "--force-device-scale-factor=2",
-            ],
+            ) + (
+                [
+                    "--window-size=1440,900",
+                    "--force-device-scale-factor=2",
+                ]
+                if platform.system() == "Darwin" else []
+            ),
             "timeout": 30 * 1000,
         },
         # IMPORTANT: scrapy-playwright reads PLAYWRIGHT_CONTEXTS (plural)
