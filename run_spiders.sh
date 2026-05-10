@@ -12,7 +12,7 @@ OUTPUT_DIR=$DEFAULT_OUTPUT_DIR
 DEFAULT_FORMAT="json"
 FORMAT=$DEFAULT_FORMAT
 # Space-separated list of spiders that require a virtual display
-XVFB_SPIDERS="new_jersey"
+XVFB_SPIDERS="new_jersey rhode_island"
 
 usage() {
     echo "Usage: $0 [-c concurrency] [spider ...]" >&2

@@ -72,7 +72,7 @@ The project uses pytest, so one can simply run `pytest` to go through the whole 
 | Oklahoma                 | [ ]     | [ ]        | [ ]            |
 | Oregon                   | [ ]     | [ ]        | [ ]            |
 | Pennsylvania             | [x]     | [x]        | [x]            |
-| Rhode Island             | [ ]     | [ ]        | [ ]            |
+| Rhode Island             | [x]     | [x]        | [x]            |
 | South Carolina           | [x]     | [x]        | [x]            |
 | South Dakota             | [ ]     | [ ]        | [ ]            |
 | Tennessee                | [ ]     | [ ]        | [ ]            |
