@@ -23,6 +23,9 @@ class InspectionItem(scrapy.Item):
     sc_deficiencies = scrapy.Field()
     # North Carolina specific
     nc_violations = scrapy.Field()
+    # Rhode Island specific
+    ri_compliance = scrapy.Field()
+    ri_licensor = scrapy.Field()
 
 
 class ProviderItem(scrapy.Item):
@@ -278,6 +281,21 @@ class ProviderItem(scrapy.Item):
     nj_tuition_school_age_daily = scrapy.Field()
     nj_tuition_school_age_weekly = scrapy.Field()
     nj_tuition_school_age_monthly = scrapy.Field()
+
+    # Rhode Island specific fields
+    ri_brightstars_rating = scrapy.Field()
+    ri_license_decision = scrapy.Field()
+    ri_most_recently_renewed = scrapy.Field()
+    ri_ccap_status = scrapy.Field()
+    ri_ccap_expiration_date = scrapy.Field()
+    ri_head_start = scrapy.Field()
+    ri_state_prek = scrapy.Field()
+    ri_is_lea = scrapy.Field()
+    ri_provider_contact_name = scrapy.Field()
+    ri_provider_email = scrapy.Field()
+    ri_services_offered = scrapy.Field()
+    ri_availability = scrapy.Field()
+    ri_age_group_capacity = scrapy.Field()
 
     # North Carolina specific fields
     nc_license_type = scrapy.Field()

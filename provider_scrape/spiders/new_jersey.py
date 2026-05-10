@@ -327,12 +327,21 @@ class NewJerseySpider(scrapy.Spider):
             "args": ["--ozone-platform=x11"],
             "timeout": 30 * 1000,
         },
-        "PLAYWRIGHT_CONTEXT_ARGS": {
-            "ignore_https_errors": True,
-            "user_agent": _UA,
-            "viewport": {"width": 1920, "height": 1080},
-            "locale": "en-US",
-            "timezone_id": "America/New_York",
+        # scrapy-playwright reads PLAYWRIGHT_CONTEXTS (plural) — there is
+        # no `PLAYWRIGHT_CONTEXT_ARGS` setting. Until this fix the kwargs
+        # below were being silently dropped and the default context ran
+        # with zero kwargs. NJ tolerates that because Cloudflare grants
+        # `cf_clearance` based on the JS challenge, not on viewport /
+        # locale / timezone consistency. RI surfaced the bug because
+        # reCAPTCHA v3 weighs those signals.
+        "PLAYWRIGHT_CONTEXTS": {
+            "default": {
+                "ignore_https_errors": True,
+                "user_agent": _UA,
+                "viewport": {"width": 1920, "height": 1080},
+                "locale": "en-US",
+                "timezone_id": "America/New_York",
+            }
         },
     }
 
@@ -353,6 +362,13 @@ class NewJerseySpider(scrapy.Spider):
         # to know the HTML is parsed, and the short fixed wait gives the CF
         # managed-challenge JS a chance to stash the `cf_clearance` cookie
         # before we fire the API fetch.
+        #
+        # The site shows a first-visit popup that intercepts page interactions
+        # until dismissed. Reloading once after the initial wait gets us past
+        # it without needing to identify and click the close button — the
+        # dismissal cookie is set during the first view, so the reload renders
+        # the page popup-free. `cf_clearance` survives the reload, so we
+        # don't have to re-pay the Cloudflare challenge.
         yield scrapy.Request(
             SEARCH_URL,
             callback=self.parse_search_page,
@@ -364,6 +380,10 @@ class NewJerseySpider(scrapy.Spider):
                         "wait_for_load_state", "domcontentloaded", timeout=60000
                     ),
                     PageMethod("wait_for_timeout", 5000),
+                    PageMethod(
+                        "reload", wait_until="domcontentloaded", timeout=60000
+                    ),
+                    PageMethod("wait_for_timeout", 3000),
                 ],
             },
         )
