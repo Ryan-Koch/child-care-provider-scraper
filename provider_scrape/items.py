@@ -26,6 +26,12 @@ class InspectionItem(scrapy.Item):
     # Rhode Island specific
     ri_compliance = scrapy.Field()
     ri_licensor = scrapy.Field()
+    # West Virginia specific
+    wv_corrective_action_plan_start = scrapy.Field()
+    wv_corrective_action_plan_end = scrapy.Field()
+    wv_non_compliance_code = scrapy.Field()
+    wv_outcome_code = scrapy.Field()
+    wv_issue_completed_date = scrapy.Field()
 
 
 class ProviderItem(scrapy.Item):
@@ -319,6 +325,14 @@ class ProviderItem(scrapy.Item):
     nc_sanitation_inspection_date = scrapy.Field()
     nc_sanitation_classification = scrapy.Field()
     nc_sanitation_score = scrapy.Field()
+
+    # West Virginia specific fields
+    wv_licensing_specialist = scrapy.Field()
+    wv_license_type = scrapy.Field()
+    wv_contact = scrapy.Field()
+    wv_contact_title = scrapy.Field()
+    wv_age_from = scrapy.Field()
+    wv_age_to = scrapy.Field()
 
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()

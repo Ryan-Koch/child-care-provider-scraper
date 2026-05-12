@@ -81,7 +81,7 @@ The project uses pytest, so one can simply run `pytest` to go through the whole 
 | Vermont                  | [ ]     | [ ]        | [ ]            |
 | Virginia                 | [x]     | [x]        | [x]            |
 | Washington               | [x]     | [x]        | [x]            |
-| West Virginia            | [ ]     | [ ]        | [ ]            |
+| West Virginia            | [x]     | [x]        | [x]            |
 | Wisconsin                | [ ]     | [ ]        | [ ]            |
 | Wyoming                  | [ ]     | [ ]        | [ ]            |
 | American Samoa           | [ ]     | [ ]        | [ ]            |
