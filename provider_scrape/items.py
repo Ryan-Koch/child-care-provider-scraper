@@ -33,6 +33,13 @@ class InspectionItem(scrapy.Item):
     wv_outcome_code = scrapy.Field()
     wv_issue_completed_date = scrapy.Field()
 
+    # Arizona specific
+    az_regulation = scrapy.Field()
+    az_decision_correction = scrapy.Field()
+    az_date_resolved = scrapy.Field()
+    az_civil_penalty = scrapy.Field()
+    az_enforcement_name = scrapy.Field()
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
@@ -333,6 +340,19 @@ class ProviderItem(scrapy.Item):
     wv_contact_title = scrapy.Field()
     wv_age_from = scrapy.Field()
     wv_age_to = scrapy.Field()
+
+    # Arizona specific fields
+    az_facility_id = scrapy.Field()
+    az_operatinghourid = scrapy.Field()
+    az_affiliation = scrapy.Field()
+    az_regionalpartnership = scrapy.Field()
+    az_shiftcomment = scrapy.Field()
+    az_headstart = scrapy.Field()
+    az_desprovider = scrapy.Field()
+    az_status_label = scrapy.Field()
+    az_first_slot_start = scrapy.Field()
+    az_first_slot_end = scrapy.Field()
+    az_license_type = scrapy.Field()
 
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
