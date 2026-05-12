@@ -12,7 +12,7 @@ OUTPUT_DIR=$DEFAULT_OUTPUT_DIR
 DEFAULT_FORMAT="json"
 FORMAT=$DEFAULT_FORMAT
 # Space-separated list of spiders that require a virtual display
-XVFB_SPIDERS="new_jersey rhode_island"
+XVFB_SPIDERS="new_jersey rhode_island arizona"
 
 usage() {
     echo "Usage: $0 [-c concurrency] [spider ...]" >&2
@@ -62,7 +62,7 @@ run_spider() {
     while [ $retry_count -lt $MAX_RETRIES ]; do
       echo "Crawling $spider_name..."
       local cmd_prefix=()
-      grep -qw "$spider_name" <<< "$XVFB_SPIDERS" && cmd_prefix=(xvfb-run -a)
+      grep -qw "$spider_name" <<< "$XVFB_SPIDERS" && cmd_prefix=(xvfb-run -a -s "-screen 0 1920x1080x24")
       "${cmd_prefix[@]}" scrapy crawl $spider_name \
       -o "${OUTPUT_DIR}${spider_name}.${FORMAT}" \
       -s LOG_FILE="${OUTPUT_DIR}${log_file}" \
