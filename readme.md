@@ -36,7 +36,7 @@ The project uses pytest, so one can simply run `pytest` to go through the whole 
 |--------------------------|---------|
 | Alabama                  | [x]     | 
 | Alaska                   | [x]     | 
-| Arizona                  | [ ]     | 
+| Arizona                  | [x]     | 
 | Arkansas                 | [x]     | 
 | California               | [x]     | 
 | Colorado                 | [x]     | 
