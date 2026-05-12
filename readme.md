@@ -32,60 +32,60 @@ The project uses pytest, so one can simply run `pytest` to go through the whole 
 
 # Progress tracking
 
-| Name                     | Scraper | Unit Tests | Item updated   |
-|--------------------------|---------|------------|----------------|
-| Alabama                  | [x]     | [x]        | [x]            |
-| Alaska                   | [x]     | [x]        | [x]            |
-| Arizona                  | [ ]     | [ ]        | [ ]            |
-| Arkansas                 | [x]     | [x]        | [x]            |
-| California               | [x]     | [x]        | [x]            |
-| Colorado                 | [x]     | [x]        | [x]            |
-| Connecticut              | [ ]     | [ ]        | [ ]            |
-| Delaware                 | [ ]     | [ ]        | [ ]            |
-| Florida                  | [ ]     | [ ]        | [ ]            |
-| Georgia                  | [x]     | [x]        | [x]            |
-| Hawaii                   | [ ]     | [ ]        | [ ]            |
-| Idaho                    | [ ]     | [ ]        | [ ]            |
-| Illinois                 | [x]     | [x]        | [x]            |
-| Indiana                  | [ ]     | [ ]        | [ ]            |
-| Iowa                     | [ ]     | [ ]        | [ ]            |
-| Kansas                   | [ ]     | [ ]        | [ ]            |
-| Kentucky                 | [ ]     | [ ]        | [ ]            |
-| Louisiana                | [ ]     | [ ]        | [ ]            |
-| Maine                    | [ ]     | [ ]        | [ ]            |
-| Maryland                 | [x]     | [x]        | [x]            |
-| Massachusetts            | [ ]     | [ ]        | [ ]            |
-| Michigan                 | [x]     | [x]        | [x]            |
-| Minnesota                | [x]     | [x]        | [x]            |
-| Mississippi              | [ ]     | [ ]        | [ ]            |
-| Missouri                 | [ ]     | [ ]        | [ ]            |
-| Montana                  | [x]     | [x]        | [x]            |
-| Nebraska                 | [ ]     | [ ]        | [ ]            |
-| Nevada                   | [ ]     | [ ]        | [ ]            |
-| New Hampshire            | [ ]     | [ ]        | [ ]            |
-| New Jersey               | [x]     | [x]        | [x]            |
-| New Mexico               | [x]     | [x]        | [x]            |
-| New York                 | [x]     | [x]        | [x]            |
-| North Carolina           | [x]     | [x]        | [x]            |
-| North Dakota             | [ ]     | [ ]        | [ ]            |
-| Ohio                     | [x]     | [x]        | [x]            |
-| Oklahoma                 | [ ]     | [ ]        | [ ]            |
-| Oregon                   | [ ]     | [ ]        | [ ]            |
-| Pennsylvania             | [x]     | [x]        | [x]            |
-| Rhode Island             | [x]     | [x]        | [x]            |
-| South Carolina           | [x]     | [x]        | [x]            |
-| South Dakota             | [ ]     | [ ]        | [ ]            |
-| Tennessee                | [ ]     | [ ]        | [ ]            |
-| Texas                    | [x]     | [x]        | [x]            |
-| Utah                     | [x]     | [x]        | [x]            |
-| Vermont                  | [ ]     | [ ]        | [ ]            |
-| Virginia                 | [x]     | [x]        | [x]            |
-| Washington               | [x]     | [x]        | [x]            |
-| West Virginia            | [x]     | [x]        | [x]            |
-| Wisconsin                | [ ]     | [ ]        | [ ]            |
-| Wyoming                  | [ ]     | [ ]        | [ ]            |
-| American Samoa           | [ ]     | [ ]        | [ ]            |
-| Guam                     | [ ]     | [ ]        | [ ]            |
-| Northern Mariana Islands | [ ]     | [ ]        | [ ]            |
-| Puerto Rico              | [ ]     | [ ]        | [ ]            |
-| U.S. Virgin Islands      | [ ]     | [ ]        | [ ]            |
+| Name                     | Scraper | 
+|--------------------------|---------|
+| Alabama                  | [x]     | 
+| Alaska                   | [x]     | 
+| Arizona                  | [ ]     | 
+| Arkansas                 | [x]     | 
+| California               | [x]     | 
+| Colorado                 | [x]     | 
+| Connecticut              | [ ]     | 
+| Delaware                 | [ ]     | 
+| Florida                  | [ ]     | 
+| Georgia                  | [x]     | 
+| Hawaii                   | [ ]     | 
+| Idaho                    | [ ]     | 
+| Illinois                 | [x]     | 
+| Indiana                  | [ ]     | 
+| Iowa                     | [ ]     | 
+| Kansas                   | [ ]     | 
+| Kentucky                 | [ ]     | 
+| Louisiana                | [ ]     | 
+| Maine                    | [ ]     | 
+| Maryland                 | [x]     | 
+| Massachusetts            | [ ]     | 
+| Michigan                 | [x]     | 
+| Minnesota                | [x]     | 
+| Mississippi              | [ ]     | 
+| Missouri                 | [ ]     | 
+| Montana                  | [x]     | 
+| Nebraska                 | [ ]     | 
+| Nevada                   | [ ]     | 
+| New Hampshire            | [ ]     | 
+| New Jersey               | [x]     | 
+| New Mexico               | [x]     | 
+| New York                 | [x]     | 
+| North Carolina           | [x]     | 
+| North Dakota             | [ ]     | 
+| Ohio                     | [x]     | 
+| Oklahoma                 | [ ]     | 
+| Oregon                   | [ ]     | 
+| Pennsylvania             | [x]     | 
+| Rhode Island             | [x]     | 
+| South Carolina           | [x]     | 
+| South Dakota             | [ ]     | 
+| Tennessee                | [ ]     | 
+| Texas                    | [x]     | 
+| Utah                     | [x]     | 
+| Vermont                  | [ ]     | 
+| Virginia                 | [x]     | 
+| Washington               | [x]     | 
+| West Virginia            | [x]     | 
+| Wisconsin                | [ ]     | 
+| Wyoming                  | [ ]     | 
+| American Samoa           | [ ]     | 
+| Guam                     | [ ]     | 
+| Northern Mariana Islands | [ ]     | 
+| Puerto Rico              | [ ]     | 
+| U.S. Virgin Islands      | [ ]     |
