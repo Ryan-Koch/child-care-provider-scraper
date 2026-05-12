@@ -33,7 +33,7 @@ The project uses pytest, so one can simply run `pytest` to go through the whole 
 # Progress tracking
 
 | Name                     | Scraper | 
-|--------------------------|---------|-
+|--------------------------|---------|
 | Alabama                  | [x]     | 
 | Alaska                   | [x]     | 
 | Arizona                  | [ ]     | 
