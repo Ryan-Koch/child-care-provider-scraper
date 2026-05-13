@@ -40,6 +40,10 @@ class InspectionItem(scrapy.Item):
     az_civil_penalty = scrapy.Field()
     az_enforcement_name = scrapy.Field()
 
+    # Florida specific
+    fl_has_violation = scrapy.Field()
+    fl_inspection_id = scrapy.Field()
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
@@ -353,6 +357,43 @@ class ProviderItem(scrapy.Item):
     az_first_slot_start = scrapy.Field()
     az_first_slot_end = scrapy.Field()
     az_license_type = scrapy.Field()
+
+    # Florida specific fields
+    fl_dba = scrapy.Field()
+    fl_license_status = scrapy.Field()
+    fl_alternate_provider_number = scrapy.Field()
+    fl_city = scrapy.Field()
+    fl_zip_code = scrapy.Field()
+    fl_display_address_on_web = scrapy.Field()
+    fl_display_email_on_web = scrapy.Field()
+    fl_display_phone_on_web = scrapy.Field()
+    fl_is_religious_exempt = scrapy.Field()
+    fl_is_faith_based = scrapy.Field()
+    fl_is_head_start = scrapy.Field()
+    fl_is_offering_school_readiness = scrapy.Field()
+    fl_is_vpk = scrapy.Field()
+    fl_is_gold_seal = scrapy.Field()
+    fl_is_public_school = scrapy.Field()
+    fl_wels_rating_date = scrapy.Field()
+    fl_vpk_school_year_composite_score = scrapy.Field()
+    fl_vpk_school_year_wels_rating_date = scrapy.Field()
+    fl_vpk_summer_composite_score = scrapy.Field()
+    fl_vpk_summer_wels_rating_date = scrapy.Field()
+    fl_is_trauma_badge = scrapy.Field()
+    fl_is_inclusion_badge = scrapy.Field()
+    fl_is_dll_badge = scrapy.Field()
+    fl_is_infant_toddler_badge = scrapy.Field()
+    fl_trauma_badge_date = scrapy.Field()
+    fl_inclusion_badge_date = scrapy.Field()
+    fl_dll_badge_date = scrapy.Field()
+    fl_infant_toddler_badge_date = scrapy.Field()
+    fl_services = scrapy.Field()
+    fl_programs = scrapy.Field()
+    fl_gold_seal = scrapy.Field()
+    fl_vpk_accreditation = scrapy.Field()
+    fl_vpk_classrooms = scrapy.Field()
+    fl_vpk_curriculum = scrapy.Field()
+    fl_vpk_instructor_credentials = scrapy.Field()
 
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()

@@ -42,7 +42,7 @@ The project uses pytest, so one can simply run `pytest` to go through the whole 
 | Colorado                 | [x]     | 
 | Connecticut              | [ ]     | 
 | Delaware                 | [ ]     | 
-| Florida                  | [ ]     | 
+| Florida                  | [x]     | 
 | Georgia                  | [x]     | 
 | Hawaii                   | [ ]     | 
 | Idaho                    | [ ]     | 
