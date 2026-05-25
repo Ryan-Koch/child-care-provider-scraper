@@ -210,7 +210,7 @@ def test_successful_extraction():
     extracted_data = next(iter(spider.providers_by_ID.values()))
     assert isinstance(extracted_data, ProviderItem)
     assert extracted_data['provider_name'] == '4 Rs Preschool'
-    assert extracted_data['address'] == '6745 Jefferson Street HAYMARKET, VA  20169'
+    assert extracted_data['address'] == '6745 Jefferson Street HAYMARKET, VA 20169'
     assert extracted_data['phone'] == '(703) 754-2497'
     assert extracted_data['provider_type'] == 'Child Day Center'
     assert extracted_data['va_license_type'] == 'Two Year'
@@ -291,7 +291,7 @@ def test_missing_fields():
     extracted_data = next(iter(spider.providers_by_ID.values()))
     assert isinstance(extracted_data, ProviderItem)
     assert extracted_data['provider_name'] == '4 Rs Preschool'
-    assert extracted_data['address'] == 'N/A HAYMARKET, VA  20169'
+    assert extracted_data['address'] == 'N/A HAYMARKET, VA 20169'
     assert extracted_data['phone'] == '(703) 754-2497'
     assert extracted_data['provider_type'] == 'N/A'
     assert extracted_data['va_license_type'] == 'N/A'
@@ -305,6 +305,42 @@ def test_missing_fields():
 
     # Assert that inspection data is an empty list when missing
     assert extracted_data['inspections'] == []
+
+
+def test_parse_provider_page_collapses_whitespace():
+    """Newline/tab runs from the DSS markup are collapsed to single spaces in both
+    provider fields and inspection rows."""
+    html_content = """
+    <html><body>
+        <table border="0"><tr><td colspan="2"><b>Whitespace Daycare</b><br>1 Main St</td></tr>
+            <tr><td colspan="2">RICHMOND, VA  23220</td></tr></table>
+        <table class="cc_search">
+            <tr><td>Business Hours:</td><td>6:00 AM  - 6:00 PM, \n\tMonday - Friday</td></tr>
+            <tr><td>Ages:</td><td>4 years\n\t\t\n\t-\n\t\t\t12 years</td></tr>
+            <tr><td>Inspector:</td><td>Nanette  Roberts: \n\t\t(757) 404-2322</td></tr>
+            <tr><td>License/Facility ID#</td><td>999111</td></tr>
+        </table>
+        <table width="80%"><tr><td>
+            <table class="cc_search">
+                <tr><td><b>Date</b></td><td><b>SHSI</b></td><td><b>CR</b></td><td><b>V</b></td></tr>
+                <tr>
+                    <td><a href="#">Jan. 31, 2022\n\t\t\t\tand\n\t\t\t\tFeb. 2, 2022</a></td>
+                    <td>No</td><td>No</td><td>Yes</td>
+                </tr>
+            </table>
+        </td></tr></table>
+    </body></html>
+    """
+    spider = VadssSpider()
+    spider.pending_providers = 2
+    list(spider.parse_provider_page(create_response(html_content)))
+    provider = next(iter(spider.providers_by_ID.values()))
+
+    assert provider['address'] == '1 Main St RICHMOND, VA 23220'
+    assert provider['hours'] == '6:00 AM - 6:00 PM, Monday - Friday'
+    assert provider['ages_served'] == '4 years - 12 years'
+    assert provider['va_inspector'] == 'Nanette Roberts: (757) 404-2322'
+    assert provider['inspections'][0]['date'] == 'Jan. 31, 2022 and Feb. 2, 2022'
 
 
 def test_parse_quality_programs_queues_profiles():

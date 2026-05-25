@@ -6,6 +6,14 @@ import scrapy
 from ..items import InspectionItem, ProviderItem
 
 
+def _clean(value):
+    """Collapse runs of whitespace (newlines/tabs from the DSS markup) to single
+    spaces and strip the ends. Returns None for falsy input."""
+    if not value:
+        return value
+    return re.sub(r"\s+", " ", value).strip()
+
+
 class VadssSpider(scrapy.Spider):
     name = "virginia"
     allowed_domains = ["dss.virginia.gov", "earlychildhoodquality.doe.virginia.gov"]
@@ -100,7 +108,7 @@ class VadssSpider(scrapy.Spider):
 
         def extract_with_xpath(query, row=None):
             try:
-                result = response.xpath(query).get(default="N/A").strip()
+                result = _clean(response.xpath(query).get(default="N/A"))
                 return result if result else "N/A"
             except:
                 return "N/A"
@@ -144,18 +152,10 @@ class VadssSpider(scrapy.Spider):
                             ).get()  # General cleanup if other text found
 
                     inspection = InspectionItem(
-                        date=row.xpath("./td[1]/a/text()").get().strip()
-                        if row.xpath("./td[1]/a/text()").get()
-                        else None,
-                        va_shsi=row.xpath("./td[2]/text()").get().strip()
-                        if row.xpath("./td[2]/text()").get()
-                        else None,
-                        va_complaint_related=complaint_related_text.strip()
-                        if complaint_related_text
-                        else None,
-                        va_violations=violations_text.strip()
-                        if violations_text
-                        else None,
+                        date=_clean(row.xpath("./td[1]/a/text()").get()),
+                        va_shsi=_clean(row.xpath("./td[2]/text()").get()),
+                        va_complaint_related=_clean(complaint_related_text),
+                        va_violations=_clean(violations_text),
                     )
                     inspection_data.append(inspection)
             return inspection_data
