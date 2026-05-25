@@ -79,6 +79,13 @@ class ProviderItem(scrapy.Item):
     va_license_type = scrapy.Field()
     va_inspector = scrapy.Field()
     va_current_subsidy_provider = scrapy.Field()
+    va_quality_rating = scrapy.Field()
+    va_ID = scrapy.Field()
+    va_public_funding = scrapy.Field()
+    va_interactions = scrapy.Field()
+    va_interactions_points = scrapy.Field()
+    va_curriculum_points = scrapy.Field()
+    va_total_points = scrapy.Field()
     # Texas specific fields
     tx_rising_star = scrapy.Field()
     tx_operation_id = scrapy.Field()
