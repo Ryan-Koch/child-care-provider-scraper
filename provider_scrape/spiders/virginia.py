@@ -11,9 +11,7 @@ class VadssSpider(scrapy.Spider):
     allowed_domains = ["dss.virginia.gov", "earlychildhoodquality.doe.virginia.gov"]
     start_urls = ["https://www.dss.virginia.gov/facility/search/cc2.cgi"]
 
-    PROGRAMS_JSON_URL = (
-        "https://earlychildhoodquality.doe.virginia.gov/vqb5-2025/site-search/programs.json"
-    )
+    PROGRAMS_JSON_URL = "https://earlychildhoodquality.doe.virginia.gov/vqb5-2025/site-search/programs.json"
 
     def __init__(self):
         self.providers_by_ID = {}
@@ -31,11 +29,17 @@ class VadssSpider(scrapy.Spider):
         self.logger.info(f"Page title: {title}")
 
         acceptable_names = [
+            # Licensed
             "search_require_client_code-2101",
             "search_require_client_code-2102",
             "search_require_client_code-2106",
-            # 'search_require_client_code-2105', 'search_require_client_code-2201', 'search_require_client_code-2104',
-            # 'search_require_client_code-3001', 'search_require_client_code-3002'
+            # Regulated Unlicensed types
+            "search_require_client_code-2105",
+            "search_require_client_code-2201",
+            "search_require_client_code-2104",
+            # unregulated and unlicensed (commented out for now)
+            # 'search_require_client_code-3001',
+            # 'search_require_client_code-3002'
         ]
 
         form = response.xpath('//form[@action="/facility/search/cc2.cgi"]')
@@ -218,13 +222,13 @@ class VadssSpider(scrapy.Spider):
 
         urls = list(
             dict.fromkeys(
-                response.urljoin(p["courseURL"])
-                for p in programs
-                if p.get("courseURL")
+                response.urljoin(p["courseURL"]) for p in programs if p.get("courseURL")
             )
         )
         self.pending_enrichments = len(urls)
-        self.logger.info(f"Queuing {self.pending_enrichments} VQB5 profiles for enrichment")
+        self.logger.info(
+            f"Queuing {self.pending_enrichments} VQB5 profiles for enrichment"
+        )
 
         if self.pending_enrichments == 0:
             yield from self._yield_all_providers()
