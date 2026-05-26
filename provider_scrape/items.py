@@ -44,6 +44,10 @@ class InspectionItem(scrapy.Item):
     fl_has_violation = scrapy.Field()
     fl_inspection_id = scrapy.Field()
 
+    # Nevada specific
+    nv_deficiency_count = scrapy.Field()
+    nv_inspection_number = scrapy.Field()
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
@@ -398,6 +402,11 @@ class ProviderItem(scrapy.Item):
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
     source_state = scrapy.Field()
+    
+    # Nevada specific fields
+    nv_credential_type = scrapy.Field()
+    nv_facility_type = scrapy.Field()
+    nv_operation_id = scrapy.Field()
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()
