@@ -1,16 +1,32 @@
+import json
+import os
+
 import pytest
-from scrapy.http import HtmlResponse, Request
+from scrapy.http import HtmlResponse, Request, TextResponse
 
 from provider_scrape.items import InspectionItem, ProviderItem
 from provider_scrape.spiders.nevada import (
+    POWERBI_QUERY_URL,
+    QUALITY_SELECT,
     NevadaSpider,
     base_facility_type,
     build_detail_url,
+    build_quality_command,
     collect_row_fields,
+    decode_data_shape,
+    epoch_ms_to_date,
     format_age_range,
     format_hours,
+    normalize_license,
     short_name,
 )
+
+FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures")
+
+
+def _load_fixture(name):
+    with open(os.path.join(FIXTURES, name)) as fh:
+        return json.load(fh)
 
 
 @pytest.fixture
@@ -303,9 +319,12 @@ def test_parse_detail_enriches_partial_item(spider):
     )
     response.meta["partial_item"] = partial
 
-    items = list(spider.parse_detail(response))
-    assert len(items) == 1
-    item = items[0]
+    # parse_detail now accumulates (it no longer yields the item directly): the
+    # finished provider lands in providers_by_license, keyed on the base license.
+    spider.pending_details = 1
+    list(spider.parse_detail(response))
+    assert "831" in spider.providers_by_license
+    item = spider.providers_by_license["831"]
     assert item["capacity"] == 243
     assert item["ages_served"] == "6 weeks - 5 years"
     assert item["hours"] == (
@@ -346,9 +365,9 @@ def test_parse_detail_handles_missing_sections(spider):
     )
     response.meta["partial_item"] = partial
 
-    items = list(spider.parse_detail(response))
-    assert len(items) == 1
-    item = items[0]
+    spider.pending_details = 1
+    list(spider.parse_detail(response))
+    item = spider.providers_by_license["9999"]
     # Search-row fields still present.
     assert item["provider_name"] == "TINY DAYCARE"
     # Missing detail fields stay as their pre-existing values (None for unset).
@@ -356,3 +375,299 @@ def test_parse_detail_handles_missing_sections(spider):
     assert item.get("ages_served") is None
     assert item.get("hours") is None
     assert item["inspections"] == []
+
+
+# ---- Quality enrichment: DSR decoding ----
+
+
+def _quality_response_json(dm0, value_dicts, dict_names, restart_token=None):
+    """Assemble a minimal querydata response around a hand-built DM0 row set."""
+    dm0 = [dict(row) for row in dm0]
+    dm0[0]["S"] = [
+        ({"N": f"G{i}", "T": 1, "DN": dn} if dn else {"N": f"G{i}", "T": 7})
+        for i, dn in enumerate(dict_names)
+    ]
+    ds = {"N": "DS0", "PH": [{"DM0": dm0}], "ValueDicts": value_dicts}
+    if restart_token is not None:
+        ds["RT"] = restart_token
+        ds["IC"] = False
+    else:
+        ds["IC"] = True
+    return {"results": [{"result": {"data": {"dsr": {"DS": [ds]}}}}]}
+
+
+def test_decode_data_shape_golden_path_real_fixture():
+    """The captured first window decodes to 500 rows with dictionaries resolved."""
+    rows, restart_token = decode_data_shape(_load_fixture("nv_quality_window1.json"))
+    assert len(rows) == 500
+    # Window 1 is not the last; it carries a restart token to page the next window.
+    assert restart_token is not None
+
+    first = dict(zip((p for p, _, _ in QUALITY_SELECT), rows[0]))
+    assert first["LicenseNumber"] == "02204-D"
+    assert first["ProgramName"] == "Squires ES"
+    assert first["ProgramType"] == "School Based"
+    assert first["StarRatingFriendlyName"] == "Five Stars"
+    # Date columns stay as raw epoch-ms until copied onto an item.
+    assert epoch_ms_to_date(first["RatingPeriodStartDate"]) == "07/01/2025"
+
+
+def test_decode_data_shape_second_window_is_complete():
+    rows, restart_token = decode_data_shape(_load_fixture("nv_quality_window2.json"))
+    assert len(rows) == 14
+    # Last window: no restart token.
+    assert restart_token is None
+
+
+def test_decode_dm0_repeat_null_and_inline_string():
+    """Exercise multi-bit R repeats, the Ø null mask, and dictionary overflow."""
+    value_dicts = {"D0": ["Alpha", "Beta"], "D1": ["North", "South"]}
+    dict_names = ["D0", None, "D1"]  # col1 is a date (no dictionary)
+    dm0 = [
+        {"C": [0, 1700000000000, 0]},                 # Alpha, date, North
+        {"C": [1], "R": 0b110},                        # Beta; cols 1,2 repeat
+        {"C": [1710000000000], "R": 0b001, "Ø": 0b100},  # col0 repeat, col2 null
+        {"C": ["Gamma Inline", 1720000000000, 1]},     # col0 inline string overflow
+    ]
+    rows, _ = decode_data_shape(
+        _quality_response_json(dm0, value_dicts, dict_names)
+    )
+    assert rows[0] == ["Alpha", 1700000000000, "North"]
+    assert rows[1] == ["Beta", 1700000000000, "North"]
+    assert rows[2] == ["Beta", 1710000000000, None]
+    assert rows[3] == ["Gamma Inline", 1720000000000, "South"]
+
+
+def test_decode_data_shape_raises_on_query_definition_error():
+    bad = {
+        "results": [
+            {"result": {"data": {"dsr": {"DataShapes": [{"odata.error": "boom"}]}}}}
+        ]
+    }
+    with pytest.raises(ValueError):
+        decode_data_shape(bad)
+
+
+def test_epoch_ms_to_date_converts_utc_midnight():
+    assert epoch_ms_to_date(1777507200000) == "04/30/2026"
+    assert epoch_ms_to_date(1704067200000) == "01/01/2024"
+    assert epoch_ms_to_date(None) is None
+
+
+# ---- Quality enrichment: license normalization ----
+
+
+def test_normalize_license_strips_suffix_and_leading_zeros():
+    assert normalize_license("831-26") == "831"
+    assert normalize_license("028-26") == "28"      # leading zero dropped
+    assert normalize_license("02204-D") == "2204"    # school-based suffix
+    assert normalize_license("UTF1028517") == "UTF1028517"
+    assert normalize_license(None) is None
+    assert normalize_license("") is None
+
+
+# ---- Quality enrichment: query builder ----
+
+
+def test_build_quality_command_literals_and_selection():
+    command = build_quality_command(2026, "April")["SemanticQueryDataShapeCommand"]
+    select = command["Query"]["Select"]
+    # LicenseNumber must be the first projection so the join key is column 0.
+    assert select[0]["Column"]["Property"] == "LicenseNumber"
+    where = command["Query"]["Where"]
+    # Long literal carries an L suffix and no quotes; month is single-quoted.
+    assert where[0]["Condition"]["In"]["Values"][0][0]["Literal"]["Value"] == "2026L"
+    assert where[1]["Condition"]["In"]["Values"][0][0]["Literal"]["Value"] == "'April'"
+    window = command["Binding"]["DataReduction"]["Primary"]["Window"]
+    assert "RestartTokens" not in window
+
+
+def test_build_quality_command_threads_restart_token():
+    token = [["'tok'"]]
+    command = build_quality_command(2026, "April", restart_token=token)[
+        "SemanticQueryDataShapeCommand"
+    ]
+    window = command["Binding"]["DataReduction"]["Primary"]["Window"]
+    assert window["RestartTokens"] == token
+
+
+# ---- Quality enrichment: join + dedupe ----
+
+
+def _quality_row(license_number, **overrides):
+    row = {
+        "LicenseNumber": license_number,
+        "ProgramName": "Example",
+        "ProgramType": "Center",
+        "County": "Clark",
+        "Region": "South",
+        "StarRatingFriendlyName": "Three Stars",
+        "StatusFriendlyName": "Maintenance",
+        "RatingPeriodStartDate": 1704067200000,  # 01/01/2024
+        "RatingPeriodEndDate": 1777507200000,    # 04/30/2026
+    }
+    row.update(overrides)
+    return row
+
+
+def test_enrich_and_finish_copies_fields_onto_match(spider):
+    provider = spider.build_provider_from_row(GOLDEN_ROW)  # license 831-26
+    spider.providers_by_license = {"831": provider}
+    spider.quality_rows = [_quality_row("831")]
+
+    items = list(spider._enrich_and_finish())
+
+    assert len(items) == 1
+    item = items[0]
+    assert item["nv_star_rating"] == "Three Stars"
+    assert item["nv_program_type"] == "Center"
+    assert item["nv_region"] == "South"
+    assert item["nv_qris_status"] == "Maintenance"
+    assert item["nv_rating_period_start"] == "01/01/2024"
+    assert item["nv_rating_period_end"] == "04/30/2026"
+    # Licensing fields are never overwritten by the quality source.
+    assert item["county"] == "CLARK"
+    assert item["status"] == "Active"
+
+
+def test_enrich_and_finish_drops_unmatched_quality_rows(spider):
+    provider = spider.build_provider_from_row(GOLDEN_ROW)  # license 831
+    spider.providers_by_license = {"831": provider}
+    spider.quality_rows = [_quality_row("999")]  # no licensed counterpart
+
+    items = list(spider._enrich_and_finish())
+
+    # The provider is still emitted, just without quality fields.
+    assert len(items) == 1
+    assert "nv_star_rating" not in items[0]
+
+
+def test_enrich_and_finish_keeps_latest_rating_period(spider):
+    provider = spider.build_provider_from_row(GOLDEN_ROW)
+    spider.providers_by_license = {"831": provider}
+    spider.quality_rows = [
+        _quality_row(
+            "831",
+            StarRatingFriendlyName="Two Stars",
+            RatingPeriodEndDate=1704067200000,  # older
+        ),
+        _quality_row(
+            "831",
+            StarRatingFriendlyName="Four Stars",
+            RatingPeriodEndDate=1777507200000,  # newer -> wins
+        ),
+    ]
+
+    items = list(spider._enrich_and_finish())
+    assert items[0]["nv_star_rating"] == "Four Stars"
+
+
+# ---- Quality enrichment: lifecycle ----
+
+
+def test_quality_gate_waits_for_pagination_and_pending_details(spider):
+    provider = spider.build_provider_from_row(GOLDEN_ROW)
+    spider.pending_details = 1
+
+    # Detail returns but pagination isn't finished yet -> no quality kickoff.
+    assert list(spider._accumulate_provider(provider)) == []
+    assert spider.providers_by_license["831"] is provider
+    assert spider.quality_started is False
+
+    # Pagination finishes; the gate trips exactly once and emits the discovery POST.
+    spider.pagination_done = True
+    requests = list(spider._maybe_start_quality())
+    assert len(requests) == 1
+    assert requests[0].method == "POST"
+    assert requests[0].url == POWERBI_QUERY_URL
+    assert spider.quality_started is True
+    # Firing again is a no-op.
+    assert list(spider._maybe_start_quality()) == []
+
+
+def _full_quality_window(restart_token=None):
+    """A one-row window matching the full nine-column quality projection."""
+    value_dicts = {
+        "D0": ["831"],            # LicenseNumber
+        "D1": ["Example"],        # ProgramName
+        "D2": ["Center"],         # ProgramType
+        "D3": ["Clark"],          # County
+        "D4": ["South"],          # Region
+        "D5": ["Three Stars"],    # StarRatingFriendlyName
+        "D6": ["Maintenance"],    # StatusFriendlyName
+    }
+    dict_names = ["D0", "D1", "D2", "D3", "D4", "D5", "D6", None, None]
+    dm0 = [{"C": [0, 0, 0, 0, 0, 0, 0, 1704067200000, 1777507200000]}]
+    return _quality_response_json(
+        dm0, value_dicts, dict_names, restart_token=restart_token
+    )
+
+
+def test_parse_quality_window_pages_then_finishes(spider):
+    provider = spider.build_provider_from_row(GOLDEN_ROW)
+    spider.providers_by_license = {"831": provider}
+
+    # First window carries a restart token -> spider issues the next window.
+    win1 = _full_quality_window(restart_token=[["'831'"]])
+    request = Request(
+        url=POWERBI_QUERY_URL,
+        method="POST",
+        body=json.dumps(
+            {
+                "queries": [
+                    {"Query": {"Commands": [build_quality_command(2026, "April")]}}
+                ]
+            }
+        ),
+    )
+    resp1 = TextResponse(
+        url=POWERBI_QUERY_URL,
+        body=json.dumps(win1).encode(),
+        encoding="utf-8",
+        request=request,
+    )
+    out1 = list(spider.parse_quality_window(resp1))
+    assert len(out1) == 1
+    assert out1[0].method == "POST"
+    assert spider.quality_window == 1
+    assert len(spider.quality_rows) == 1
+
+    # Final window has no restart token -> enrichment runs and providers emit.
+    win2 = _full_quality_window()
+    resp2 = TextResponse(
+        url=POWERBI_QUERY_URL, body=json.dumps(win2).encode(), encoding="utf-8"
+    )
+    out2 = list(spider.parse_quality_window(resp2))
+    assert out2 == [provider]
+
+
+def test_parse_period_discovery_picks_latest_then_queries(spider):
+    resp = TextResponse(
+        url=POWERBI_QUERY_URL,
+        body=json.dumps(_load_fixture("nv_period_discovery.json")).encode(),
+        encoding="utf-8",
+    )
+    requests = list(spider.parse_period_discovery(resp))
+    assert len(requests) == 1
+    body = json.loads(requests[0].body)
+    where = body["queries"][0]["Query"]["Commands"][0][
+        "SemanticQueryDataShapeCommand"
+    ]["Query"]["Where"]
+    # Latest data month in the fixture is April 2026.
+    assert where[0]["Condition"]["In"]["Values"][0][0]["Literal"]["Value"] == "2026L"
+    assert where[1]["Condition"]["In"]["Values"][0][0]["Literal"]["Value"] == "'April'"
+
+
+def test_parse_period_discovery_falls_back_on_bad_response(spider):
+    bad = {"results": [{"result": {"data": {"dsr": {"DataShapes": []}}}}]}
+    resp = TextResponse(
+        url=POWERBI_QUERY_URL, body=json.dumps(bad).encode(), encoding="utf-8"
+    )
+    requests = list(spider.parse_period_discovery(resp))
+    # Falls back to the hardcoded period rather than failing outright.
+    assert len(requests) == 1
+    body = json.loads(requests[0].body)
+    where = body["queries"][0]["Query"]["Commands"][0][
+        "SemanticQueryDataShapeCommand"
+    ]["Query"]["Where"]
+    assert where[0]["Condition"]["In"]["Values"][0][0]["Literal"]["Value"] == "2026L"

@@ -414,6 +414,15 @@ class ProviderItem(scrapy.Item):
     nv_credential_type = scrapy.Field()
     nv_facility_type = scrapy.Field()
     nv_operation_id = scrapy.Field()
+    # Base license number (no year suffix) used as the quality-data join key.
+    nv_license_base = scrapy.Field()
+    # Silver State Stars QRIS enrichment (Power BI quality dashboard).
+    nv_star_rating = scrapy.Field()
+    nv_program_type = scrapy.Field()
+    nv_region = scrapy.Field()
+    nv_qris_status = scrapy.Field()
+    nv_rating_period_start = scrapy.Field()
+    nv_rating_period_end = scrapy.Field()
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()
