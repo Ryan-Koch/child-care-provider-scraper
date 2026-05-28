@@ -32,7 +32,8 @@ FALLBACK_PERIOD = (2026, "April")
 
 # Columns the main quality query selects from QStarEnrollment, in projection order.
 # Each tuple is (powerbi_property, provider_item_field, is_date). A None field means
-# the column is used only for matching/diagnostics and is not copied onto the item.
+# the column is used only for matching/diagnostics (or, for Address/City/Zip,
+# stitched together into the address field for QRIS-only providers).
 QUALITY_SELECT = [
     ("LicenseNumber", None, False),
     ("ProgramName", None, False),
@@ -43,6 +44,13 @@ QUALITY_SELECT = [
     ("StatusFriendlyName", "nv_qris_status", False),
     ("RatingPeriodStartDate", "nv_rating_period_start", True),
     ("RatingPeriodEndDate", "nv_rating_period_end", True),
+    ("DateEnrollmentFormSubmitted", "nv_qris_enrollment_date", True),
+    ("RatingPeriodName", "nv_rating_period_name", False),
+    ("SiteCharacteristic", "nv_site_characteristic", False),
+    ("RatingPriority", "nv_rating_priority", False),
+    ("Address", None, False),
+    ("City", None, False),
+    ("Zip", None, False),
 ]
 
 
@@ -66,6 +74,21 @@ def epoch_ms_to_date(value):
     if value is None:
         return None
     return datetime.fromtimestamp(value / 1000, tz=timezone.utc).strftime("%m/%d/%Y")
+
+
+def format_qris_address(street, city, zip_code):
+    """Stitch the QRIS address parts into one "<street>, <city>, NV <zip>" string."""
+    if not any([street, city, zip_code]):
+        return None
+    tail_parts = []
+    if city:
+        tail_parts.append(f"{city}, NV")
+    else:
+        tail_parts.append("NV")
+    if zip_code:
+        tail_parts.append(str(zip_code))
+    tail = " ".join(tail_parts)
+    return f"{street}, {tail}" if street else tail
 
 
 def _col(prop, source="q"):
@@ -851,7 +874,12 @@ class NevadaSpider(scrapy.Spider):
         yield from self._yield_all_providers()
 
     def _enrich_and_finish(self):
-        """Join the accumulated quality rows onto providers, then emit everything."""
+        """Join the accumulated quality rows onto providers, then emit everything.
+
+        QRIS rows whose license has no licensing-source match become standalone
+        providers populated entirely from the QRIS row — the Silver State Stars
+        roster includes programs the licensing search doesn't surface.
+        """
         # Dedupe quality rows per license, keeping the latest rating period end.
         best_by_license = {}
         for row in self.quality_rows:
@@ -864,6 +892,7 @@ class NevadaSpider(scrapy.Spider):
             ):
                 best_by_license[key] = row
 
+        license_provider_count = len(self.providers_by_license)
         matched = 0
         for key, provider in self.providers_by_license.items():
             row = best_by_license.get(key)
@@ -878,17 +907,50 @@ class NevadaSpider(scrapy.Spider):
                 provider[field] = epoch_ms_to_date(value) if is_date else value
             matched += 1
 
-        dropped = sum(
-            1 for key in best_by_license if key not in self.providers_by_license
-        )
+        qris_only = 0
+        for key, row in best_by_license.items():
+            if key in self.providers_by_license:
+                continue
+            self.providers_by_license[key] = self._build_provider_from_quality(row)
+            qris_only += 1
+
         self.logger.info(
             "Quality enrichment complete: matched %s of %s license providers; "
-            "%s quality rows matched no license (dropped)",
+            "added %s QRIS-only providers with no licensing match",
             matched,
-            len(self.providers_by_license),
-            dropped,
+            license_provider_count,
+            qris_only,
         )
         yield from self._yield_all_providers()
+
+    def _build_provider_from_quality(self, row):
+        """Build a ProviderItem from a QRIS row with no licensing-source match.
+
+        Pulls identity (name, county, license number) from the columns the
+        quality query already selects for matching/diagnostics, then copies the
+        same QRIS fields the enrichment path writes onto matched providers.
+        """
+        item = ProviderItem()
+        item["source_state"] = "NV"
+        license_number = row.get("LicenseNumber")
+        item["license_number"] = license_number
+        item["nv_license_base"] = license_number
+        item["provider_name"] = row.get("ProgramName")
+        item["county"] = row.get("County")
+        address = format_qris_address(
+            row.get("Address"), row.get("City"), row.get("Zip")
+        )
+        if address:
+            item["address"] = address
+        for prop, field, is_date in QUALITY_SELECT:
+            if not field:
+                continue
+            value = row.get(prop)
+            if value is None:
+                continue
+            item[field] = epoch_ms_to_date(value) if is_date else value
+        item["inspections"] = []
+        return item
 
     def _yield_all_providers(self):
         self.logger.info(
