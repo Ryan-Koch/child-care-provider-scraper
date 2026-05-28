@@ -17,6 +17,7 @@ from provider_scrape.spiders.nevada import (
     epoch_ms_to_date,
     format_age_range,
     format_hours,
+    format_qris_address,
     normalize_license,
     short_name,
 )
@@ -148,6 +149,21 @@ def test_format_hours_returns_none_when_every_day_closed():
     assert format_hours(rows) is None
 
 
+def test_format_qris_address_handles_present_and_missing_parts():
+    assert (
+        format_qris_address("123 Main St", "Las Vegas", "89102")
+        == "123 Main St, Las Vegas, NV 89102"
+    )
+    # Missing zip is fine.
+    assert format_qris_address("123 Main St", "Las Vegas", None) == "123 Main St, Las Vegas, NV"
+    # Missing street still produces a usable locality.
+    assert format_qris_address(None, "Las Vegas", "89102") == "Las Vegas, NV 89102"
+    # Missing city falls back to bare state.
+    assert format_qris_address("123 Main St", None, None) == "123 Main St, NV"
+    # All-empty short-circuits to None so we never emit a bare "NV".
+    assert format_qris_address(None, None, None) is None
+
+
 def test_build_detail_url_uses_row_fields():
     url = build_detail_url(
         "https://nvdpbh.aithent.com/Protected/LIC/LicenseeSearch.aspx",
@@ -230,10 +246,11 @@ def test_parse_search_results_dispatches_one_request_per_row(spider):
         request=Request(url="https://nvdpbh.aithent.com/Protected/LIC/LicenseeSearch.aspx"),
     )
     requests = list(spider.parse_search_results(response))
-    # Two providers, no pagination links present.
-    assert len(requests) == 2
-    for req in requests:
-        assert "SODPublicView.aspx" in req.url
+    # Two providers dispatched as detail fetches (plus a chain request to the
+    # next county, since no pagination links are present on this page).
+    detail_reqs = [r for r in requests if "SODPublicView.aspx" in r.url]
+    assert len(detail_reqs) == 2
+    for req in detail_reqs:
         partial = req.meta["partial_item"]
         assert isinstance(partial, ProviderItem)
         assert partial["provider_url"] == req.url
@@ -505,6 +522,13 @@ def _quality_row(license_number, **overrides):
         "StatusFriendlyName": "Maintenance",
         "RatingPeriodStartDate": 1704067200000,  # 01/01/2024
         "RatingPeriodEndDate": 1777507200000,    # 04/30/2026
+        "DateEnrollmentFormSubmitted": 1661299200000,  # 08/24/2022
+        "RatingPeriodName": "Annual 2026",
+        "SiteCharacteristic": "Standard",
+        "RatingPriority": 10,
+        "Address": "123 Main St",
+        "City": "Las Vegas",
+        "Zip": "89102",
     }
     row.update(overrides)
     return row
@@ -525,21 +549,74 @@ def test_enrich_and_finish_copies_fields_onto_match(spider):
     assert item["nv_qris_status"] == "Maintenance"
     assert item["nv_rating_period_start"] == "01/01/2024"
     assert item["nv_rating_period_end"] == "04/30/2026"
-    # Licensing fields are never overwritten by the quality source.
+    # Newly wired QRIS metadata fields.
+    assert item["nv_qris_enrollment_date"] == "08/24/2022"
+    assert item["nv_rating_period_name"] == "Annual 2026"
+    assert item["nv_site_characteristic"] == "Standard"
+    assert item["nv_rating_priority"] == 10
+    # Licensing fields are never overwritten by the quality source, including
+    # the address: QRIS carries Address/City/Zip but the licensing-source line
+    # is preserved verbatim on matched providers.
+    assert item["address"] == "180 N. WESTMINSTER WAY HENDERSON, NV 89015"
     assert item["county"] == "CLARK"
     assert item["status"] == "Active"
 
 
-def test_enrich_and_finish_drops_unmatched_quality_rows(spider):
+def test_enrich_and_finish_adds_qris_only_provider(spider):
     provider = spider.build_provider_from_row(GOLDEN_ROW)  # license 831
     spider.providers_by_license = {"831": provider}
-    spider.quality_rows = [_quality_row("999")]  # no licensed counterpart
+    spider.quality_rows = [
+        _quality_row(
+            "999",
+            ProgramName="QRIS-Only Program",
+            County="Washoe",
+        )
+    ]
 
     items = list(spider._enrich_and_finish())
 
-    # The provider is still emitted, just without quality fields.
-    assert len(items) == 1
-    assert "nv_star_rating" not in items[0]
+    # Original licensed provider plus a synthesized QRIS-only entry.
+    assert len(items) == 2
+    by_license = {item["license_number"]: item for item in items}
+    assert "831-26" in by_license
+    qris_only = by_license["999"]
+
+    assert isinstance(qris_only, ProviderItem)
+    assert qris_only["source_state"] == "NV"
+    assert qris_only["provider_name"] == "QRIS-Only Program"
+    assert qris_only["county"] == "Washoe"
+    assert qris_only["nv_license_base"] == "999"
+    # Address is composed from QRIS Address/City/Zip for QRIS-only providers.
+    assert qris_only["address"] == "123 Main St, Las Vegas, NV 89102"
+    # Quality fields flow through the same enrichment loop.
+    assert qris_only["nv_star_rating"] == "Three Stars"
+    assert qris_only["nv_program_type"] == "Center"
+    assert qris_only["nv_region"] == "South"
+    assert qris_only["nv_qris_status"] == "Maintenance"
+    assert qris_only["nv_rating_period_start"] == "01/01/2024"
+    assert qris_only["nv_rating_period_end"] == "04/30/2026"
+    assert qris_only["nv_qris_enrollment_date"] == "08/24/2022"
+    assert qris_only["nv_rating_period_name"] == "Annual 2026"
+    assert qris_only["nv_site_characteristic"] == "Standard"
+    assert qris_only["nv_rating_priority"] == 10
+    assert qris_only["inspections"] == []
+
+
+def test_build_provider_from_quality_minimal_row(spider):
+    """A QRIS row with only a license number still produces a usable item.
+
+    No address parts means no composed address; no county/program-name fields
+    means those stay unset on the item.
+    """
+    item = spider._build_provider_from_quality({"LicenseNumber": "555"})
+    assert isinstance(item, ProviderItem)
+    assert item["source_state"] == "NV"
+    assert item["license_number"] == "555"
+    assert item["nv_license_base"] == "555"
+    assert item.get("provider_name") is None
+    assert item.get("county") is None
+    assert item.get("address") is None
+    assert item["inspections"] == []
 
 
 def test_enrich_and_finish_keeps_latest_rating_period(spider):
@@ -565,6 +642,51 @@ def test_enrich_and_finish_keeps_latest_rating_period(spider):
 # ---- Quality enrichment: lifecycle ----
 
 
+def _last_page_response(county_code):
+    """A search-results response with no further pagination links (last page)."""
+    html = _search_results_html()
+    url = "https://nvdpbh.aithent.com/Protected/LIC/LicenseeSearch.aspx"
+    return HtmlResponse(
+        url=url,
+        body=html,
+        encoding="utf-8",
+        request=Request(
+            url=url,
+            meta={"county_code": county_code, "page_num": 1, "visited_pages": {1}},
+        ),
+    )
+
+
+def test_finishing_a_county_chains_to_the_next(spider):
+    from provider_scrape.spiders.nevada import COUNTY_CODES
+
+    spider.county_index = 0
+    out = list(spider.parse_search_results(_last_page_response(COUNTY_CODES[0])))
+
+    # Not the last county: advance the cursor without tripping the global gate.
+    assert spider.county_index == 1
+    assert spider.pagination_done is False
+    assert spider.quality_started is False
+    # The single yielded request is the next county's Search postback.
+    assert len(out) == 1
+    assert out[0].meta["county_code"] == COUNTY_CODES[1]
+    assert out[0].method == "POST"
+
+
+def test_last_county_trips_pagination_and_quality(spider):
+    from provider_scrape.spiders.nevada import COUNTY_CODES, POWERBI_QUERY_URL
+
+    spider.county_index = len(COUNTY_CODES) - 1
+    out = list(spider.parse_search_results(_last_page_response(COUNTY_CODES[-1])))
+
+    # Final county finishing flips pagination_done and (with no pending detail
+    # fetches) kicks off quality enrichment.
+    assert spider.pagination_done is True
+    assert spider.quality_started is True
+    assert len(out) == 1
+    assert out[0].url == POWERBI_QUERY_URL
+
+
 def test_quality_gate_waits_for_pagination_and_pending_details(spider):
     provider = spider.build_provider_from_row(GOLDEN_ROW)
     spider.pending_details = 1
@@ -586,7 +708,11 @@ def test_quality_gate_waits_for_pagination_and_pending_details(spider):
 
 
 def _full_quality_window(restart_token=None):
-    """A one-row window matching the full nine-column quality projection."""
+    """A one-row window matching the full quality projection in QUALITY_SELECT.
+
+    Date and integer columns ride inline (no dictionary); string columns are
+    dictionary-encoded to mirror the real Power BI payload shape.
+    """
     value_dicts = {
         "D0": ["831"],            # LicenseNumber
         "D1": ["Example"],        # ProgramName
@@ -595,9 +721,29 @@ def _full_quality_window(restart_token=None):
         "D4": ["South"],          # Region
         "D5": ["Three Stars"],    # StarRatingFriendlyName
         "D6": ["Maintenance"],    # StatusFriendlyName
+        "D7": ["Annual 2026"],    # RatingPeriodName
+        "D8": ["Standard"],       # SiteCharacteristic
+        "D9": ["123 Main St"],    # Address
+        "D10": ["Henderson"],     # City
+        "D11": ["89015"],         # Zip
     }
-    dict_names = ["D0", "D1", "D2", "D3", "D4", "D5", "D6", None, None]
-    dm0 = [{"C": [0, 0, 0, 0, 0, 0, 0, 1704067200000, 1777507200000]}]
+    # Order matches QUALITY_SELECT — date/integer columns have no DN.
+    dict_names = [
+        "D0", "D1", "D2", "D3", "D4", "D5", "D6",
+        None, None, None,   # RatingPeriodStart/End, DateEnrollmentFormSubmitted
+        "D7", "D8",
+        None,               # RatingPriority (integer)
+        "D9", "D10", "D11",
+    ]
+    dm0 = [{"C": [
+        0, 0, 0, 0, 0, 0, 0,
+        1704067200000,      # RatingPeriodStartDate
+        1777507200000,      # RatingPeriodEndDate
+        1661299200000,      # DateEnrollmentFormSubmitted
+        0, 0,
+        10,                 # RatingPriority
+        0, 0, 0,
+    ]}]
     return _quality_response_json(
         dm0, value_dicts, dict_names, restart_token=restart_token
     )

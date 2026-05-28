@@ -13,6 +13,22 @@ from ..items import InspectionItem, ProviderItem
 DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 DAY_ABBR = {d: d[:3] for d in DAY_NAMES}
 
+# The licensing search silently caps a single query at 500 result rows, so an
+# "All counties" search loses providers once the statewide roster exceeds that.
+# We instead run one search per county and union the results. Codes match the
+# cmbCounty <option> values on LicenseeSearch.aspx ("All" is excluded on
+# purpose — it's the very query that gets truncated).
+COUNTY_CODES = [
+    "CC", "CH", "CL", "DO", "EL", "ES", "EU", "HU",
+    "LA", "LI", "LY", "MI", "NY", "PE", "ST", "WA", "WP",
+]
+COUNTY_FIELD = "ctl00$ContentPlaceHolder1$ucLicenseeSearchPublic$cmbCounty"
+BUSINESS_UNIT_FIELD = "ctl00$ContentPlaceHolder1$ucLicenseeSearchPublic$ddlBusinessUnit"
+# The Search control is an ASP.NET LinkButton: clicking it fires
+# __doPostBack("...CommonLinkButton1", ""). Selecting a county on its own does
+# NOT refresh the grid, so the county filter only takes effect on this postback.
+SEARCH_FIELD = "ctl00$ContentPlaceHolder1$CommonLinkButton1"
+
 # --- Silver State Stars QRIS quality dashboard (Power BI publish-to-web) ---
 # Anonymous; the only credential is the resource key sent as a request header.
 # IDs are stable for the life of the published report (see nevada_enrichment.md §1).
@@ -396,6 +412,13 @@ class NevadaSpider(scrapy.Spider):
         # finishes, then join Silver State Stars quality data before emitting.
         self.providers_by_license = {}
         self.pending_details = 0
+        # Counties are searched strictly one at a time (the search is stateful);
+        # county_index tracks how far through COUNTY_CODES we've walked, and
+        # pagination_done trips once the final county reaches its last page.
+        self.county_index = 0
+        # License bases we've already dispatched a detail fetch for, so a
+        # provider surfacing under more than one query isn't scraped twice.
+        self.dispatched_keys = set()
         self.pagination_done = False
         self.quality_started = False
         self.quality_rows = []
@@ -427,30 +450,53 @@ class NevadaSpider(scrapy.Spider):
             content = await page.content()
             rendered = HtmlResponse(url=response.url, body=content, encoding="utf-8")
 
-            formdata = {}
-            for hidden in rendered.css('input[type="hidden"]'):
-                name = hidden.attrib.get("name")
-                if name:
-                    formdata[name] = hidden.attrib.get("value", "")
-            formdata[
-                "ctl00$ContentPlaceHolder1$ucLicenseeSearchPublic$ddlBusinessUnit"
-            ] = "CCP"
-            formdata["ctl00$ContentPlaceHolder1$CommonLinkButton1"] = "Search"
-
-            yield scrapy.FormRequest(
-                url=response.url,
-                formdata=formdata,
-                callback=self.parse_search_results,
-                meta={"playwright": False, "visited_pages": {1}, "page_num": 1},
+            # The statewide ("All") search is silently capped at 500 rows, so we
+            # search county by county and union the results. The flow is stateful
+            # — concurrent searches on the shared ASP.NET session corrupt each
+            # other's grid — so we walk the counties strictly one at a time,
+            # chaining to the next only after the current one is fully paged.
+            self.county_index = 0
+            self.logger.info(
+                "Starting per-county search across %s counties", len(COUNTY_CODES)
             )
+            yield self._county_search_request(rendered, COUNTY_CODES[0])
         finally:
             try:
                 await page.close()
             except Exception:
                 pass
 
+    def _county_search_request(self, source_response, county_code):
+        """Build the Search postback for one county.
+
+        Carries the viewstate from source_response (the post-CCP page for the
+        first county, or the prior county's last results page thereafter) and
+        fires the Search LinkButton with cmbCounty set, which is the only action
+        that actually pulls a county-filtered result set.
+        """
+        formdata = {"__EVENTTARGET": SEARCH_FIELD, "__EVENTARGUMENT": ""}
+        for hidden in source_response.css('input[type="hidden"]'):
+            name = hidden.attrib.get("name")
+            if name:
+                formdata[name] = hidden.attrib.get("value", "")
+        formdata[BUSINESS_UNIT_FIELD] = "CCP"
+        formdata[COUNTY_FIELD] = county_code
+        return scrapy.FormRequest(
+            url=source_response.url,
+            formdata=formdata,
+            callback=self.parse_search_results,
+            meta={
+                "playwright": False,
+                "page_num": 1,
+                "visited_pages": {1},
+                "county_code": county_code,
+            },
+            dont_filter=True,
+        )
+
     def parse_search_results(self, response):
         page_num = response.meta.get("page_num", 1)
+        county_code = response.meta.get("county_code")
         total_records_value = response.css(
             'input[id$="hdnTotalRecords"]::attr(value)'
         ).get()
@@ -461,7 +507,8 @@ class NevadaSpider(scrapy.Spider):
         rows = response.css('table[id*="ResultsGrid"] tr')
         provider_rows = [r for r in rows if r.css('input[type="hidden"]')]
         self.logger.info(
-            "Page %s: parsing %s provider rows (total reported: %s)",
+            "County %s page %s: parsing %s provider rows (total reported: %s)",
+            county_code,
             page_num,
             len(provider_rows),
             total_records,
@@ -478,6 +525,17 @@ class NevadaSpider(scrapy.Spider):
         yield from self.follow_pagination(response, page_num)
 
     def dispatch_provider(self, response, row_fields):
+        # Guard against fetching the same provider twice if it ever surfaces
+        # under more than one query (keyed on the same base license join key).
+        key = normalize_license(
+            row_fields.get("hfLicenseNumber")
+            or row_fields.get("hfLicenseNumberToDisplay")
+        )
+        if key:
+            if key in self.dispatched_keys:
+                return
+            self.dispatched_keys.add(key)
+
         partial_item = self.build_provider_from_row(row_fields)
         detail_url = build_detail_url(response.url, row_fields)
         partial_item["provider_url"] = detail_url
@@ -521,6 +579,7 @@ class NevadaSpider(scrapy.Spider):
         return item
 
     def follow_pagination(self, response, page_num):
+        county_code = response.meta.get("county_code")
         page_links = response.xpath(
             '//a[contains(@href, "Page$") and not(contains(@href, "..."))]/@href'
         ).getall()
@@ -539,17 +598,36 @@ class NevadaSpider(scrapy.Spider):
 
         if next_page_num is None:
             self.logger.info(
-                "Pagination complete - last page: %s, pages visited: %s",
+                "County %s pagination complete - last page: %s, pages visited: %s",
+                county_code,
                 page_num,
                 len(visited),
             )
+            self.county_index += 1
+            if self.county_index < len(COUNTY_CODES):
+                next_county = COUNTY_CODES[self.county_index]
+                self.logger.info(
+                    "Advancing to county %s (%s/%s)",
+                    next_county,
+                    self.county_index + 1,
+                    len(COUNTY_CODES),
+                )
+                # Reuse this response's viewstate to fire the next county search.
+                yield self._county_search_request(response, next_county)
+                return
+            self.logger.info("All counties searched")
             self.pagination_done = True
-            # A page with no outstanding detail fetches (e.g. all already
-            # returned) won't get another parse_detail to trip the gate.
+            # The final county may finish with no outstanding detail fetches
+            # (e.g. all already returned), so trip the quality gate here too.
             yield from self._maybe_start_quality()
             return
 
-        self.logger.info("Pagination: page %s -> page %s", page_num, next_page_num)
+        self.logger.info(
+            "County %s pagination: page %s -> page %s",
+            county_code,
+            page_num,
+            next_page_num,
+        )
 
         formdata = {
             "__EVENTTARGET": "ctl00$ContentPlaceHolder1$ucLicenseeSearchResult$ResultsGrid",
@@ -559,6 +637,10 @@ class NevadaSpider(scrapy.Spider):
             name = hidden.attrib.get("name")
             if name:
                 formdata[name] = hidden.attrib.get("value", "")
+        # The county dropdown isn't a hidden input, so carry the selection
+        # forward explicitly to keep pagination scoped to this county.
+        if county_code:
+            formdata[COUNTY_FIELD] = county_code
 
         yield scrapy.FormRequest(
             url=response.url,
@@ -568,6 +650,7 @@ class NevadaSpider(scrapy.Spider):
                 "playwright": False,
                 "visited_pages": visited | {next_page_num},
                 "page_num": next_page_num,
+                "county_code": county_code,
             },
             dont_filter=True,
         )
