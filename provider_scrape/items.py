@@ -423,6 +423,10 @@ class ProviderItem(scrapy.Item):
     nv_qris_status = scrapy.Field()
     nv_rating_period_start = scrapy.Field()
     nv_rating_period_end = scrapy.Field()
+    nv_qris_enrollment_date = scrapy.Field()
+    nv_rating_period_name = scrapy.Field()
+    nv_site_characteristic = scrapy.Field()
+    nv_rating_priority = scrapy.Field()
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()
