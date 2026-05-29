@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head><title>Child Care Provider Search</title></head>
+<body>
+<script>
+    let areaTree = {};
+    $.ajax({
+        url: 'https://prod-28.usgovtexas.logic.azure.us:443/workflows/5a3c6892c14442138e4b600e03411aa2/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=sPbgvsl2Ese18mRBq1xAB51oZVzIoUG4TQuFTuzERpg',
+        type: "POST",
+    });
+    $("#search-form").on("submit", function (e) {
+        $.ajax({
+            url: 'https://prod-06.usgovtexas.logic.azure.us:443/workflows/179f51f14f6a4837b49e82a3099bc3c3/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=V2SJOS2DthZkevCZtKQR-6GAHNVv1p57XZKIYJKewYo',
+            type: "POST",
+        });
+    });
+</script>
+</body>
+</html>
