@@ -15,6 +15,7 @@ from provider_scrape.spiders.hawaii import (
     extract_embedded_json,
     extract_endpoint_urls,
     extract_inspection_details,
+    extract_inspection_list_url,
     format_address,
     format_age_range,
     format_hours,
@@ -466,38 +467,173 @@ def test_count_requirements_not_met_counts_n_flags():
     assert count_requirements_not_met(None) is None
 
 
-def test_parse_inspections_builds_inspection_items(spider):
+def _visit_detail_payload(not_met, code=200):
+    """A per-visit detail response with `not_met` requirements flagged 'N'."""
+    items = [{"itemReqMet": "N"} for _ in range(not_met)]
+    items += [{"itemReqMet": "Y"}, {"itemReqMet": "X"}, {"itemReqMet": None}]
+    return {
+        "hanaResponseStatus": {"responseCode": code},
+        "hanaResponse": {"visitDetails": items},
+    }
+
+
+def test_parse_inspections_warm_cache_counts_embedded_and_fetches_rest(spider):
     out = list(spider.parse_inspections(_inspections_response(spider)))
+    # 18408's detail is embedded (counted in place); 14341 needs a per-visit fetch,
+    # so parse_inspections yields that POST rather than the item.
     assert len(out) == 1
-    item = out[0]
-    inspections = item["inspections"]
+    request = out[0]
+    assert request.method == "POST"
+    assert "85cc14072d62409fbfc0c2a7ea3da2bd" in request.url
+    assert json.loads(request.body) == {"visitId": "14341"}
+
+    state = request.meta["state"]
+    item = state["item"]
+    inspections = {i["hi_visit_id"]: i for i in item["inspections"]}
     assert len(inspections) == 2
-    assert all(isinstance(i, InspectionItem) for i in inspections)
+    assert all(isinstance(i, InspectionItem) for i in inspections.values())
+    assert inspections[18408]["type"] == "Annual/Biennial"
+    assert inspections[18408]["hi_requirements_not_met"] == 1  # embedded
+    assert inspections[14341]["type"] == "Off-year"
+    assert inspections[14341].get("hi_requirements_not_met") is None
+    assert state["pending"] == 1
 
-    # First visit: off-year, no embedded detail -> no not-met count.
-    first = next(i for i in inspections if i["hi_visit_id"] == 14341)
-    assert first["date"] == "2024-07-17"
-    assert first["type"] == "Off-year"
-    assert first["hi_licensing_period_start"] == "2023-06-22"
-    assert first.get("hi_requirements_not_met") is None
-
-    # Second visit: annual, detail embedded -> one requirement not met.
-    second = next(i for i in inspections if i["hi_visit_id"] == 18408)
-    assert second["type"] == "Annual/Biennial"
-    assert second["hi_requirements_not_met"] == 1
-
-
-def test_parse_inspections_handles_no_data(spider):
-    item = ProviderItem()
-    item["hi_service_id"] = 999
-    item["inspections"] = []
+    # Resolving the outstanding visit-detail fetch sets the count and emits.
     resp = _text_response(
-        "https://childcareprovidersearch.dhs.hawaii.gov/inspections/?serviceId=999",
-        "<html><body>Thank you for your patience</body></html>",
+        request.url, json.dumps(_visit_detail_payload(2)), meta=request.meta
+    )
+    out2 = list(spider.parse_visit_detail(resp))
+    assert out2 == [item]
+    assert inspections[14341]["hi_requirements_not_met"] == 2
+
+
+def test_extract_inspection_list_url_finds_cold_cache_endpoint():
+    url = extract_inspection_list_url(_load_text("hawaii_inspections_nocache.html"))
+    assert url is not None
+    assert "e17345f72a8f424597023d79e2608fb2" in url
+
+
+def test_parse_inspections_cold_cache_falls_back_to_list_endpoint(spider):
+    item = ProviderItem()
+    item["hi_service_id"] = 34
+    item["inspections"] = []
+    body = _load_text("hawaii_inspections_nocache.html")
+    resp = _text_response(
+        "https://childcareprovidersearch.dhs.hawaii.gov/inspections/?serviceId=34",
+        body,
         meta={"partial_item": item},
     )
     out = list(spider.parse_inspections(resp))
+    # No embedded cachedList -> a POST to the live list endpoint, not an item yet.
     assert len(out) == 1
+    request = out[0]
+    assert request.method == "POST"
+    assert "e17345f72a8f424597023d79e2608fb2" in request.url
+    assert json.loads(request.body) == {"serviceId": "34"}
+    assert request.meta["partial_item"] is item
+
+
+def test_parse_inspections_cold_cache_uses_fallback_url_when_absent(spider):
+    from provider_scrape.spiders.hawaii import INSPECTION_LIST_URL
+
+    item = ProviderItem()
+    item["hi_service_id"] = 34
+    item["inspections"] = []
+    resp = _text_response(
+        "https://childcareprovidersearch.dhs.hawaii.gov/inspections/?serviceId=34",
+        "<html><body>no cached list, no embedded url here</body></html>",
+        meta={"partial_item": item},
+    )
+    out = list(spider.parse_inspections(resp))
+    assert out[0].url == INSPECTION_LIST_URL
+
+
+def _list_payload(*visits):
+    return {
+        "hanaResponseStatus": {"responseCode": 200},
+        "hanaResponse": {"serviceId": 34, "visitSummaries": list(visits)},
+    }
+
+
+def test_parse_inspection_list_dispatches_a_visit_detail_fetch_per_visit(spider):
+    item = ProviderItem()
+    item["hi_service_id"] = 34
+    item["inspections"] = []
+    payload = _list_payload(
+        {"visitId": 15516, "visitType": "LR", "visitDate": "2024-10-15",
+         "licensingPeriodStart": "2024-11-20", "licensingPeriodEnd": "2026-10-31"},
+        {"visitId": 20542, "visitType": "LO", "visitDate": "2025-10-13",
+         "licensingPeriodStart": "2024-11-01", "licensingPeriodEnd": "2026-10-31"},
+    )
+    resp = _text_response(
+        "https://prod-26.usgovtexas.logic.azure.us/x", json.dumps(payload),
+        meta={"partial_item": item},
+    )
+    out = list(spider.parse_inspection_list(resp))
+    # No embedded detail on this path: one visit-detail POST per visit, no item yet.
+    assert len(out) == 2
+    assert all(r.method == "POST" for r in out)
+    assert all("85cc14072d62409fbfc0c2a7ea3da2bd" in r.url for r in out)
+    assert [json.loads(r.body)["visitId"] for r in out] == ["15516", "20542"]
+    state = out[0].meta["state"]
+    assert state["pending"] == 2
+
+    # First fetch resolves (count 0) -> still pending, no emit.
+    resp1 = _text_response(out[0].url, json.dumps(_visit_detail_payload(0)), meta=out[0].meta)
+    assert list(spider.parse_visit_detail(resp1)) == []
+    # Last fetch resolves (count 3) -> item emitted with both counts populated.
+    resp2 = _text_response(out[1].url, json.dumps(_visit_detail_payload(3)), meta=out[1].meta)
+    final = list(spider.parse_visit_detail(resp2))
+    assert final == [state["item"]]
+    counts = {i["hi_visit_id"]: i["hi_requirements_not_met"] for i in state["item"]["inspections"]}
+    assert counts == {15516: 0, 20542: 3}
+
+
+def test_parse_visit_detail_error_response_leaves_count_unset_but_emits(spider):
+    item = ProviderItem()
+    item["hi_service_id"] = 34
+    item["inspections"] = [InspectionItem()]
+    inspection = item["inspections"][0]
+    inspection["hi_visit_id"] = 15516
+    state = {"item": item, "pending": 1}
+    resp = _text_response(
+        "https://prod-05.usgovtexas.logic.azure.us/x",
+        json.dumps(_visit_detail_payload(0, code=500)),
+        meta={"state": state, "inspection": inspection},
+    )
+    out = list(spider.parse_visit_detail(resp))
+    assert out == [item]
+    assert inspection.get("hi_requirements_not_met") is None
+
+
+def test_visit_detail_errback_emits_item_when_last(spider):
+    item = ProviderItem()
+    item["hi_service_id"] = 34
+    item["inspections"] = [InspectionItem()]
+    inspection = item["inspections"][0]
+    inspection["hi_visit_id"] = 15516
+    state = {"item": item, "pending": 1}
+
+    class _Failure:
+        request = Request(
+            url="https://x", meta={"state": state, "inspection": inspection}
+        )
+
+    out = list(spider.visit_detail_errback(_Failure()))
+    assert out == [item]
+    assert inspection.get("hi_requirements_not_met") is None
+
+
+def test_parse_inspection_list_handles_error_response(spider):
+    item = ProviderItem()
+    item["hi_service_id"] = 34
+    item["inspections"] = []
+    payload = {"hanaResponseStatus": {"responseCode": 500}, "hanaResponse": {}}
+    resp = _text_response(
+        "https://prod-26.usgovtexas.logic.azure.us/x", json.dumps(payload),
+        meta={"partial_item": item},
+    )
+    out = list(spider.parse_inspection_list(resp))
     assert out[0]["inspections"] == []
 
 
