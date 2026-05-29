@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head><title>Inspections</title></head>
+<body>
+<span id="serviceName">PUNANA LEO O MOLOKAI</span>
+<span style="display: none;" id="noDataFound"></span>
+<script>
+  const allInspections = [];
+  $(document).ready(function() {
+    // checks fetchxml response; calls hana if cache empty
+    $.ajax({
+      url: 'https://prod-26.usgovtexas.logic.azure.us:443/workflows/e17345f72a8f424597023d79e2608fb2/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=9USvXoJj-AHbEUd_pghs1DNXnAfkkgCflxND6gJwlkQ',
+      type: "POST",
+      async: false,
+      contentType: "application/json; charset=utf-8",
+      data: JSON.stringify({ serviceId: '34' }),
+    });
+  });
+</script>
+</body>
+</html>

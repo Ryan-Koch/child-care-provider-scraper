@@ -42,6 +42,27 @@ DETAIL_URL = "https://childcareprovidersearch.dhs.hawaii.gov/details/?serviceId=
 INSPECTIONS_URL = (
     "https://childcareprovidersearch.dhs.hawaii.gov/inspections/?serviceId={}"
 )
+# The inspections page embeds the visit list only when the portal's Dataverse
+# cache is warm; when it's cold the page fetches the list client-side from this
+# HANA "inspection list" Logic App. We POST it directly (hardcoded fallback; we
+# prefer the live URL scraped off the page since the SAS sig can rotate).
+INSPECTION_LIST_URL = (
+    "https://prod-26.usgovtexas.logic.azure.us:443/workflows/"
+    "e17345f72a8f424597023d79e2608fb2/triggers/manual/paths/invoke"
+    "?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0"
+    "&sig=9USvXoJj-AHbEUd_pghs1DNXnAfkkgCflxND6gJwlkQ"
+)
+INSPECTION_LIST_WORKFLOW_ID = "e17345f72a8f424597023d79e2608fb2"
+# Per-visit detail Logic App ({"visitId": id}); we POST it for every visit to get
+# the visitDetails needed for the requirements-not-met count. Same resilience as
+# the list endpoint: prefer the live URL off the page, fall back to this.
+VISIT_DETAIL_URL = (
+    "https://prod-05.usgovtexas.logic.azure.us:443/workflows/"
+    "85cc14072d62409fbfc0c2a7ea3da2bd/triggers/manual/paths/invoke"
+    "?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0"
+    "&sig=Jh6IG3_Akdzz9bShSSqdKfnft2CqlQvWublcR0LMwLI"
+)
+VISIT_DETAIL_WORKFLOW_ID = "85cc14072d62409fbfc0c2a7ea3da2bd"
 
 # visitType codes on the inspections page (ported from the site's getInspectionType).
 VISIT_TYPE_MAP = {
@@ -195,6 +216,26 @@ def extract_inspection_details(html):
         except json.JSONDecodeError:
             continue
     return details
+
+
+def _find_workflow_url(html, workflow_id):
+    """Return the first embedded Logic App URL carrying `workflow_id`, or None."""
+    for url in re.findall(
+        r"https://prod-\d+\.usgovtexas\.logic\.azure\.us[^'\"\s]+", html
+    ):
+        if workflow_id in url:
+            return url
+    return None
+
+
+def extract_inspection_list_url(html):
+    """Find the live inspection-list Logic App URL embedded in the page, or None."""
+    return _find_workflow_url(html, INSPECTION_LIST_WORKFLOW_ID)
+
+
+def extract_visit_detail_url(html):
+    """Find the live per-visit detail Logic App URL embedded in the page, or None."""
+    return _find_workflow_url(html, VISIT_DETAIL_WORKFLOW_ID)
 
 
 def count_requirements_not_met(visit_response):
@@ -451,6 +492,9 @@ class HawaiiSpider(scrapy.Spider):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.search_url = SEARCH_URL
+        # Per-visit detail endpoint; refreshed from the live inspections page when
+        # seen (the SAS sig can rotate), else the hardcoded fallback.
+        self.visit_detail_url = VISIT_DETAIL_URL
         self.parent_of = {}
         self.children = {}
         # serviceIds already dispatched, so overlapping area queries don't
@@ -668,36 +712,154 @@ class HawaiiSpider(scrapy.Spider):
         )
 
     def parse_inspections(self, response):
-        """Populate item['inspections'] from the server-rendered visit list."""
-        item = response.meta["partial_item"]
-        cached = extract_braced_json(response.text, "const cachedList = ")
-        summaries = (
-            (cached or {}).get("hanaResponse", {}).get("visitSummaries", []) or []
-        )
-        details_by_visit = extract_inspection_details(response.text)
+        """Populate item['inspections'] from the inspections page.
 
+        The visit list is embedded as `const cachedList` only when the portal's
+        Dataverse cache is warm. When it's cold the page has no list and fetches
+        it client-side, so we POST the HANA list endpoint ourselves instead.
+        """
+        item = response.meta["partial_item"]
+        # Refresh the per-visit detail URL from the live page when present.
+        live_visit_url = extract_visit_detail_url(response.text)
+        if live_visit_url:
+            self.visit_detail_url = live_visit_url
+
+        cached = extract_braced_json(response.text, "const cachedList = ")
+        if cached and cached.get("hanaResponseStatus", {}).get("responseCode") == 200:
+            summaries = cached.get("hanaResponse", {}).get("visitSummaries", []) or []
+            details_by_visit = extract_inspection_details(response.text)
+            yield from self._emit_with_visit_details(item, summaries, details_by_visit)
+            return
+
+        # Cold cache: hit the live list endpoint the page would have called.
+        list_url = extract_inspection_list_url(response.text)
+        if not list_url:
+            self.logger.warning(
+                "Inspection-list URL not found for serviceId %s; using fallback",
+                item.get("hi_service_id"),
+            )
+            list_url = INSPECTION_LIST_URL
+        yield scrapy.Request(
+            list_url,
+            method="POST",
+            body=json.dumps({"serviceId": str(item["hi_service_id"])}),
+            headers=AZURE_HEADERS,
+            callback=self.parse_inspection_list,
+            errback=self.inspections_errback,
+            meta={"partial_item": item, "playwright": False},
+            dont_filter=True,
+        )
+
+    def parse_inspection_list(self, response):
+        """Build inspections from the HANA list endpoint (cold-cache fallback)."""
+        item = response.meta["partial_item"]
+        try:
+            data = json.loads(response.text)
+        except json.JSONDecodeError:
+            data = {}
+        if data.get("hanaResponseStatus", {}).get("responseCode") == 200:
+            summaries = data.get("hanaResponse", {}).get("visitSummaries", []) or []
+        else:
+            summaries = []
+            self.logger.warning(
+                "Inspection-list endpoint returned no usable data for serviceId %s",
+                item.get("hi_service_id"),
+            )
+        # The list endpoint carries no per-visit detail, so every visit's count is
+        # fetched individually via _emit_with_visit_details.
+        yield from self._emit_with_visit_details(item, summaries, {})
+
+    def _emit_with_visit_details(self, item, summaries, details_by_visit):
+        """Attach inspections to the item and fetch each visit's not-met count.
+
+        Visits whose detail was embedded on the page (warm-cache, latest visit)
+        are counted in place; the rest get a per-visit POST. The item is held
+        until every outstanding visit-detail fetch resolves so the count is
+        populated consistently across the dataset.
+        """
         inspections = []
         for visit in summaries:
-            visit_id = visit.get("visitId")
-            visit_type = visit.get("visitType")
             inspection = InspectionItem()
             inspection["date"] = visit.get("visitDate")
-            inspection["type"] = VISIT_TYPE_MAP.get(visit_type, visit_type)
-            inspection["hi_visit_id"] = visit_id
+            inspection["type"] = VISIT_TYPE_MAP.get(
+                visit.get("visitType"), visit.get("visitType")
+            )
+            inspection["hi_visit_id"] = visit.get("visitId")
             inspection["hi_licensing_period_start"] = visit.get("licensingPeriodStart")
             inspection["hi_licensing_period_end"] = visit.get("licensingPeriodEnd")
-            not_met = count_requirements_not_met(details_by_visit.get(visit_id))
+            not_met = count_requirements_not_met(details_by_visit.get(visit.get("visitId")))
             if not_met is not None:
                 inspection["hi_requirements_not_met"] = not_met
             inspections.append(inspection)
-
         item["inspections"] = inspections
-        self.logger.info(
-            "Parsed %s inspection(s) for serviceId %s",
-            len(inspections),
-            item.get("hi_service_id"),
+
+        pending = [
+            insp
+            for insp in inspections
+            if insp.get("hi_requirements_not_met") is None
+            and insp.get("hi_visit_id") is not None
+        ]
+        if not pending:
+            self.logger.info(
+                "Parsed %s inspection(s) for serviceId %s",
+                len(inspections),
+                item.get("hi_service_id"),
+            )
+            yield item
+            return
+
+        state = {"item": item, "pending": len(pending)}
+        for inspection in pending:
+            yield scrapy.Request(
+                self.visit_detail_url,
+                method="POST",
+                body=json.dumps({"visitId": str(inspection["hi_visit_id"])}),
+                headers=AZURE_HEADERS,
+                callback=self.parse_visit_detail,
+                errback=self.visit_detail_errback,
+                meta={"state": state, "inspection": inspection, "playwright": False},
+                dont_filter=True,
+            )
+
+    def parse_visit_detail(self, response):
+        """Set one visit's requirements-not-met count; emit the item when last."""
+        state = response.meta["state"]
+        inspection = response.meta["inspection"]
+        try:
+            data = json.loads(response.text)
+        except json.JSONDecodeError:
+            data = {}
+        if data.get("hanaResponseStatus", {}).get("responseCode") == 200:
+            inspection["hi_requirements_not_met"] = count_requirements_not_met(data)
+        else:
+            self.logger.warning(
+                "Visit-detail fetch returned no data for visitId %s",
+                inspection.get("hi_visit_id"),
+            )
+        yield from self._visit_detail_done(state)
+
+    def visit_detail_errback(self, failure):
+        """A visit-detail fetch failed; leave its count unset and keep going."""
+        state = failure.request.meta.get("state")
+        inspection = failure.request.meta.get("inspection")
+        self.logger.warning(
+            "Visit-detail fetch failed for visitId %s; leaving count unset",
+            inspection.get("hi_visit_id") if inspection else None,
         )
-        yield item
+        if state is not None:
+            yield from self._visit_detail_done(state)
+
+    def _visit_detail_done(self, state):
+        """Decrement the per-item pending counter; emit the item at zero."""
+        state["pending"] -= 1
+        if state["pending"] <= 0:
+            item = state["item"]
+            self.logger.info(
+                "Parsed %s inspection(s) for serviceId %s",
+                len(item.get("inspections") or []),
+                item.get("hi_service_id"),
+            )
+            yield item
 
     def inspections_errback(self, failure):
         """Inspections fetch failed; emit the provider with no inspection list."""
