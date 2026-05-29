@@ -4,14 +4,17 @@ import os
 import pytest
 from scrapy.http import HtmlResponse, Request, TextResponse
 
-from provider_scrape.items import ProviderItem
+from provider_scrape.items import InspectionItem, ProviderItem
 from provider_scrape.spiders.hawaii import (
     HawaiiSpider,
     build_area_index,
     code_table_map,
     convert_military_time,
+    count_requirements_not_met,
+    extract_braced_json,
     extract_embedded_json,
     extract_endpoint_urls,
+    extract_inspection_details,
     format_address,
     format_age_range,
     format_hours,
@@ -275,9 +278,13 @@ def _detail_response(spider, service_id=92021, provider_kind="OR"):
 
 
 def test_parse_detail_golden_path(spider):
-    items = list(spider.parse_detail(_detail_response(spider)))
-    assert len(items) == 1
-    item = items[0]
+    # parse_detail now chains to an inspections fetch; the fully populated item
+    # rides along in that request's meta.
+    out = list(spider.parse_detail(_detail_response(spider)))
+    assert len(out) == 1
+    request = out[0]
+    assert "inspections/?serviceId=92021" in request.url
+    item = request.meta["partial_item"]
     assert item["provider_name"] == "PUNANA LEO O HILO INFANT TODDLER"
     assert item["license_holder"] == "AHA PUNANA LEO INC"
     assert item["provider_type"] == "Infant and Toddler Center"
@@ -418,6 +425,92 @@ def test_fill_details_unknown_meal_code_does_not_raise(spider):
     # Known code maps; unknown falls back to the raw code rather than raising.
     assert item["hi_meals"] == ["Breakfast", "ZZ"]
     assert item["hi_accreditations"] == []
+
+
+# ---- Inspections ----
+
+
+def _inspections_response(spider, service_id=41747, item=None):
+    if item is None:
+        item = ProviderItem()
+        item["hi_service_id"] = service_id
+        item["inspections"] = []
+    body = _load_text("hawaii_inspections.html").encode()
+    resp = HtmlResponse(
+        url=f"https://childcareprovidersearch.dhs.hawaii.gov/inspections/?serviceId={service_id}",
+        body=body,
+        encoding="utf-8",
+        request=Request(url="https://x", meta={"partial_item": item}),
+    )
+    resp.meta["partial_item"] = item
+    return resp
+
+
+def test_extract_braced_json_reads_cached_list():
+    cached = extract_braced_json(_load_text("hawaii_inspections.html"), "const cachedList = ")
+    summaries = cached["hanaResponse"]["visitSummaries"]
+    assert len(summaries) == 2
+    assert summaries[0]["visitId"] == 14341
+
+
+def test_extract_inspection_details_keys_by_visit_id():
+    details = extract_inspection_details(_load_text("hawaii_inspections.html"))
+    assert set(details) == {18408}
+    assert details[18408]["hanaResponse"]["visitType"] == "LR"
+
+
+def test_count_requirements_not_met_counts_n_flags():
+    details = extract_inspection_details(_load_text("hawaii_inspections.html"))
+    # One visitDetails item has itemReqMet == "N".
+    assert count_requirements_not_met(details[18408]) == 1
+    assert count_requirements_not_met(None) is None
+
+
+def test_parse_inspections_builds_inspection_items(spider):
+    out = list(spider.parse_inspections(_inspections_response(spider)))
+    assert len(out) == 1
+    item = out[0]
+    inspections = item["inspections"]
+    assert len(inspections) == 2
+    assert all(isinstance(i, InspectionItem) for i in inspections)
+
+    # First visit: off-year, no embedded detail -> no not-met count.
+    first = next(i for i in inspections if i["hi_visit_id"] == 14341)
+    assert first["date"] == "2024-07-17"
+    assert first["type"] == "Off-year"
+    assert first["hi_licensing_period_start"] == "2023-06-22"
+    assert first.get("hi_requirements_not_met") is None
+
+    # Second visit: annual, detail embedded -> one requirement not met.
+    second = next(i for i in inspections if i["hi_visit_id"] == 18408)
+    assert second["type"] == "Annual/Biennial"
+    assert second["hi_requirements_not_met"] == 1
+
+
+def test_parse_inspections_handles_no_data(spider):
+    item = ProviderItem()
+    item["hi_service_id"] = 999
+    item["inspections"] = []
+    resp = _text_response(
+        "https://childcareprovidersearch.dhs.hawaii.gov/inspections/?serviceId=999",
+        "<html><body>Thank you for your patience</body></html>",
+        meta={"partial_item": item},
+    )
+    out = list(spider.parse_inspections(resp))
+    assert len(out) == 1
+    assert out[0]["inspections"] == []
+
+
+def test_inspections_errback_emits_item(spider):
+    item = ProviderItem()
+    item["hi_service_id"] = 555
+    item["inspections"] = []
+
+    class _Failure:
+        request = Request(url="https://x", meta={"partial_item": item})
+
+    out = list(spider.inspections_errback(_Failure()))
+    assert out == [item]
 
 
 def test_fill_details_maps_populated_accreditations(spider):

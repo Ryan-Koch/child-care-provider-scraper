@@ -16,7 +16,7 @@ import re
 
 import scrapy
 
-from ..items import ProviderItem
+from ..items import InspectionItem, ProviderItem
 
 
 # --- Azure Logic App endpoints (hardcoded fallbacks; we prefer the live URLs
@@ -39,6 +39,18 @@ SEARCH_WORKFLOW_ID = "179f51f14f6a4837b49e82a3099bc3c3"
 
 LANDING_URL = "https://childcareprovidersearch.dhs.hawaii.gov/"
 DETAIL_URL = "https://childcareprovidersearch.dhs.hawaii.gov/details/?serviceId={}"
+INSPECTIONS_URL = (
+    "https://childcareprovidersearch.dhs.hawaii.gov/inspections/?serviceId={}"
+)
+
+# visitType codes on the inspections page (ported from the site's getInspectionType).
+VISIT_TYPE_MAP = {
+    "LD": "Drop-In",
+    "LI": "Initial",
+    "LM": "Monitoring",
+    "LO": "Off-year",
+    "LR": "Annual/Biennial",
+}
 
 # The state root code; islands are its direct children.
 ROOT_AREA = "AA"
@@ -108,6 +120,89 @@ def extract_embedded_json(html, var_name):
         return json.loads(match.group(1))
     except json.JSONDecodeError:
         return None
+
+
+def _match_braces(text, start):
+    """Return the substring from the `{` at `start` through its matching `}`.
+
+    String-aware so braces inside JSON string values don't throw off the count.
+    Returns None if no balanced close is found.
+    """
+    depth = 0
+    in_string = False
+    escaped = False
+    for i in range(start, len(text)):
+        char = text[i]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+        elif char == '"':
+            in_string = True
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : i + 1]
+    return None
+
+
+def extract_braced_json(html, prefix):
+    """Parse a ``<prefix>{...}`` JS object literal (e.g. ``const cachedList = {``).
+
+    Unlike the backtick-literal code tables, the inspections page assigns plain
+    object literals, so we brace-match from the first `{` after the prefix.
+    """
+    idx = html.find(prefix)
+    if idx == -1:
+        return None
+    brace = html.find("{", idx + len(prefix))
+    if brace == -1:
+        return None
+    blob = _match_braces(html, brace)
+    if blob is None:
+        return None
+    try:
+        return json.loads(blob)
+    except json.JSONDecodeError:
+        return None
+
+
+def extract_inspection_details(html):
+    """Map {visitId: response} for each ``allInspections.push({...})`` block.
+
+    Only visits whose detail the server pre-rendered appear here (the inspections
+    page lazily fetches the rest on click), so callers must tolerate misses.
+    """
+    details = {}
+    for match in re.finditer(
+        r"allInspections\.push\(\s*\{\s*inspectionId:\s*(\d+)\s*,\s*response:\s*",
+        html,
+    ):
+        visit_id = int(match.group(1))
+        brace = html.find("{", match.end())
+        if brace == -1:
+            continue
+        blob = _match_braces(html, brace)
+        if blob is None:
+            continue
+        try:
+            details[visit_id] = json.loads(blob)
+        except json.JSONDecodeError:
+            continue
+    return details
+
+
+def count_requirements_not_met(visit_response):
+    """Count visitDetails items flagged "not met" (itemReqMet == 'N')."""
+    if not visit_response:
+        return None
+    items = visit_response.get("hanaResponse", {}).get("visitDetails", [])
+    return sum(1 for item in items if item.get("itemReqMet") == "N")
 
 
 def code_table_map(code_table_json, value_field="description"):
@@ -561,7 +656,58 @@ class HawaiiSpider(scrapy.Spider):
             item.get("provider_type"),
             item.get("capacity"),
         )
+        # Inspections live on a sibling page keyed by the same serviceId; fetch
+        # it to populate the item, then emit. The item is emitted regardless of
+        # whether that fetch succeeds (see inspections_errback).
+        yield scrapy.Request(
+            INSPECTIONS_URL.format(item["hi_service_id"]),
+            callback=self.parse_inspections,
+            errback=self.inspections_errback,
+            meta={"partial_item": item, "playwright": False},
+            dont_filter=True,
+        )
+
+    def parse_inspections(self, response):
+        """Populate item['inspections'] from the server-rendered visit list."""
+        item = response.meta["partial_item"]
+        cached = extract_braced_json(response.text, "const cachedList = ")
+        summaries = (
+            (cached or {}).get("hanaResponse", {}).get("visitSummaries", []) or []
+        )
+        details_by_visit = extract_inspection_details(response.text)
+
+        inspections = []
+        for visit in summaries:
+            visit_id = visit.get("visitId")
+            visit_type = visit.get("visitType")
+            inspection = InspectionItem()
+            inspection["date"] = visit.get("visitDate")
+            inspection["type"] = VISIT_TYPE_MAP.get(visit_type, visit_type)
+            inspection["hi_visit_id"] = visit_id
+            inspection["hi_licensing_period_start"] = visit.get("licensingPeriodStart")
+            inspection["hi_licensing_period_end"] = visit.get("licensingPeriodEnd")
+            not_met = count_requirements_not_met(details_by_visit.get(visit_id))
+            if not_met is not None:
+                inspection["hi_requirements_not_met"] = not_met
+            inspections.append(inspection)
+
+        item["inspections"] = inspections
+        self.logger.info(
+            "Parsed %s inspection(s) for serviceId %s",
+            len(inspections),
+            item.get("hi_service_id"),
+        )
         yield item
+
+    def inspections_errback(self, failure):
+        """Inspections fetch failed; emit the provider with no inspection list."""
+        item = failure.request.meta.get("partial_item")
+        if item is not None:
+            self.logger.warning(
+                "Inspections fetch failed for serviceId %s; emitting without inspections",
+                item.get("hi_service_id"),
+            )
+            yield item
 
     def detail_errback(self, failure):
         item = failure.request.meta.get("partial_item")

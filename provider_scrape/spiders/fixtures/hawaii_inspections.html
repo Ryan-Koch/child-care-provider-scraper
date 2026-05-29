@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head><title>Inspections</title></head>
+<body>
+<span id="serviceName">KIDS FOR ALL SEASONS</span>
+<script>
+  const formsJSON = [];
+  const allInspections = [];
+
+  allInspections.push({
+    inspectionId: 18408,
+    response: {"hanaResponseStatus":{"responseStatusMessage":"Success","responseCode":200},"hanaResponse":{"serviceId":41747,"visitId":18408,"visitType":"LR","metadataType":"BAS-02","visitDate":"2025-05-13","licensingPeriodStart":"2025-06-22","licensingPeriodEnd":"2027-06-21","visitDetails":[{"itemCode":"VIII.A.1","itemNotes":null,"itemReqMet":"Y","itemText":null,"itemDate":null},{"itemCode":"VII.C.6","itemNotes":"Trash note.","itemReqMet":"N","itemText":null,"itemDate":null},{"itemCode":"II.A.13","itemNotes":null,"itemReqMet":"X","itemText":null,"itemDate":null},{"itemCode":"DIRECTOR","itemNotes":null,"itemReqMet":null,"itemText":"Director","itemDate":null}]}}
+  });
+
+  $(document).ready(function() {
+    const cachedList = {"hanaResponseStatus":{"responseStatusMessage":"Success","responseCode":200},"hanaResponse":{"serviceId":41747,"visitSummaries":[{"visitId":14341,"visitType":"LO","visitDate":"2024-07-17","licensingPeriodStart":"2023-06-22","licensingPeriodEnd":"2025-06-21"},{"visitId":18408,"visitType":"LR","visitDate":"2025-05-13","licensingPeriodStart":"2025-06-22","licensingPeriodEnd":"2027-06-21"}]}};
+    validateResponse(cachedList);
+  });
+</script>
+</body>
+</html>

@@ -48,6 +48,14 @@ class InspectionItem(scrapy.Item):
     nv_deficiency_count = scrapy.Field()
     nv_inspection_number = scrapy.Field()
 
+    # Hawaii specific
+    hi_visit_id = scrapy.Field()
+    hi_licensing_period_start = scrapy.Field()
+    hi_licensing_period_end = scrapy.Field()
+    # Count of requirements marked "not met" on the visit, when the visit's
+    # detail is embedded in the inspections page (latest visit only).
+    hi_requirements_not_met = scrapy.Field()
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
