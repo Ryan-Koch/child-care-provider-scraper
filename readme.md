@@ -44,7 +44,7 @@ The project uses pytest, so one can simply run `pytest` to go through the whole 
 | Delaware                 | [ ]     | 
 | Florida                  | [x]     | 
 | Georgia                  | [x]     | 
-| Hawaii                   | [ ]     | 
+| Hawaii                   | [x]     | 
 | Idaho                    | [ ]     | 
 | Illinois                 | [x]     | 
 | Indiana                  | [ ]     | 
