@@ -406,6 +406,23 @@ class ProviderItem(scrapy.Item):
     fl_vpk_curriculum = scrapy.Field()
     fl_vpk_instructor_credentials = scrapy.Field()
 
+    # Hawaii specific fields
+    hi_service_id = scrapy.Field()          # serviceId - the per-service primary key
+    hi_provider_id = scrapy.Field()         # providerId - the parent org id
+    hi_service_type_code = scrapy.Field()   # raw serviceType code, e.g. "05"
+    hi_provider_kind = scrapy.Field()       # "OR" (org/center) or "CG" (caregiver/home)
+    hi_license_type = scrapy.Field()        # "Provisional" | "Regular" (from P/R)
+    hi_area_code = scrapy.Field()           # fully-qualified area code, e.g. "ABAHBW"
+    hi_island = scrapy.Field()              # island name (top-level area description)
+    hi_mailing_address = scrapy.Field()     # mailing address (distinct from location)
+    hi_usda_food_program = scrapy.Field()   # bool
+    hi_diapered_children_accepted = scrapy.Field()  # bool
+    hi_demonstration_project = scrapy.Field()       # bool
+    hi_meals = scrapy.Field()               # list of meal descriptions
+    hi_accreditations = scrapy.Field()      # list of accreditation descriptions
+    hi_license_history = scrapy.Field()     # list of prior license periods
+    hi_status_history = scrapy.Field()      # list of {status, statusDate}
+
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
     source_state = scrapy.Field()

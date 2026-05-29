@@ -1,0 +1,3994 @@
+<head><style data-merge-styles="true"></style>
+		
+		
+		<link rel="manifest" href="/PWAManifest.json">
+		<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<script async="" src="https://www.clarity.ms/tag/pv05ayahb3"></script><script async="" src="https://scripts.clarity.ms/0.8.64/clarity.js"></script><script async="" src="https://www.clarity.ms/tag/sf209nollg"></script><script type="text/javascript">
+				
+        </script>
+	<title>
+	
+		Provider Info - Profile Details
+		
+</title>
+		
+		<script src="/_portal/bbe35dee-2e27-4e5e-bb0d-41c80c125968/Resources/ResourceManager?lang=en-US"></script>
+	
+	<script type="text/javascript">
+        // Refresh all powerBI Iframes on Login in one Iframe
+        window.addEventListener('message', function (event) {
+            if (event && event.data && event.data == 'refreshPowerBI') {
+                $("iframe.powerbi").each(function () {
+                    this.src = this.src;
+                });
+            }
+        });
+
+        // Fix for incorrect viewport width setting in IE 10 on Windows Phone 8.
+        if (navigator.userAgent.match(/IEMobile\/10\.0/)) {
+            var msViewportStyle = document.createElement("style");
+            msViewportStyle.appendChild(document.createTextNode("@-ms-viewport{width:auto!important}"));
+            document.getElementsByTagName("head")[0].appendChild(msViewportStyle);
+        }
+    </script>
+		
+	
+		
+		<link href="/bootstrap.min.css" rel="stylesheet">
+
+		<link href="https://gov.content.powerapps.us/resource/powerappsportal/dist/font-awesome.BootstrapV5.bundle-2ce6efb497.css" onerror="javascript: var target = event.target; var link = document.createElement('link'); link.crossOrigin = target.crossOrigin; link.href = '/dist/font-awesome.BootstrapV5.bundle-2ce6efb497.css'; link.rel = 'stylesheet'; target.insertAdjacentElement('afterend',link);" rel="stylesheet">
+
+				<link href="https://gov.content.powerapps.us/resource/powerappsportal/dist/preform.BootstrapV5.bundle-a79c3ca7cf.css" onerror="javascript: var target = event.target; var link = document.createElement('link'); link.crossOrigin = target.crossOrigin; link.href = '/dist/preform.BootstrapV5.bundle-a79c3ca7cf.css'; link.rel = 'stylesheet'; target.insertAdjacentElement('afterend',link);" rel="stylesheet">
+
+
+		
+			
+
+
+		
+		<link href="/thumbnail.css" rel="stylesheet">
+<link href="/theme.css" rel="stylesheet">
+<link href="/portalbasictheme.css" rel="stylesheet">
+
+		
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;family=Urbanist:ital,wght@0,100..900;1,100..900&amp;display=swap" rel="stylesheet">
+
+<!-- MS Clarity -->
+<style>
+  /* Styles for the cookie consent overlay */
+  #cookie-consent-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0; /* Start hidden */
+    visibility: hidden; /* Start hidden */
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+  }
+
+  #cookie-consent-overlay.show {
+    opacity: 1; /* Fade in */
+    visibility: visible; /* Show */
+  }
+
+  #cookie-consent-message {
+    background: white;
+    padding: 24px;
+    border-radius: 4px;
+    text-align: center;
+    transform: translateY(-50px); /* Start position */
+    opacity: 0; /* Start hidden */
+    transition: transform 0.5s ease, opacity 0.5s ease;
+    max-width: 550px;
+  }
+
+  #cookie-consent-message.show {
+    transform: translateY(0); /* Slide in */
+    opacity: 1; /* Fade in */
+  }
+
+  button {
+    margin: 10px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  #accept-cookies {
+    background-color: #4caf50;
+    color: white;
+  }
+
+  #reject-cookies {
+    background-color: #f44336;
+    color: white;
+  }
+
+  @media (max-width: 500px) {
+    .buttonDiv {
+      flex-direction: column-reverse !important;
+    }
+  }
+</style>
+<script>
+  function showOverlay() {
+    // Check if the user is already on the homepage
+    if (window.location.pathname === '/') {
+      openOverlay();
+    } else {
+      // Redirect to the homepage with a query parameter
+      window.location.href = '/?showOverlay=true';
+    }
+  }
+
+  function openOverlay() {
+    document.querySelector('.overlay').classList.add('show');
+  }
+</script>
+<script type="text/javascript">
+  (function (c, l, a, r, i, t, y) {
+    c[a] =
+      c[a] ||
+      function () {
+        (c[a].q = c[a].q || []).push(arguments);
+      };
+    t = l.createElement(r);
+    t.async = 1;
+    t.src = "https://www.clarity.ms/tag/" + i;
+    y = l.getElementsByTagName(r)[0];
+    y.parentNode.insertBefore(t, y);
+  })(window, document, "clarity", "script", "sf209nollg");
+
+  // Utility function to set a cookie
+  function setCookie(name, value, days) {
+    let expires = "";
+    if (days) {
+      const date = new Date();
+      date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+      expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "") + expires + "; path=/";
+  }
+
+  // Utility function to get a cookie value
+  function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(";");
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === " ") c = c.substring(1, c.length);
+      if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+  }
+
+  // Function to create and append the cookie consent HTML
+  function createCookieConsentOverlay() {
+    // Create the overlay div
+    const overlay = document.createElement("div");
+    overlay.id = "cookie-consent-overlay";
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.background = "rgba(0, 0, 0, 0.7)";
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+    overlay.style.zIndex = "1000";
+    overlay.className = "hidden";
+
+    // Create the message div
+    const messageDiv = document.createElement("div");
+    messageDiv.id = "cookie-consent-message";
+    messageDiv.style.background = "white";
+    messageDiv.style.padding = "24px";
+    messageDiv.style.borderRadius = "5px";
+    messageDiv.style.textAlign = "center";
+    messageDiv.style.width = "430px";
+
+    // Create the title header
+    const consentHeader = document.createElement("h1");
+    consentHeader.textContent = "Cookie Preferences";
+    consentHeader.style.textAlign = 'left';
+    consentHeader.style.textAlign = 'left';
+    consentHeader.style.fontWeight = 600;
+    consentHeader.style.margin = 0;
+    consentHeader.style.fontSize = '24px';
+    messageDiv.appendChild(consentHeader);
+
+    // Create the message paragraph
+    const message = document.createElement("p");
+    message.textContent =
+      "Child Care Provider Search employs cookies to enhance your application experience and improve website usability. By accepting all cookies, you agree to their use on your device.";
+    message.style.marginTop = '1rem';
+    message.style.textAlign = 'left';
+    message.style.fontWeight = 400;
+    message.style.fontSize = '14px';
+    messageDiv.appendChild(message);
+
+    // Create the flex div
+    const buttonDiv = document.createElement("div");
+    buttonDiv.className = 'buttonDiv';
+    buttonDiv.style.display = "flex";
+    buttonDiv.style.justifyContent = "center";
+    buttonDiv.style.flexDirection = "column";
+    buttonDiv.style.gap = "12px";
+    messageDiv.appendChild(buttonDiv);
+
+    // Create the Accept button
+    const acceptButton = document.createElement("button");
+    acceptButton.className = "cookie-button";
+    acceptButton.id = "accept-cookies";
+    acceptButton.textContent = "ALLOW ALL";
+    acceptButton.style.margin = "0";
+    acceptButton.style.padding = "16px 32px 16px 32px";
+    acceptButton.style.border = "none";
+    acceptButton.style.borderRadius = "41px";
+    acceptButton.style.cursor = "pointer";
+    acceptButton.style.backgroundColor = "#CA4623";
+    acceptButton.style.color = "white";
+    buttonDiv.appendChild(acceptButton);
+
+    // Create the Reject button
+    const rejectButton = document.createElement("button");
+    rejectButton.className = "cookie-button";
+    rejectButton.id = "reject-cookies";
+    rejectButton.textContent = "DECLINE ALL";
+    rejectButton.style.margin = "0";
+    rejectButton.style.padding = "16px 32px 16px 32px";
+    rejectButton.style.border = "2px solid #CA4623";
+    rejectButton.style.borderRadius = "41px";
+    rejectButton.style.cursor = "pointer";
+    rejectButton.style.backgroundColor = "white";
+    rejectButton.style.color = "black";
+    buttonDiv.appendChild(rejectButton);
+
+    // Append message div to overlay, and overlay to body
+    overlay.appendChild(messageDiv);
+    document.body.appendChild(overlay);
+
+    // Show overlay with animation
+    requestAnimationFrame(() => {
+      overlay.classList.add("show");
+      messageDiv.classList.add("show");
+    });
+
+    // Set up event listeners for the consent buttons
+    acceptButton.addEventListener("click", () => {
+      setCookie("cookie_consent", "accepted", 365);
+      window.clarity("consent");
+      hideOverlay();
+    });
+
+    rejectButton.addEventListener("click", () => {
+      setCookie("cookie_consent", "rejected", 365);
+      window.clarity("consent", false);
+      hideOverlay();
+    });
+  }
+
+  // Function to hide the overlay with animation
+  function hideOverlay() {
+    const overlay = document.getElementById("cookie-consent-overlay");
+    const messageDiv = document.getElementById("cookie-consent-message");
+
+    messageDiv.classList.remove("show");
+    overlay.classList.remove("show");
+
+    overlay.addEventListener(
+      "transitionend",
+      () => {
+        overlay.remove();
+      },
+      { once: true }
+    );
+  }
+
+  // Check if the cookie consent has already been given
+  function checkCookieConsent() {
+    const consent = getCookie("cookie_consent");
+    if (!consent) {
+      createCookieConsentOverlay();
+    }
+  }
+
+  // Run the script after the DOM content is loaded
+  document.addEventListener("DOMContentLoaded", checkCookieConsent);
+</script>
+		
+		
+		
+	
+		
+		<link href="https://gov.content.powerapps.us/resource/powerappsportal/dist/pwa-style.bundle-55718a4c0d.css" onerror="javascript: var target = event.target; var link = document.createElement('link'); link.crossOrigin = target.crossOrigin; link.href = '/dist/pwa-style.bundle-55718a4c0d.css'; link.rel = 'stylesheet'; target.insertAdjacentElement('afterend',link);" rel="stylesheet">
+
+		<style data-load-themed-styles="true" type="text/css">.resultContent_4cc31f3f{display:table-row}.resultContent_4cc31f3f .resultItem_4cc31f3f{display:table-cell;vertical-align:bottom}.peoplePickerPersona_4cc31f3f{width:180px}.peoplePickerPersona_4cc31f3f .ms-Persona-details{width:100%}.peoplePicker_4cc31f3f .ms-BasePicker-text{min-height:40px}.peoplePickerPersonaContent_4cc31f3f{display:-webkit-box;display:-ms-flexbox;display:flex;width:100%;-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between;-webkit-box-align:center;-ms-flex-align:center;align-items:center}</style><style data-load-themed-styles="true" type="text/css">.callout_ad5629e1 .ms-Suggestions-itemButton{padding:0;border:none}.callout_ad5629e1 .ms-Suggestions{min-width:300px}</style><style data-load-themed-styles="true" type="text/css">.resultContent_f73be5be{display:table-row}.resultContent_f73be5be .resultItem_f73be5be{display:table-cell;vertical-align:bottom}.peoplePickerPersona_f73be5be{width:180px}.peoplePickerPersona_f73be5be .ms-Persona-details{width:100%}.peoplePicker_f73be5be .ms-BasePicker-text{min-height:40px}.peoplePickerPersonaContent_f73be5be{display:-webkit-box;display:-ms-flexbox;display:flex;width:100%;-webkit-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between;-webkit-box-align:center;-ms-flex-align:center;align-items:center;padding:7px 12px}</style><style data-load-themed-styles="true">.pickerText_9f838726{display:-webkit-box;display:-ms-flexbox;display:flex;-ms-flex-wrap:wrap;flex-wrap:wrap;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-sizing:border-box;box-sizing:border-box;border:1px solid #bab8b7;min-width:180px;padding:1px;min-height:32px}.pickerText_9f838726:hover{border-color:#c7d8b3}.pickerInput_9f838726{height:34px;border:none;-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;outline:0;padding:0 6px 0;margin:1px}.pickerInput_9f838726::-ms-clear{display:none}.root_8c91000a{min-width:260px}.suggestionsItem_8c91000a{display:-webkit-box;display:-ms-flexbox;display:flex;-webkit-box-align:stretch;-ms-flex-align:stretch;align-items:stretch;-webkit-box-sizing:border-box;box-sizing:border-box;width:100%;position:relative;overflow:hidden}.suggestionsItem_8c91000a:hover{background:#f4f4f4}.suggestionsItem_8c91000a:hover .closeButton_8c91000a{display:block}.suggestionsItem_8c91000a.suggestionsItemIsSuggested_8c91000a{background:#eaeaea}.suggestionsItem_8c91000a.suggestionsItemIsSuggested_8c91000a:hover{background:#c8c8c8}@media screen and (-ms-high-contrast:active),screen and (forced-colors:active){.suggestionsItem_8c91000a.suggestionsItemIsSuggested_8c91000a:hover{background:Highlight;color:HighlightText}}@media screen and (-ms-high-contrast:active),screen and (forced-colors:active){.suggestionsItem_8c91000a.suggestionsItemIsSuggested_8c91000a{background:Highlight;color:HighlightText;-ms-high-contrast-adjust:none}}.suggestionsItem_8c91000a.suggestionsItemIsSuggested_8c91000a .closeButton_8c91000a:hover{background:#bab8b7;color:#323130}@media screen and (-ms-high-contrast:active),screen and (forced-colors:active){.suggestionsItem_8c91000a.suggestionsItemIsSuggested_8c91000a .itemButton_8c91000a{color:HighlightText}}.suggestionsItem_8c91000a .closeButton_8c91000a{display:none;color:#a3a2a0}.suggestionsItem_8c91000a .closeButton_8c91000a:hover{background:#eaeaea}.actionButton_8c91000a{background-color:transparent;border:0;cursor:pointer;margin:0;position:relative;border-top:1px solid #eaeaea;height:40px;width:100%;font-size:12px}[dir=ltr] .actionButton_8c91000a{padding-left:8px}[dir=rtl] .actionButton_8c91000a{padding-right:8px}html[dir=ltr] .actionButton_8c91000a{text-align:left}html[dir=rtl] .actionButton_8c91000a{text-align:right}.actionButton_8c91000a:hover{background-color:#eaeaea;cursor:pointer}.actionButton_8c91000a:active,.actionButton_8c91000a:focus{background-color:#c7d8b3}.actionButton_8c91000a .ms-Button-icon{font-size:16px;width:25px}.actionButton_8c91000a .ms-Button-label{margin:0 4px 0 9px}html[dir=rtl] .actionButton_8c91000a .ms-Button-label{margin:0 9px 0 4px}.buttonSelected_8c91000a{background-color:#c7d8b3}.suggestionsTitle_8c91000a{padding:0 12px;color:#5C7C35;font-size:12px;line-height:40px;border-bottom:1px solid #eaeaea}.suggestionsContainer_8c91000a{overflow-y:auto;overflow-x:hidden;max-height:300px;border-bottom:1px solid #eaeaea}.suggestionsNone_8c91000a{text-align:center;color:#797775;font-size:12px;line-height:30px}.suggestionsSpinner_8c91000a{margin:5px 0;white-space:nowrap;line-height:20px;font-size:12px}html[dir=ltr] .suggestionsSpinner_8c91000a{padding-left:14px}html[dir=rtl] .suggestionsSpinner_8c91000a{padding-right:14px}html[dir=ltr] .suggestionsSpinner_8c91000a{text-align:left}html[dir=rtl] .suggestionsSpinner_8c91000a{text-align:right}.suggestionsSpinner_8c91000a .ms-Spinner-circle{display:inline-block;vertical-align:middle}.suggestionsSpinner_8c91000a .ms-Spinner-label{display:inline-block;margin:0 10px 0 16px;vertical-align:middle}html[dir=rtl] .suggestionsSpinner_8c91000a .ms-Spinner-label{margin:0 16px 0 10px}.itemButton_8c91000a.itemButton_8c91000a{width:100%;padding:0;min-width:0;height:100%}@media screen and (-ms-high-contrast:active),screen and (forced-colors:active){.itemButton_8c91000a.itemButton_8c91000a{color:WindowText}}.itemButton_8c91000a.itemButton_8c91000a:hover{color:#605e5d}.closeButton_8c91000a.closeButton_8c91000a{padding:0 4px;height:auto;width:32px}@media screen and (-ms-high-contrast:active),screen and (forced-colors:active){.closeButton_8c91000a.closeButton_8c91000a{color:WindowText}}.closeButton_8c91000a.closeButton_8c91000a:hover{background:#c8c8c8;color:#605e5d}.suggestionsAvailable_8c91000a{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}.suggestionsContainer_44c59fda{overflow-y:auto;overflow-x:hidden;max-height:300px}.suggestionsContainer_44c59fda .ms-Suggestion-item:hover{background-color:#f4f4f4;cursor:pointer}.suggestionsContainer_44c59fda .is-suggested{background-color:#e1ead5}.suggestionsContainer_44c59fda .is-suggested:hover{background-color:#c7d8b3;cursor:pointer}.root_ade399af{min-width:260px}.actionButton_ade399af{background:0 0;background-color:transparent;border:0;cursor:pointer;margin:0;padding:0;position:relative;width:100%;font-size:12px}html[dir=ltr] .actionButton_ade399af{text-align:left}html[dir=rtl] .actionButton_ade399af{text-align:right}.actionButton_ade399af:hover{background-color:#f4f4f4;cursor:pointer}.actionButton_ade399af:active,.actionButton_ade399af:focus{background-color:#c7d8b3}.actionButton_ade399af .ms-Button-icon{font-size:16px;width:25px}.actionButton_ade399af .ms-Button-label{margin:0 4px 0 9px}html[dir=rtl] .actionButton_ade399af .ms-Button-label{margin:0 9px 0 4px}.buttonSelected_ade399af{background-color:#e1ead5}.buttonSelected_ade399af:hover{background-color:#c7d8b3;cursor:pointer}@media screen and (-ms-high-contrast:active),screen and (forced-colors:active){.buttonSelected_ade399af:hover{background-color:Highlight;color:HighlightText}}@media screen and (-ms-high-contrast:active),screen and (forced-colors:active){.buttonSelected_ade399af{background-color:Highlight;color:HighlightText;-ms-high-contrast-adjust:none}}.suggestionsTitle_ade399af{font-size:12px}.suggestionsSpinner_ade399af{margin:5px 0;white-space:nowrap;line-height:20px;font-size:12px}html[dir=ltr] .suggestionsSpinner_ade399af{padding-left:14px}html[dir=rtl] .suggestionsSpinner_ade399af{padding-right:14px}html[dir=ltr] .suggestionsSpinner_ade399af{text-align:left}html[dir=rtl] .suggestionsSpinner_ade399af{text-align:right}.suggestionsSpinner_ade399af .ms-Spinner-circle{display:inline-block;vertical-align:middle}.suggestionsSpinner_ade399af .ms-Spinner-label{display:inline-block;margin:0 10px 0 16px;vertical-align:middle}html[dir=rtl] .suggestionsSpinner_ade399af .ms-Spinner-label{margin:0 16px 0 10px}.itemButton_ade399af{height:100%;width:100%;padding:7px 12px}@media screen and (-ms-high-contrast:active),screen and (forced-colors:active){.itemButton_ade399af{color:WindowText}}.screenReaderOnly_ade399af{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}.picker_94f06b16{position:relative}.pickerText_94f06b16{display:-webkit-box;display:-ms-flexbox;display:flex;-ms-flex-wrap:wrap;flex-wrap:wrap;-webkit-box-align:center;-ms-flex-align:center;align-items:center;-webkit-box-sizing:border-box;box-sizing:border-box;border:1px solid #bab8b7;min-width:180px;min-height:30px}.pickerText_94f06b16:hover{border-color:#323130}.pickerText_94f06b16.inputFocused_94f06b16{position:relative;border-color:#5C7C35}.pickerText_94f06b16.inputFocused_94f06b16:after{pointer-events:none;content:"";position:absolute;left:-1px;top:-1px;bottom:-1px;right:-1px;border:2px solid #5C7C35}@media screen and (-ms-high-contrast:active),screen and (forced-colors:active){.pickerText_94f06b16.inputDisabled_94f06b16{position:relative;border-color:GrayText}.pickerText_94f06b16.inputDisabled_94f06b16:after{pointer-events:none;content:"";position:absolute;left:0;top:0;bottom:0;right:0;background-color:Window}}.pickerInput_94f06b16{height:34px;border:none;-webkit-box-flex:1;-ms-flex-positive:1;flex-grow:1;outline:0;padding:0 6px 0;-ms-flex-item-align:end;align-self:flex-end}.pickerItems_94f06b16{display:-webkit-box;display:-ms-flexbox;display:flex;-ms-flex-wrap:wrap;flex-wrap:wrap;max-width:100%}.screenReaderOnly_94f06b16{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}.personaContainer_6625fd9a{border-radius:15px;display:-webkit-inline-box;display:-ms-inline-flexbox;display:inline-flex;-webkit-box-align:center;-ms-flex-align:center;align-items:center;background:#f7faf4;margin:4px;cursor:default;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;vertical-align:middle;position:relative}.personaContainer_6625fd9a::-moz-focus-inner{border:0}.personaContainer_6625fd9a{outline:transparent}.personaContainer_6625fd9a{position:relative}.ms-Fabric--isFocusVisible .personaContainer_6625fd9a:focus:after{-webkit-box-sizing:border-box;box-sizing:border-box;content:"";position:absolute;top:-2px;right:-2px;bottom:-2px;left:-2px;pointer-events:none;border:1px solid #a3a2a0;border-radius:0}.personaContainer_6625fd9a .ms-Persona-primaryText{color:#475f29;font-size:14px;font-weight:400}.personaContainer_6625fd9a .ms-Persona-primaryText.hover_6625fd9a{color:#475f29}@media screen and (-ms-high-contrast:active),screen and (forced-colors:active){.personaContainer_6625fd9a .ms-Persona-primaryText{color:HighlightText}}.personaContainer_6625fd9a .actionButton_6625fd9a:hover{background:#c7d8b3}.personaContainer_6625fd9a .actionButton_6625fd9a .ms-Button-icon{color:#475f29}@media screen and (-ms-high-contrast:active),screen and (forced-colors:active){.personaContainer_6625fd9a .actionButton_6625fd9a .ms-Button-icon{color:HighlightText}}.personaContainer_6625fd9a:hover{background:#e1ead5}.personaContainer_6625fd9a:hover .ms-Persona-primaryText{color:#475f29;font-size:14px;font-weight:400}@media screen and (-ms-high-contrast:active),screen and (forced-colors:active){.personaContainer_6625fd9a:hover .ms-Persona-primaryText{color:HighlightText}}.personaContainer_6625fd9a.personaContainerIsSelected_6625fd9a{background:#5C7C35}.personaContainer_6625fd9a.personaContainerIsSelected_6625fd9a .ms-Persona-primaryText{color:#FFFFFF}@media screen and (-ms-high-contrast:active),screen and (forced-colors:active){.personaContainer_6625fd9a.personaContainerIsSelected_6625fd9a .ms-Persona-primaryText{color:HighlightText}}.personaContainer_6625fd9a.personaContainerIsSelected_6625fd9a .actionButton_6625fd9a{color:#FFFFFF}.personaContainer_6625fd9a.personaContainerIsSelected_6625fd9a .actionButton_6625fd9a .ms-Button-icon{color:#475f29}.personaContainer_6625fd9a.personaContainerIsSelected_6625fd9a .actionButton_6625fd9a .ms-Button-icon:hover{background:#475f29}@media screen and (-ms-high-contrast:active),screen and (forced-colors:active){.personaContainer_6625fd9a.personaContainerIsSelected_6625fd9a .actionButton_6625fd9a .ms-Button-icon{color:HighlightText}}@media screen and (-ms-high-contrast:active),screen and (forced-colors:active){.personaContainer_6625fd9a.personaContainerIsSelected_6625fd9a{border-color:Highlight;background:Highlight;-ms-high-contrast-adjust:none}}.personaContainer_6625fd9a.validationError_6625fd9a .ms-Persona-primaryText{color:#e81123}.personaContainer_6625fd9a.validationError_6625fd9a .ms-Persona-initials{font-size:20px}@media screen and (-ms-high-contrast:active),screen and (forced-colors:active){.personaContainer_6625fd9a{border:1px solid WindowText}}.personaContainer_6625fd9a .itemContent_6625fd9a{-webkit-box-flex:0;-ms-flex:0 1 auto;flex:0 1 auto;min-width:0;max-width:100%}.personaContainer_6625fd9a .removeButton_6625fd9a{border-radius:15px;-webkit-box-flex:0;-ms-flex:0 0 auto;flex:0 0 auto;width:33px;height:33px;-ms-flex-preferred-size:32px;flex-basis:32px}.personaContainer_6625fd9a .expandButton_6625fd9a{border-radius:15px 0 0 15px;height:33px;width:44px;padding-right:16px;position:inherit;display:-webkit-box;display:-ms-flexbox;display:flex;margin-right:-17px}.personaContainer_6625fd9a .personaWrapper_6625fd9a{position:relative;display:inherit}.personaContainer_6625fd9a .personaWrapper_6625fd9a .ms-Persona-details{padding:0 8px}.personaContainer_6625fd9a .personaDetails_6625fd9a{-webkit-box-flex:0;-ms-flex:0 1 auto;flex:0 1 auto}.itemContainer_6625fd9a{display:inline-block;vertical-align:top}</style></head>
+<body data-sitemap-state="/details/:/" data-dateformat="M/d/yyyy" data-timeformat="h:mm tt" data-datetimeformat="M/d/yyyy h:mm tt" data-app-path="/" data-ckeditor-basepath="/js/BaseHtmlContentDesigner/Libs/msdyncrm_/libs/ckeditor/" data-case-deflection-url="/_services/search/bbe35dee-2e27-4e5e-bb0d-41c80c125968" cz-shortcut-listen="true">
+
+
+	
+		<link href="https://gov.content.powerapps.us/resource/powerappsportal/dist/pcf-style.bundle-373a0f4982.css" onerror="javascript: var target = event.target; var link = document.createElement('link'); link.crossOrigin = target.crossOrigin; link.href = '/dist/pcf-style.bundle-373a0f4982.css'; link.rel = 'stylesheet'; target.insertAdjacentElement('afterend',link);" rel="stylesheet">
+
+			
+	
+		
+
+	<div id="offlineNotificationBar" class="displayNone">
+		<img alt="web" class="col-3" id="web" onerror="javascript: var target = event.target; var img = document.createElement('img'); img.src = '/css/images/web.png'; img.alt = 'web'; img.id = 'web' ; target.insertAdjacentElement('afterend',img); target.remove();" src="https://gov.content.powerapps.us/resource/powerappsportal/img/web.png">
+		<div id="message">You’re offline. This is a read only version of the page.</div>
+		<div id="close" onclick="this.parentElement.style.display='none';"><img alt="close" class="col-3" onerror="javascript: var target = event.target; var img = document.createElement('img'); img.src = '/css/images/close.png'; img.alt = 'close'; img.id = '' ; target.insertAdjacentElement('afterend',img); target.remove();" src="https://gov.content.powerapps.us/resource/powerappsportal/img/close.png"></div>
+	</div>
+
+	
+
+	<script type="text/javascript">
+        window.DisableCkEditor = window.DisableCkEditor || {};
+		DisableCkEditor.Value = 'False';
+    </script>
+
+	<script type="text/javascript">
+        var enableOmniChannelWidgetWithSiteCopilot = 'False';
+        if (enableOmniChannelWidgetWithSiteCopilot === "True" || enableOmniChannelWidgetWithSiteCopilot === "true") {
+            const authUrl = window.location.origin + "/_services/auth/portalusertoken";
+            const fetchWithRetries = async (url, options, retries) => {
+                try {
+                    const authResponse = await fetch(url, options);
+                    const token = await authResponse.text();
+                    sessionStorage['c2Token'] = token;
+                } catch (err) {
+                    if (retries === 1) throw err;
+                    return await fetchWithRetries(url, options, retries - 1);
+                }
+            };
+            fetchWithRetries(authUrl, { method: "POST" }, 4);
+
+            // Enable/disable Omnichannel session refresh on auth state change
+            // When enabled, closeChat() is called when user logs in/out to start a fresh session
+            var enableOmniChannelSessionRefreshSetting = 'True';
+            window.enableOmniChannelSessionRefresh = enableOmniChannelSessionRefreshSetting === 'True' || enableOmniChannelSessionRefreshSetting === 'true';
+        }
+    </script>
+
+	<script type="text/javascript">
+		var isPvaBotAuthenticated = sessionStorage['isPvaBotAuthenticated'];
+		var isPortalUserLoggedIn = 'False';
+
+        if ((isPvaBotAuthenticated != null || isPvaBotAuthenticated != undefined) && isPvaBotAuthenticated != isPortalUserLoggedIn) {
+			sessionStorage['triggerPvaBotSignOut'] = true;
+			sessionStorage.removeItem('c2Token');
+            sessionStorage.removeItem('directLinetoken');
+            sessionStorage.removeItem('conversation_Id');
+
+			sessionStorage.removeItem('bot_c2Token');
+			sessionStorage.removeItem('botdirectLinetoken');
+            sessionStorage.removeItem('botconversation_Id');
+		}
+		sessionStorage['isPvaBotAuthenticated'] = isPortalUserLoggedIn;
+    </script>
+
+	<script type="text/javascript">
+		window["CSPSettings"] = window["CSPSettings"] || {};
+		window["CSPSettings"].nonce = '';
+        window["FabricConfig"] = window["FabricConfig"] || {};
+        window["FabricConfig"].mergeStyles = window["FabricConfig"].mergeStyles || {};
+		window["FabricConfig"].mergeStyles.cspSettings = window["CSPSettings"];
+        window["Microsoft"] = window["Microsoft"] || {};
+		window["Microsoft"].Dynamic365 = {
+			Portal: {
+				
+				User: {
+					userName: '',
+					firstName: '',
+					lastName: '',
+					email: '',
+					contactId: '',
+					userRoles: [],
+				},
+				
+				version: '9.8.4.17',
+				type: 'PowerPages_BlankTemplate_V2',
+				id: '1c3f74aa-7e2d-4681-ad18-430b0fa5103f', 
+				geo: 'GCC2', 
+				tenant: '3847dec6-63b2-43f9-a6d0-58a40aaa1a10', 
+				correlationId: 'dc4368aa-37a1-4a27-89e6-b8eba615a4c2',
+                orgEnvironmentId: '8c50e76e-ae24-4562-b7f5-6a6a04974efc',
+                orgId: 'eee997f6-590e-43cb-a783-b8d090dba824',
+                portalProductionOrTrialType: 'Production',
+                isTelemetryEnabled: 'True',
+                InstrumentationSettings: {
+                    instrumentationKey: '47d84c9b995341e19219d73ab0c6bcd2-e951660d-d17d-4de3-83c3-6a766bd23de8-7007',
+                    collectorEndpoint: 'https://tb.events.data.microsoft.com/OneCollector/1.0/'
+                },
+                timerProfileForBatching: 'NEAR_REAL_TIME',
+                activeLanguages: ["en-US"],
+                isClientApiEnabled: 'True'
+            }
+        };
+
+		window["Microsoft"].Dynamic365.Portal.onPagesClientApiReady = (callback) => {
+			return new Promise((resolve, reject) => {
+				let isComplete = false;
+				let timeoutId;
+				const timeoutInterval = 10000;
+		
+				function handleReady() {
+					if (!isComplete && window.$pages) {
+						isComplete = true;
+						clearTimeout(timeoutId);
+						try {
+							if (typeof callback === "function") {
+								callback(window.$pages);
+							}
+						} catch (e) {
+							console.error("onPagesClientApiReady callback error:", e);
+						}
+						resolve(window.$pages); // should we reject if callback throws an error
+					}
+				}
+		
+				if (window.$pages) {
+					handleReady();
+					return;
+				}
+		
+				function sdkListener() {
+					handleReady();
+					window.removeEventListener('pagesSDKInitialized', sdkListener);
+				}
+		
+				window.addEventListener('pagesSDKInitialized', sdkListener);
+		
+				timeoutId = setTimeout(() => {
+					if (!isComplete) {
+						window.removeEventListener('pagesSDKInitialized', sdkListener);
+						if (window.$pages) {
+							handleReady();
+						} else {
+							isComplete = true;
+							reject(new Error('window.$pages not available.'));
+						}
+					}
+				}, timeoutInterval);
+			});
+		};
+
+        // Mark request not cacheable if Dynamics365PortalAnalytics cookie is being refreshed by the server or if the cookie in request header is invalid
+		
+
+        // For client side telemetry intializing Dynamics365PortalAnalytics cookie object
+		
+        window["Microsoft"].Dynamic365.Portal.dynamics365PortalAnalytics = 'wMYmJ06nDH1QH4FPgGGBupjEbUdoz_cgIEYUTzeRg2R2yjNkHmmgYU85iV_N4Mvvmz6-ZP-lMv94oE1UaVXp4sV-9zm8I-CToCIP7nXmnHQC-FNd8oWhFV2YCDLElt4zFOQKghWy41iSDfcAPtDk3A2'; // CodeQL [SM00430] False Positive: only alphanumeric chars allowed, for non-alphanumeric char it will return INVALID_CHARACTERS_IN_COOKIE 
+		
+
+	</script>
+	
+	<script type="text/javascript">
+
+		
+    </script>
+
+	
+		
+<script>console.log("5/29/2026 3:45:53 AM")</script>
+
+ 
+
+
+<!--5/29/2026 3:45:53 AM
+Liquid error: Index was outside the bounds of the array.
+Liquid error: Index was outside the bounds of the array.-->
+
+ 
+
+
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&amp;display=swap" rel="stylesheet">
+
+<style>
+  .banner {
+    display: flex;
+    background: #FFFFCC;
+    padding: 16px 50px;
+    position: relative;
+    z-index: 10;
+  }
+
+  #maintenance {
+    display: flex;
+    background: #FAEA39;
+    padding: 16px 50px;
+    position: relative;
+    z-index: 10;
+    align-items: center;
+  }
+
+  .banner svg, #maintenance svg {
+    margin: auto 0px;
+    min-width: 25px;
+    max-height: 25px;
+  }
+
+  .banner-body {
+      padding: 0px 10px 0px 8px;
+      margin: auto auto auto 0px;
+      font-family: Inter;
+      font-style: normal;
+      line-height: normal;
+      width: 100%;
+  }
+
+  .banner-body b {
+    font-size: 14px;
+    font-weight: 600px;
+    margin: 0px;
+  }
+
+  .banner-body p {
+    font-size: 14px;
+    font-weight: 400px;
+    margin: 0px;
+  }
+
+  .close-banner, #close-maint {
+    width: 40px;
+    font-size: 24px;
+    background: transparent;
+    color: #000000;
+    border: none;
+    height: 40px;
+    padding: 0px;
+  }
+
+  @media (max-width: 600px) {
+    .banner, #maintenance {
+      padding: 16px;
+    }
+  }
+</style>
+
+
+
+
+
+
+
+<script>
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const banners = document.querySelectorAll('[id^="banner-"]');
+    const maint = document.getElementById('close-maint');
+
+    banners.forEach(banner => {
+      const closeButton = banner.querySelector('button[id^="close-"]');
+      
+      closeButton.addEventListener('click', function() {
+        banner.style.display = 'none';
+      });
+    });
+
+      if (maint) {
+        maint.addEventListener('click', function() {
+          document.getElementById('maintenance').style.display = 'none';
+      });
+    }
+
+  });
+  
+</script>
+
+
+
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "pv05ayahb3");
+</script>
+
+<div id="skipContentDiv" tabindex="-1">
+  <a href="#main-content" class="skipContent" id="skipContentId" style="color: #007bff;">SKIP TO MAIN CONTENT</a>
+</div>
+<header role="header" class="header-container">
+  <div class="header-left">
+    <div class="logo">
+      <a title="State of Hawaii Homepage" aria-label="State of Hawaii Homepage" href="https://portal.ehawaii.gov/"><img src="/StateSeal.png" alt="State of Hawaii Seal" class="header-state"></a>
+      <a title="DHS Homepage" aria-label="DHS Homepage" href="https://humanservices.hawaii.gov/"><img src="/DHSSeal.png" alt="Department of Hawaii Seal" class="header-dhs"></a>
+    </div>
+
+  </div>
+  <div class="header-middle">
+    <a style="text-decoration: none;" href="/" onclick="sessionStorage.clear()">
+      <div class="header1Parent">
+        <span class="header1">State of Hawaiʻi</span><br>
+      </div>
+      <div class="header2Parent">
+        <span class="header2">Department of Human Services</span>
+      </div>
+      <span class="header3">Child Care Provider Search</span>
+    </a>
+  </div>
+  
+    <div class="weblink " style="position: absolute; right: 100px;" role="none">
+        <a class="navbar-links" style="font-weight: 700; text-decoration-line: underline; color: black;" role="menuitem" aria-label="Sign In" href="https://childcareprovidersearch.dhs.hawaii.gov/SignIn">
+            WORKER SIGN-IN
+        </a>
+    </div>
+  
+</header>
+
+<style>
+  #skipContentDiv {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #FFFFFF;
+        height: 0; /* Initially hidden */
+        overflow: hidden; /* Prevent overflow when height is 0 */
+        transform: translateY(-100%);
+        transition: transform 0.3s ease, height 0.3s ease; /* Smooth transition for both */
+  }
+ 
+  #skipContentDiv:focus-within {
+        height: 50px; /* Full height when focused */
+        transform: translateY(0); /* Slide into view */
+  }
+
+  .header-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    /* justify-content: space-between; */
+    background-color: #ffffff;
+    padding: 10px 20px;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+  }
+
+  #userCache, #userLogout {
+    font-weight: 700; 
+    text-decoration: underline; 
+    color: black;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+  }
+
+  .header-state {
+    height: 85px;
+  }
+
+  .header-dhs {
+    height: 95px;
+  }
+
+  .header-middle {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+  }
+
+  .header1Parent {
+    height: 17px;
+  }
+
+  .header2Parent {
+    height: 20px;
+  }
+
+  .header1 {
+    font-family: "Inter", sans-serif;
+    font-size: 20px;
+    color: #a47f36;
+    font-weight: 600;
+  }
+
+  .header2 {
+    font-family: "Inter", sans-serif;
+    font-size: 20px;
+    color: #3c747b;
+    font-weight: 600;
+  }
+
+  .header3 {
+    font-size: 30px;
+    font-weight: 600;
+    line-height: 40px;
+    color: black;;
+  }
+
+  /*Ipad View*/
+  @media (max-width: 676px) {
+    .header1 {
+      font-size: 16px;
+    }
+
+    .header2 {
+      font-size: 16px;
+    }
+
+    .header3 {
+      font-size: 20px;
+      line-height: 30px;
+    }
+
+    .header-state {
+      height: 65px;
+    }
+
+    .header-dhs {
+      height: 75px;
+    }
+  }
+
+  /*Mobile View*/
+  @media all and (max-width: 1024px) {
+    .header-container {
+      flex-direction: column;
+      align-items: flex-start;
+      border-bottom: 1px solid #e7e7e7;
+    }
+
+    .header-left {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .logo .img {
+      max-height: 44px;
+    }
+
+    .header-middle {
+      margin-top: 10px;
+      margin-left: 0;
+    }
+
+    .header1 {
+      font-size: 14px;
+      letter-spacing: -0.75px;
+    }
+
+    .header2 {
+      font-size: 14px;
+      letter-spacing: -0.75px;
+    }
+
+    .header3 {
+      font-size: 24px;
+    }
+    .header-state {
+      height: 65px;
+    }
+
+    .header-dhs {
+      height: 75px;
+    }
+
+    .open {
+      display: flex;
+    }
+
+    .hidden {
+      display: none;
+    }
+  }
+</style>
+	
+
+	<!-- add anti-forgery token-->
+	<div id="antiforgerytoken" data-url="/_layout/tokenhtml"></div>
+
+	
+			<!-- Client Telemetry init if telemetry enabled-->
+			<script onerror="javascript: var target = event.target; var script = document.createElement('script'); script.crossOrigin = target.crossOrigin; script.src = '/dist/client-telemetry.bundle-2d4a32f75c.js'; script.type = 'text/javascript'; target.insertAdjacentElement('afterend',script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/client-telemetry.bundle-2d4a32f75c.js" type="text/javascript"></script>
+
+		
+	
+		<!-- Client Telemetry Wrapper init -->
+		<script onerror="javascript: var target = event.target; var script = document.createElement('script'); script.crossOrigin = target.crossOrigin; script.src = '/dist/client-telemetry-wrapper.bundle-633e70f51b.js'; script.type = 'text/javascript'; target.insertAdjacentElement('afterend',script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/client-telemetry-wrapper.bundle-633e70f51b.js" type="text/javascript"></script>
+
+		<script>
+			window.clientLogWrapper = new ClientLogWrapper();
+		</script>
+		<script onerror="javascript: var target = event.target; var script = document.createElement('script'); script.crossOrigin = target.crossOrigin; script.src = '/dist/preform.BootstrapV5.moment_2_29_4.bundle-1eaf0ef06f.js'; script.type = 'text/javascript'; target.insertAdjacentElement('afterend',script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/preform.BootstrapV5.moment_2_29_4.bundle-1eaf0ef06f.js" type="text/javascript"></script>
+
+		
+
+		<script onerror="javascript: var target = event.target; var script = document.createElement('script'); script.crossOrigin = target.crossOrigin; script.src = '/dist/pcf-dependency.bundle-805a1661b7.js'; script.type = 'text/javascript'; target.insertAdjacentElement('afterend',script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/pcf-dependency.bundle-805a1661b7.js" type="text/javascript"></script>
+
+							   <script onerror="javascript: var target = event.target; var script = document.createElement('script'); script.crossOrigin = target.crossOrigin; script.src = '/dist/pcf.bundle-9c853932e0.js'; script.type = 'text/javascript'; target.insertAdjacentElement('afterend',script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/pcf.bundle-9c853932e0.js" type="text/javascript"></script>
+
+							   <script onerror="javascript: var target = event.target; var script = document.createElement('script'); script.crossOrigin = target.crossOrigin; script.src = '/dist/pcf-extended.bundle-b0e01b5622.js'; script.type = 'text/javascript'; target.insertAdjacentElement('afterend',script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/pcf-extended.bundle-b0e01b5622.js" type="text/javascript"></script>
+
+						
+	
+
+<div class="xrm-editable-html xrm-attribute" data-languagecontext="English"><div class="xrm-attribute-value"><!-- Help Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="helpModalLabel">Help</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" id="helpModalBody">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+$(document).ready(function() {
+    $("#modal-close-button").on("click", function () {
+       $("#helpModal").modal("hide");
+    });
+
+    $('[data-dismiss="modal"]').on("click", function () {
+       $("#helpModal").modal("hide");
+    });
+
+    // Handle help icon click
+    $(".help-icon").on("click", function () {
+        const type = $(this).data("type");
+        let content = "";
+        if (type === "type") {
+            content = `
+            <div>
+                <h5><b>Home Based Provider</b></h5>
+                <p style="font-size: 12px;">Child care provided in a private residence.</p>
+            </div>
+            <div>
+                <h5><b>Center Based Provider</b></h5>
+                <p style="font-size: 12px;">Child care provided in a facility other than a private residence.</p>
+            </div>`;
+        } else if (type === "others") {
+            content = `
+            <div>
+                <h5>NAEYC</h5>
+                <p style="font-size: 12px;">NAEYC or National Association for the Education of Young Children promotes high-quality early learning for all young children by connecting early childhood practice, policy, and research. NAEYC is the largest organization for early childhood educators.</p>
+            </div>
+            <div>
+                <h5>NECPA</h5>
+                <p style="font-size: 12px;">NECPA or National Early Childhood Program Accreditation is a set of standards that encompass the whole child by assessing relationships between the child and teacher, program and center relationships with families, and program community relationships.</p>
+            </div>
+            <div>
+                <h5>NAFCC</h5>
+                <p style="font-size: 12px;">NAFCC or National Association for Family Child Care is a standard designed specifically for family child care providers. This system was designed by hundreds of providers, parents, and early care and education experts in an effort to create a quality indicator for family child care programs across the country.</p>
+            </div>`;
+        }
+        $("#helpModalBody").html(content);
+        $("#helpModalLabel").text(
+            type === "type" ? "Provider Types" : "Accreditation Types"
+        );
+    });
+
+    // Handle help icon click
+    $(".help-icon-types").on("click", function () {
+        const content = `
+            <div>
+                <h5>School-age Center</h5>
+                <p style="font-size: 12px;">Center-based child care provided before and/or after the regular school day.</p>
+            </div>
+            <div>
+                <h5>Family Child Care Home</h5>
+                <p style="font-size: 12px;">Home-based child care provider.</p>
+            </div>
+            <div>
+                <h5>Preschool Center</h5>
+                <p style="font-size: 12px;">Center based child care provider for children around the ages of 2-4 years old.</p>
+            </div>
+            <div>
+                <h5>Group Child Care Home</h5>
+                <p style="font-size: 12px;">Home-based child care provider (larger capacity than Family Child Care Home).</p>
+            </div>
+            <div>
+                <h5>Infant and Toddler Center</h5>
+                <p style="font-size: 12px;">Center-based child care for infants and toddlers.</p>
+            </div>
+            `;
+        $("#helpModalBody").html(content);
+        $("#helpModalLabel").text("Service Types");
+    });
+});
+</script>
+<style>
+    .help-icon, .help-icon-types {
+        cursor: pointer;
+        margin-left: 5px;
+        vertical-align: middle;
+    }
+</style></div></div>
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous" mode="no-cors"></script>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+  <style>
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+    
+    .badge {
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .yellow-badge {
+      margin: auto;
+      background-color: #fffaeb;
+      border: 1px solid #fedf89;
+      border-radius: 6px;
+      color: #b42318;
+    }
+
+    .green-badge {
+      margin: auto;
+      background-color: #ecfdf3;
+      border: 1px solid #abefc6;
+      color: #067647;
+    }
+
+    .red-badge {
+      margin: auto;
+      background-color: #fef3f2;
+      border: 1px solid #fecdca;
+      color: #b42318;
+    }
+
+    .container {
+      font-family: "Inter"
+      , sans-serif;
+    }
+
+    /*Top Section*/
+    .container {
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      max-width: 100%
+    }
+
+    .topSection-container {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      background: #fff;
+      border-top: 1px solid #E7E7E7;
+      border-bottom: 1px solid #333333;
+      padding: 30px 20px;
+      gap: 10px;
+      margin-top: 20px;
+      min-height: 200px;
+    }
+
+
+    .topSection-left,
+    .topSection-right {
+      min-width: 50%;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .topSection-left {
+      border-right: 1px solid #333333;
+      justify-content: space-evenly;
+    }
+
+    .topSection-right {
+      justify-content: space-evenly;
+    }
+
+
+    .topSection-column {
+      margin: 0;
+    }
+
+    .titleAndContact {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 20px;
+      width: 500px;
+    }
+
+    .contactModRow {
+      span {
+        font-size: 24px;
+      }
+    }
+
+    .topSection-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      p {
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0;
+        color: #333333;
+        text-decoration: none !important;
+      }
+      span, i, a {
+        font-size: 16px;
+        color: #333333;
+      }
+    }
+
+    .serviceName {
+      font-weight: 700;
+      font-size: 40px;
+    }
+
+    .serviceType {
+      font-weight: 600;
+      font-size: 20px;
+    }
+
+    .summary {
+      min-height: 50%;
+      min-width: 30%
+    }
+
+    .detailsMobile {
+      display: none;
+    }
+
+    #accRow01, #accRow02, #accRow03, #accRowNA {
+      display: none;
+      flex-direction: row;
+      gap: 5px;
+    }
+
+    /*Bottom Section*/
+    .tabBody {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding-top: 30px;
+      gap: 15px;
+      background-color: #F5F5F5;
+    }
+
+    .tabBody-left,
+    .tabBody-right {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tabBody-left {
+      width: 60%;
+    }
+
+    .tabBody-right {
+      width: 35%;
+    }
+
+    .tabBody-right table td:first-child {
+      padding-left: 20px;
+    }
+
+    .tabBody-right table td:last-child {
+      padding-right: 20px;
+    }
+
+    .card {
+      margin: 15px;
+      background-color: #FFFFFF;
+      border: 2px solid #e5e5e5;
+      border-radius: 15px;
+    }
+
+    .cardHeader {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 15px;
+      border-top-left-radius: 15px;
+      border-top-right-radius: 15px;
+      background-color: #5E4884;
+
+      .icon {
+        min-width: 25px;
+        min-height: 25px;
+        background-color: white;
+        mask-repeat: no-repeat;
+      }
+      .folder-icon {
+        -webkit-mask-image: url('/folder.svg');
+        mask-image: url('/folder.svg');
+      }
+      .clock-icon {
+        -webkit-mask-image: url('/clock.svg');
+        mask-image: url('/clock.svg');
+      }
+      .apple-icon {
+        -webkit-mask-image: url('/apple.svg');
+        mask-image: url('/apple.svg');
+      }
+      .faq-icon {
+        -webkit-mask-image: url('/faq.svg');
+        mask-image: url('/faq.svg');
+      }
+
+      h2 {
+        font-size: 24px;
+        font-weight: bold;
+        color: #FFFFFF;
+        margin-left: 15px;
+        margin-bottom: 0;
+      }
+    }
+
+    .contact-icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .cardBody,
+    .cardLicense {
+      padding: 20px;
+    }
+    .mapIframe {
+      border: 2px solid #3c747b;
+      border-radius: 15px;
+      min-height: 600px;
+      min-width: 100%;
+    }
+
+    /*Liscense Status Table Header*/
+    .historyTableHeader {
+      height: 44px;
+      background: #3c747b;
+      width: 150px;
+      text-align: center;
+      color: #eee;
+    }
+
+    .historyArrows {
+      display: inline-flex;
+      height: 25px;
+      cursor: pointer;
+      background: #ffffff;
+      padding: 2px;
+      border-radius: 50%;
+      width: 25px;
+      text-align: center;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #history {
+      border: 1px solid #e7e7e7;
+      border-radius: 5px;
+    }
+
+    table {
+      min-width: 100%;
+      font-size: 16px;
+      text-align: right;
+    }
+
+    th {
+      background-color: #3B747B;
+      border: none;
+      color: #ffffff;
+    }
+
+    th,
+    td {
+      height: 50px;
+    }
+
+    button {
+      cursor: pointer;
+      background-color: transparent;
+      border: none;
+      white-space: normal;
+      /* Allows text to wrap */
+      word-wrap: break-word;
+      /* Breaks long words to wrap */
+      overflow-wrap: break-word;
+      /* Ensures compatibility */
+    }
+
+    table tr:nth-child(even) {
+      background-color: #F5F5F5;
+    }
+
+    #hours td:nth-child(odd),
+    #meal td:nth-child(odd) {
+      font-size: 20px;
+      font-weight: bold;
+      text-align: left;
+    }
+
+    #historyTable td,
+    #historyTable th {
+      text-align: center;
+    }
+
+    #historyTable tr:last-child {
+      border-top: 1px solid #e7e7e7;
+    }
+
+    #historyTable table {
+      min-width: 60%;
+      tbody {
+        width: 60%;
+      }
+    }
+
+    #historyTable td {
+      border: 1px solid #e7e7e7;
+    }
+
+    #historyControl {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      border: none;
+      background-color: #F5F5F5;
+    }
+
+    .historyFooter {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 10px;
+      font-size: 16px;
+      padding: 8px;
+    }
+
+    .historyFooter select {
+      padding: 0 !important;
+    }
+
+    #locationAddress,
+    #mailingAddress {
+      width: 50%;
+    }
+
+    .mailDisplay {
+      font-size: 18px;
+      width: 45%;
+    }
+
+    .columnSummary {
+      margin-top: 10px;
+    }
+
+    #contactModePH, #contactModeP2, #contactModeMO, #contactModeFX, #contactModeEM, #contactModeWW, #contactModeNone {
+      display: none;
+      flex-direction: row;
+      gap: 10px;
+    }
+
+    #contact p {
+      display: none;
+    }
+
+    #misc {
+      font-size: 20px;
+      padding-left: 20px;
+    }
+
+    #historyCardContainer {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 10px;
+    }
+
+    .historyCard {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: column;
+      align-item: center;
+      gap: 8px;
+      border: 1px solid #CCCCCC;
+      border-radius: 10px;
+      padding: 8px;
+      background-color: #FFFFFF;
+    }
+
+    .historyCard h4 {
+      font-weight: 700;
+      font-size: 16px;
+      background-color: #3B747B;
+      color: #FFFFFF;
+      padding: 4px 8px;
+      text-align: center;
+      border-radius: 6px;
+      margin: 0;
+    }
+
+    .historyCard .grid {
+      display: grid;
+      grid-template-columns: auto auto;
+      gap: 8px 10px;
+      width: 100%;
+    }
+
+    .historyCard p {
+      margin: 0;
+    }
+
+    select {
+      border: none;
+      background: transparent;
+      padding: 10px;
+    }
+
+    @media screen and (max-width: 800px) {
+
+      .topSection-container {
+        flex-direction: column;
+        gap: 20px;
+        padding: 30px 20px;
+      }
+
+      .topSection-left {
+        border-right: none;
+        border-bottom: 1px solid #CCCCCC;
+        padding: 0px 8px 20px;
+        justify-content: space-between;
+      }
+
+      .topSection-right {
+        padding-bottom: 20px;
+      }
+
+      .topSection-column {
+        padding: 0px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .topSection-item.summary {
+        min-height: initial;
+      }
+
+      .tabBody-left {
+        width: 100%;
+      }
+
+      .tabBody-right {
+        width: 100%;
+      }
+
+      .addressDisplay {
+        flex-direction: column;
+      }
+
+      .mailDisplay {
+        margin-top: 10px;
+        padding-left: 10px;
+        padding-right: 10px;
+        width: 100%;
+      }
+
+      .section1 {
+        flex-direction: column;
+      }
+
+      .summary2 {
+        height: 100%;
+      }
+
+      .columnSummary {
+        min-height: 40px;
+      }
+
+      .titleAndContact {
+        width: initial;
+      }
+
+    }
+
+    @media screen and (max-width: 500px) {
+      /*Top Section Mobile View*/
+      .topSection-container {
+        max-width: 90%;
+        margin: 8px auto;
+        flex-direction: column;
+        border: 1px solid #CCCCCC;
+        border-radius: 10px;
+        padding: 8px;
+        align-items: center;
+      gap: 10px;
+      }
+      .topSection-left {
+        min-width: 100%;
+        flex-direction: column;
+        border: none;
+      }
+      .topSection-column {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+      }
+      .titleAndContact {
+        width: 100%;
+      }
+      .serviceName {
+        font-size: 16px;
+        background-color: #5E4884;
+        color: #FFFFFF;
+        padding: 4px 8px;
+        text-align: center;
+        border-radius: 6px;
+      }
+      .serviceType {
+      font-size: 14px;
+        font-weight: 400;
+      }
+      #contact p {
+        display: block;
+        margin-bottom: 10px;
+      }
+      #contactModePH, #contactModeP2, #contactModeMO, #contactModeFX, #contactModeEM, #contactModeWW, #contactModeNone {
+        margin-left: 5px;
+      }
+      .topSection-item span {
+        margin: 10px 0;
+      }
+      .topSection-item p,
+      .detailsMobile h4 {
+        font-weight: 700;
+        background-color: #5E4884;
+        color: #FFFFFF;
+        padding: 4px 8px;
+        text-align: center;
+        border-radius: 6px;
+      }
+
+      .topSection-item {
+          p {
+              font-size: 16px;
+          }
+          i, a, span {
+              font-size: 14px;
+          }
+      }
+    
+      .contact-icon {
+          width: 16px;
+          height: 16px;
+      }
+      
+      .detailsMobile h4 {
+            font-size: 16px;
+      }
+
+      .detailsMobile {
+            b, span {
+              font-size: 14px;
+            }
+      }
+        
+      .topSection-right {
+        display: none;
+      }
+      .detailsMobile {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+      }
+      /*Main or Bottom Section Mobile View*/
+      .mapIframe {
+        min-height: 80vw;
+        margin-top: 5px;
+        margin-bottom: 5px;
+      }
+      .card {
+        width: 90%;
+        margin: 5px auto;
+        border: none;
+        background-color: #F5F5F5;
+      }
+      .cardHeader {
+        justify-content: center;
+        padding: 4px 8px;
+        border-radius: 6px;
+        h2 {
+          font-size: 16px;
+          font-weight: 700;
+        }
+      }
+      .cardBody,
+      .cardLicense {
+        border-radius: 10px;
+        margin: 10px auto;
+        width: 100%;
+      }
+      .cardLicense {
+        padding: 0px;
+      }
+      .cardBody {
+        border: 1px solid #CCCCCC;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 8px;
+        background-color: #FFFFFF
+      }
+      
+      .badge {
+        padding: 4px 8px;
+        font-size: 14px;
+        width: 100%;
+      }
+      #misc {
+        font-size: 18px;
+      }
+
+      #misc b {
+        font-size: 16px;
+        font-weight: 700;
+      }
+      #misc p {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+
+      #history {
+        display: none;
+      }
+      #historyCardContainer {
+        display: flex;
+        background-color: #F5F5F5
+      }
+      td {
+          height: auto;
+          padding: 8px;
+      }
+      #hours td,
+      #meal td {
+          font-size: 14px;
+          font-weight: 600;
+      }
+      #hours td:nth-child(odd),
+      #meal td:nth-child(odd) {
+          font-size: 16px;
+          font-weight: 700;
+          border: 1px solid transparent;
+          border-top-left-radius: 6px;
+          border-bottom-left-radius: 6px;
+      }
+      #hours td:nth-child(even),
+      #meal td:nth-child(even) {
+          border: 1px solid transparent;
+          border-top-right-radius: 6px;
+          border-bottom-right-radius: 6px;
+      }
+    
+      .historyCard {
+          p, i, a {
+              font-size: 14px;
+          }
+      }
+      
+      .tabBody {
+          margin: 0;
+          gap: 0;
+      }
+    }
+    
+    .see-more-results {
+      width: 100%;
+      max-width: 450px;
+      background-color: #CA4623;
+      color: white;
+      padding: 8px 12px;
+      font-weight: 500;
+      border-radius: 8px;
+      border: none;
+    }
+    .state-hidden {
+      display: none !important;
+    }
+
+    footer {
+      margin-top: 0px !important;
+    }
+
+  </style>
+
+
+<title>Service Information</title>
+
+  <div class="xrm-editable-html xrm-attribute" data-languagecontext="English"><div class="xrm-attribute-value"><div id="loading" style="position: fixed; top: 0px; left: 0px; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.9); z-index: 1000; display: none; justify-content: center; align-items: center; box-sizing: border-box; font-family: Inter, sans-serif;">
+  <div class="loading-container" style="background-color: rgb(255, 255, 255); padding-top: 20px; padding-right: 40px; padding-bottom: 20px; padding-left: 40px; border-top-left-radius: 8px; border-top-right-radius: 8px; border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 8px; text-align: center; box-sizing: border-box; font-family: Inter, sans-serif;">
+    <div class="spinner-border" style="width: 3rem; height: 3rem; border-right-width: 0.3rem; border-bottom-width: 0.3rem; border-left-width: 0.3rem; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-right-color: rgb(227, 227, 227); border-bottom-color: rgb(227, 227, 227); border-left-color: rgb(227, 227, 227); border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; border-top-width: 0.3rem; border-top-style: solid; border-top-color: rgb(34, 118, 124); border-top-left-radius: 50%; border-top-right-radius: 50%; border-bottom-right-radius: 50%; border-bottom-left-radius: 50%; animation-duration: 1.5s; animation-timing-function: ease-in-out; animation-delay: 0s; animation-iteration-count: infinite; animation-direction: normal; animation-fill-mode: none; animation-play-state: running; animation-name: spin; animation-timeline: auto; animation-range-start: normal; animation-range-end: normal; margin-bottom: 10px; box-sizing: border-box; font-family: Inter, sans-serif;"></div>
+    <p style="margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; color: rgb(108, 117, 125); font-size: 1rem; font-weight: 500; box-sizing: border-box; font-family: Inter, sans-serif;">Loading...</p>
+  </div>
+</div>
+</div></div>
+  <div class="xrm-editable-html xrm-attribute" data-languagecontext="English"><div class="xrm-attribute-value">
+<style>
+  .nav-icon-open {
+    display: none;
+  }
+  .nav-container {
+    width: 100%;
+    padding: 10px 20px 10px 20px;
+    border-top: 4px solid #0f737a;
+    border-bottom: 4px solid #0f737a;
+    background-color: #ffffff;
+  }
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .nav-item {
+    display: flex;
+    justify-content: space-between;
+    margin: auto;
+  }
+  .nav-tem a p:hover {
+    text-decoration: none !important;
+  }
+  .nav-item:hover a i {
+    background-color: #0f737a;
+  }
+  .nav-item:hover a p {
+    color: #0f737a;
+  }
+  .disableNavItem a,
+  .disableNavItem:hover a {
+    pointer-events: none;
+    cursor: not-allowed;
+    p {
+      color: #3B747B;
+    }
+    h1 {
+      color: #3B747B;
+    }
+    i {
+      background-color: #3B747B;
+    }
+  }
+  .disableNavItem:hover {
+    background-color: #ffffff !important;
+  }
+  .nav a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-decoration: none;
+  }
+  .icon {
+    min-width: 24px;
+    min-height: 25px;
+    background-color: black;
+    mask-repeat: no-repeat;
+  }
+  .info-icon {
+    -webkit-mask-image: url(/info.svg);
+    mask-image: url(/info.svg);
+  }
+  .inspection-icon {
+    -webkit-mask-image: url(/search.svg);
+    mask-image: url(/search.svg);
+  }
+  .deficiencies-icon {
+    -webkit-mask-image: url(/cancel.svg);
+    mask-image: url(/cancel.svg);
+  }
+  .complaints-icon {
+    -webkit-mask-image: url(/warning.svg);
+    mask-image: url(/warning.svg);
+  }
+  .nav p {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0px;
+  }
+  .navHeader-container {
+    width: 80%;
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+    border-bottom: 1px solid #e7e7e7;
+    margin: 10px;
+  }
+  /*Mobile View*/
+  @media all and (max-width: 768px) {
+    .nav-container {
+      display: none;
+      flex-direction: column;
+      padding: 0;
+      border: none;
+      width: 80%;
+      height: 100%;
+      position: fixed;
+      top: 0px;
+      background-color: #ffffff;
+      z-index: 100;
+    }
+    .nav {
+      display: none;
+      justify-content: start;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 20px;
+    }
+    .nav a {
+      justify-content: center;
+      flex-direction: row;
+      gap: 20px;
+      padding: 16px;
+    }
+    .nav-icon-open, .nav-icon-close {
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      align-items: end;
+      height: 24px;
+      z-index: 10;
+    }
+    .nav-icon-open {
+      position: relative;
+      bottom: 160px;
+      right: 20px;
+    }
+    .nav-icon-close {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: row;
+      margin: 0px;
+    }
+    .nav-item:hover {
+      background-color: #f2f4f7;
+      border-radius: 10px;
+    }
+  }
+  .open {
+    display: flex;
+  }
+  .hidden {
+    display: none;
+  }
+</style>
+<a class="nav-icon-open">
+  <img id="navToggleOpen" src="/burger.svg" alt="open menu">
+</a>
+<a class="nav-icon-close hidden" id="navToggleClose">
+  <img src="/close.svg" alt="close menu">
+</a>
+<div class="nav-container">
+  <!--NavBar Header-->
+  <header class="navHeader-container">
+    <div class="header-left">
+      <div class="logo">
+        <a title="State of Hawaii Homepage" aria-label="State of Hawaii Homepage" href="https://portal.ehawaii.gov/"><img src="/StateSeal.png" alt="State of Hawaii Seal" class="header-state"></a>
+        <a title="DHS Homepage" aria-label="DHS Homepage" href="https://humanservices.hawaii.gov/"><img src="/DHSSeal.png" alt="Department of Hawaii Seal" class="header-dhs"></a>
+      </div>
+    </div>
+    <div class="header-middle">
+      <a style="text-decoration: none" href="/" onclick="sessionStorage.clear()">
+        <div class="header1Parent">
+          <span class="header1">State of Hawaiʻi</span><br>
+        </div>
+        <div class="header2Parent">
+          <span class="header2">Department of Human Services</span>
+        </div>
+        <span class="header3">Child Care Provider Search</span>
+      </a>
+    </div>
+  </header>
+  <nav class="nav">
+    <div class="nav-item disableNavItem" id="detailsNav">
+      <a id="providerInfoLink" href="/details/?serviceId=92021">
+        <i class="icon info-icon"></i>
+        <p class="general-info">GENERAL INFORMATION</p>
+      </a>
+    </div>
+    <div class="nav-item" id="inspectionsNav">
+      <a id="inspectionsLink" href="/inspections/?serviceId=92021">
+        <i class="icon inspection-icon"></i>
+        <p>INSPECTIONS</p>
+      </a>
+    </div>
+    <div class="nav-item" id="deficienciesNav">
+      <a id="deficienciesLink" href="/deficiencies/?serviceId=92021">
+        <i class="icon deficiencies-icon"></i>
+        <p>DEFICIENCIES</p>
+      </a>
+    </div>
+    <div class="nav-item" id="complaintsNav">
+      <a id="complaintsLink" href="/complaints/?serviceId=92021">
+        <i class="icon complaints-icon"></i>
+        <p>COMPLAINTS</p>
+      </a>
+    </div>
+  </nav>
+</div>
+<script>
+  const navToggleOpen = document.querySelector("#navToggleOpen");
+  const navToggleClose = document.querySelector("#navToggleClose");
+  const container = document.querySelector(".nav-container");
+  const header = document.querySelector(".navHeader-container");
+  const nav = document.querySelector("nav");
+  let getId = new URLSearchParams(window.location.search);
+  let id = getId.get("serviceId");
+  document
+    .getElementById("providerInfoLink")
+    .setAttribute("href", "/details/?serviceId=" + `${id}`);
+  document
+    .getElementById("inspectionsLink")
+    .setAttribute("href", "/inspections/?serviceId=" + `${id}`);
+  document
+    .getElementById("deficienciesLink")
+    .setAttribute("href", "/deficiencies/?serviceId=" + `${id}`);
+  document
+    .getElementById("complaintsLink")
+    .setAttribute("href", "/complaints/?serviceId=" + `${id}`);
+  navToggleOpen.addEventListener("click", () => {
+    nav.classList.toggle("open");
+    container.classList.toggle("open");
+    header.classList.toggle("open");
+    navToggleClose.classList.toggle("hidden");
+    navToggleOpen.classList.toggle("hidden"); 
+  });
+  navToggleClose.addEventListener("click", () => {
+    nav.classList.toggle("open");
+    container.classList.toggle("open");
+    header.classList.toggle("open");
+    navToggleClose.classList.toggle("hidden");
+    navToggleOpen.classList.toggle("hidden"); 
+  });
+  window.addEventListener("click", (event) => {
+    if (event.target == nav) {
+      nav.classList.toggle("open");
+      container.classList.toggle("open");
+    }
+  });
+</script></div></div>
+  
+  <div class="xrm-editable-html xrm-attribute" data-languagecontext="English"><div class="xrm-attribute-value"><style>
+    #breadcrumb-container {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+    .back-link {
+        padding: 0;
+        text-decoration: underline;
+        font-weight: 700;
+        color: #0f737a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+</style>
+<!-- requires pageName set before call -->
+<div id="breadcrumb-container">
+    <div style="display: flex; gap: 12px; align-items: center; padding: 10px 20px 0" class="mobile-hidden">
+        <button onclick="location.href='/'" style="font-size: 14px;" class="back-link">
+            SEARCH RESULTS
+        </button>
+        <span>
+            <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 12.5L10 8.5L6 4.5" stroke="#555555" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+        </span>
+        <span style="font-weight: 600; font-size: 14px;">GENERAL INFORMATION</span>
+    </div>
+</div></div></div>
+  <script>
+      document.addEventListener("DOMContentLoaded", function() {
+    // Select the nav item by its ID
+    const currentNav = document.querySelector('#detailsNav');
+    currentNav.classList.toggle('disableNavItem');
+    // Optionally, prevent the default action
+    currentNav.addEventListener('click', function(event) {
+      event.preventDefault();
+    });
+      });
+  </script>
+  <!-- Provider Summary Container -->
+  <span style="display: none; margin: 24px 20px;" id="noDataFound">
+    <p style="font-weight: 400; font-size: 20px;">
+    This service ID does not exist.
+    </p>
+  </span>
+  <div id="main-content" role="body" class="container">
+    <div class="topSection-container">
+      <div class="topSection-left">
+        <div class="topSection-column titleAndContact">
+          <div class="topSection-item">
+            <div class="serviceName" id="serviceName">PUNANA LEO O HILO INFANT TODDLER</div>
+            <div class="serviceType" id="serviceType">Infant and Toddler Center</div>
+          </div>
+
+          <div class="topSection-item" id="contact">
+            <p>Contact</p>
+            <div id="contactModePH" style="display: flex;">
+              <div id="modePH"><span><svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+  <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122l-2.19.547a1.75 1.75 0 0 1-1.657-.459L5.482 8.062a1.75 1.75 0 0 1-.46-1.657l.548-2.19a.68.68 0 0 0-.122-.58zM1.884.511a1.745 1.745 0 0 1 2.612.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.68.68 0 0 0 .178.643l2.457 2.457a.68.68 0 0 0 .644.178l2.189-.547a1.75 1.75 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.6 18.6 0 0 1-7.01-4.42 18.6 18.6 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877z" stroke="#333333" stroke-width="0.5"></path>
+</svg></span></div>
+              <div id="modeValPH"><span><a href="tel:8089354304"> (808) 935-4304</a></span></div>
+            </div>
+            <div id="contactModeP2">
+              <div id="modeP2"></div>
+              <div id="modeValP2"></div>
+            </div>
+            <div id="contactModeMO">
+              <div id="modeMO"></div>
+              <div id="modeValMO"></div>
+            </div>
+            <div id="contactModeFX">
+              <div id="modeFX"></div>
+              <div id="modeValFX"></div>
+            </div>
+            <div id="contactModeEM">
+              <div id="modeEM"></div>
+              <div id="modeValEM"></div>
+            </div>
+            <div id="contactModeWW">
+              <div id="modeWW"></div>
+              <div id="modeValWW"></div>
+            </div>
+            <div id="contactModeNone">
+              <div id="modeNone"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="topSection-column">
+          <div class="topSection-item summary">
+            <p>Location Address</p>
+            <span id="locationAddress">16-120 OPUKAHA IA STREET, KEAAU, HI 96749</span>
+          </div>
+          <div class="topSection-item summary">
+            <p>Mailing Address</p>
+            <span id="mailingAddress">96 PUUHONU PL, HILO, HI 96720</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="topSection-right">
+        <div class="topSection-column">
+          <div class="topSection-item summary">
+            <p>License Number</p>
+            <span id="licenseNumber">17993</span>
+          </div>
+
+          <div class="topSection-item summary">
+            <p>Accreditations</p>
+            <div id="accRow01">
+              <span id="acc01"></span>
+              <span id="accVals01">N/A</span>
+            </div>
+            <div id="accRow02">
+              <span id="acc02"></span>
+              <span id="accVals02"></span>
+            </div>
+            <div id="accRow03">
+              <span id="acc03"></span>
+              <span id="accVals03"></span>
+            </div>
+            <div id="accRowNA" style="display: flex;">N/A</div>
+          </div>
+        </div>
+
+        <div class="topSection-column">
+          <div class="topSection-item summary">
+            <p>Effective Date</p>
+            <span id="effectiveDateSummary">09/08/2025 - 09/07/2026</span>
+          </div>
+          <div class="topSection-item">
+            <p>Age Range</p>
+            <span id="ageRange">over 9 months - under 3 years</span>
+          </div>
+        </div>
+
+        <div class="topSection-column">
+          <div class="topSection-item summary">
+            <p id="refreshHanaData">Type</p>
+            <span id="licenseTypeSummary">Regular</span>
+          </div>
+          <div class="topSection-item summary">
+            <p>Capacity</p>
+            <span id="capacitySummary">9</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detailsMobile">
+        <h4>Details</h4>
+        <ul>
+          <li>
+            <b>License Number:
+            </b>
+            <span id="licenseNumberM">17993</span>
+          </li>
+          <li>
+            <b>Accreditations:
+            </b>
+            <span id="acc01M"></span>
+            <span id="accVals01M">N/A</span>
+            <span id="acc02M"></span>
+            <span id="accVals02M"></span>
+            <span id="acc03M"></span>
+            <span id="accVals03M"></span>
+          </li>
+          <li>
+            <b>Effective Date:</b>
+            <span id="effectiveDateSummaryM">09/08/2025 - 09/07/2026</span>
+          </li>
+          <li>
+            <b id="refreshHanaData">Type:
+            </b>
+            <span id="licenseTypeSummaryM">Regular</span>
+          </li>
+          <li>
+            <b>Age Range:
+            </b>
+            <span id="ageRangeM">over 9 months - under 3 years</span>
+          </li>
+          <li>
+            <b>Capacity</b>
+            <span id="capacitySummaryM">9</span>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Main Body -->
+    <div class="tabBody">
+      <div class="tabBody-left">
+        <div class="card">
+          <iframe class="mapIframe" src="https://maps.google.com/maps?q=16-120 OPUKAHA IA STREET, KEAAU, HI 96749&amp;t=&amp;z=13&amp;ie=UTF8&amp;iwloc=&amp;output=embed" display="block" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+
+        <div class="card">
+
+          <div class="cardHeader">
+            <i class="icon folder-icon"></i>
+            <h2>Licensed Status</h2>
+          </div>
+
+          <div class="cardLicense">
+            <div id="history">
+              <table id="historyTable">
+                <tbody><tr><th style="border-top-left-radius: 5px">Status</th>
+                <th>Effective Dates</th>
+                <th>Certification #</th>
+                <th>Age Range</th>
+                <th style="border-top-right-radius: 5px">Capacity</th>
+
+                </tr></tbody><tfoot>
+                  <tr><td style="background-color: #F5F5F5;" colspan="5">
+                    <div id="historyControl">
+                      <div class="historyFooter">
+                        <span for="historyPage">
+                          License Status per page
+                        </span>
+                        <select id="historyPage" name="historyPage">
+                          <option value="5" selected="">5</option>
+                          <option value="10">10</option>
+                          <option value="15">15</option>
+                          <option value="20">20</option>
+                        </select>
+                      </div>
+                      <div class="historyFooter">
+                        <span id="historyBack" style="margin-left: 10px;">
+                          <button><img src="/chevron-left.svg" alt=""></button>
+                        </span>
+                        <div>Page</div>
+                        <span id="historyCurrentPage">1</span>
+                        <div>/</div>
+                        <span id="historyAllPage">1</span>
+                        <span id="historyForward" style="margin-left: 1px;">
+                          <button><img src="/chevron-right.svg" alt=""></button>
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                </tr></tfoot>
+              
+              <tbody><tr class="historyRow">
+                  <td><div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge green-badge">Licensed</p></div></td>
+                    <td>09/08/2025 - 09/07/2026</td>
+                  <td>9657</td>
+                    <td>over 9 months - under 3 years</td>
+                  <td>9</td>
+              </tr>
+              <tr class="historyRow">
+                  <td><div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge green-badge">Licensed</p></div></td>
+                    <td>09/08/2024 - 09/07/2025</td>
+                  <td>9130</td>
+                    <td>over 9 months - under 4 years</td>
+                  <td>9</td>
+              </tr>
+              <tr class="historyRow">
+                  <td><div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge green-badge">Licensed</p></div></td>
+                    <td>12/08/2023 - 09/07/2024</td>
+                  <td>8968</td>
+                    <td>over 9 months - under 4 years</td>
+                  <td>9</td>
+              </tr>
+              <tr class="historyRow">
+                  <td><div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge green-badge">Provisional</p></div></td>
+                    <td>09/14/2023 - 12/08/2023</td>
+                  <td>9637</td>
+                    <td>over 9 months - under 4 years</td>
+                  <td>9</td>
+              </tr></tbody></table>
+            </div>
+            <div id="historyCardContainer">
+              <div class="historyCard">
+                    <div><div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge green-badge">Licensed</p></div></div>
+                    <h4>Effective Dates</h4>
+                    <p>09/08/2025 - 09/07/2026</p>
+                    <h4>Age Range</h4>
+                    <p>over 9 months - under 3 years</p>
+                    <div class="grid">
+                    <h4>Cert.#</h4>
+                    <h4>Capacity</h4>
+                    <p>9657</p>
+                    <p>9</p>
+                    </div></div><div class="historyCard">
+                    <div><div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge green-badge">Licensed</p></div></div>
+                    <h4>Effective Dates</h4>
+                    <p>09/08/2024 - 09/07/2025</p>
+                    <h4>Age Range</h4>
+                    <p>over 9 months - under 4 years</p>
+                    <div class="grid">
+                    <h4>Cert.#</h4>
+                    <h4>Capacity</h4>
+                    <p>9130</p>
+                    <p>9</p>
+                    </div></div><div class="historyCard">
+                    <div><div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge green-badge">Licensed</p></div></div>
+                    <h4>Effective Dates</h4>
+                    <p>12/08/2023 - 09/07/2024</p>
+                    <h4>Age Range</h4>
+                    <p>over 9 months - under 4 years</p>
+                    <div class="grid">
+                    <h4>Cert.#</h4>
+                    <h4>Capacity</h4>
+                    <p>8968</p>
+                    <p>9</p>
+                    </div></div><div class="historyCard">
+                    <div><div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge green-badge">Provisional</p></div></div>
+                    <h4>Effective Dates</h4>
+                    <p>09/14/2023 - 12/08/2023</p>
+                    <h4>Age Range</h4>
+                    <p>over 9 months - under 4 years</p>
+                    <div class="grid">
+                    <h4>Cert.#</h4>
+                    <h4>Capacity</h4>
+                    <p>9637</p>
+                    <p>9</p>
+                    </div></div><button id="seeMoreResults" class="see-more-results state-hidden">See More Results</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabBody-right">
+        <div class="card">
+          <div class="cardHeader">
+            <i class="icon clock-icon"></i>
+            <h2>Hours of Operations</h2>
+          </div>
+
+          <div class="cardBody">
+            <table id="hours">
+              <tbody><tr>
+                <td>Sunday</td>
+                <td id="hours1"><span>CLOSED</span></td>
+              </tr>
+              <tr>
+                <td>Monday</td>
+                <td id="hours2"><span>7:30 AM - 3:30 PM</span><br></td>
+              </tr>
+              <tr>
+                <td>Tuesday</td>
+                <td id="hours3"><span>7:30 AM - 3:30 PM</span><br></td>
+              </tr>
+              <tr>
+                <td>Wednesday</td>
+                <td id="hours4"><span>7:30 AM - 3:30 PM</span><br></td>
+              </tr>
+              <tr>
+                <td>Thursday</td>
+                <td id="hours5"><span>7:30 AM - 3:30 PM</span><br></td>
+              </tr>
+              <tr>
+                <td>Friday</td>
+                <td id="hours6"><span>7:30 AM - 3:30 PM</span><br></td>
+              </tr>
+              <tr>
+                <td>Saturday</td>
+                <td id="hours7"><span>CLOSED</span></td>
+              </tr>
+            </tbody></table>
+          </div>
+
+        </div>
+
+        <div class="card">
+          <div class="cardHeader">
+            <i class="icon apple-icon"></i>
+            <h2>Meals and Snacks</h2>
+          </div>
+
+          <div class="cardBody">
+            <table id="meal">
+              <tbody><tr>
+                <td>Breakfast</td>
+                <td id="mealBR">Yes</td>
+              </tr>
+              <tr>
+                <td>Morning Snack</td>
+                <td id="mealMS">No</td>
+              </tr>
+              <tr>
+                <td>Lunch</td>
+                <td id="mealLU">Yes</td>
+              </tr>
+              <tr>
+                <td>Afternoon Snack</td>
+                <td id="mealAS">Yes</td>
+              </tr>
+              <tr>
+                <td>Dinner</td>
+                <td id="mealDI">No</td>
+              </tr>
+              <tr>
+                <td>Special Meal Request</td>
+                <td id="mealSM">No</td>
+              </tr>
+            </tbody></table>
+          </div>
+
+        </div>
+
+        <div class="card">
+          <div class="cardHeader">
+            <i class="icon faq-icon"></i>
+            <h2>Miscellaneous</h2>
+          </div>
+
+          <div class="cardBody">
+            <div id="misc">
+              <b>Service ID</b>
+              <p id="serviceIdDetails">92021</p>
+
+              <b>USDA Food Program</b>
+              <p id="usdaFoodProgram">Yes</p>
+
+              <b>Diapered Children Accepted</b>
+              <p id="diaperedChildrenAccepted">Yes</p>
+
+              <b>Demonstration Project</b>
+              <p id="demonstrationProject">No</p>
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+      let serviceTypeObject;
+
+      // API call for Service Types
+      
+        const hanaJSON = JSON.parse(`{"hanaResponseStatus":{"responseStatusMessage":"Success","responseCode":200,"requestReceivedAt":"2025-06-13T16:18:23.999-1000","responseReturnedAt":"2025-06-13T16:18:24.004-1000"},"hanaResponse":{"codeTableRows":[{"code":"AC","shortName":"ACT","publicName":null},{"code":"EM","shortName":"EMP","publicName":null},{"code":"I1","shortName":"ILL","publicName":"Illegal Child Care Center"},{"code":"I2","shortName":"ILL","publicName":"Illegal Child Care Home"},{"code":"TR","shortName":"TRT","publicName":null},{"code":"01","shortName":"REL","publicName":"Exempt Family Child Care Home - relative"},{"code":"02","shortName":"FCC","publicName":"Family Child Care Home"},{"code":"03","shortName":"GCC","publicName":"Preschool Center"},{"code":"04","shortName":"BAS","publicName":"School-age Center"},{"code":"05","shortName":"IT","publicName":"Infant and Toddler Center"},{"code":"06","shortName":"LE-GCC","publicName":"Exempt Preschool Center"},{"code":"07","shortName":"LE-FCC","publicName":"Exempt Family Child Care Home"},{"code":"08","shortName":"LE-BAS","publicName":"Exempt School-age Center"},{"code":"09","shortName":"GCH","publicName":"Group Child Care Home"},{"code":"10","shortName":"LE-GCCMA","publicName":"Exempt Preschool Center - Military, Accredited"},{"code":"11","shortName":"LE-FCCM","publicName":"Exempt Family Child Care Home - Military"},{"code":"12","shortName":"LE-BASM","publicName":"Exempt School-age Center - Military"}]}}`);
+        serviceTypeObject = hanaJSON;
+      
+
+      const serviceCodeMap = {}
+
+      for (const serviceType of serviceTypeObject.hanaResponse.codeTableRows) {
+      serviceCodeMap[serviceType.code] = serviceType.publicName
+      }
+
+      // Map the service type code to its full string
+      function mapServiceTypeToString(serviceCode) {
+      return serviceCodeMap[serviceCode];
+      }
+
+      function formatDate(isoDateString) {
+    // Parse the ISO date string to a Date object
+    const date = new Date(isoDateString);
+
+    date.setHours(date.getHours() + 10);
+    
+    // Extract month, day, and year from the Date object
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    
+    // Format the date to MM/DD/YYYY
+    return `${month}/${day}/${year}`;
+      }
+
+      /**  
+      *  helper function
+      *
+      *  argument: time <integer> - can be 3 digits or 4 digits
+      *
+      *  dividing by 100 gives the first digit or first two digits
+      *  modulus gives us the remainder
+      */
+      function convertMilitaryTime(time) {
+    const hour = Math.floor(time / 100);
+    const minute = time % 100 === 0 ? "00" : time % 100;
+
+    if (time < 1300) {
+      return hour + ":" + minute + " AM";
+    } else {
+      return hour - 12 + ":" + minute + " PM";
+    }
+      }
+
+      /**
+      *    argument: shifts <array> - could be empty or up to three objects
+      */
+      function createWeekdayMapFromShifts(shifts) {
+    const weekdayMap = {
+      1: [],
+      2: [],
+      3: [],
+      4: [],
+      5: [],
+      6: [],
+      7: [],
+    };
+
+    if (!shifts || !shifts.length) return weekdayMap;
+
+    for (const shift of shifts) {
+      if (!shift.hours) continue;
+      for (const shiftHours of shift.hours) {
+        const { endTime, startTime, weekdayNumber } = shiftHours;
+        weekdayMap[weekdayNumber].push({
+          start: convertMilitaryTime(startTime),
+          end: convertMilitaryTime(endTime),
+        });
+      }
+    }
+    return weekdayMap;
+      }
+
+      // Formats shift hours
+      function renderShiftHours(weekdayMap) {
+    for (const [day, shifts] of Object.entries(weekdayMap)) {
+      if (!shifts.length) {
+        document
+          .getElementById("hours" + day)
+          .insertAdjacentHTML("beforeend", `<span>CLOSED</span>`);
+      } else {
+        let shiftHTML = "";
+        for (const shift of shifts) {
+          shiftHTML += `<span>${shift.start} - ${shift.end}</span><br>`;
+        }
+        document
+          .getElementById("hours" + day)
+          .insertAdjacentHTML("beforeend", shiftHTML);
+      }
+    }
+      }
+
+      // Formats phone number into (XXX) XXX-XXXX
+      function formatNumber(value, modeVal) {
+    if (value.substring(0, 2) == "NA") {
+      let val = "";
+      let parseValue = value.substring(2, value.length);
+      let num = parseValue.match(/^(\d{3})(\d{3})(\d{4})$/);
+      if (num !== null) {
+        val = '(' + num[1] + ') ' + num[2] + '-' + num[3];
+      }
+      return val;
+    } else if (value.substring(0, 2) == "IN") {
+      return value.substring(2, value.length);
+    }
+      }
+
+        $(document).ready(function () {
+        let globalEffectiveDate = '';
+        let getId = new URLSearchParams(window.location.search);
+        let getMeals = {};
+        let getLanguages = {};
+        let getAccreditations = {};
+        let getProviderType = '';
+        let minAge = '';
+        let maxAge = '';
+
+     //   $("#ccps-link").show();
+
+        function parseHanaJsonData(response) {
+        const copy = {...response}
+        $("#loading").hide();
+        console.log(response);
+        
+        if (response !== null && response.details.hanaResponseStatus.responseCode === 400) { 
+            // Invalid Service Id
+            console.log("Invalid Service Id!");
+            document.getElementById('main-content').style.display = 'none';
+            document.getElementById('noDataFound').style.display = 'flex';
+        } else if (response !== null) {
+          // Service Summary
+          document.getElementById("serviceName").textContent =
+            response.summary.hanaResponse.serviceName;
+            document.getElementById("serviceType").textContent =
+            mapServiceTypeToString(response.summary.hanaResponse.serviceType);
+          document.getElementById(
+            "effectiveDateSummary"
+          ).innerHTML = `${formatDate(response.summary.hanaResponse.effectiveDate)} - ${formatDate(response.summary.hanaResponse.expirationDate)}`;
+          globalEffectiveDate = `${formatDate(response.summary.hanaResponse.effectiveDate)} - ${formatDate(response.summary.hanaResponse.expirationDate)}`;
+          document.getElementById(
+            "effectiveDateSummaryM"
+          ).innerHTML = `${formatDate(response.summary.hanaResponse.effectiveDate)} - ${formatDate(response.summary.hanaResponse.expirationDate)}`;
+          globalEffectiveDate = `${formatDate(response.summary.hanaResponse.effectiveDate)} - ${formatDate(response.summary.hanaResponse.expirationDate)}`;
+
+          if (response.summary.hanaResponse.minAgeValue !== null) {
+            if (response.summary.hanaResponse.minAgeUnit === 'W') {
+              minAge = translateFromWeeks(response.summary.hanaResponse.minAgeValue);
+            } else if (response.summary.hanaResponse.minAgeUnit === 'M') {
+              minAge = translateFromMonths(response.summary.hanaResponse.minAgeValue);
+            }
+          } else {
+            minAge = '';
+          }
+
+          if (response.summary.hanaResponse.maxAgeValue !== null) {
+            if (response.summary.hanaResponse.maxAgeUnit === 'W') {
+              maxAge = translateFromWeeks(response.summary.hanaResponse.maxAgeValue);
+            } else if (response.summary.hanaResponse.maxAgeUnit === 'M') {
+              maxAge = translateFromMonths(response.summary.hanaResponse.maxAgeValue);
+            }
+          } else {
+            maxAge = '';
+          }
+
+          document.getElementById(
+            "ageRange"
+          ).textContent = `over ${minAge} - under ${maxAge}`;
+          document.getElementById(
+            "ageRangeM"
+          ).textContent = `over ${minAge} - under ${maxAge}`;
+          document.getElementById("licenseNumber").textContent =
+            response.summary.hanaResponse.licenseNumber;
+            document.getElementById("licenseNumberM").textContent =
+            response.summary.hanaResponse.licenseNumber;
+          if (response.summary.hanaResponse.licenseType === "P") {
+            document.getElementById("licenseTypeSummary").textContent =
+              "Provisional";
+              document.getElementById("licenseTypeSummaryM").textContent =
+              "Provisional";
+          } else if (response.summary.hanaResponse.licenseType === "R") {
+            document.getElementById("licenseTypeSummary").textContent =
+              "Regular";
+              document.getElementById("licenseTypeSummaryM").textContent =
+              "Regular";
+          }
+          document.getElementById("capacitySummary").textContent =
+            response.summary.hanaResponse.capacity;
+            document.getElementById("capacitySummaryM").textContent =
+            response.summary.hanaResponse.capacity;
+
+          // Service Details
+          document.getElementById("serviceIdDetails").textContent =
+            response.details.hanaResponse.serviceId;
+          if (response.details.hanaResponse.usdaFoodProgram === true) {
+            document.getElementById("usdaFoodProgram").textContent = "Yes";
+          } else {
+            document.getElementById("usdaFoodProgram").textContent = "No";
+          }
+
+          if (response.details.hanaResponse.diaperedChildrenAccepted === true) {
+            document.getElementById("diaperedChildrenAccepted").textContent = "Yes";
+          } else {
+            document.getElementById("diaperedChildrenAccepted").textContent = "No";
+          }
+          
+          if (response.details.hanaResponse.demonstrationProject === true) {
+             document.getElementById("demonstrationProject").textContent = "Yes";
+          } else {
+             document.getElementById("demonstrationProject").textContent = "No";
+          }
+
+          renderShiftHours(
+            createWeekdayMapFromShifts(response.details.hanaResponse.shifts)
+          );
+
+          function translateFromWeeks(numberOfWeeks) {
+            if (numberOfWeeks === 0) return `1 day`
+            let addSweeks = numberOfWeeks % 52 > 1 ? 's' : ''
+            if (numberOfWeeks > 52) {
+              let addSYears = Math.floor(numberOfWeeks / 52) > 1 ? 's' : '' // dynamically add an 's' to "year"
+              if (numberOfWeeks % 52 !== 0) {
+                return `${Math.floor(numberOfWeeks / 52)} year${addSYears} ${numberOfWeeks % 52} week${addSweeks}`
+              } else {
+                return `${Math.floor(numberOfWeeks / 52)} year${addSYears}`
+              }
+            } else {
+              return numberOfWeeks + ` week${addSweeks}`
+            }
+          }
+
+          function translateFromMonths(numberOfMonths) {
+            let addSmonths = numberOfMonths % 12 > 1 ? 's' : ''
+            if (numberOfMonths >= 12) {
+              let addSYears = Math.floor(numberOfMonths / 12) > 1 ? 's' : '' // dynamically add an 's' to "year"
+              if (numberOfMonths % 12 !== 0) {
+                return `${Math.floor(numberOfMonths / 12)} year${addSYears} ${numberOfMonths % 12} month${addSmonths}`
+              } else {
+                return `${Math.floor(numberOfMonths / 12)} year${addSYears}`
+              }
+            } else {
+              return numberOfMonths + ` month${addSmonths}`
+            }
+          }
+
+          function getAgeRange(serviceRange) {
+            if (serviceRange.minAgeValue !== null && serviceRange.maxAgeValue !== null) {
+
+              // instantiate translated values
+              let minAgeUnitTranslated = '', maxAgeUnitTranslated = ''
+
+              // translate min age unit
+              if (serviceRange.minAgeUnit === "W") {
+                minAgeUnitTranslated = translateFromWeeks(serviceRange.minAgeValue)
+              }
+              else if (serviceRange.minAgeUnit === "M") {
+                minAgeUnitTranslated = translateFromMonths(serviceRange.minAgeValue)
+              }
+
+              // translate max age unit
+              if (serviceRange.maxAgeUnit === "W") {
+                maxAgeUnitTranslated = translateFromWeeks(serviceRange.maxAgeValue)
+              }
+              else if (serviceRange.maxAgeUnit === "M") {
+                maxAgeUnitTranslated = translateFromMonths(serviceRange.maxAgeValue)
+              }
+
+              if (minAgeUnitTranslated !== '' && maxAgeUnitTranslated !== '') {
+                return serviceRange.overallAgeRange = `over ${minAgeUnitTranslated} - under ${maxAgeUnitTranslated}`
+              } else {
+                 return serviceRange.overallAgeRange = '-'
+              }
+            } 
+            else if (serviceRange.minAgeLegacy && serviceRange.maxAgeLegacy) {
+              if (serviceRange.minAgeLegacy !== '' && serviceRange.maxAgeLegacy !== '') {
+                return serviceRange.overallAgeRange = `over ${serviceRange.minAgeLegacy} - under ${serviceRange.maxAgeLegacy}`
+              } else {
+                return serviceRange.overallAgeRange = '-'
+              }
+            } else {
+              return serviceRange.overallAgeRange = '' // no range
+            }
+          }
+
+          function combineHistoryArr(historyHanaRes) {
+            const { histories, licenses } = historyHanaRes;
+            let mergedHistory = [...licenses];
+
+            // dont merge - need to follow confluence
+
+            for (let i = 0; i < histories.length; i++) {
+              histories[i].effectiveDate = histories[i].statusDate;
+              if (
+                histories[i - 1] &&
+                (histories[i - 1].status === "SU" ||
+                  histories[i - 1].status === "PR")
+              ) {
+                if (
+                  histories[i].status === "SU" ||
+                  histories[i].status === "PR"
+                ) {
+                  continue;
+                } else {
+                  histories[i - 1].expirationDate = histories[i].effectiveDate;
+                }
+              }
+            }
+
+            for (const svcHistory of histories) {
+              if (
+                svcHistory.status === "SU" ||
+                svcHistory.status === "PR" ||
+                svcHistory.status === "RE"
+              ) {
+                mergedHistory.push(svcHistory);
+              }
+            }
+
+            // Sort by effective date AND expiration date
+            mergedHistory.sort(function (a, b) {
+                const start = new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime();
+                if (start !== 0) {
+                  return start;
+                }   
+                return new Date(b.expirationDate).getTime() - new Date(a.expirationDate).getTime();
+              }
+            );
+
+            for (let i = 0; i < mergedHistory.length - 1; i++) {
+              const currentStartDate = Date.parse(mergedHistory[i].effectiveDate);
+              const currentStartDatePlusOne = new Date(currentStartDate);
+              currentStartDatePlusOne.setDate(currentStartDatePlusOne.getDate() - 1);
+              if (
+                !mergedHistory[i + 1].expirationDate ||
+                Date.parse(mergedHistory[i + 1].expirationDate) >
+                  currentStartDatePlusOne
+              ) {
+                mergedHistory[i + 1].expirationDate =
+                  mergedHistory[i].effectiveDate;
+              }
+            }
+
+            for (let iter = mergedHistory.length - 2; iter >= 0; iter--) {
+              const currentStartDate = Date.parse(mergedHistory[iter].effectiveDate);
+              const currentStartDateMinusOne = new Date(currentStartDate);
+              currentStartDateMinusOne.setDate(currentStartDateMinusOne.getDate() - 1);
+              if (
+                mergedHistory[iter + 1].expirationDate &&
+                Date.parse(mergedHistory[iter + 1].expirationDate) <
+                  currentStartDateMinusOne
+              ) {
+                const noLicenseEnd = new Date(mergedHistory[iter].effectiveDate)
+                noLicenseEnd.setDate(noLicenseEnd.getDate() - 1);
+                const noLicenseStart = new Date(mergedHistory[iter + 1].expirationDate)
+                noLicenseStart.setDate(noLicenseStart.getDate() + 1);
+                let noLicenseObj = {
+                  expirationDate: noLicenseEnd.toISOString().split('T')[0],
+                  effectiveDate: noLicenseStart.toISOString().split('T')[0],
+                  overallStatus: `<div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge red-badge">No License</p></div>`
+                }
+                mergedHistory.splice(iter + 1, 0, noLicenseObj)
+              }
+            }
+
+            mergedHistory.sort(function (a, b) {
+                const start = new Date(b.effectiveDate).getTime() - new Date(a.effectiveDate).getTime();
+                if (start !== 0) {
+                  return start;
+                }   
+                return new Date(b.expirationDate).getTime() - new Date(a.expirationDate).getTime();
+              }
+            );
+
+            mergedHistory.forEach((history) => {
+              getAgeRange(history) // method will manipulate object too add new field
+
+              if (!history.effectiveDate) {
+                history.effectiveDate = history.statusDate;
+              }
+                history.effectiveDate2 =
+                formatDate(history.effectiveDate) + " - " + formatDate(history.expirationDate);
+
+              if (!history.printNumber) {
+                history.printNumber = "";
+              }
+
+              if (!history.capacity) {
+                history.capacity = "";
+              }
+
+              if (history.status) {
+                switch (history.status) {
+                  case "AC":
+                    history.overallStatus = `<div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge green-badge">Active</p></div>`;
+                    break;
+                  case "CL":
+                    history.overallStatus = `<div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge red-badge">Closed</p></div>`;
+                    break;
+                  case "SU":
+                    history.overallStatus = `<div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge red-badge">Suspended</p></div>`;
+                    break;
+                  case "RE":
+                    history.overallStatus = `<div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge red-badge">Revoked</p></div>`;
+                    break;
+                  case "PE":
+                    history.overallStatus = `<div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge yellow-badge">Pending</p></div>`;
+                    break;
+                  case "PC":
+                    history.overallStatus = `<div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge yellow-badge">Pending Closure</p></div>`;
+                    break;
+                  case "PR":
+                    history.overallStatus = `<div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge yellow-badge">Pending Revocation</p></div>`;
+                    break;
+                }
+              } else {
+                if (history.licenseType === "R") {
+                  history.overallStatus = `<div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge green-badge">Licensed</p></div>`;
+                  
+                } else if (history.licenseType === "P") {
+                  history.overallStatus = `<div style="display: flex; justify-content: center; align-items: flex-start;"><p class="badge green-badge">Provisional</p></div>`;
+                }
+              }
+            });
+
+            return mergedHistory;
+          }
+
+        //  For mobile view, this is only called once
+        // Pushes all elements to DOM with only first 5 visible
+          function populateHistoryCards(sortedHistoryArr) {
+            const cardContainer = document.getElementById("historyCardContainer");
+            const seeMoreButton = document.getElementById("seeMoreResults");
+            sortedHistoryArr.forEach((hE) => {
+                const newCard = document.createElement("div");
+                newCard.classList.add("historyCard");
+                newCard.innerHTML = `
+                    <div>${hE.overallStatus}</div>
+                    <h4>Effective Dates</h4>
+                    <p>${hE.effectiveDate2}</p>
+                    <h4>Age Range</h4>
+                    <p>${hE.overallAgeRange}</p>
+                    <div class="grid">
+                    <h4>Cert.#</h4>
+                    <h4>Capacity</h4>
+                    <p>${hE.printNumber}</p>
+                    <p>${hE.capacity}</p>
+                    </div>`
+                newCard.classList.add("state-hidden");
+                cardContainer.insertBefore(newCard, seeMoreButton);
+            })
+          }
+          // Display up to 5 more complaint cards on mobile
+          function viewMoreResults() {
+            const cards = document.querySelectorAll('.historyCard');
+            const hiddenCards = Array.from(cards).filter(card => card.classList.contains('state-hidden'));
+
+            // Display 5 more cards
+            const cardsToShow = hiddenCards.slice(0, 5);
+            
+            cardsToShow.forEach(card => {
+                card.classList.remove('state-hidden');
+            });
+
+            // Disable "View More" button if no more cards are hidden
+            if (hiddenCards.length <= 5) {
+                document.getElementById('seeMoreResults').classList.add('state-hidden');
+            }
+        }
+          function populateHistoryTable(
+            sortedHistoryArr,
+            paginationValue,
+            pageSelected
+          ) {
+            // the goal is to keep sortedHistoryArr immutable
+
+            // then we can slice it and set the state accordingly based on
+
+            // the page selected, and the pagination value the user set
+
+            // basically, we will run this once when the page loads, then if paginationValue or pageSelected changes,
+            // we plug in the values to this function again
+
+            /* part one -> slice the data */
+
+            // we need to slice based on paginationValue and pageSelected
+            // pageSelected should give us our starting point and paginationValue should give us our slice range
+
+            // we also need to figure out what the max page is, referencing the paginationValue
+
+            const visibleSubset = sortedHistoryArr.slice(
+              (pageSelected - 1) * paginationValue,
+              (pageSelected - 1) * paginationValue + paginationValue
+            );
+
+            let visibleRowsHTML = "";
+            // let visibleCardsHTML = "";
+
+            // hE -> historyElement
+            visibleSubset.forEach((hE) => {
+              const newRow = `
+              <tr class="historyRow">
+                  <td>${hE.overallStatus}</td>
+                    <td>${hE.effectiveDate2}</td>
+                  <td>${hE.printNumber}</td>
+                    <td>${hE.overallAgeRange}</td>
+                  <td>${hE.capacity}</td>
+              </tr>`;
+
+            //   const newCard = `
+            //   <div class="historyCard">
+            //     <div>${hE.overallStatus}</div>
+            //     <h4>Effective Dates</h4>
+            //     <p>${hE.effectiveDate2}</p>
+            //     <h4>Age Range</h4>
+            //     <p>${hE.overallAgeRange}</p>
+            //     <div class="grid">
+            //       <h4>Cert.#</h4>
+            //       <h4>Capacity</h4>
+            //       <p>${hE.printNumber}</p>
+            //       <p>${hE.capacity}</p>
+            //     </div>
+            //   </div>`;
+
+              visibleRowsHTML += newRow;
+            //   visibleCardsHTML += newCard;
+            });
+
+            $("tr.historyRow").remove();
+            // $("div.historyCard").remove();
+
+            document
+              .getElementById("historyTable")
+              .insertAdjacentHTML("beforeend", visibleRowsHTML);
+
+            // document
+            //   .getElementById("historyCardContainer")
+            //   .insertAdjacentHTML("beforeend", visibleCardsHTML);
+
+            // max page logic
+
+            if (sortedHistoryArr.length <= paginationValue) {
+              // max page should be 1
+              document.getElementById("historyAllPage").textContent = 1;
+            } else {
+              // max page should be the ceiling of arr length divided by paginationValue
+              document.getElementById("historyAllPage").textContent = Math.ceil(
+                sortedHistoryArr.length / paginationValue
+              );
+            }
+          }
+
+          const sortedHistoryArr = combineHistoryArr(
+            response.history.hanaResponse
+          );
+
+        //   Initial population of the history table & cards
+          populateHistoryTable(sortedHistoryArr, 5, 1);
+          populateHistoryCards(sortedHistoryArr);
+        //   Load initial 5 cards
+          viewMoreResults();
+            document.getElementById("seeMoreResults").addEventListener("click", viewMoreResults);
+          document
+            .getElementById("historyPage")
+            .addEventListener("change", (e) => {
+              document.getElementById("historyCurrentPage").textContent = 1;
+
+              return populateHistoryTable(
+                sortedHistoryArr,
+                parseInt(e.target.value),
+                1
+              );
+            });
+
+          document
+            .getElementById("historyBack")
+            .addEventListener("click", (e) => {
+              const current = parseInt(
+                document.getElementById("historyCurrentPage").innerText
+              );
+
+              if (current - 1 >= 1) {
+                populateHistoryTable(
+                  sortedHistoryArr,
+                  parseInt(document.getElementById("historyPage").value),
+                  current - 1
+                );
+
+                document.getElementById("historyCurrentPage").textContent =
+                  current - 1;
+              }
+              // otherwise just return
+              return;
+            });
+
+          document
+            .getElementById("historyForward")
+            .addEventListener("click", (e) => {
+              const current = parseInt(
+                document.getElementById("historyCurrentPage").innerText
+              );
+              if (
+                current + 1 <=
+                Math.ceil(
+                  sortedHistoryArr.length /
+                    parseInt(document.getElementById("historyPage").value)
+                )
+              ) {
+                populateHistoryTable(
+                  sortedHistoryArr,
+                  parseInt(document.getElementById("historyPage").value),
+                  current + 1
+                );
+
+                document.getElementById("historyCurrentPage").textContent =
+                  current + 1;
+              }
+              // otherwise just return
+              return;
+            });
+
+          // Get response from HANA for meals, languages and accreditations
+          getMeals = response.details.hanaResponse.meals;
+          getLanguages = response.details.hanaResponse.caregiverLanguages;
+          getAccreditations = response.details.hanaResponse.accreditations;
+
+          // Logic to display location address
+          function checkStreetFields(street1, street2, building) {
+            if (street1 !== null && street2 !== null) {
+              if (building !== null) {
+                 document.getElementById(
+                  "locationAddress"
+                ).textContent = `${response.details.hanaResponse.locationAddress.street1}, ${response.details.hanaResponse.locationAddress.street2}, ${response.details.hanaResponse.locationAddress.building}, ${response.details.hanaResponse.locationAddress.city}, ${response.details.hanaResponse.locationAddress.state} ${response.details.hanaResponse.locationAddress.zipCode}`;
+              } else {
+                 document.getElementById(
+                  "locationAddress"
+                ).textContent = `${response.details.hanaResponse.locationAddress.street1}, ${response.details.hanaResponse.locationAddress.street2}, ${response.details.hanaResponse.locationAddress.city}, ${response.details.hanaResponse.locationAddress.state} ${response.details.hanaResponse.locationAddress.zipCode}`;
+              }
+            } else if (street1 !== null && street2 === null) {
+              if (building !== null) {
+                 document.getElementById(
+                  "locationAddress"
+                ).textContent = `${response.details.hanaResponse.locationAddress.street1}, ${response.details.hanaResponse.locationAddress.building}, ${response.details.hanaResponse.locationAddress.city}, ${response.details.hanaResponse.locationAddress.state} ${response.details.hanaResponse.locationAddress.zipCode}`;
+              } else {
+                 document.getElementById(
+                  "locationAddress"
+                ).textContent = `${response.details.hanaResponse.locationAddress.street1}, ${response.details.hanaResponse.locationAddress.city}, ${response.details.hanaResponse.locationAddress.state} ${response.details.hanaResponse.locationAddress.zipCode}`;
+              }
+            } else if (street1 === null && street2 !== null) {
+              if (building !== null) {
+                document.getElementById(
+                  "locationAddress"
+                ).textContent = `${response.details.hanaResponse.locationAddress.street2}, ${response.details.hanaResponse.locationAddress.building}, ${response.details.hanaResponse.locationAddress.city}, ${response.details.hanaResponse.locationAddress.state} ${response.details.hanaResponse.locationAddress.zipCode}`;
+              } else {
+                document.getElementById(
+                  "locationAddress"
+                ).textContent = `${response.details.hanaResponse.locationAddress.street2}, ${response.details.hanaResponse.locationAddress.city}, ${response.details.hanaResponse.locationAddress.state} ${response.details.hanaResponse.locationAddress.zipCode}`;
+              }
+            } else {
+              if (building !== null) {
+                document.getElementById(
+                  "locationAddress"
+                ).textContent = `${response.details.hanaResponse.locationAddress.building}, ${response.details.hanaResponse.locationAddress.city}, ${response.details.hanaResponse.locationAddress.state} ${response.details.hanaResponse.locationAddress.zipCode}`;
+              } else {
+                document.getElementById(
+                  "locationAddress"
+                ).textContent = `${response.details.hanaResponse.locationAddress.city}, ${response.details.hanaResponse.locationAddress.state} ${response.details.hanaResponse.locationAddress.zipCode}`;
+              }
+            }
+          }
+
+          // If provider is center-based, we can display the full address, else the provider is home-based and we only display city, state and zipcode
+          if (response.summary.hanaResponse.providerType === "OR") {
+            let street1 = response.details.hanaResponse.locationAddress.street1;
+            let street2 = response.details.hanaResponse.locationAddress.street2;
+            let locBuilding = response.details.hanaResponse.locationAddress.building;
+            checkStreetFields(street1, street2, locBuilding);
+          } else if (response.summary.hanaResponse.providerType === "CG") {
+              document.getElementById(
+              "locationAddress"
+            ).textContent = `${response.details.hanaResponse.locationAddress.city}, ${response.details.hanaResponse.locationAddress.state} ${response.details.hanaResponse.locationAddress.zipCode}`;
+          }
+
+          // Logic for displaying mailing address       
+          if (response.details.hanaResponse.mailingAddress !== null) {
+            if (response.summary.hanaResponse.providerType === "OR") {
+              let mailStreet1 = response.details.hanaResponse.mailingAddress.street1;
+              let mailStreet2 = response.details.hanaResponse.mailingAddress.street2;
+              let mailBuilding = response.details.hanaResponse.mailingAddress.building;
+              if (mailStreet1 !== null && mailStreet2 !== null) {
+                if (mailBuilding !== null) {
+                   document.getElementById(
+                    "mailingAddress"
+                  ).textContent = `${response.details.hanaResponse.mailingAddress.street1}, ${response.details.hanaResponse.mailingAddress.street2}, ${response.details.hanaResponse.mailingAddress.building}, ${response.details.hanaResponse.mailingAddress.city}, ${response.details.hanaResponse.mailingAddress.state} ${response.details.hanaResponse.mailingAddress.zipCode}`;
+                } else {
+                   document.getElementById(
+                    "mailingAddress"
+                  ).textContent = `${response.details.hanaResponse.mailingAddress.street1}, ${response.details.hanaResponse.mailingAddress.street2}, ${response.details.hanaResponse.mailingAddress.city}, ${response.details.hanaResponse.mailingAddress.state} ${response.details.hanaResponse.mailingAddress.zipCode}`;
+                }
+              } else if (mailStreet1 !== null && mailStreet2 === null) {
+                if (mailBuilding !== null) {
+                  document.getElementById(
+                    "mailingAddress"
+                  ).textContent = `${response.details.hanaResponse.mailingAddress.street1}, ${response.details.hanaResponse.mailingAddress.building}, ${response.details.hanaResponse.mailingAddress.city}, ${response.details.hanaResponse.mailingAddress.state} ${response.details.hanaResponse.mailingAddress.zipCode}`;
+                } else {
+                  document.getElementById(
+                    "mailingAddress"
+                  ).textContent = `${response.details.hanaResponse.mailingAddress.street1}, ${response.details.hanaResponse.mailingAddress.city}, ${response.details.hanaResponse.mailingAddress.state} ${response.details.hanaResponse.mailingAddress.zipCode}`;
+                }
+              } else if (mailStreet1 === null && mailStreet2 !== null) {
+                if (mailBuilding !== null) {
+                   document.getElementById(
+                    "mailingAddress"
+                  ).textContent = `${response.details.hanaResponse.mailingAddress.street2}, ${response.details.hanaResponse.mailingAddress.building}, ${response.details.hanaResponse.mailingAddress.city}, ${response.details.hanaResponse.mailingAddress.state} ${response.details.hanaResponse.mailingAddress.zipCode}`;
+                } else {
+                   document.getElementById(
+                    "mailingAddress"
+                  ).textContent = `${response.details.hanaResponse.mailingAddress.street2}, ${response.details.hanaResponse.mailingAddress.city}, ${response.details.hanaResponse.mailingAddress.state} ${response.details.hanaResponse.mailingAddress.zipCode}`;
+                }
+              } else {
+                if (mailBuilding !== null) {
+                  document.getElementById(
+                    "mailingAddress"
+                  ).textContent = `${response.details.hanaResponse.mailingAddress.building}, ${response.details.hanaResponse.mailingAddress.city}, ${response.details.hanaResponse.mailingAddress.state} ${response.details.hanaResponse.mailingAddress.zipCode}`;
+                } else {
+                  document.getElementById(
+                    "mailingAddress"
+                  ).textContent = `${response.details.hanaResponse.mailingAddress.city}, ${response.details.hanaResponse.mailingAddress.state} ${response.details.hanaResponse.mailingAddress.zipCode}`;
+                }
+              }
+            } else if (response.summary.hanaResponse.providerType === "CG") {
+                document.getElementById(
+                "mailingAddress"
+              ).textContent = `${response.details.hanaResponse.mailingAddress.city}, ${response.details.hanaResponse.mailingAddress.state} ${response.details.hanaResponse.mailingAddress.zipCode}`;
+            }
+          } else {
+            document.getElementById(
+                "mailingAddress"
+              ).textContent = "N/A";
+          }
+
+          // Displays the provider's contact modes
+          if (response.details.hanaResponse.contactModes !== null) {
+            const contactMap = new Map();
+            response.details.hanaResponse.contactModes.forEach((item) => {
+              contactMap.set(item.mode, item.value);
+            });
+
+            let val = "";
+            for (const [mode, value] of contactMap) {
+              switch(mode) {
+                case "PH":
+                  val = formatNumber(value, "modeValPH");
+                  document.getElementById("modePH").insertAdjacentHTML("beforeend", `<span><svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-telephone" viewBox="0 0 16 16">
+  <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122l-2.19.547a1.75 1.75 0 0 1-1.657-.459L5.482 8.062a1.75 1.75 0 0 1-.46-1.657l.548-2.19a.68.68 0 0 0-.122-.58zM1.884.511a1.745 1.745 0 0 1 2.612.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.68.68 0 0 0 .178.643l2.457 2.457a.68.68 0 0 0 .644.178l2.189-.547a1.75 1.75 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.6 18.6 0 0 1-7.01-4.42 18.6 18.6 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877z" stroke="#333333" stroke-width="0.5" />
+</svg></span>`);
+                  document.getElementById("modeValPH").insertAdjacentHTML("beforeend", `<span><a href="tel:${val.replace(/[^\d\+]/g,"")}"> ${val}</a></span>`);
+                  document.getElementById("modePH").parentNode.style.display = 'flex';
+              break;
+              case "P2":
+                  val = formatNumber(value, "modeValP2");
+                  document.getElementById("modeP2").insertAdjacentHTML("beforeend", `<span><svg class="contact-icon" style="display: block; transform: scale(-1,1)" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-telephone" viewBox="0 0 16 16">
+  <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.6 17.6 0 0 0 4.168 6.608 17.6 17.6 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.68.68 0 0 0-.58-.122l-2.19.547a1.75 1.75 0 0 1-1.657-.459L5.482 8.062a1.75 1.75 0 0 1-.46-1.657l.548-2.19a.68.68 0 0 0-.122-.58zM1.884.511a1.745 1.745 0 0 1 2.612.163L6.29 2.98c.329.423.445.974.315 1.494l-.547 2.19a.68.68 0 0 0 .178.643l2.457 2.457a.68.68 0 0 0 .644.178l2.189-.547a1.75 1.75 0 0 1 1.494.315l2.306 1.794c.829.645.905 1.87.163 2.611l-1.034 1.034c-.74.74-1.846 1.065-2.877.702a18.6 18.6 0 0 1-7.01-4.42 18.6 18.6 0 0 1-4.42-7.009c-.362-1.03-.037-2.137.703-2.877z" stroke="#333333" stroke-width="0.5" />
+</svg></span>`);
+                  document.getElementById("modeValP2").insertAdjacentHTML("beforeend", `<span><a href="tel:${val}">${val}</a></span>`);
+                  document.getElementById("modeP2").parentNode.style.display = 'flex';
+              break;
+              case "MO":
+                  val = formatNumber(value, "modeValMO");
+                  document.getElementById("modeMO").insertAdjacentHTML("beforeend", `<span><svg class="contact-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 17.5H12.01M8.2 22H15.8C16.9201 22 17.4802 22 17.908 21.782C18.2843 21.5903 18.5903 21.2843 18.782 20.908C19 20.4802 19 19.9201 19 18.8V5.2C19 4.07989 19 3.51984 18.782 3.09202C18.5903 2.71569 18.2843 2.40973 17.908 2.21799C17.4802 2 16.9201 2 15.8 2H8.2C7.0799 2 6.51984 2 6.09202 2.21799C5.71569 2.40973 5.40973 2.71569 5.21799 3.09202C5 3.51984 5 4.0799 5 5.2V18.8C5 19.9201 5 20.4802 5.21799 20.908C5.40973 21.2843 5.71569 21.5903 6.09202 21.782C6.51984 22 7.07989 22 8.2 22ZM12.5 17.5C12.5 17.7761 12.2761 18 12 18C11.7239 18 11.5 17.7761 11.5 17.5C11.5 17.2239 11.7239 17 12 17C12.2761 17 12.5 17.2239 12.5 17.5Z" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+</span>`);
+                  document.getElementById("modeValMO").insertAdjacentHTML("beforeend", `<span><a href="tel:${val}"> ${val}</a></span>`);
+                  document.getElementById("modeMO").parentNode.style.display = 'flex';
+              break;
+              case "FX":
+                  val = formatNumber(value, "modeValFX");
+                  document.getElementById("modeFX").insertAdjacentHTML("beforeend", `<span><svg class="contact-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M18 7V5.2C18 4.0799 18 3.51984 17.782 3.09202C17.5903 2.71569 17.2843 2.40973 16.908 2.21799C16.4802 2 15.9201 2 14.8 2H9.2C8.0799 2 7.51984 2 7.09202 2.21799C6.71569 2.40973 6.40973 2.71569 6.21799 3.09202C6 3.51984 6 4.0799 6 5.2V7M6 18C5.07003 18 4.60504 18 4.22354 17.8978C3.18827 17.6204 2.37962 16.8117 2.10222 15.7765C2 15.395 2 14.93 2 14V11.8C2 10.1198 2 9.27976 2.32698 8.63803C2.6146 8.07354 3.07354 7.6146 3.63803 7.32698C4.27976 7 5.11984 7 6.8 7H17.2C18.8802 7 19.7202 7 20.362 7.32698C20.9265 7.6146 21.3854 8.07354 21.673 8.63803C22 9.27976 22 10.1198 22 11.8V14C22 14.93 22 15.395 21.8978 15.7765C21.6204 16.8117 20.8117 17.6204 19.7765 17.8978C19.395 18 18.93 18 18 18M15 10.5H18M9.2 22H14.8C15.9201 22 16.4802 22 16.908 21.782C17.2843 21.5903 17.5903 21.2843 17.782 20.908C18 20.4802 18 19.9201 18 18.8V17.2C18 16.0799 18 15.5198 17.782 15.092C17.5903 14.7157 17.2843 14.4097 16.908 14.218C16.4802 14 15.9201 14 14.8 14H9.2C8.0799 14 7.51984 14 7.09202 14.218C6.71569 14.4097 6.40973 14.7157 6.21799 15.092C6 15.5198 6 16.0799 6 17.2V18.8C6 19.9201 6 20.4802 6.21799 20.908C6.40973 21.2843 6.71569 21.5903 7.09202 21.782C7.51984 22 8.07989 22 9.2 22Z" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+</span>`);
+                  document.getElementById("modeValFX").insertAdjacentHTML("beforeend", `<span><a href="fax:${val}"> ${val}</a></span>`);
+                  document.getElementById("modeFX").parentNode.style.display = 'flex';
+              break;
+              case "EM":
+                  document.getElementById("modeEM").insertAdjacentHTML("beforeend", `<span><svg class="contact-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M22 6L12 13L2 6" stroke="#333333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+</span>`);
+                  document.getElementById("modeValEM").insertAdjacentHTML("beforeend", `<span><a href="mailto:${value}" style="font-size: 16px;"> ${value}</a></span>`);
+                  document.getElementById("modeEM").parentNode.style.display = 'flex';
+              break;
+              case "WW":
+                  document.getElementById("modeWW").insertAdjacentHTML("beforeend", `<span><svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-box-arrow-up-right" viewBox="0 0 16 16">
+  <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5" stroke="#333333" stroke-width="0.5"/>
+  <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z" stroke="#333333" stroke-width="0.5"/>
+</svg></span>`);
+                  let ww = value;
+                  if (!value.startsWith('http://') && !value.startsWith('https://')) {
+                    ww = 'http://' + value;
+                  }
+                  document.getElementById("modeValWW").insertAdjacentHTML("beforeend", `<span><a href="${ww}" target="_blank"> Location Website</a></span>`);
+                  document.getElementById("modeWW").parentNode.style.display = 'flex';                  
+              break;            
+              }
+            }
+          } else {
+            document
+                .getElementById("modeNone")
+                .insertAdjacentHTML("beforeend", `<span></span>`);
+                document
+                .getElementById("modeNone").parentNode.style.display = 'flex';
+          }
+          
+          function testValidatingZipCode(zipcode) {
+            validateZipCode = zipcode.toString().substring(0, 2);
+            if (validateZipCode === "96") {
+              return true;
+            } else {
+              return false;
+            }
+          }
+
+          // Google Maps logic - pinpoint the exact address for center-based, else return the general area/zipcode that the provider's home-based service resides
+          let iframeSrc = "";
+          let testZipCode =
+            response.details.hanaResponse.locationAddress.zipCode;
+
+          let s1 = response.details.hanaResponse.locationAddress.street1;
+          let s2 = response.details.hanaResponse.locationAddress.street2;
+          let building = response.details.hanaResponse.locationAddress.building;
+          if (testValidatingZipCode(testZipCode) === true) {
+            if (s1 !== null && s2 !== null) {
+              if (building !== null) {
+                locAddress = `${response.details.hanaResponse.locationAddress.street1}, ${response.details.hanaResponse.locationAddress.street2}, ${response.details.hanaResponse.locationAddress.building}, ${response.details.hanaResponse.locationAddress.city}, ${response.details.hanaResponse.locationAddress.state} ${response.details.hanaResponse.locationAddress.zipCode}`;
+              } else {
+                locAddress = `${response.details.hanaResponse.locationAddress.street1}, ${response.details.hanaResponse.locationAddress.street2}, ${response.details.hanaResponse.locationAddress.city}, ${response.details.hanaResponse.locationAddress.state} ${response.details.hanaResponse.locationAddress.zipCode}`;
+              }
+            } else if (s1 !== null && s2 === null) {
+              if (building !== null) {
+                locAddress = `${response.details.hanaResponse.locationAddress.street1}, ${response.details.hanaResponse.locationAddress.building}, ${response.details.hanaResponse.locationAddress.city}, ${response.details.hanaResponse.locationAddress.state} ${response.details.hanaResponse.locationAddress.zipCode}`;
+              } else {
+                locAddress = `${response.details.hanaResponse.locationAddress.street1}, ${response.details.hanaResponse.locationAddress.city}, ${response.details.hanaResponse.locationAddress.state} ${response.details.hanaResponse.locationAddress.zipCode}`;
+              }
+            } else if (s1 === null && s2 !== null) {
+              if (building !== null) {
+                locAddress = `${response.details.hanaResponse.locationAddress.street2}, ${response.details.hanaResponse.locationAddress.building}, ${response.details.hanaResponse.locationAddress.city}, ${response.details.hanaResponse.locationAddress.state} ${response.details.hanaResponse.locationAddress.zipCode}`;
+              } else {
+                locAddress = `${response.details.hanaResponse.locationAddress.street2}, ${response.details.hanaResponse.locationAddress.city}, ${response.details.hanaResponse.locationAddress.state} ${response.details.hanaResponse.locationAddress.zipCode}`;
+              }
+            } else {
+              if (building !== null) {
+                locAddress = `${response.details.hanaResponse.locationAddress.building}, ${response.details.hanaResponse.locationAddress.city}, ${response.details.hanaResponse.locationAddress.state} ${response.details.hanaResponse.locationAddress.zipCode}`;
+              } else {
+                locAddress = `${response.details.hanaResponse.locationAddress.city}, ${response.details.hanaResponse.locationAddress.state} ${response.details.hanaResponse.locationAddress.zipCode}`;
+              }
+            }
+        } else {
+          locAddress = '';
+        }
+
+        // Center - can display exact address
+        if (response.summary.hanaResponse.providerType === "OR" && locAddress !== '') {
+          iframeSrc =
+            "https://maps.google.com/maps?q=" +
+            locAddress +
+            "&t=&z=13&ie=UTF8&iwloc=&output=embed";
+        // Home - can only display general area via provided zipcode
+        } else if (response.summary.hanaResponse.providerType === "CG") {
+          if (testValidatingZipCode(testZipCode) === true) {
+          iframeSrc =
+            "https://maps.google.com/maps?q=" +
+            testZipCode +
+            "&t=&z=13&ie=UTF8&iwloc=&output=embed";
+            } else {
+            iframeSrc =
+            "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3827841.4583703666!2d-157.505!3d20.46!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x7bffdb064f79e005%3A0x4b7782d274cc8628!2sHawaii!5e0!3m2!1sen!2sus!4v1722981055661!5m2!1sen!2sus";
+          }
+        } else {
+          // Displays state
+          iframeSrc =
+            "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3827841.4583703666!2d-157.505!3d20.46!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x7bffdb064f79e005%3A0x4b7782d274cc8628!2sHawaii!5e0!3m2!1sen!2sus!4v1722981055661!5m2!1sen!2sus";
+        }
+        document.getElementsByTagName("iframe")[0].src = iframeSrc;
+
+        getProviderType = response.summary.hanaResponse.providerType;
+
+        const histories = response.history.hanaResponse.histories
+          .map((history) => `${history.status}: ${history.statusDate}`)
+          .join(", ");
+
+        const licenses = response.history.hanaResponse.licenses
+          .map(
+            (license) =>
+              `Effective: ${license.effectiveDate}, Expiration: ${license.expirationDate}, Capacity: ${license.capacity}`
+          )
+          .join(", ");
+        } else if (
+          response.hanaResponseStatus !== null &&
+          response.hanaResponseStatus !== undefined &&
+          response.hanaResponseStatus.responseCode === 400
+        ) {
+          response.errors.forEach((result) => {
+            $("#helpModalLabel").text("Error");
+            $("#helpModalBody").text(`An error occurred: ${result.message}`);
+            $("#helpModal").modal("show");
+          });
+        } else {
+          $("#helpModalLabel").text("Error");
+          $("#helpModalBody").text(
+            `An error occurred while fetching the data: ${response.responseStatusMessage}`
+          );
+          $("#helpModal").modal("show");
+        }
+      }
+
+      /* temp work around for refreshing data dynamically */
+      function refreshHanaDataInBackground() {
+    $.ajax({
+      url: 'https://prod-20.usgovtexas.logic.azure.us:443/workflows/a60854dc08744146bfa5a217a992cdd9/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=ZGxAs2nsKDIdR9FhMel5N4fg9A56xSf6mT5LtNkgmco',
+      type: "POST",
+      async: false,
+      contentType: "application/json; charset=utf-8",
+      data: JSON.stringify({ serviceId: getId.get("serviceId") }),
+      datatype: "json",
+      success: function (response) {
+        console.log("Service Info updated. Please Refresh.")
+      },
+      error: function (xhr, status, error) {
+        $("#loading").hide();
+        console.error(
+          `An error occurred while fetching the data: ${
+            xhr.responseText || error
+          }`
+        );
+      },
+    });
+      }
+
+      document.getElementById('refreshHanaData').addEventListener('click', () => refreshHanaDataInBackground())
+
+      /* temp work around for refreshing data dynamically end */
+
+      // API call for Service Info (Details, Summary, History)
+      
+    const response = `{"summary":{"hanaResponseStatus":{"responseStatusMessage":"Success","responseCode":200,"requestReceivedAt":"2026-05-28T20:10:28.471-1000","responseReturnedAt":"2026-05-28T20:10:28.475-1000"},"hanaResponse":{"serviceId":92021,"serviceType":"05","licensed":true,"serviceName":"PUNANA LEO O HILO INFANT TODDLER","providerType":"OR","providerName":"AHA PUNANA LEO INC","effectiveDate":"2025-09-08","expirationDate":"2026-09-07","minAgeUnit":"M","minAgeValue":9,"maxAgeUnit":"M","maxAgeValue":36,"licenseNumber":17993,"licenseType":"R","capacity":9}},"details":{"hanaResponseStatus":{"responseStatusMessage":"Success","responseCode":200,"requestReceivedAt":"2026-05-28T20:10:29.433-1000","responseReturnedAt":"2026-05-28T20:10:29.448-1000"},"hanaResponse":{"serviceId":92021,"usdaFoodProgram":true,"diaperedChildrenAccepted":true,"demonstrationProject":false,"mailingAddress":{"street1":"96 PUUHONU PL","street2":null,"building":null,"city":"HILO","state":"HI","zipCode":96720,"zipCodeExt":null},"locationAddress":{"street1":"16-120 OPUKAHA IA STREET","street2":null,"building":null,"city":"KEAAU","state":"HI","zipCode":96749,"zipCodeExt":null},"meals":["AS","BR","LU"],"caregiverLanguages":null,"contactModes":[{"mode":"PH","value":"NA8089354304"}],"accreditations":[],"shifts":[{"shiftNumber":1,"hours":[{"weekdayNumber":6,"startTime":730,"endTime":1530},{"weekdayNumber":2,"startTime":730,"endTime":1530},{"weekdayNumber":4,"startTime":730,"endTime":1530},{"weekdayNumber":5,"startTime":730,"endTime":1530},{"weekdayNumber":3,"startTime":730,"endTime":1530}]}]}},"history":{"hanaResponseStatus":{"responseStatusMessage":"Success","responseCode":200,"requestReceivedAt":"2026-05-28T20:10:30.298-1000","responseReturnedAt":"2026-05-28T20:10:30.307-1000"},"hanaResponse":{"serviceId":92021,"histories":[{"status":"PE","statusDate":"2022-11-10"},{"status":"AC","statusDate":"2023-09-22"}],"licenses":[{"effectiveDate":"2023-09-14","expirationDate":"2023-12-13","printNumber":9637,"minAgeUnit":"M","minAgeValue":9,"minAgeLegacy":null,"maxAgeUnit":"M","maxAgeValue":48,"maxAgeLegacy":null,"licenseType":"P","capacity":9},{"effectiveDate":"2023-12-08","expirationDate":"2024-09-07","printNumber":8968,"minAgeUnit":"M","minAgeValue":9,"minAgeLegacy":null,"maxAgeUnit":"M","maxAgeValue":48,"maxAgeLegacy":null,"licenseType":"R","capacity":9},{"effectiveDate":"2024-09-08","expirationDate":"2025-09-07","printNumber":9130,"minAgeUnit":"M","minAgeValue":9,"minAgeLegacy":null,"maxAgeUnit":"M","maxAgeValue":48,"maxAgeLegacy":null,"licenseType":"R","capacity":9},{"effectiveDate":"2025-09-08","expirationDate":"2026-09-07","printNumber":9657,"minAgeUnit":"M","minAgeValue":9,"minAgeLegacy":null,"maxAgeUnit":"M","maxAgeValue":36,"maxAgeLegacy":null,"licenseType":"R","capacity":9}],"listings":null}}}`
+    const hanaJSON = JSON.parse(response)
+    parseHanaJsonData(hanaJSON)
+      
+
+      // API call for Service Meals
+      
+    const serviceMealsResponse = `{"hanaResponseStatus":{"responseStatusMessage":"Success","responseCode":200,"requestReceivedAt":"2025-06-13T16:17:48.948-1000","responseReturnedAt":"2025-06-13T16:17:48.959-1000"},"hanaResponse":{"codeTableRows":[{"code":"AS","description":"Afternoon snack"},{"code":"BR","description":"Breakfast"},{"code":"DI","description":"Dinner"},{"code":"LU","description":"Lunch"},{"code":"MS","description":"Morning snack"},{"code":"SM","description":"Special meal request"}]}}`
+    const hanaJSONMeals = JSON.parse(serviceMealsResponse)
+    parseHanaMealsJsonData(hanaJSONMeals)
+      
+
+      // Parses the Meals JSON from HANA
+      function parseHanaMealsJsonData(response) {
+    let meals = {};
+    $("#loading").hide();
+    if (response !== null) {
+      // Get meal codes/code table
+      meals = response.hanaResponse.codeTableRows;
+      const mealMap = new Map(
+        meals.map((meal) => [meal.code, meal.description])
+      );
+      // Check provider's meal codes against mappings
+      for (const [code, description] of mealMap) {
+        if (getMeals.includes(code)) {
+          document
+            .getElementById("meal" + code)
+            .textContent = `Yes`;
+          }
+        }
+      } else if (
+        response.hanaResponseStatus !== null &&
+        response.hanaResponseStatus !== undefined &&
+        response.hanaResponseStatus.responseCode === 400
+      ) {
+        response.errors.forEach((result) => {
+          $("#helpModalLabel").text("Error");
+          $("#helpModalBody").text(`An error occurred: ${result.message}`);
+          $("#helpModal").modal("show");
+        });
+      } else {
+        $("#helpModalLabel").text("Error");
+        $("#helpModalBody").text(
+          `An error occurred while fetching the data: ${response.responseStatusMessage}`
+        );
+        $("#helpModal").modal("show");
+      }
+      }
+
+      // API calls for Languages
+      
+    const serviceLanguagesResponse = `{"hanaResponseStatus":{"responseStatusMessage":"Success","responseCode":200,"requestReceivedAt":"2025-06-13T16:17:10.107-1000","responseReturnedAt":"2025-06-13T16:17:10.119-1000"},"hanaResponse":{"codeTableRows":[{"code":"AM","description":"ARAMAIC"},{"code":"AR","description":"ARABIC"},{"code":"BE","description":"BENGALI"},{"code":"BI","description":"BISAYAN"},{"code":"BU","description":"BULGARIAN"},{"code":"CA","description":"CAMBODIAN"},{"code":"CC","description":"CANTONESE"},{"code":"CE","description":"CEBUANO"},{"code":"CH","description":"CHAMORRO"},{"code":"CM","description":"MANDARIN"},{"code":"CR","description":"CROATIAN"},{"code":"CU","description":"CHUUKESE"},{"code":"CZ","description":"CZECH"},{"code":"DA","description":"DANISH"},{"code":"DU","description":"DUTCH"},{"code":"EN","description":"ENGLISH"},{"code":"ES","description":"ESTONIAN"},{"code":"FC","description":"FRENCH CREOLE"},{"code":"FI","description":"ILOCANO"},{"code":"FJ","description":"FIJIAN"},{"code":"FM","description":"FORMOSAN"},{"code":"FN","description":"FINNISH"},{"code":"FO","description":"FILIPINO OTHER"},{"code":"FR","description":"FRENCH"},{"code":"FT","description":"TAGALOG"},{"code":"GE","description":"GERMAN"},{"code":"GR","description":"GREEK"},{"code":"GU","description":"GUJARATHI"},{"code":"HA","description":"HAWAIIAN"},{"code":"HC","description":"HAITIAN-CREOLE"},{"code":"HE","description":"HEBREW"},{"code":"HI","description":"HINDI"},{"code":"HM","description":"HMONG"},{"code":"HU","description":"HUNGARIAN"},{"code":"IB","description":"IBO"},{"code":"IN","description":"INDONESIAN"},{"code":"IR","description":"IRISH"},{"code":"IT","description":"ITALIAN"},{"code":"JA","description":"JAPANESE"},{"code":"KO","description":"KOREAN"},{"code":"KR","description":"KRU"},{"code":"KS","description":"KOSRAEAN"},{"code":"KU","description":"KURDISH"},{"code":"LA","description":"LAOTIAN"},{"code":"LI","description":"LITHUANIAN"},{"code":"LT","description":"LATVIAN"},{"code":"MA","description":"MALAY"},{"code":"MK","description":"MON-KHMER"},{"code":"ML","description":"MALTESE"},{"code":"MO","description":"MAORI"},{"code":"MR","description":"MARQUESAN"},{"code":"MS","description":"MARSHALLESE"},{"code":"MX","description":"MIXTECO"},{"code":"NA","description":"NAVAHO"},{"code":"NO","description":"NORWEGIAN"},{"code":"OA","description":"OTHER ASIAN"},{"code":"OI","description":"OTHER INDO-EUROPEAN"},{"code":"ON","description":"OTHER NORTH AMERICAN INDIAN"},{"code":"OT","description":"OTHER"},{"code":"PA","description":"PALAUAN"},{"code":"PE","description":"PERSIAN"},{"code":"PL","description":"POLISH"},{"code":"PO","description":"POHNPEIAN"},{"code":"PP","description":"PAPUAN"},{"code":"PR","description":"PORTUGUESE"},{"code":"PT","description":"PATOIS"},{"code":"PW","description":"PAIWAN"},{"code":"QU","description":"QUICHEAN"},{"code":"RA","description":"RAPANUI"},{"code":"RO","description":"ROMANIAN"},{"code":"RU","description":"RUSSIAN"},{"code":"SA","description":"SAMOAN"},{"code":"SE","description":"SERBIAN"},{"code":"SH","description":"SWAHILI"},{"code":"SI","description":"SIGN LANGUAGE"},{"code":"SL","description":"SLOVAK"},{"code":"SN","description":"SINHALESE"},{"code":"SO","description":"OTHER SOUTH PACIFIC"},{"code":"SP","description":"SPANISH"},{"code":"SV","description":"SLOVENIAN"},{"code":"SW","description":"SWEDISH"},{"code":"TA","description":"TAHITIAN"},{"code":"TH","description":"THAI"},{"code":"TO","description":"TONGAN"},{"code":"TU","description":"TURKISH"},{"code":"UN","description":"UNKNOWN"},{"code":"UR","description":"URDU"},{"code":"VI","description":"VIETNAMESE"},{"code":"VS","description":"VISAYAN"},{"code":"WO","description":"WOLOF"},{"code":"YA","description":"YAPESE"},{"code":"YI","description":"YIDDISH"},{"code":"YO","description":"YORUBA"}]}}`
+    const hanaJSONLanguages = JSON.parse(serviceLanguagesResponse)
+    parseHanaLanguagesJsonData(hanaJSONLanguages)
+      
+
+      // Parses the Languages JSON from HANA
+      // Check provider's languages against mapping, only display languages for CENTER based. Default display language should be English.
+      function parseHanaLanguagesJsonData(response) {
+    let languages = {};
+    let providerLanguages = [];
+    $("#loading").hide();
+    if (response !== null) {
+      languages = response.hanaResponse.codeTableRows;
+      const languagesMap = new Map(
+        languages.map((language) => [language.code, language.description])
+      );
+      
+      if (getLanguages !== null && getProviderType === 'CG') {
+        for (const [code, description] of languagesMap) {
+          if (getLanguages.includes(code)) {
+            providerLanguages.push(description[0] + (description.substring(1, description.length)).toLowerCase());
+          }
+        }
+        document.getElementById("misc").insertAdjacentHTML("beforeend", `<div class="miscModeRow">
+            <b>Languages</b>
+            <p id="languagesList"><p>
+            </span></div>
+          </div>
+        </div>`);
+        if (providerLanguages === []) {
+            document
+            .getElementById("languagesList")
+            .textContent = `${providerLanguages.join(', ')}`;
+        } else {
+          document
+            .getElementById("languagesList")
+            .textContent = "English"; 
+        }
+      } 
+    
+    } else if (
+      response.hanaResponseStatus !== null &&
+      response.hanaResponseStatus !== undefined &&
+      response.hanaResponseStatus.responseCode === 400
+    ) {
+      response.errors.forEach((result) => {
+        $("#helpModalLabel").text("Error");
+        $("#helpModalBody").text(`An error occurred: ${result.message}`);
+        $("#helpModal").modal("show");
+      });
+    } else {
+      $("#helpModalLabel").text("Error");
+      $("#helpModalBody").text(
+        `An error occurred while fetching the data: ${response.responseStatusMessage}`
+      );
+      $("#helpModal").modal("show");
+    }
+      }
+
+      // Get Accreditations
+      
+    const serviceAccreditationsResponse = `{"hanaResponseStatus":{"responseStatusMessage":"Success","responseCode":200,"requestReceivedAt":"2025-06-13T16:18:31.683-1000","responseReturnedAt":"2025-06-13T16:18:31.691-1000"},"hanaResponse":{"codeTableRows":[{"code":"01","description":"NAEYC"},{"code":"02","description":"NECPA"},{"code":"03","description":"NAFCC"}]}}`
+    const hanaJSONAccre = JSON.parse(serviceAccreditationsResponse)
+    parseHanaAccreditationsJsonData(hanaJSONAccre)
+      
+
+      // Parses the Accreditations JSON from HANA
+      function parseHanaAccreditationsJsonData(response) {
+    let accreditations = {};
+    $("#loading").hide();
+    if (response !== null) {
+      accreditations = response.hanaResponse.codeTableRows;
+      const accreditationsMap = new Map(
+        accreditations.map((accreditation) => [accreditation.code, accreditation.description])
+      );
+      const accreditationsArr = [];
+      getAccreditations.forEach((obj) => {
+        if (accreditationsMap.has(obj.accreditationType)) {
+          accreditationsArr.push(true)
+          document
+            .getElementById("acc" + obj.accreditationType)
+            .textContent = accreditationsMap.get(obj.accreditationType);
+          if (obj.effectiveDate !== null && obj.expirationDate !== null) {
+            document
+            .getElementById("accVals" + obj.accreditationType)
+            .insertAdjacentHTML("beforeend", `<span>${formatDate(obj.effectiveDate)} - ${formatDate(obj.expirationDate)}</span>`);
+          } else {
+            document
+            .getElementById("accVals" + obj.accreditationType)
+            .insertAdjacentHTML("beforeend", "N/A");
+          }
+          document
+              .getElementById("accVals" + obj.accreditationType).parentNode.style.display = 'flex';
+        }
+      });
+      $('.accreModeRow:visible:last').css("border-radius", "0 0 24px 24px");
+      if (!accreditationsArr.length) { // if service has no accreditations
+        document
+            .getElementById("accVals01")
+            .insertAdjacentHTML("beforeend", "N/A");
+      }
+    } else if (
+      response.hanaResponseStatus !== null &&
+      response.hanaResponseStatus !== undefined &&
+      response.hanaResponseStatus.responseCode === 400
+    ) {
+      response.errors.forEach((result) => {
+        $("#helpModalLabel").text("Error");
+        $("#helpModalBody").text(`An error occurred: ${result.message}`);
+        $("#helpModal").modal("show");
+      });
+    } else {
+      $("#helpModalLabel").text("Error");
+      $("#helpModalBody").text(
+        `An error occurred while fetching the data: ${response.responseStatusMessage}`
+      );
+      $("#helpModal").modal("show");
+    }
+      }
+
+      $(".effective-date-modal").on("click", function () {
+    let content = "";
+        content = `
+                  <div>
+                      <p>Current Licensing Period: <span id="modal-license-period">` + globalEffectiveDate + `</span></p>
+                  </div>`;
+      $("#helpModalBody").html(content);
+      $("#helpModalLabel").text("Effective Date");
+    });
+      });
+
+      window.onload = function() {
+      copyContent();
+      };
+
+      function copyContent() {
+        // Get the content from the source element & Paste the content into the target element
+        const acc01 = document.getElementById('acc01').innerHTML;
+        const accVals01 = document.getElementById('accVals01').innerHTML;
+        const acc02 = document.getElementById('acc02').innerHTML;
+        const accVals02 = document.getElementById('accVals02').innerHTML;
+        const acc03 = document.getElementById('acc03').innerHTML;
+        const accVals03 = document.getElementById('accVals03').innerHTML;
+
+        if (acc01) { 
+          acc01.innerHTML = `${acc01}:`;
+          document.getElementById('accRow01').style.display = 'flex';
+        }else if (acc02) {
+          acc02 = `${acc02}:`;
+          document.getElementById('accRow02').style.display = 'flex';
+        }else if (acc03) {
+          acc03.innerHTML = `${acc03}:`;
+          document.getElementById('accRow03').style.display = 'flex';
+        } else {
+          document.getElementById('accRowNA').innerHTML = `N/A`;
+          document.getElementById('accRowNA').style.display = 'flex';
+        }
+        
+        if (accVals01 == 'N/A') {
+          document.getElementById('accVals01M').innerHTML = accVals01;
+        }else {
+          document.getElementById('acc01M').innerHTML = `${acc01}:`;
+          document.getElementById('accVals01M').innerHTML = accVals01;
+        }
+        if (accVals02.length > 0){
+          document.getElementById('acc02M').innerHTML = `${acc02}:`;
+          document.getElementById('accVals02M').innerHTML = accVals02;
+        } else if (accVals02.length > 0) {
+          document.getElementById('acc03M').innerHTML = `${acc03}:`;
+          document.getElementById('accVals03M').innerHTML = accVals02;
+        }    
+        
+    }
+
+
+  </script>
+
+
+
+	<script onerror="javascript: var target = event.target; var script = document.createElement('script'); script.crossOrigin = target.crossOrigin; script.src = '/dist/pcf-loader.bundle-f4a0e619b8.js'; script.type = 'text/javascript'; target.insertAdjacentElement('afterend',script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/pcf-loader.bundle-f4a0e619b8.js" type="text/javascript"></script>
+
+		
+		
+	
+
+	
+		<div id="pp-native-controls-react-root"></div>
+<script>window._nativeControlConfig = { "publicPath":"https://gov.content.powerapps.us/resource/powerappsportal/controls", "versions": {"pcf_loader":"0.0.44","pcf_controls":"3.22.7","mf_shared":"0.2.25","host":"0.13.3","data_grid":"1.11.9","controls_fluent_v9":"0.0.47"} }</script>
+<script defer="defer" src="https://gov.content.powerapps.us/resource/powerappsportal/controls/host/main.b1a931c657.chunk.js"></script>
+		
+	
+	
+		
+    <footer role="contentinfo">
+      <div class="footer-top hidden-print">
+        <div class="full-width-container">
+          <div class="row">
+            <div class="xrm-editable-html xrm-attribute" data-languagecontext="English">
+              <div class="xrm-attribute-value">
+                <div class="footer-eyga">
+                  <div class="footer-columns">
+                    <div class="footer-column">
+                      <p class="header">Contact Us</p>
+                      <p class="footer-text">
+                        <a style="
+                            color: #333333;
+                            font-family: 'Inter';
+                            text-decoration: none;
+                          " href="https://humanservices.hawaii.gov/bessd/files/2025/01/Statewide-Child-Care-Licensing-Units-01-25.pdf" target="_blank">Child Care Licensing Units</a>
+                      </p>
+                    </div>
+                    <div class="footer-column">
+                      <p class="header">Quick Links</p>
+                      <ul class="footer-list">
+                        <li>
+                          <a title="Apply for Child Care" aria-label="Program Details" href="https://childcaresubsidyapplication.dhs.hawaii.gov/">Apply for Child Care</a>
+                        </li>
+                        <li>
+                          <a title="Child Care Grant Portal" aria-label="Applications" href="https://dhsgrants.hawaii.gov/">Child Care Grant Portal</a>
+                        </li>
+                        <li>
+                          <a id="ccps-link" title="Child Care Provider Search Portal" aria-label="Get FAQs" href="https://dhscedudev.powerappsportals.us/" onclick="sessionStorage.clear()">Child Care Provider Search Portal</a>
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="footer-column">
+                      <p class="header">Policies</p>
+                      <ul class="footer-list">
+                        <li>
+                          <a title="Terms of Use" aria-label="Terms of Use" href="https://portal.ehawaii.gov/terms-of-use.html">Terms of Use</a>
+                        </li>
+                        <li>
+                          <a title="Accessibility" aria-label="Accessibility" href="https://humanservices.hawaii.gov/accessibility-policy/">Accessibility</a>
+                        </li>
+                        <li>
+                          <a title="Privacy Policy" aria-label="Privacy Policy" href="https://portal.ehawaii.gov/privacy-policy.html">Privacy Policy</a>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <!-- Accordion -->
+                  <div class="mobile-footer-container">
+                    <div class="accordion-container">
+                      <button id="contact-accordion-button" onclick="toggleAccordion('contact-accordion')" class="accordion-header">
+                        <span>CONTACT US</span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 9L12 15L18 9" fill="black"></path>
+                        </svg>
+                      </button>
+                      <ul style="display: none" id="contact-accordion" class="">
+                        <li>
+                          <a style="
+                              color: #333333;
+                              font-family: 'Inter';" href="https://humanservices.hawaii.gov/wp-content/uploads/2024/07/Statewide-Child-Care-Licensing-Units-07-2024.pdf" target="_blank">Child Care Licensing Units</a>
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="accordion-container">
+                      <button id="quick-link-accordion-button" onclick="toggleAccordion('quick-link-accordion')" class="accordion-header">
+                        <span>QUICK LINKS</span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 9L12 15L18 9" fill="black"></path>
+                        </svg>
+                      </button>
+                      <ul style="display: none" id="quick-link-accordion" class="">
+                        <li>
+                          <a title="Apply for Child Care" aria-label="Program Details" href="https://childcaresubsidyapplication.dhs.hawaii.gov/">Apply for Child Care</a>
+                        </li>
+                        <li>
+                          <a title="Child Care Grant Portal" aria-label="Applications" href="https://dhsgrants.hawaii.gov/">Child Care Grant Portal</a>
+                        </li>
+                        <li>
+                          <a id="ccps-link" title="Child Care Provider Search Portal" aria-label="Get FAQs" href="https://dhscedudev.powerappsportals.us/" onclick="sessionStorage.clear()">Child Care Provider Search Portal</a>
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="accordion-container">
+                      <button onclick="toggleAccordion('policies-accordion')" id="policies-accordion-button" class="accordion-header">
+                        <span>POLICIES</span><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 9L12 15L18 9" fill="black"></path>
+                        </svg>
+                      </button>
+                      <ul style="display: none" id="policies-accordion" class="">
+                        <li>
+                          <a title="Terms of Use" aria-label="Terms of Use" href="https://portal.ehawaii.gov/terms-of-use.html">Terms of Use</a>
+                        </li>
+                        <li>
+                          <a title="Accessibility" aria-label="Accessibility" href="https://humanservices.hawaii.gov/accessibility-policy/">Accessibility</a>
+                        </li>
+                        <li>
+                          <a title="Privacy Policy" aria-label="Privacy Policy" href="https://portal.ehawaii.gov/privacy-policy.html">Privacy Policy</a>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="footer-right">
+                    <a title="State of Hawaii Homepage" aria-label="State of Hawaii Homepage" href="https://portal.ehawaii.gov/">
+                      <img alt="State Seal" src="/StateSeal.png" style="width: 5rem; height: 5rem">
+                    </a>
+                    <p style="margin-top: 0.5rem">
+                      Copyright 2024, State of Hawaiʻi. All rights reserved.
+                    </p>
+                  </div>
+                </div>
+
+                <script>
+                  // doing this check specifically for screens such as iPhone 12 Pro Max
+                  if (/Mobi|Android/i.test(navigator.userAgent)) {
+                    $(".footer-eyga").css("flex-direction", "column");
+                    $(".footer-columns div").css("margin-top", "1rem");
+                  }
+                </script>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display: none !important" class="hidden-print footer-bottom">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-8 col-sm-12 col-xs-12 text-left" data-weblinks-maxdepth="2">
+              <ul class="row list-unstyled"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <script>
+      function toggleAccordion(id) {
+        const element = document.getElementById(id);
+        element.style.display =
+          element.style.display === "none" ? "block" : "none";
+        const button = document.getElementById(`${id}-button`);
+        button.classList.toggle("active");
+      }
+    </script>
+    <style>
+      .mobile-footer-container {
+        display: none;
+      }
+      @media (max-width: 767px) {
+        .footer-eyga {
+          flex-direction: column;
+          text-align: center;
+        }
+        .mobile-footer-container {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .mobile-footer-container ul {
+          list-style: none;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+        .accordion-header {
+          display: flex;
+          justify-content: space-between;
+          width: 100%;
+          align-items: center;
+          border-bottom: 1px solid #e7e7e7;
+          border-top: 0;
+          border-right: 0;
+          border-left: 0;
+          background-color: transparent;
+        }
+        .mobile-footer-container ul li {
+          text-align: left;
+          padding: 4px 0;
+        }
+        .accordion-header.active svg {
+          transform: rotate(180deg);
+        }
+        .accordion-header span {
+          font-weight: 700;
+        }
+        .footer-columns {
+          display: none !important;
+        }
+       .footer-right {
+          align-items: baseline !important;
+          margin-left: 0 !important;
+        }
+      }
+      footer {
+        position: relative;
+        color: #555;
+        background-color: #f5f5f5;
+        margin-top: 2rem;
+        padding: 0;
+      }
+
+      .footer-top {
+        width: 100%;
+        display: flex;
+        border-top: 0.1rem solid #ccc;
+        align-items: center;
+        background-color: #f5f5f5 !important;
+      }
+
+      .footer-eyga {
+        display: flex;
+        justify-content: space-between;
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        box-sizing: border-box;
+      }
+
+      .footer-columns {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+
+      .footer-column {
+        flex: 1;
+        min-width: 15rem;
+        margin-right: 1rem;
+      }
+
+      .footer-column .header {
+        font-weight: 700;
+        color: #37474f;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+        font-size: 1rem;
+      }
+
+      .footer-column .footer-text {
+        font-weight: 400;
+        color: #333;
+        margin-bottom: 0.5rem;
+        white-space: nowrap;
+        font-size: 0.875rem;
+      }
+
+      .footer-column .footer-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .footer-column .footer-list li {
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+      }
+
+      .footer-column .footer-list a {
+        color: #333;
+        text-decoration: none;
+        font-family: "Inter";
+      }
+
+      .footer-right {
+        display: flex;
+        align-items: flex-end;
+        justify-content: flex-end;
+        flex-direction: column;
+        text-align: right;
+        padding-top: 1rem;
+        margin-left: auto;
+        min-width: 15rem;
+      }
+
+      .container {
+        width: 100% !important;
+        padding: 0;
+      }
+
+      .row {
+        margin-left: 0;
+        margin-right: 0;
+      }
+
+      .full-width-container {
+        width: 100% !important;
+        padding: 0;
+      }
+
+      .list-unstyled {
+        padding-left: 0;
+        list-style: none;
+      }
+
+      .xrm-attribute {
+        display: flex;
+        align-items: center;
+      }
+
+      .xrm-attribute-value {
+        width: 100%;
+      }
+
+      #ccps-link {
+          display: none;
+      }
+    </style>
+	
+
+	<script type="text/javascript">
+
+		function trackCopilotCustomUsage(botSchema) {
+			const request = {
+				botSchemaName: botSchema
+			}
+			var json = JSON.stringify(request);
+			shell.ajaxSafePost({
+				type: "POST",
+				contentType: "application/json",
+				url: "/_services/copilot/TrackUsage",
+				data: json
+			}).done(function () {
+			}).fail(function (jqXhr) {
+			});
+		}
+
+		function findAndLogCustomCopilotUsage() {
+			const pageSource = document.documentElement.outerHTML;
+			const customPvaBotWebchatRegex = /api\.(preprod\.|test\.)?powerplatform\.(com|us|cn|appsplatform\.us)\/powervirtualagents\/botsbyschema\/([^/]+)\/directline\/token/;
+			const customPvaBotIframeRegex = /powerva\.microsoft\.com\/environments\/([0-9a-fA-F\-]+)\/bots\/([^/]+)\/webchat/;
+			const omniChannelRegex = /livechatwidget\/scripts\/LiveChatBootstrapper\.js/;
+
+			const matchPvaBotWebchat = pageSource.match(customPvaBotWebchatRegex);
+			if (matchPvaBotWebchat && matchPvaBotWebchat[3]) {
+				trackCopilotCustomUsage(matchPvaBotWebchat[3]);
+			}
+
+			const matchPvaBotIframe = pageSource.match(customPvaBotIframeRegex);
+			if (matchPvaBotIframe && matchPvaBotIframe[2]) {
+				trackCopilotCustomUsage(matchPvaBotIframe[2]);
+			}
+
+			const matchOmniChannel = pageSource.match(omniChannelRegex);
+			if (matchOmniChannel && matchOmniChannel[0]) {
+				trackCopilotCustomUsage("omnichannelWidget");
+			}
+		}
+
+		window.addEventListener("load", function () {
+			findAndLogCustomCopilotUsage();
+		});
+	</script>
+
+		
+			
+			
+			
+			
+		
+	<script onerror="javascript: var target = event.target; var script = document.createElement('script'); script.crossOrigin = target.crossOrigin; script.src = '/dist/bootstrap.BootstrapV5.bundle-be8391e97d.js'; script.type = 'text/javascript'; target.insertAdjacentElement('afterend',script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/bootstrap.BootstrapV5.bundle-be8391e97d.js" type="text/javascript"></script>
+
+	<script onerror="javascript: var target = event.target; var script = document.createElement('script'); script.crossOrigin = target.crossOrigin; script.src = '/dist/postpreform.BootstrapV5.bundle-11a5a91493.js'; script.type = 'text/javascript'; target.insertAdjacentElement('afterend',script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/postpreform.BootstrapV5.bundle-11a5a91493.js" type="text/javascript"></script>
+
+	<script onerror="javascript: var target = event.target; var script = document.createElement('script'); script.crossOrigin = target.crossOrigin; script.src = '/dist/app.BootstrapV5.bundle-2010696351.js'; script.type = 'text/javascript'; target.insertAdjacentElement('afterend',script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/app.BootstrapV5.bundle-2010696351.js" type="text/javascript"></script>
+
+	<script onerror="javascript: var target = event.target; var script = document.createElement('script'); script.crossOrigin = target.crossOrigin; script.src = '/dist/default-1033.moment_2_29_4.bundle-eda4e638fd.js'; script.type = 'text/javascript'; target.insertAdjacentElement('afterend',script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/default-1033.moment_2_29_4.bundle-eda4e638fd.js" type="text/javascript"></script>
+
+	
+
+	
+	
+	
+	<script>
+        //this event will update the title of the page based on active breadcrumb
+        $('.breadcrumb').ready(function () {
+            if ($('.breadcrumb').is(':visible')) {
+                document.querySelector('title').innerHTML = ($('.breadcrumb > li.active').text() + "");
+            }
+        });
+
+        function GoToNewEditor() {
+            var editCmsUrlSegment = "EditInCms";
+            var currentUrl = window.location.href;
+            if (currentUrl.indexOf('?') > -1) {
+                var urlSegments = currentUrl.split("?");
+                window.location.href = window.location.origin + '/' + editCmsUrlSegment + window.location.pathname + '?' + urlSegments[1];
+            }
+            else {
+                window.location.href = window.location.origin + '/' + editCmsUrlSegment + window.location.pathname;
+            }
+        }
+    </script>
+	
+		
+		
+	
+		
+			<script>
+				if ('serviceWorker' in navigator) {
+					navigator.serviceWorker.register('/js/sw.js?languageCode=/&version=vbaa14f0f-abd4-469f-8e44-b255e0938a1c', { scope: '/', updateViaCache: 'all' }).then(function (registration) {
+						console.log('Service worker registration succeeded:', registration);
+					}, function (error) {
+						console.log('Service worker registration failed:', error);
+					});
+					navigator.serviceWorker.addEventListener('message', event => {
+						showOfflineNotification();
+					});
+				} else {
+					console.log('Service workers are not supported.');
+				}
+			</script>
+			<script>
+				var notificationArea = document.getElementById("offlineNotificationBar");
+
+				function showOfflineNotification() {
+					notificationArea.style.display = "flex";
+					notificationArea.classList.remove("displayNone");
+					var navigationBar = document.getElementsByClassName("navbar navbar-inverse navbar-static-top");
+					if (navigationBar != null) {
+						var skipToMainContent = navigationBar[0].querySelectorAll(":scope > .skip-to-content");
+						if (skipToMainContent != null) {
+							skipToMainContent[0].style.display = "none";
+						}
+					}
+				}
+				window.addEventListener('offline', () => {
+					showOfflineNotification();
+				});
+				window.addEventListener('online', () => {
+					notificationArea.style.display = "none";
+					notificationArea.classList.add("displayNone");
+				});
+			</script>
+			
+	
+		
+	<!--Start Show Session Expire Warning Popup here -->
+    
+		
+
+
+
+
+</body>

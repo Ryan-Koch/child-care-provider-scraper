@@ -1,0 +1,36 @@
+{
+  "hanaResponseStatus": {"responseStatusMessage": "Success", "responseCode": 200},
+  "hanaResponse": {
+    "results": [
+      {
+        "providerId": 40001,
+        "providerType": "OR",
+        "name": "XPLOR EDUCATION INC",
+        "services": [
+          {"serviceId": 91187, "providerId": 40001, "serviceType": "03",
+           "serviceName": "XPLOR EDUCATION PRESCHOOL", "area": "ADAO"},
+          {"serviceId": 91655, "providerId": 40001, "serviceType": "05",
+           "serviceName": "XPLOR EDUCATION INFANT TODDLER", "area": "ADAO"}
+        ]
+      },
+      {
+        "providerId": 40002,
+        "providerType": "CG",
+        "name": "JANE DOE",
+        "services": [
+          {"serviceId": 91700, "providerId": 40002, "serviceType": "02",
+           "serviceName": "JANE DOE FAMILY CHILD CARE", "area": "ADAP"}
+        ]
+      },
+      {
+        "providerId": 40003,
+        "providerType": "OR",
+        "name": "LANAI COMMUNITY CENTER",
+        "services": [
+          {"serviceId": 91800, "providerId": 40003, "serviceType": "04",
+           "serviceName": "LANAI AFTERSCHOOL", "area": "ADAO"}
+        ]
+      }
+    ]
+  }
+}

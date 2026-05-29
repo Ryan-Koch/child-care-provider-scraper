@@ -1,0 +1,19 @@
+{
+  "hanaResponseStatus": {"responseStatusMessage": "Success", "responseCode": 200},
+  "hanaResponse": {
+    "codeTableRows": [
+      {"code": "AA", "parent": null, "description": "State of Hawaii"},
+      {"code": "AB", "parent": "AA", "description": "Hawaii"},
+      {"code": "AC", "parent": "AA", "description": "Kauai"},
+      {"code": "AD", "parent": "AA", "description": "Lanai"},
+      {"code": "AE", "parent": "AA", "description": "Maui"},
+      {"code": "AF", "parent": "AA", "description": "Molokai"},
+      {"code": "AG", "parent": "AA", "description": "Oahu"},
+      {"code": "AH", "parent": "AB", "description": "East Hawaii"},
+      {"code": "JO", "parent": "AH", "description": "Hawaii National Park"},
+      {"code": "BW", "parent": "AH", "description": "Hilo"},
+      {"code": "AO", "parent": "AD", "description": "Lanai City"},
+      {"code": "AP", "parent": "AD", "description": "Lanai Other"}
+    ]
+  }
+}
