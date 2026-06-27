@@ -63,6 +63,9 @@ class ProviderItem(scrapy.Item):
     license_number = scrapy.Field()
     license_holder = scrapy.Field()
     provider_type = scrapy.Field()
+    # Canonical cross-state facet derived from provider_type (normalization
+    # pipeline). Additive: provider_type keeps its exact state value.
+    facility_category = scrapy.Field()
     status = scrapy.Field()
     status_date = scrapy.Field()
     sutq_rating = scrapy.Field()
@@ -86,6 +89,25 @@ class ProviderItem(scrapy.Item):
     license_expiration = scrapy.Field()
     deficiencies = scrapy.Field()
     languages = scrapy.Field()
+
+    # Common fields populated by the normalization pipeline's field-collapse
+    # step (additive: the source state-specific fields are preserved, D2).
+    # See FIELD_COLLAPSE_MAP in normalization.py.
+    license_type = scrapy.Field()
+    school_district = scrapy.Field()
+    mailing_address = scrapy.Field()
+    accreditation = scrapy.Field()
+    meals = scrapy.Field()
+    accepting_new_children = scrapy.Field()
+    transportation = scrapy.Field()
+    head_start = scrapy.Field()  # normalized to a boolean
+    curriculum = scrapy.Field()
+
+    # Best-effort address components parsed from `address` by the normalization
+    # pipeline (additive; `address` is preserved). Left None when ambiguous.
+    city = scrapy.Field()
+    state = scrapy.Field()  # USPS 2-letter
+    zip = scrapy.Field()
 
     # Virginia specific fields
     va_license_type = scrapy.Field()

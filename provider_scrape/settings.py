@@ -62,9 +62,14 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    "va_scrape.pipelines.VaScrapePipeline": 300,
-#}
+ITEM_PIPELINES = {
+    # Runs after item construction so exporters see normalized values.
+    "provider_scrape.pipelines.NormalizationPipeline": 300,
+}
+
+# Master switch for scrape-time normalization (data cleanup pipeline). Set to
+# False for a non-normalized run when raw scraped values are needed (D4).
+NORMALIZE_ENABLED = True
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
