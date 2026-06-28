@@ -300,6 +300,23 @@ def test_facility_category_mappings():
     assert normalization.facility_category_from_type("Exempt Only") == "exempt"
 
 
+def test_canonical_status_maryland_values():
+    assert normalization.canonical_status("Continuing - Full") == "active"
+    assert normalization.canonical_status("Initial - Full") == "provisional"
+    assert normalization.canonical_status("Provisional") == "provisional"
+    assert normalization.canonical_status("Suspended - Emergency") \
+        == "enforcement"
+    assert normalization.canonical_status("Closed") == "closed"
+    assert normalization.canonical_status("Revoked") == "closed"
+
+
+def test_facility_category_maryland_codes():
+    assert normalization.facility_category_from_type("CTR") == "center"
+    assert normalization.facility_category_from_type("LOC") == "center"
+    assert normalization.facility_category_from_type("FCCH") == "family_home"
+    assert normalization.facility_category_from_type("LFCCH") == "family_home"
+
+
 def test_facility_category_unmapped_is_other_and_logged(caplog):
     with caplog.at_level("WARNING"):
         assert normalization.facility_category_from_type("Spaceship Care") \

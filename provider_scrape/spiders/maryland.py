@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import os
 import re
@@ -11,6 +12,25 @@ from provider_scrape.items import InspectionItem, ProviderItem
 
 # tessdata path for tesserocr — bundled fast model
 TESSDATA_DIR = os.environ.get("TESSDATA_PREFIX", "/tmp/tessdata")
+
+# Maryland EXCELS "Find a Program" public API. Keyed by license number, it
+# returns the precise street address (with the house number the licensing site
+# omits from HTML), lat/long coordinates, and the EXCELS rating breakdown — in
+# one fast (~1-2s) JSON call on a separate, non-tarpitting domain. This replaces
+# the slow inspection-report PDF download + OCR for the ~91% of inspected
+# providers that participate in EXCELS. See maryland_performance_epic.
+EXCELS_SEARCH_URL = (
+    "https://findaprogram.marylandexcels.org/api/fap/search?license={license}"
+)
+EXCELS_REFERER = "https://findaprogram.marylandexcels.org/"
+
+# Realistic browser UA applied to every request ("stealth-lite") to reduce the
+# chance of tripping checkccmd.org's anti-bot protection under concurrency.
+USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/124.0.0.0 Safari/537.36"
+)
 
 
 def extract_address_from_pdf(pdf_bytes):
@@ -70,21 +90,46 @@ def _format_address(raw):
 
 class MarylandSpider(scrapy.Spider):
     name = "maryland"
-    allowed_domains = ["checkccmd.org"]
+    allowed_domains = ["checkccmd.org", "findaprogram.marylandexcels.org"]
     start_urls = ["https://www.checkccmd.org/"]
 
     custom_settings = {
-        "DOWNLOAD_DELAY": 0.5,
-        "CONCURRENT_REQUESTS": 4,
-        "CONCURRENT_REQUESTS_PER_DOMAIN": 4,
+        # Detail/results pages on checkccmd are cheap and parallelize cleanly
+        # (measured: 8 concurrent → 4.5s wall, no penalty). The slow part —
+        # inspection-report PDFs — is now only a small EXCELS-miss fallback,
+        # routed to its own low-concurrency "checkccmd-pdf" slot so it can't
+        # stall the detail scrape.
+        "DOWNLOAD_DELAY": 0.25,
+        "CONCURRENT_REQUESTS": 16,
+        "CONCURRENT_REQUESTS_PER_DOMAIN": 8,
         "RETRY_TIMES": 10,
+        "USER_AGENT": USER_AGENT,
+        # The slow, server-rendered inspection PDF is only fetched for the small
+        # set of providers absent from EXCELS (when ocr_fallback is on). Pin
+        # those to a dedicated low-concurrency slot so they can't stall the fast
+        # detail scrape and stay below the ~6-concurrent point where the PDF
+        # endpoint starts to tarpit.
+        "DOWNLOAD_SLOTS": {
+            "checkccmd-pdf": {"concurrency": 3, "delay": 0.4},
+        },
     }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, ocr_fallback=True, counties=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.seen_fi = set()
         # Track requested pages per county to keep pagination chains independent
         self.requested_pages_by_county = {}
+        # When EXCELS has no address for a provider, fall back to the slow
+        # inspection-report PDF + OCR. Disable (``-a ocr_fallback=false``) for a
+        # pure-fast run that downloads zero PDFs.
+        self.ocr_fallback = str(ocr_fallback).lower() not in ("false", "0", "no")
+        # Optional debug filter: ``-a counties="Howard,Carroll"`` restricts the
+        # crawl to counties whose dropdown label contains one of these terms
+        # (case-insensitive). Used for limited verification runs.
+        if counties:
+            self._county_filter = [c.strip().lower() for c in str(counties).split(",")]
+        else:
+            self._county_filter = None
 
     def parse(self, response):
         """Extract form options, then launch a fresh session per county."""
@@ -102,6 +147,16 @@ class MarylandSpider(scrapy.Spider):
         self._cities = response.css(
             "#MainContent_ddlCityList option::attr(value)"
         ).getall()
+
+        if self._county_filter:
+            counties = [
+                c
+                for c in counties
+                if any(term in c.lower() for term in self._county_filter)
+            ]
+            self.logger.info(
+                f"County debug filter active — restricting to: {counties}"
+            )
 
         self.logger.info(
             f"Form options: {len(self._fac_types)} types, "
@@ -185,6 +240,13 @@ class MarylandSpider(scrapy.Spider):
                     cols[5].css("::text").get("").strip() if len(cols) > 5 else None
                 )
 
+                # Pin the detail request to this county's cookie session. The
+                # licensing site is ASP.NET, which holds a per-session request
+                # lock — requests sharing one session are processed serially by
+                # the server (~16s each). Without this, every detail request
+                # across all counties shares the one default session and the
+                # whole crawl serializes. Per-county jars let the ~24 counties'
+                # detail requests run concurrently.
                 yield response.follow(
                     link,
                     callback=self.parse_detail,
@@ -193,6 +255,7 @@ class MarylandSpider(scrapy.Spider):
                         "school_name": school_name or None,
                         "program_type": program_type or None,
                     },
+                    meta={"cookiejar": county_key},
                 )
 
         # Pagination - find next page via __doPostBack.
@@ -330,17 +393,121 @@ class MarylandSpider(scrapy.Spider):
         # Inspections
         item["inspections"] = self._extract_inspections(response)
 
-        # Try to get precise address from the first inspection report PDF
         first_report_url = self._get_first_report_url(response)
-        if first_report_url:
+
+        # Enrich the precise address (house number for centers) + rooftop
+        # coordinates from the Maryland EXCELS public API, keyed by license
+        # number. Falls back to the inspection-report PDF + OCR only when EXCELS
+        # has no record at all (and ocr_fallback is enabled).
+        license_number = item.get("license_number")
+        if license_number and str(license_number).strip().isdigit():
+            yield scrapy.Request(
+                EXCELS_SEARCH_URL.format(license=str(license_number).strip()),
+                callback=self.parse_excels,
+                cb_kwargs={"item": item, "first_report_url": first_report_url},
+                headers={"Referer": EXCELS_REFERER, "Accept": "application/json"},
+                dont_filter=True,
+            )
+        else:
+            yield from self._address_fallback(item, first_report_url)
+
+    def parse_excels(self, response, item, first_report_url=None):
+        """Enrich the item with a precise address + coordinates from EXCELS.
+
+        The EXCELS ``search?license=`` endpoint returns ``{"data": [ {...} ]}``.
+        A record carries rooftop-accurate ``lat``/``long`` for both centers and
+        family homes (verified: a family-home coordinate reverse-geocodes to the
+        exact house, and a center coordinate matches an independent geocode of
+        its house-numbered address to 0 m). So whenever EXCELS has a record we
+        capture the precise location and are done — no PDF:
+
+        * **Centers** also expose a house-numbered street address, so we adopt
+          it as ``address``.
+        * **Family homes** have the house number withheld from the address
+          string, but the rooftop coordinate already pins the exact location
+          (and the number is recoverable from it by reverse-geocoding), so the
+          PDF offers no accuracy upside.
+
+        Only a *true* EXCELS miss (no record at all) optionally falls back to the
+        inspection-report PDF + OCR.
+        """
+        record = None
+        try:
+            data = json.loads(response.text).get("data")
+            if isinstance(data, list) and data:
+                record = data[0]
+        except (ValueError, AttributeError) as e:
+            self.logger.debug(
+                f"EXCELS parse failed for license "
+                f"{item.get('license_number')}: {e}"
+            )
+
+        if record:
+            self._apply_excels_location(item, record)
+            street = (record.get("streetAddress") or "").strip()
+            if street and street[0].isdigit():
+                # House-numbered address (centers): adopt the full address.
+                item["address"] = self._compose_excels_address(record)
+            # Family homes keep the results-page street-name address plus the
+            # rooftop coordinates captured above.
+            yield item
+            return
+
+        # True EXCELS miss: optionally OCR the inspection-report PDF.
+        yield from self._address_fallback(item, first_report_url)
+
+    @staticmethod
+    def _apply_excels_location(item, record):
+        """Set coordinates + structured city/state/ZIP from an EXCELS record.
+
+        The normalization pipeline fills city/state/zip only when absent, so
+        these authoritative values are not clobbered downstream.
+        """
+        lat = record.get("lat")
+        lon = record.get("long")
+        if lat is not None:
+            item["latitude"] = str(lat)
+        if lon is not None:
+            item["longitude"] = str(lon)
+        city = (record.get("city") or "").strip()
+        zip_code = (record.get("zipcode") or "").strip()
+        if city:
+            item["city"] = city
+        if (record.get("state") or "").strip().lower().startswith("maryland"):
+            item["state"] = "MD"
+        if zip_code:
+            item["zip"] = zip_code
+
+    def _address_fallback(self, item, first_report_url):
+        """Yield the item, using PDF/OCR for a precise address when enabled.
+
+        The PDF request is pinned to the low-concurrency ``checkccmd-pdf``
+        download slot so the slow, server-rendered reports can't stall the
+        detail/results crawl.
+        """
+        if self.ocr_fallback and first_report_url:
             yield scrapy.Request(
                 first_report_url,
                 callback=self.parse_inspection_pdf,
                 cb_kwargs={"item": item},
+                meta={"download_slot": "checkccmd-pdf"},
                 dont_filter=True,
             )
         else:
             yield item
+
+    @staticmethod
+    def _compose_excels_address(record):
+        """Join EXCELS address parts into 'street, city, MD zip'."""
+        street = (record.get("streetAddress") or "").strip()
+        city = (record.get("city") or "").strip()
+        state = (record.get("state") or "").strip()
+        if state.lower().startswith("maryland"):
+            state = "MD"
+        zip_code = (record.get("zipcode") or "").strip()
+        state_zip = " ".join(p for p in [state, zip_code] if p)
+        city_state_zip = ", ".join(p for p in [city, state_zip] if p)
+        return ", ".join(p for p in [street, city_state_zip] if p)
 
     async def parse_inspection_pdf(self, response, item):
         """Extract precise address from an inspection report PDF via OCR."""

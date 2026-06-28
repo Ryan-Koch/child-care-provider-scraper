@@ -263,12 +263,12 @@ STATUS_BUCKETS = {
         "Regular", "Registration", "Registered", "Listed", "Full Permit",
         "CONTINUOUS LICENSE", "License issued (IL)", "Certified", "CERTIFIED",
         "Open - Certified", "Open - Payment Only", "Compliance Certificate",
-        "Original", "Amended permit (AP)",
+        "Original", "Amended permit (AP)", "Continuing - Full",
     ],
     "provisional": [
         "PROVISIONAL LICENSE", "Initial Permit", "Provisional 1",
         "Provisional 2", "Provisional 3", "Permit issued (IP)",
-        "Renewed Initial",
+        "Renewed Initial", "Initial - Full", "Provisional",
     ],
     "pending": [
         "Pending renewal application (RN)", "PENDING", "Pending",
@@ -278,7 +278,7 @@ STATUS_BUCKETS = {
     "enforcement": [
         "Pending Revocation", "ON PROBATION", "ENFORCEMENT",
         "Pending Revocation and Denial", "Suspended",
-        "Pending revocation (PR)",
+        "Pending revocation (PR)", "Suspended - Emergency",
         # NB: en-dash (–), exactly as emitted by the source.
         "Open – Pending Legal Action Outcome", "RevocationPending",
         "Refuse to Renew (RR)", "Revoke License (RL)",
@@ -336,6 +336,9 @@ FACILITY_CATEGORY_BUCKETS = {
         "Small Employer Based Child Care", "Department of Defense",
         "DAY CARE CENTER - ILL CENTER", "University", "SDCC",
         "Child Care Hourly Center",
+        # Maryland (checkccmd.org) codes: CTR = center, LOC = a center-based
+        # program operating under a Letter of Compliance.
+        "CTR", "LOC",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME", "Family Child Care Home", "Family Home", "FDC",
@@ -346,6 +349,8 @@ FACILITY_CATEGORY_BUCKETS = {
         "Licensed Family Home", "Family Home Child Care",
         "Large Family Child Care Home", "Unlicensed/Unregistered FDH",
         "System Approved FDH", "Child Care Residential Certificate",
+        # Maryland codes: FCCH = family child care home, LFCCH = large FCCH.
+        "FCCH", "LFCCH",
     ],
     "group_home": [
         "GFDC", "Group Home", "Group Home Child Care", "Group",
