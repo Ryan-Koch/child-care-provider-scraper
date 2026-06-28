@@ -91,20 +91,20 @@ def test_extract_form_field_empty():
 def test_build_search_message_structure():
     msg_str = build_search_message(page_size=50, page_number=2)
     msg = json.loads(msg_str)
-    
+
     assert "actions" in msg
     action = msg["actions"][0]
     assert action["id"] == "2;a"
     assert action["params"]["classname"] == "PVM_ProviderSearchControllerMain"
     assert action["params"]["method"] == "getProvidersfromZip"
-    
+
     params = action["params"]["params"]
     assert params["pageSize"] == 50
     assert params["pageNumber"] == 2
 
 def test_build_search_post_body():
     body = build_search_post_body(page_size=50, page_number=2, aura_context="ctx_blob")
-    
+
     # Check that required urlencoded parts are present
     assert "aura.context=ctx_blob" in body
     assert "aura.token=null" in body
@@ -116,7 +116,7 @@ def test_build_search_post_body():
 
 def test_parse_provider_full_record(spider):
     item = spider.parse_provider(AZ_PROVIDER_RECORD)
-    
+
     assert isinstance(item, ProviderItem)
     assert item["source_state"] == "Arizona"
     assert item["provider_name"] == "Arcadia Montessori School"
@@ -126,14 +126,14 @@ def test_parse_provider_full_record(spider):
     assert item["ages_served"] == "3 Years To 12 Years"
     assert item["az_license_type"] == "Center - Licensed by AZ Dept. of Health Services"
     assert item["license_holder"] == "John Doe"
-    assert item["sutq_rating"] is None
+    assert item["az_quality_rating"] is None
     assert item["languages"] == "English;Spanish"
     assert item["phone"] == "602-840-2342"
     assert item["provider_website"] == "https://www.arcadiamontessori.com"
     assert item["address"] == "2257 E Cedar Ave\nFlagstaff, AZ, 86004"
     assert item["latitude"] == "33.475900000000000"
     assert item["longitude"] == "-111.971100000000000"
-    
+
     # AZ specific fields
     assert item["az_operatinghourid"] == "0OHcs000002qQrhGAE"
     assert item["az_affiliation"] is None
@@ -144,7 +144,7 @@ def test_parse_provider_full_record(spider):
     assert item["az_status_label"] == "Open Spots"
     assert item["az_first_slot_start"] == "07:30:00.000Z"
     assert item["az_first_slot_end"] == "14:50:00.000Z"
-    
+
     # Inspections
     assert len(item["inspections"]) == 2
 
@@ -158,16 +158,16 @@ def test_parse_provider_rating_to_string(spider):
     record = dict(AZ_PROVIDER_RECORD)
     record["rating"] = 4.5
     item = spider.parse_provider(record)
-    assert item["sutq_rating"] == "4.5"
+    assert item["az_quality_rating"] == "4.5"
 
 
 # ---- parse_inspections ----
 
 def test_parse_inspections(spider):
     inspections = spider.parse_inspections(AZ_PROVIDER_RECORD["dhsenforcements"])
-    
+
     assert len(inspections) == 2
-    
+
     first = inspections[0]
     assert isinstance(first, InspectionItem)
     assert first["date"] == "2025-02-12"

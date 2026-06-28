@@ -348,12 +348,12 @@ def test_parse_provider_unwraps_parsed_value_scores(spider):
 
 def test_parse_provider_sutq_rating_handles_parsed_value(spider):
     item = spider.parse_provider(FL_PROVIDER_EXEMPT, "Miami-Dade")
-    assert item["sutq_rating"] == 5
+    assert item["fl_vpk_composite_score"] == 5
 
 
 def test_parse_provider_sutq_rating_none_when_missing(spider):
     item = spider.parse_provider(FL_PROVIDER_FULL, "Miami-Dade")
-    assert item["sutq_rating"] is None
+    assert item["fl_vpk_composite_score"] is None
 
 
 def test_parse_provider_program_and_service_lists(spider):
@@ -429,5 +429,3 @@ def test_parse_inspections_handles_none_and_missing_reports(spider):
     assert spider.parse_inspections(None) == []
     assert spider.parse_inspections([]) == []
     assert spider.parse_inspections([{"year": 2024, "inspectionReport": None}]) == []
-
-

@@ -76,7 +76,7 @@ class SouthCarolinaSpider(scrapy.Spider):
     it through request meta to the detail parser.
     """
 
-    name = "south_carolina"
+    name = "South Carolina"
     allowed_domains = ["scchildcare.org"]
 
     custom_settings = {
@@ -168,7 +168,7 @@ class SouthCarolinaSpider(scrapy.Spider):
 
     def parse_detail(self, response):
         item = ProviderItem()
-        item["source_state"] = "South Carolina"
+        item["source_state"] = "SC"
         item["provider_url"] = response.url
         item["sc_provider_id"] = response.meta.get("sc_provider_id")
         item["latitude"] = response.meta.get("latitude")

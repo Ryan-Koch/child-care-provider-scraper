@@ -64,7 +64,7 @@ run_spider() {
       local cmd_prefix=()
       grep -qw "$spider_name" <<< "$XVFB_SPIDERS" && cmd_prefix=(xvfb-run -a -s "-screen 0 1920x1080x24")
       "${cmd_prefix[@]}" scrapy crawl $spider_name \
-      -o "${OUTPUT_DIR}${spider_name}.${FORMAT}" \
+      -O "${OUTPUT_DIR}${spider_name}.${FORMAT}" \
       -s LOG_FILE="${OUTPUT_DIR}${log_file}" \
       -s LOG_LEVEL=$LOG_LEVEL \
       -s LOG_FILE_APPEND=False

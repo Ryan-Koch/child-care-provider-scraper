@@ -63,9 +63,12 @@ class ProviderItem(scrapy.Item):
     license_number = scrapy.Field()
     license_holder = scrapy.Field()
     provider_type = scrapy.Field()
+    # Canonical cross-state facet derived from provider_type (normalization
+    # pipeline). Additive: provider_type keeps its exact state value.
+    facility_category = scrapy.Field()
     status = scrapy.Field()
     status_date = scrapy.Field()
-    sutq_rating = scrapy.Field()
+    # sutq_rating = scrapy.Field()
     address = scrapy.Field()
     latitude = scrapy.Field()
     longitude = scrapy.Field()
@@ -87,6 +90,28 @@ class ProviderItem(scrapy.Item):
     deficiencies = scrapy.Field()
     languages = scrapy.Field()
 
+    # Common fields populated by the normalization pipeline's field-collapse
+    # step (additive: the source state-specific fields are preserved, D2).
+    # See FIELD_COLLAPSE_MAP in normalization.py.
+    license_type = scrapy.Field()
+    school_district = scrapy.Field()
+    mailing_address = scrapy.Field()
+    accreditation = scrapy.Field()
+    meals = scrapy.Field()
+    accepting_new_children = scrapy.Field()
+    transportation = scrapy.Field()
+    head_start = scrapy.Field()  # normalized to a boolean
+    curriculum = scrapy.Field()
+
+    # Best-effort address components parsed from `address` by the normalization
+    # pipeline (additive; `address` is preserved). Left None when ambiguous.
+    city = scrapy.Field()
+    state = scrapy.Field()  # USPS 2-letter
+    zip = scrapy.Field()
+
+    # Ohio specific fields
+    oh_sutq_rating = scrapy.Field()
+
     # Virginia specific fields
     va_license_type = scrapy.Field()
     va_inspector = scrapy.Field()
@@ -98,10 +123,12 @@ class ProviderItem(scrapy.Item):
     va_interactions_points = scrapy.Field()
     va_curriculum_points = scrapy.Field()
     va_total_points = scrapy.Field()
+
     # Texas specific fields
     tx_rising_star = scrapy.Field()
     tx_operation_id = scrapy.Field()
     tx_agency_number = scrapy.Field()
+
     # California specific fields
     ca_regional_office = scrapy.Field()
     ca_license_first_date = scrapy.Field()
@@ -116,6 +143,7 @@ class ProviderItem(scrapy.Item):
     ca_inspect_typeb = scrapy.Field()
     ca_other_typea = scrapy.Field()
     ca_other_typeb = scrapy.Field()
+
     # IL specific
     il_provider_id = scrapy.Field()
     il_facility_type = scrapy.Field()
@@ -376,6 +404,7 @@ class ProviderItem(scrapy.Item):
     az_first_slot_start = scrapy.Field()
     az_first_slot_end = scrapy.Field()
     az_license_type = scrapy.Field()
+    az_quality_rating = scrapy.Field()
 
     # Florida specific fields
     fl_dba = scrapy.Field()
@@ -394,6 +423,7 @@ class ProviderItem(scrapy.Item):
     fl_is_gold_seal = scrapy.Field()
     fl_is_public_school = scrapy.Field()
     fl_wels_rating_date = scrapy.Field()
+    fl_vpk_composite_score = scrapy.Field()
     fl_vpk_school_year_composite_score = scrapy.Field()
     fl_vpk_school_year_wels_rating_date = scrapy.Field()
     fl_vpk_summer_composite_score = scrapy.Field()
@@ -415,26 +445,26 @@ class ProviderItem(scrapy.Item):
     fl_vpk_instructor_credentials = scrapy.Field()
 
     # Hawaii specific fields
-    hi_service_id = scrapy.Field()          # serviceId - the per-service primary key
-    hi_provider_id = scrapy.Field()         # providerId - the parent org id
-    hi_service_type_code = scrapy.Field()   # raw serviceType code, e.g. "05"
-    hi_provider_kind = scrapy.Field()       # "OR" (org/center) or "CG" (caregiver/home)
-    hi_license_type = scrapy.Field()        # "Provisional" | "Regular" (from P/R)
-    hi_area_code = scrapy.Field()           # fully-qualified area code, e.g. "ABAHBW"
-    hi_island = scrapy.Field()              # island name (top-level area description)
-    hi_mailing_address = scrapy.Field()     # mailing address (distinct from location)
-    hi_usda_food_program = scrapy.Field()   # bool
+    hi_service_id = scrapy.Field()  # serviceId - the per-service primary key
+    hi_provider_id = scrapy.Field()  # providerId - the parent org id
+    hi_service_type_code = scrapy.Field()  # raw serviceType code, e.g. "05"
+    hi_provider_kind = scrapy.Field()  # "OR" (org/center) or "CG" (caregiver/home)
+    hi_license_type = scrapy.Field()  # "Provisional" | "Regular" (from P/R)
+    hi_area_code = scrapy.Field()  # fully-qualified area code, e.g. "ABAHBW"
+    hi_island = scrapy.Field()  # island name (top-level area description)
+    hi_mailing_address = scrapy.Field()  # mailing address (distinct from location)
+    hi_usda_food_program = scrapy.Field()  # bool
     hi_diapered_children_accepted = scrapy.Field()  # bool
-    hi_demonstration_project = scrapy.Field()       # bool
-    hi_meals = scrapy.Field()               # list of meal descriptions
-    hi_accreditations = scrapy.Field()      # list of accreditation descriptions
-    hi_license_history = scrapy.Field()     # list of prior license periods
-    hi_status_history = scrapy.Field()      # list of {status, statusDate}
+    hi_demonstration_project = scrapy.Field()  # bool
+    hi_meals = scrapy.Field()  # list of meal descriptions
+    hi_accreditations = scrapy.Field()  # list of accreditation descriptions
+    hi_license_history = scrapy.Field()  # list of prior license periods
+    hi_status_history = scrapy.Field()  # list of {status, statusDate}
 
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
     source_state = scrapy.Field()
-    
+
     # Nevada specific fields
     nv_credential_type = scrapy.Field()
     nv_facility_type = scrapy.Field()
