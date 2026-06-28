@@ -242,14 +242,14 @@ class ArizonaSpider(scrapy.Spider):
 
         try:
             self.logger.info(f"Loaded initial page: {page.url}")
-            
+
             # Click the landing page search button to navigate to the Aura app
             # This helps seed Cloudflare cookies and provides a valid Referer
             landing_btn = page.locator("input[type='button'][value='Search']").first
             if await landing_btn.count() > 0:
                 self.logger.info("Clicking landing page Search button to navigate to Aura app...")
                 await landing_btn.click()
-                
+
                 self.logger.info("Waiting for navigation to Aura app...")
                 await page.wait_for_url("**/s/providersearch**", timeout=60000)
                 await page.wait_for_load_state("domcontentloaded")
@@ -261,7 +261,7 @@ class ArizonaSpider(scrapy.Spider):
                 await page.wait_for_timeout(5000)
 
             await self._humanize_warmup(page)
-            
+
             # The search button might take a moment to be rendered by Aura
             self.logger.info("Waiting for the Aura search button to appear...")
             button_selector = "button.search-button:has-text('Search'), input[type='button'][value='Search']"
@@ -275,65 +275,65 @@ class ArizonaSpider(scrapy.Spider):
                 return
 
             search_button = page.locator(button_selector).first
-            
+
             self.logger.info("Clicking the search button to capture aura.context...")
             async with page.expect_response(
                 lambda r: "aura" in r.url and r.request.method == "POST",
                 timeout=30000
             ) as resp_info:
                 await search_button.click()
-            
+
             resp = await resp_info.value
             post_data = resp.request.post_data
             aura_context = extract_form_field(post_data, "aura.context")
-            
+
             if not aura_context:
                 self.logger.error("Failed to extract aura.context from initial request.")
                 return
-            
+
             self.logger.info("Successfully extracted aura.context. Beginning pagination.")
-            
+
             page_number = 1
             total_extracted = 0
-            
+
             while True:
                 self.logger.info(f"Fetching page {page_number}...")
                 body = build_search_post_body(self.page_size, page_number, aura_context)
                 url = "https://azchildcaresearch.azdes.gov" + AURA_ENDPOINT_PATH
-                
+
                 result = await page.evaluate(_FETCH_SCRIPT, {"url": url, "body": body})
-                
+
                 if result.get("error"):
                     self.logger.error(f"Fetch failed on page {page_number}: {result.get('error')}")
                     break
-                
+
                 if result.get("status") != 200:
                     self.logger.error(f"HTTP {result.get('status')} on page {page_number}")
                     break
-                
+
                 try:
                     data = json.loads(result["body"])
                 except json.JSONDecodeError as e:
                     self.logger.error(f"Failed to decode JSON on page {page_number}: {e}")
                     break
-                
+
                 actions = data.get("actions", [])
                 if not actions or actions[0].get("state") != "SUCCESS":
                     self.logger.warning(f"Action state was not SUCCESS on page {page_number}")
                     break
-                
+
                 records = actions[0].get("returnValue", {}).get("returnValue", {}).get("records", [])
-                
+
                 if not records:
                     self.logger.info(f"No records returned on page {page_number}. Pagination complete.")
                     break
-                
+
                 for record in records:
                     yield self.parse_provider(record)
                     total_extracted += 1
-                
+
                 self.logger.info(f"Extracted {len(records)} records from page {page_number}. Total so far: {total_extracted}")
-                
+
                 page_number += 1
                 await asyncio.sleep(random.uniform(1.0, 3.0))
 
@@ -343,7 +343,7 @@ class ArizonaSpider(scrapy.Spider):
     def parse_provider(self, data):
         item = ProviderItem()
         item["source_state"] = "Arizona"
-        
+
         item["provider_name"] = data.get("title")
         item["az_facility_id"] = data.get("value")
         item["provider_type"] = data.get("providertype")
@@ -353,20 +353,20 @@ class ArizonaSpider(scrapy.Spider):
         item["license_holder"] = data.get("owner")
         if item["license_holder"] and not item["license_holder"].strip():
             item["license_holder"] = None
-        
+
         # Parse rating
         rating = data.get("rating")
-        item["sutq_rating"] = str(rating) if rating is not None else None
-        
+        item["az_quality_rating"] = str(rating) if rating is not None else None
+
         item["languages"] = data.get("languages")
         item["phone"] = data.get("phone")
         item["provider_website"] = data.get("website")
         item["address"] = data.get("address")
-        
+
         loc = data.get("location", {})
         item["latitude"] = loc.get("Latitude")
         item["longitude"] = loc.get("Longitude")
-        
+
         # AZ Specific Flags
         item["az_operatinghourid"] = data.get("operatinghourid")
         item["az_affiliation"] = data.get("affiliation")
@@ -377,10 +377,10 @@ class ArizonaSpider(scrapy.Spider):
         item["az_status_label"] = data.get("statusLabel")
         item["az_first_slot_start"] = data.get("firstSlotStart")
         item["az_first_slot_end"] = data.get("firstSlotEnd")
-        
+
         item["inspections"] = self.parse_inspections(data.get("dhsenforcements", []))
         return item
-    
+
     def parse_inspections(self, enforcements):
         inspections = []
         for enc in enforcements:

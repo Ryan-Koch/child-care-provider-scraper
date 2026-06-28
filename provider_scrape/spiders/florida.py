@@ -238,7 +238,7 @@ class FloridaSpider(scrapy.Spider):
         item["fl_is_gold_seal"] = data.get("isGoldSeal")
         item["fl_is_public_school"] = data.get("isPublicSchool")
 
-        item["sutq_rating"] = _num(data.get("compositesScore"))
+        item["fl_vpk_composite_score"] = _num(data.get("compositesScore"))
         item["fl_wels_rating_date"] = data.get("welsRatingDate")
         item["fl_vpk_school_year_composite_score"] = _num(
             data.get("vpkSchoolYearCompositeScore")

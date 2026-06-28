@@ -96,7 +96,4 @@ FIELD_DOCS = {
     "toddler": "Toddler care indicator/count, as emitted (whitespace-cleaned).",
     "preschool": "Preschool indicator/count, as emitted (whitespace-cleaned).",
     "school": "School-age indicator/count, as emitted (whitespace-cleaned).",
-    "sutq_rating": "Ohio's Step Up To Quality rating. A legacy quality-rating "
-                   "field that predates the state-specific convention; other "
-                   "states' ratings stay in their own xx_ fields.",
 }

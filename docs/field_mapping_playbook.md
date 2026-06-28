@@ -72,10 +72,6 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `curriculum` | Curriculum | String (collapsed) |
 | `languages` | Languages | String/list |
 
-> `sutq_rating` also sits in the common block but is **Ohio's** Step Up To
-> Quality rating — a legacy quality-rating field. Don't map other states into
-> it; quality ratings stay state-specific (see the exception below).
-
 ---
 
 ## Canonical vocabularies
@@ -147,7 +143,7 @@ create an `xx_` field for genuinely state-unique data.
 
 Quality / QRIS ratings (`ut_quality_rating`, `pa_stars_rating`,
 `nv_star_rating`, `ga_quality_rated_level`, `ri_brightstars_rating`,
-`wa_early_achievers_status`, `md_excels_level`, Ohio's `sutq_rating`, …) are
+`wa_early_achievers_status`, `md_excels_level`, Ohio's `oh_sutq_rating`, …) are
 **deliberately not** collapsed into a common `quality_rating` field. Each
 state's value set differs, and the web app enumerates each state's filter
 choices independently. A new state's rating gets its **own** `xx_` field — even

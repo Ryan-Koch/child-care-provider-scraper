@@ -7,3 +7,7 @@ __pycache__
 venv
 .claude
 state_output
+state_output_normal_run
+
+# Throwaway analysis scripts (Task 01)
+scratch/

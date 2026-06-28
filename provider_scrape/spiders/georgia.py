@@ -563,7 +563,6 @@ class GeorgiaSpider(scrapy.Spider):
         item["ga_accreditation"] = g("Accreditation_Status")
 
         # Quality Rating
-        item["sutq_rating"] = g("QR_Rating")
         item["ga_quality_rated_level"] = g("QR_Rating")
 
         # Program status
