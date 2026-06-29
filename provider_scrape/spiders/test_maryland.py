@@ -3,7 +3,12 @@ import json
 import pytest
 import scrapy
 from scrapy.http import HtmlResponse, Request, TextResponse
-from provider_scrape.spiders.maryland import MarylandSpider, extract_address_from_pdf
+from provider_scrape.spiders.maryland import (
+    MarylandSpider,
+    extract_address_from_pdf,
+    MAX_NAV_ATTEMPTS,
+    RESULTS_PRIORITY,
+)
 from provider_scrape.items import ProviderItem
 from unittest.mock import patch
 
@@ -272,7 +277,6 @@ def test_parse_results_page(spider):
         url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
     )
 
-    spider.requested_pages_by_county["TestCounty"] = set()
     results = list(spider.parse_results(response, county_key="TestCounty"))
 
     detail_requests = [r for r in results if not isinstance(r, scrapy.FormRequest)]
@@ -292,7 +296,12 @@ def test_parse_results_page(spider):
     assert kwargs1["school_name"] == "Lincoln Elementary"
     assert kwargs1["program_type"] == "CTR"
 
+    # One pagination request to page 2, carrying its expected page and a high
+    # priority so it isn't starved behind the detail-request backlog.
     assert len(form_requests) == 1
+    assert form_requests[0].cb_kwargs["expected_page"] == 2
+    assert form_requests[0].priority == RESULTS_PRIORITY
+    assert "Page%242" in form_requests[0].body.decode() or "Page$2" in form_requests[0].body.decode()
 
 
 def test_parse_results_deduplicates_on_reprocess(spider):
@@ -302,15 +311,60 @@ def test_parse_results_deduplicates_on_reprocess(spider):
         url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
     )
 
-    spider.requested_pages_by_county["TestCounty"] = set()
-
-    # First call processes normally
+    # First call processes normally (page 1)
     results1 = list(spider.parse_results(response, county_key="TestCounty"))
     assert len(results1) == 3  # 2 detail + 1 pagination
 
-    # Second call: detail requests are skipped (seen fi), pagination is skipped (requested)
+    # Second delivery of the same page: rows already parsed, so nothing is
+    # re-extracted and the chain isn't re-driven from it.
     results2 = list(spider.parse_results(response, county_key="TestCounty"))
     assert len(results2) == 0
+
+
+def test_parse_results_self_heals_stale_postback(spider):
+    """A response for the wrong page re-issues navigation toward the wanted page.
+
+    Simulates a paginated postback that timed out and came back rendering page 1
+    when page 2 was requested. The spider should NOT extract page 1's rows again
+    and should re-navigate to page 2 instead of silently dropping the chain.
+    """
+    request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
+    response = HtmlResponse(  # RESULTS_HTML renders as page 1 (pager span = "1")
+        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
+    )
+
+    results = list(
+        spider.parse_results(response, county_key="TestCounty", expected_page=2)
+    )
+
+    # Exactly one re-navigation request, no detail items, page 1 not parsed.
+    assert len(results) == 1
+    renav = results[0]
+    assert isinstance(renav, scrapy.FormRequest)
+    assert renav.cb_kwargs["expected_page"] == 2
+    assert renav.priority == RESULTS_PRIORITY
+    assert 1 not in spider.parsed_pages_by_county.get("TestCounty", set())
+
+
+def test_pagination_gives_up_after_max_nav_attempts(spider, caplog):
+    """Repeated stale postbacks for one page are capped, not looped forever."""
+    request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
+    response = HtmlResponse(
+        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
+    )
+
+    # Pretend page 2 has already been attempted the maximum number of times.
+    spider.nav_attempts_by_county["TestCounty"] = {2: MAX_NAV_ATTEMPTS}
+
+    results = list(
+        spider.parse_results(response, county_key="TestCounty", expected_page=2)
+    )
+
+    # No further navigation is issued; the give-up is surfaced at ERROR.
+    assert results == []
+    assert any(
+        "gave up navigating to page 2" in r.message for r in caplog.records
+    )
 
 
 def test_parse_detail_page_missing_data(spider):

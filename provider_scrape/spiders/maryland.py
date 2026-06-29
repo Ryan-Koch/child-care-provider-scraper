@@ -32,6 +32,20 @@ USER_AGENT = (
     "Chrome/124.0.0.0 Safari/537.36"
 )
 
+# Results/pagination requests are cheap but chain-critical: each results page is
+# what enqueues both the next page and that page's detail requests. Give them a
+# priority well above the default (0) so a pagination postback jumps ahead of
+# the large, server-throttled backlog of detail requests. Otherwise a postback
+# can sit queued for hours behind the details, by which point its ASP.NET
+# ViewState has gone stale and the retry silently returns the *previous* page —
+# truncating that county's pagination chain (see maryland_performance_epic).
+RESULTS_PRIORITY = 100
+
+# A stale postback returns the wrong page; we re-issue the navigation toward the
+# page we actually wanted. Bound those re-issues so repeated stale returns for
+# one page are surfaced (logged at ERROR) and give up rather than looping.
+MAX_NAV_ATTEMPTS = 5
+
 
 def extract_address_from_pdf(pdf_bytes):
     """Extract the precise address from an inspection report PDF via OCR.
@@ -117,8 +131,13 @@ class MarylandSpider(scrapy.Spider):
     def __init__(self, ocr_fallback=True, counties=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.seen_fi = set()
-        # Track requested pages per county to keep pagination chains independent
-        self.requested_pages_by_county = {}
+        # Pages whose rows we've successfully parsed, per county. Used to avoid
+        # re-extracting a page that's delivered twice (e.g. a late retry) and to
+        # decide whether forward navigation still has somewhere to go.
+        self.parsed_pages_by_county = {}
+        # How many times we've issued a navigation postback for a given page,
+        # per county. Caps stale-postback self-healing at MAX_NAV_ATTEMPTS.
+        self.nav_attempts_by_county = {}
         # When EXCELS has no address for a provider, fall back to the slow
         # inspection-report PDF + OCR. Disable (``-a ocr_fallback=false``) for a
         # pure-fast run that downloads zero PDFs.
@@ -169,13 +188,15 @@ class MarylandSpider(scrapy.Spider):
         # don't overwrite each other's server-side state. We load the search
         # page fresh for each county to get a clean ViewState + session.
         for county in counties:
-            self.requested_pages_by_county[county] = set()
+            self.parsed_pages_by_county[county] = set()
+            self.nav_attempts_by_county[county] = {}
             yield scrapy.Request(
                 "https://www.checkccmd.org/",
                 callback=self.parse_county_search,
                 cb_kwargs={"county_key": county},
                 meta={"cookiejar": county},
                 dont_filter=True,
+                priority=RESULTS_PRIORITY,
             )
 
     def parse_county_search(self, response, county_key):
@@ -191,14 +212,26 @@ class MarylandSpider(scrapy.Spider):
                 "ctl00$MainContent$SearchButton": "SEARCH",
             },
             callback=self.parse_results,
-            cb_kwargs={"county_key": county_key},
+            cb_kwargs={"county_key": county_key, "expected_page": 1},
             meta={"cookiejar": county_key},
             dont_click=True,
             dont_filter=True,
+            priority=RESULTS_PRIORITY,
         )
 
-    def parse_results(self, response, county_key=None):
-        """Parse the search results page with pagination."""
+    def parse_results(self, response, county_key=None, expected_page=1):
+        """Parse the search results page, with self-healing pagination.
+
+        Pagination is a sequential chain: each results page enqueues the next.
+        Under load the licensing site throttles, and a paginated postback that
+        times out and is retried can come back rendering the *previous* page —
+        its ASP.NET ViewState went stale. We detect that mismatch
+        (``current_page != expected_page``) and re-issue the navigation toward
+        the page we actually wanted, using this fresh response, bounded by
+        ``MAX_NAV_ATTEMPTS``. Previously such a stale postback silently
+        truncated the county's chain (the old dedup guard refused to re-request
+        the page), which dropped ~60% of providers in a full run.
+        """
         pager_row = response.css("tr.dataPager")
         current_page = 1
         if pager_row:
@@ -206,8 +239,30 @@ class MarylandSpider(scrapy.Spider):
             if current_page_text and current_page_text.strip().isdigit():
                 current_page = int(current_page_text.strip())
 
+        # Self-heal a stale postback: the server rendered a different page than
+        # we navigated to. Re-issue the navigation toward the page we wanted
+        # (this fresh response carries a usable ViewState) without extracting
+        # the wrong page's rows.
+        if current_page != expected_page:
+            self.logger.warning(
+                f"[{county_key}] expected page {expected_page} but server "
+                f"returned page {current_page} (stale postback) — re-navigating."
+            )
+            yield from self._navigate_to(response, county_key, expected_page)
+            return
+
         total_text = response.css("#MainContent_lblTotalRows::text").get()
         self.logger.info(f"[{county_key}] page {current_page} — Total: {total_text}")
+
+        # Skip a page that's already been parsed (e.g. a duplicate/late retry
+        # delivery): don't re-extract its rows or re-drive pagination from it.
+        parsed_pages = self.parsed_pages_by_county.setdefault(county_key, set())
+        if current_page in parsed_pages:
+            self.logger.debug(
+                f"[{county_key}] page {current_page} already parsed — skipping."
+            )
+            return
+        parsed_pages.add(current_page)
 
         # Extract provider detail links, deduplicating by facility ID
         rows = response.css("#grdResults tr.rowStyle")
@@ -258,45 +313,70 @@ class MarylandSpider(scrapy.Spider):
                     meta={"cookiejar": county_key},
                 )
 
-        # Pagination - find next page via __doPostBack.
-        # Track requested pages per county to keep chains independent.
-        requested_pages = self.requested_pages_by_county.get(county_key, set())
-        if pager_row:
-            next_page = current_page + 1
-            target_page = None
+        # Advance the chain to the next page (sequential, with windowed-pager
+        # "..." jumps). The end of pagination is when no next link is offered.
+        next_target = self._resolve_next_page(pager_row, current_page)
+        if next_target and next_target not in parsed_pages:
+            yield from self._navigate_to(response, county_key, next_target)
 
-            next_link = pager_row.css(f'a[href*="Page${next_page}"]')
-            if next_link:
-                target_page = next_page
-            else:
-                # Check for "..." link which jumps to the next set of pages
-                ellipsis_links = pager_row.css("a")
-                for el_link in ellipsis_links:
-                    text = el_link.css("::text").get("").strip()
-                    href = el_link.attrib.get("href", "")
-                    if text == "..." and f"Page${next_page}" not in href:
-                        match = re.search(r"Page\$(\d+)", href)
-                        if match:
-                            jump_page = int(match.group(1))
-                            if jump_page > current_page:
-                                target_page = jump_page
-                                break
+    @staticmethod
+    def _resolve_next_page(pager_row, current_page):
+        """Return the next page number to navigate to, or None at the last page.
 
-            if target_page and target_page not in requested_pages:
-                requested_pages.add(target_page)
-                self.logger.info(f"[{county_key}] Navigating to page {target_page}...")
-                yield scrapy.FormRequest.from_response(
-                    response,
-                    formdata={
-                        "__EVENTTARGET": "ctl00$MainContent$grdResults",
-                        "__EVENTARGUMENT": f"Page${target_page}",
-                    },
-                    callback=self.parse_results,
-                    cb_kwargs={"county_key": county_key},
-                    meta={"cookiejar": county_key},
-                    dont_click=True,
-                    dont_filter=True,
-                )
+        The pager renders only a window of page links; when the immediate next
+        page isn't linked, a "..." link jumps to the start of the next window.
+        """
+        if not pager_row:
+            return None
+        next_page = current_page + 1
+        if pager_row.css(f'a[href*="Page${next_page}"]'):
+            return next_page
+        # Fall back to the "..." link that jumps to the next set of pages.
+        for el_link in pager_row.css("a"):
+            text = el_link.css("::text").get("").strip()
+            href = el_link.attrib.get("href", "")
+            if text == "..." and f"Page${next_page}" not in href:
+                match = re.search(r"Page\$(\d+)", href)
+                if match:
+                    jump_page = int(match.group(1))
+                    if jump_page > current_page:
+                        return jump_page
+        return None
+
+    def _navigate_to(self, response, county_key, target_page):
+        """Issue a paginated postback to ``target_page``, bounded by retries.
+
+        Shared by normal forward navigation and stale-postback self-healing, so
+        repeated stale returns for the same page are capped at
+        ``MAX_NAV_ATTEMPTS`` (and surfaced at ERROR) instead of looping or
+        silently dying. The postback is high-priority so it resolves before its
+        ViewState can go stale behind the detail-request backlog.
+        """
+        attempts = self.nav_attempts_by_county.setdefault(county_key, {})
+        count = attempts.get(target_page, 0)
+        if count >= MAX_NAV_ATTEMPTS:
+            self.logger.error(
+                f"[{county_key}] gave up navigating to page {target_page} after "
+                f"{count} attempts (stale postbacks) — chain truncated here."
+            )
+            return
+        attempts[target_page] = count + 1
+        self.logger.info(
+            f"[{county_key}] Navigating to page {target_page} (attempt {count + 1})..."
+        )
+        yield scrapy.FormRequest.from_response(
+            response,
+            formdata={
+                "__EVENTTARGET": "ctl00$MainContent$grdResults",
+                "__EVENTARGUMENT": f"Page${target_page}",
+            },
+            callback=self.parse_results,
+            cb_kwargs={"county_key": county_key, "expected_page": target_page},
+            meta={"cookiejar": county_key},
+            dont_click=True,
+            dont_filter=True,
+            priority=RESULTS_PRIORITY,
+        )
 
     def parse_detail(self, response, address=None, school_name=None, program_type=None):
         """Parse a provider detail page."""
