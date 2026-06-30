@@ -7,8 +7,10 @@ from provider_scrape.spiders.maryland import (
     MarylandSpider,
     extract_address_from_pdf,
     MAX_NAV_ATTEMPTS,
+    MAX_CHAIN_RESTARTS,
     RESULTS_PRIORITY,
 )
+from twisted.python.failure import Failure
 from provider_scrape.items import ProviderItem
 from unittest.mock import patch
 
@@ -301,6 +303,7 @@ def test_parse_results_page(spider):
     assert len(form_requests) == 1
     assert form_requests[0].cb_kwargs["expected_page"] == 2
     assert form_requests[0].priority == RESULTS_PRIORITY
+    assert form_requests[0].errback == spider._pagination_errback
     assert "Page%242" in form_requests[0].body.decode() or "Page$2" in form_requests[0].body.decode()
 
 
@@ -346,6 +349,49 @@ def test_parse_results_self_heals_stale_postback(spider):
     assert 1 not in spider.parsed_pages_by_county.get("TestCounty", set())
 
 
+def test_parse_results_tracks_declared_and_found_counts(spider):
+    """parse_results records the declared total and tallies rows found per county."""
+    request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
+    response = HtmlResponse(
+        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
+    )
+
+    list(spider.parse_results(response, county_key="TestCounty"))
+
+    # RESULTS_HTML declares "Providers = 8476" and renders 2 provider rows.
+    assert spider.declared_total_by_county["TestCounty"] == 8476
+    assert spider.found_count_by_county["TestCounty"] == 2
+
+
+def test_closed_reports_incomplete_county(spider, caplog):
+    """A county short of its declared total is reported loudly at close."""
+    spider.declared_total_by_county = {"Baltimore County": 1481, "Kent County": 35}
+    spider.found_count_by_county = {"Baltimore County": 70, "Kent County": 35}
+
+    with caplog.at_level("INFO"):
+        spider.closed("finished")
+
+    msgs = "\n".join(r.message for r in caplog.records)
+    assert "Crawl INCOMPLETE" in msgs
+    assert "[Baltimore County] 70/1481" in msgs
+    assert "1411 missing" in msgs
+    # The complete county is not flagged.
+    assert "[Kent County]" not in msgs
+
+
+def test_closed_reports_complete_crawl(spider, caplog):
+    """When every county meets its declared total, close logs completion, not error."""
+    spider.declared_total_by_county = {"Kent County": 35, "Garrett County": 44}
+    spider.found_count_by_county = {"Kent County": 35, "Garrett County": 44}
+
+    with caplog.at_level("INFO"):
+        spider.closed("finished")
+
+    msgs = "\n".join(r.message for r in caplog.records)
+    assert "Crawl complete" in msgs
+    assert "INCOMPLETE" not in msgs
+
+
 def test_pagination_gives_up_after_max_nav_attempts(spider, caplog):
     """Repeated stale postbacks for one page are capped, not looped forever."""
     request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
@@ -364,6 +410,51 @@ def test_pagination_gives_up_after_max_nav_attempts(spider, caplog):
     assert results == []
     assert any(
         "gave up navigating to page 2" in r.message for r in caplog.records
+    )
+
+
+def _failed_pagination_failure(county="Baltimore County", page=58, retry_times=10):
+    """A Failure wrapping a timed-out pagination postback, as errback receives it."""
+    request = scrapy.FormRequest(
+        "https://www.checkccmd.org/SearchResults.aspx",
+        cb_kwargs={"county_key": county, "expected_page": page},
+        meta={"cookiejar": county, "retry_times": retry_times},
+    )
+    try:
+        raise TimeoutError("took longer than 180.0 seconds")
+    except TimeoutError:
+        failure = Failure()
+    failure.request = request
+    return failure
+
+
+def test_pagination_errback_reissues_request(spider):
+    """A terminal pagination failure re-issues the postback with a fresh retry budget."""
+    failure = _failed_pagination_failure()
+
+    out = spider._pagination_errback(failure)
+
+    assert isinstance(out, scrapy.Request)
+    assert out.cb_kwargs["expected_page"] == 58
+    assert out.cb_kwargs["county_key"] == "Baltimore County"
+    assert out.errback == spider._pagination_errback  # further failures recurse
+    assert out.dont_filter is True
+    # The exhausted retry counter is reset so the re-issue gets a full budget.
+    assert "retry_times" not in out.meta
+    assert spider.chain_restarts_by_county["Baltimore County"] == 1
+
+
+def test_pagination_errback_gives_up_after_max_restarts(spider, caplog):
+    """After MAX_CHAIN_RESTARTS, the errback stops re-issuing and logs loudly."""
+    spider.chain_restarts_by_county["Baltimore County"] = MAX_CHAIN_RESTARTS
+    failure = _failed_pagination_failure()
+
+    out = spider._pagination_errback(failure)
+
+    assert out is None
+    assert any(
+        "exhausted" in r.message and "truncated" in r.message
+        for r in caplog.records
     )
 
 

@@ -46,6 +46,12 @@ RESULTS_PRIORITY = 100
 # one page are surfaced (logged at ERROR) and give up rather than looping.
 MAX_NAV_ATTEMPTS = 5
 
+# When a pagination postback fails terminally at the downloader level (all
+# retries exhausted — its callback never runs, so self-healing can't see it),
+# the errback re-issues it. Bound those restarts per county so a genuinely dead
+# endpoint can't loop forever; a final give-up is left to the closed() guardrail.
+MAX_CHAIN_RESTARTS = 3
+
 
 def extract_address_from_pdf(pdf_bytes):
     """Extract the precise address from an inspection report PDF via OCR.
@@ -115,7 +121,17 @@ class MarylandSpider(scrapy.Spider):
         # stall the detail scrape.
         "DOWNLOAD_DELAY": 0.25,
         "CONCURRENT_REQUESTS": 16,
-        "CONCURRENT_REQUESTS_PER_DOMAIN": 8,
+        "CONCURRENT_REQUESTS_PER_DOMAIN": 6,
+        # Pagination postbacks are chain-critical, so they keep the patient
+        # default download timeout (180s) and retry budget rather than
+        # fail-fast: a verification run with a short 45s timeout caused a
+        # postback to *give up at the downloader level* (callback never runs, so
+        # self-healing can't engage) and silently truncated a county at page
+        # 57/106. With RESULTS_PRIORITY they no longer sit queued long enough to
+        # go stale, so a generous timeout is safe. The terminal-failure case is
+        # caught by the pagination errback (_pagination_errback). AutoThrottle
+        # is intentionally NOT enabled — the server's per-IP ceiling is the real
+        # limiter, and latency-driven backoff only compounded the slowdown.
         "RETRY_TIMES": 10,
         "USER_AGENT": USER_AGENT,
         # The slow, server-rendered inspection PDF is only fetched for the small
@@ -138,6 +154,15 @@ class MarylandSpider(scrapy.Spider):
         # How many times we've issued a navigation postback for a given page,
         # per county. Caps stale-postback self-healing at MAX_NAV_ATTEMPTS.
         self.nav_attempts_by_county = {}
+        # How many times a county's chain has been restarted from a terminal
+        # downloader failure (errback). Capped at MAX_CHAIN_RESTARTS.
+        self.chain_restarts_by_county = {}
+        # Completeness guardrail: the provider count the results page declares
+        # for each county, and how many provider rows we actually paginated
+        # through. Compared at spider close so a truncated chain is loud, not a
+        # silently "finished" short run (see closed()).
+        self.declared_total_by_county = {}
+        self.found_count_by_county = {}
         # When EXCELS has no address for a provider, fall back to the slow
         # inspection-report PDF + OCR. Disable (``-a ocr_fallback=false``) for a
         # pure-fast run that downloads zero PDFs.
@@ -190,6 +215,7 @@ class MarylandSpider(scrapy.Spider):
         for county in counties:
             self.parsed_pages_by_county[county] = set()
             self.nav_attempts_by_county[county] = {}
+            self.chain_restarts_by_county[county] = 0
             yield scrapy.Request(
                 "https://www.checkccmd.org/",
                 callback=self.parse_county_search,
@@ -254,6 +280,13 @@ class MarylandSpider(scrapy.Spider):
         total_text = response.css("#MainContent_lblTotalRows::text").get()
         self.logger.info(f"[{county_key}] page {current_page} — Total: {total_text}")
 
+        # Record the declared provider count for this county (same on every
+        # page) for the spider-close completeness check.
+        if county_key not in self.declared_total_by_county and total_text:
+            total_match = re.search(r"(\d+)", total_text)
+            if total_match:
+                self.declared_total_by_county[county_key] = int(total_match.group(1))
+
         # Skip a page that's already been parsed (e.g. a duplicate/late retry
         # delivery): don't re-extract its rows or re-drive pagination from it.
         parsed_pages = self.parsed_pages_by_county.setdefault(county_key, set())
@@ -266,6 +299,11 @@ class MarylandSpider(scrapy.Spider):
 
         # Extract provider detail links, deduplicating by facility ID
         rows = response.css("#grdResults tr.rowStyle")
+        # Tally provider rows actually paginated through, per county, vs the
+        # declared total — the spider-close completeness guardrail.
+        self.found_count_by_county[county_key] = (
+            self.found_count_by_county.get(county_key, 0) + len(rows)
+        )
         self.logger.info(
             f"[{county_key}] Found {len(rows)} provider rows on page {current_page}."
         )
@@ -371,12 +409,92 @@ class MarylandSpider(scrapy.Spider):
                 "__EVENTARGUMENT": f"Page${target_page}",
             },
             callback=self.parse_results,
+            errback=self._pagination_errback,
             cb_kwargs={"county_key": county_key, "expected_page": target_page},
             meta={"cookiejar": county_key},
             dont_click=True,
             dont_filter=True,
             priority=RESULTS_PRIORITY,
         )
+
+    def _pagination_errback(self, failure):
+        """Recover a pagination postback that failed terminally.
+
+        Retries are exhausted at the downloader level, so the callback never
+        ran and the self-healing path in ``parse_results`` can't see it — the
+        county's chain would otherwise die here. Re-issue the same postback
+        (resetting its retry budget) so the navigation gets another full set of
+        attempts; if the server returns a stale page, ``parse_results`` self-
+        heals from there. Bounded by ``MAX_CHAIN_RESTARTS`` per county; a final
+        give-up is surfaced loudly by ``closed()``.
+        """
+        request = failure.request
+        county_key = request.cb_kwargs.get("county_key")
+        target_page = request.cb_kwargs.get("expected_page")
+
+        restarts = self.chain_restarts_by_county.get(county_key, 0)
+        if restarts >= MAX_CHAIN_RESTARTS:
+            self.logger.error(
+                f"[{county_key}] pagination to page {target_page} failed "
+                f"terminally and exhausted {restarts} chain restarts — chain "
+                f"truncated here ({failure.value})."
+            )
+            return
+        self.chain_restarts_by_county[county_key] = restarts + 1
+        self.logger.warning(
+            f"[{county_key}] pagination to page {target_page} failed terminally "
+            f"({failure.value}) — restarting chain (restart {restarts + 1})."
+        )
+        # Reset the retry counter so the re-issued postback gets a fresh budget,
+        # and keep the callback/errback so it parses and can recurse on another
+        # terminal failure.
+        new_meta = dict(request.meta)
+        new_meta.pop("retry_times", None)
+        return request.replace(
+            meta=new_meta,
+            dont_filter=True,
+            callback=self.parse_results,
+            errback=self._pagination_errback,
+        )
+
+    def closed(self, reason):
+        """Report per-county completeness when the spider closes.
+
+        Auto-connected to the ``spider_closed`` signal by Scrapy. The crawl can
+        report ``finish_reason: finished`` while still having dropped most of a
+        county (a truncated pagination chain), so compare the provider rows we
+        actually paginated through against the count each county's results page
+        declared and make any shortfall loud (ERROR) instead of silent.
+        """
+        incomplete = []
+        total_declared = 0
+        total_found = 0
+        for county in sorted(self.declared_total_by_county):
+            declared = self.declared_total_by_county[county]
+            found = self.found_count_by_county.get(county, 0)
+            total_declared += declared
+            total_found += found
+            if found < declared:
+                incomplete.append((county, found, declared))
+
+        if incomplete:
+            self.logger.error(
+                f"Crawl INCOMPLETE ({reason}): paginated {total_found} of "
+                f"{total_declared} declared providers across "
+                f"{len(self.declared_total_by_county)} counties; "
+                f"{len(incomplete)} short:"
+            )
+            for county, found, declared in incomplete:
+                self.logger.error(
+                    f"  [{county}] {found}/{declared} "
+                    f"({declared - found} missing)"
+                )
+        else:
+            self.logger.info(
+                f"Crawl complete ({reason}): paginated all {total_found} "
+                f"declared providers across "
+                f"{len(self.declared_total_by_county)} counties."
+            )
 
     def parse_detail(self, response, address=None, school_name=None, program_type=None):
         """Parse a provider detail page."""
