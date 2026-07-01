@@ -197,7 +197,7 @@ def test_collect_row_fields_strips_aspnet_prefix():
 def test_build_provider_from_row_golden_path(spider):
     item = spider.build_provider_from_row(GOLDEN_ROW)
     assert isinstance(item, ProviderItem)
-    assert item["source_state"] == "NV"
+    assert item["source_state"] == "Nevada"
     assert item["provider_name"] == "ACELERO LEARNING CCC - HENDERSON"
     assert item["license_number"] == "831-26"
     # Status should be the human-readable label, not the ACT code.
@@ -582,7 +582,7 @@ def test_enrich_and_finish_adds_qris_only_provider(spider):
     qris_only = by_license["999"]
 
     assert isinstance(qris_only, ProviderItem)
-    assert qris_only["source_state"] == "NV"
+    assert qris_only["source_state"] == "Nevada"
     assert qris_only["provider_name"] == "QRIS-Only Program"
     assert qris_only["county"] == "Washoe"
     assert qris_only["nv_license_base"] == "999"
@@ -610,7 +610,7 @@ def test_build_provider_from_quality_minimal_row(spider):
     """
     item = spider._build_provider_from_quality({"LicenseNumber": "555"})
     assert isinstance(item, ProviderItem)
-    assert item["source_state"] == "NV"
+    assert item["source_state"] == "Nevada"
     assert item["license_number"] == "555"
     assert item["nv_license_base"] == "555"
     assert item.get("provider_name") is None

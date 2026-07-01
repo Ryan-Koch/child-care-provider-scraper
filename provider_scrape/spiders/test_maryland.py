@@ -1,7 +1,16 @@
+import json
+
 import pytest
 import scrapy
 from scrapy.http import HtmlResponse, Request, TextResponse
-from provider_scrape.spiders.maryland import MarylandSpider, extract_address_from_pdf
+from provider_scrape.spiders.maryland import (
+    MarylandSpider,
+    extract_address_from_pdf,
+    MAX_NAV_ATTEMPTS,
+    MAX_CHAIN_RESTARTS,
+    RESULTS_PRIORITY,
+)
+from twisted.python.failure import Failure
 from provider_scrape.items import ProviderItem
 from unittest.mock import patch
 
@@ -9,6 +18,17 @@ from unittest.mock import patch
 @pytest.fixture
 def spider():
     return MarylandSpider()
+
+
+def _excels_response(data, license_number="150301"):
+    """Build a TextResponse mimicking the EXCELS search?license= endpoint."""
+    request = Request(
+        url=f"https://findaprogram.marylandexcels.org/api/fap/search?license={license_number}"
+    )
+    body = json.dumps({"statusCode": 200, "data": data})
+    return TextResponse(
+        url=request.url, body=body, encoding="utf-8", request=request
+    )
 
 
 DETAIL_HTML = """
@@ -165,8 +185,8 @@ RESULTS_HTML = """
 """
 
 
-def test_parse_detail_page_chains_to_pdf(spider):
-    """Test that parse_detail yields a PDF request when inspections exist."""
+def test_parse_detail_page_chains_to_excels(spider):
+    """parse_detail yields an EXCELS enrichment request keyed by license."""
     request = Request(
         url="https://www.checkccmd.org/FacilityDetail.aspx?ft=&fn=&sn=&z=&c=&co=&lc=&fi=134978",
     )
@@ -181,14 +201,18 @@ def test_parse_detail_page_chains_to_pdf(spider):
         program_type="CTR",
     ))
 
-    # Should yield a Request for the first inspection report PDF
+    # Should yield a Request to the EXCELS API for the provider's license
     assert len(results) == 1
-    pdf_request = results[0]
-    assert isinstance(pdf_request, scrapy.Request)
-    assert "PrintTask.aspx?t=526&d=3384" in pdf_request.url
+    excels_request = results[0]
+    assert isinstance(excels_request, scrapy.Request)
+    assert "findaprogram.marylandexcels.org" in excels_request.url
+    assert "license=150301" in excels_request.url
+    assert excels_request.callback == spider.parse_excels
+    # The first inspection report URL is carried for the PDF fallback path.
+    assert "PrintTask.aspx?t=526&d=3384" in excels_request.cb_kwargs["first_report_url"]
 
     # The item should be passed through cb_kwargs
-    item = pdf_request.cb_kwargs["item"]
+    item = excels_request.cb_kwargs["item"]
     assert item["provider_name"] == "7 Day Kiddie Kare Inc."
     assert item["license_number"] == "150301"
     assert item["county"] == "Baltimore City"
@@ -221,9 +245,10 @@ def test_parse_detail_page_inspections(spider):
     )
 
     results = list(spider.parse_detail(response))
-    # With inspections, parse_detail yields a Request (for PDF), not an item
-    pdf_request = results[0]
-    item = pdf_request.cb_kwargs["item"]
+    # parse_detail now yields an EXCELS enrichment Request; the item (with its
+    # parsed inspections) rides along in cb_kwargs.
+    enrich_request = results[0]
+    item = enrich_request.cb_kwargs["item"]
 
     assert len(item["inspections"]) == 3
 
@@ -254,7 +279,6 @@ def test_parse_results_page(spider):
         url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
     )
 
-    spider.requested_pages_by_county["TestCounty"] = set()
     results = list(spider.parse_results(response, county_key="TestCounty"))
 
     detail_requests = [r for r in results if not isinstance(r, scrapy.FormRequest)]
@@ -274,7 +298,13 @@ def test_parse_results_page(spider):
     assert kwargs1["school_name"] == "Lincoln Elementary"
     assert kwargs1["program_type"] == "CTR"
 
+    # One pagination request to page 2, carrying its expected page and a high
+    # priority so it isn't starved behind the detail-request backlog.
     assert len(form_requests) == 1
+    assert form_requests[0].cb_kwargs["expected_page"] == 2
+    assert form_requests[0].priority == RESULTS_PRIORITY
+    assert form_requests[0].errback == spider._pagination_errback
+    assert "Page%242" in form_requests[0].body.decode() or "Page$2" in form_requests[0].body.decode()
 
 
 def test_parse_results_deduplicates_on_reprocess(spider):
@@ -284,15 +314,148 @@ def test_parse_results_deduplicates_on_reprocess(spider):
         url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
     )
 
-    spider.requested_pages_by_county["TestCounty"] = set()
-
-    # First call processes normally
+    # First call processes normally (page 1)
     results1 = list(spider.parse_results(response, county_key="TestCounty"))
     assert len(results1) == 3  # 2 detail + 1 pagination
 
-    # Second call: detail requests are skipped (seen fi), pagination is skipped (requested)
+    # Second delivery of the same page: rows already parsed, so nothing is
+    # re-extracted and the chain isn't re-driven from it.
     results2 = list(spider.parse_results(response, county_key="TestCounty"))
     assert len(results2) == 0
+
+
+def test_parse_results_self_heals_stale_postback(spider):
+    """A response for the wrong page re-issues navigation toward the wanted page.
+
+    Simulates a paginated postback that timed out and came back rendering page 1
+    when page 2 was requested. The spider should NOT extract page 1's rows again
+    and should re-navigate to page 2 instead of silently dropping the chain.
+    """
+    request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
+    response = HtmlResponse(  # RESULTS_HTML renders as page 1 (pager span = "1")
+        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
+    )
+
+    results = list(
+        spider.parse_results(response, county_key="TestCounty", expected_page=2)
+    )
+
+    # Exactly one re-navigation request, no detail items, page 1 not parsed.
+    assert len(results) == 1
+    renav = results[0]
+    assert isinstance(renav, scrapy.FormRequest)
+    assert renav.cb_kwargs["expected_page"] == 2
+    assert renav.priority == RESULTS_PRIORITY
+    assert 1 not in spider.parsed_pages_by_county.get("TestCounty", set())
+
+
+def test_parse_results_tracks_declared_and_found_counts(spider):
+    """parse_results records the declared total and tallies rows found per county."""
+    request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
+    response = HtmlResponse(
+        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
+    )
+
+    list(spider.parse_results(response, county_key="TestCounty"))
+
+    # RESULTS_HTML declares "Providers = 8476" and renders 2 provider rows.
+    assert spider.declared_total_by_county["TestCounty"] == 8476
+    assert spider.found_count_by_county["TestCounty"] == 2
+
+
+def test_closed_reports_incomplete_county(spider, caplog):
+    """A county short of its declared total is reported loudly at close."""
+    spider.declared_total_by_county = {"Baltimore County": 1481, "Kent County": 35}
+    spider.found_count_by_county = {"Baltimore County": 70, "Kent County": 35}
+
+    with caplog.at_level("INFO"):
+        spider.closed("finished")
+
+    msgs = "\n".join(r.message for r in caplog.records)
+    assert "Crawl INCOMPLETE" in msgs
+    assert "[Baltimore County] 70/1481" in msgs
+    assert "1411 missing" in msgs
+    # The complete county is not flagged.
+    assert "[Kent County]" not in msgs
+
+
+def test_closed_reports_complete_crawl(spider, caplog):
+    """When every county meets its declared total, close logs completion, not error."""
+    spider.declared_total_by_county = {"Kent County": 35, "Garrett County": 44}
+    spider.found_count_by_county = {"Kent County": 35, "Garrett County": 44}
+
+    with caplog.at_level("INFO"):
+        spider.closed("finished")
+
+    msgs = "\n".join(r.message for r in caplog.records)
+    assert "Crawl complete" in msgs
+    assert "INCOMPLETE" not in msgs
+
+
+def test_pagination_gives_up_after_max_nav_attempts(spider, caplog):
+    """Repeated stale postbacks for one page are capped, not looped forever."""
+    request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
+    response = HtmlResponse(
+        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
+    )
+
+    # Pretend page 2 has already been attempted the maximum number of times.
+    spider.nav_attempts_by_county["TestCounty"] = {2: MAX_NAV_ATTEMPTS}
+
+    results = list(
+        spider.parse_results(response, county_key="TestCounty", expected_page=2)
+    )
+
+    # No further navigation is issued; the give-up is surfaced at ERROR.
+    assert results == []
+    assert any(
+        "gave up navigating to page 2" in r.message for r in caplog.records
+    )
+
+
+def _failed_pagination_failure(county="Baltimore County", page=58, retry_times=10):
+    """A Failure wrapping a timed-out pagination postback, as errback receives it."""
+    request = scrapy.FormRequest(
+        "https://www.checkccmd.org/SearchResults.aspx",
+        cb_kwargs={"county_key": county, "expected_page": page},
+        meta={"cookiejar": county, "retry_times": retry_times},
+    )
+    try:
+        raise TimeoutError("took longer than 180.0 seconds")
+    except TimeoutError:
+        failure = Failure()
+    failure.request = request
+    return failure
+
+
+def test_pagination_errback_reissues_request(spider):
+    """A terminal pagination failure re-issues the postback with a fresh retry budget."""
+    failure = _failed_pagination_failure()
+
+    out = spider._pagination_errback(failure)
+
+    assert isinstance(out, scrapy.Request)
+    assert out.cb_kwargs["expected_page"] == 58
+    assert out.cb_kwargs["county_key"] == "Baltimore County"
+    assert out.errback == spider._pagination_errback  # further failures recurse
+    assert out.dont_filter is True
+    # The exhausted retry counter is reset so the re-issue gets a full budget.
+    assert "retry_times" not in out.meta
+    assert spider.chain_restarts_by_county["Baltimore County"] == 1
+
+
+def test_pagination_errback_gives_up_after_max_restarts(spider, caplog):
+    """After MAX_CHAIN_RESTARTS, the errback stops re-issuing and logs loudly."""
+    spider.chain_restarts_by_county["Baltimore County"] = MAX_CHAIN_RESTARTS
+    failure = _failed_pagination_failure()
+
+    out = spider._pagination_errback(failure)
+
+    assert out is None
+    assert any(
+        "exhausted" in r.message and "truncated" in r.message
+        for r in caplog.records
+    )
 
 
 def test_parse_detail_page_missing_data(spider):
@@ -342,8 +505,14 @@ def test_parse_detail_page_no_inspections(spider):
     )
 
     results = list(spider.parse_detail(response))
+    # Numeric license -> parse_detail chains to the EXCELS request; the fully
+    # built item (incl. fields) is carried in cb_kwargs.
     assert len(results) == 1
-    item = results[0]
+    enrich_request = results[0]
+    assert isinstance(enrich_request, scrapy.Request)
+    assert "findaprogram.marylandexcels.org" in enrich_request.url
+    assert enrich_request.cb_kwargs["first_report_url"] is None
+    item = enrich_request.cb_kwargs["item"]
     assert isinstance(item, ProviderItem)
 
     assert item["provider_name"] == "Test Provider"
@@ -393,8 +562,12 @@ def test_parse_detail_non_operating(spider):
         program_type="FCCH",
     ))
 
+    # Non-operating provider still has a numeric license -> EXCELS request.
     assert len(results) == 1
-    item = results[0]
+    enrich_request = results[0]
+    assert isinstance(enrich_request, scrapy.Request)
+    assert "license=570530" in enrich_request.url
+    item = enrich_request.cb_kwargs["item"]
     assert isinstance(item, ProviderItem)
     assert item["provider_name"] == "Adrian McMillan"
     assert item["license_number"] == "570530"
@@ -438,6 +611,191 @@ async def test_parse_inspection_pdf_updates_address(spider):
 
     assert len(results) == 1
     assert results[0]["address"] == "325 N Howard Street, Baltimore, MD 21201"
+
+
+EXCELS_RECORD = {
+    "name": "7 Day Kiddie Kare Inc.",
+    "license": "150301",
+    "type": "Child Care Center",
+    "streetAddress": "325 N Howard Street ",
+    "city": "Baltimore",
+    "state": "Maryland",
+    "zipcode": "21201",
+    "county": "Baltimore City",
+    "lat": 39.29512,
+    "long": -76.61968,
+}
+
+
+def test_parse_excels_center_hit_sets_address_and_coords(spider):
+    """A center (house-numbered EXCELS address) adopts it; no PDF needed."""
+    item = ProviderItem()
+    item["provider_name"] = "7 Day Kiddie Kare Inc."
+    item["license_number"] = "150301"
+    item["address"] = "N Howard Street, Baltimore, MD 21201"  # street-name only
+
+    response = _excels_response([EXCELS_RECORD])
+    results = list(
+        spider.parse_excels(
+            response, item=item, first_report_url="https://www.checkccmd.org/x.pdf"
+        )
+    )
+
+    # No PDF request — the house-numbered EXCELS address satisfied the need.
+    assert len(results) == 1
+    out = results[0]
+    assert isinstance(out, ProviderItem)
+    assert out["address"] == "325 N Howard Street, Baltimore, MD 21201"
+    assert out["latitude"] == "39.29512"
+    assert out["longitude"] == "-76.61968"
+    assert out["city"] == "Baltimore"
+    assert out["state"] == "MD"
+    assert out["zip"] == "21201"
+
+
+def test_parse_excels_family_home_keeps_coords_no_pdf(spider):
+    """A family home (street-only EXCELS address) keeps rooftop coords, no PDF.
+
+    EXCELS withholds the house number for homes but its lat/long is
+    rooftop-accurate, so the precise location is captured and no PDF is fetched
+    even though a report URL is available.
+    """
+    item = ProviderItem()
+    item["license_number"] = "150301"
+    item["address"] = "Roundhill Road, Ellicott City, MD 21043"
+
+    # Street-name-only address, but coordinates ARE present (as EXCELS returns
+    # for family homes).
+    record = dict(
+        EXCELS_RECORD,
+        streetAddress="Roundhill Road ",
+        city="Ellicott City",
+        zipcode="21043",
+        lat=39.2427582,
+        long=-76.78768113,
+    )
+    response = _excels_response([record])
+    results = list(
+        spider.parse_excels(
+            response,
+            item=item,
+            first_report_url="https://www.checkccmd.org/PublicReports/PrintTask.aspx?t=1&d=2",
+        )
+    )
+
+    # The item is yielded directly — no PDF — with coordinates captured.
+    assert len(results) == 1
+    assert results[0] is item
+    assert item["latitude"] == "39.2427582"
+    assert item["longitude"] == "-76.78768113"
+    assert item["city"] == "Ellicott City"
+    assert item["zip"] == "21043"
+    # Address keeps the results-page street-name value (no house number).
+    assert item["address"] == "Roundhill Road, Ellicott City, MD 21043"
+
+
+def test_parse_excels_family_home_no_report_keeps_coords(spider):
+    """A street-only family home with no report keeps its coords + address."""
+    item = ProviderItem()
+    item["license_number"] = "150301"
+    item["address"] = "Roundhill Road, Ellicott City, MD 21043"
+
+    record = dict(EXCELS_RECORD, streetAddress="Roundhill Road",
+                  lat=39.24, long=-76.78)
+    response = _excels_response([record])
+    results = list(
+        spider.parse_excels(response, item=item, first_report_url=None)
+    )
+
+    assert len(results) == 1
+    assert results[0] is item
+    assert item["latitude"] == "39.24"
+    assert item["address"] == "Roundhill Road, Ellicott City, MD 21043"
+
+
+def test_parse_excels_miss_falls_back_to_pdf(spider):
+    """An EXCELS miss with a report URL yields a PDF request on its own slot."""
+    item = ProviderItem()
+    item["license_number"] = "999999"
+    item["address"] = "Some Street, Baltimore, MD 21201"
+
+    response = _excels_response([], license_number="999999")
+    results = list(
+        spider.parse_excels(
+            response,
+            item=item,
+            first_report_url="https://www.checkccmd.org/PublicReports/PrintTask.aspx?t=1&d=2",
+        )
+    )
+
+    assert len(results) == 1
+    pdf_request = results[0]
+    assert isinstance(pdf_request, scrapy.Request)
+    assert "PrintTask.aspx?t=1&d=2" in pdf_request.url
+    assert pdf_request.callback == spider.parse_inspection_pdf
+    assert pdf_request.meta.get("download_slot") == "checkccmd-pdf"
+
+
+def test_parse_excels_miss_without_report_yields_item(spider):
+    """An EXCELS miss with no report keeps the results-page address."""
+    item = ProviderItem()
+    item["license_number"] = "999999"
+    item["address"] = "Some Street, Baltimore, MD 21201"
+
+    response = _excels_response([], license_number="999999")
+    results = list(
+        spider.parse_excels(response, item=item, first_report_url=None)
+    )
+
+    assert len(results) == 1
+    assert results[0] is item
+    assert results[0]["address"] == "Some Street, Baltimore, MD 21201"
+
+
+def test_parse_excels_miss_with_ocr_disabled_yields_item():
+    """With ocr_fallback off, an EXCELS miss never produces a PDF request."""
+    spider = MarylandSpider(ocr_fallback="false")
+    assert spider.ocr_fallback is False
+
+    item = ProviderItem()
+    item["license_number"] = "999999"
+    item["address"] = "Some Street, Baltimore, MD 21201"
+
+    response = _excels_response([], license_number="999999")
+    results = list(
+        spider.parse_excels(
+            response,
+            item=item,
+            first_report_url="https://www.checkccmd.org/PublicReports/PrintTask.aspx?t=1&d=2",
+        )
+    )
+
+    assert len(results) == 1
+    assert results[0] is item
+
+
+def test_parse_excels_record_without_street_keeps_coords_no_pdf(spider):
+    """A record with coords but a blank street still yields (no PDF)."""
+    item = ProviderItem()
+    item["license_number"] = "150301"
+    item["address"] = "N Howard Street, Baltimore, MD 21201"
+
+    record = dict(EXCELS_RECORD, streetAddress="  ")
+    response = _excels_response([record])
+    results = list(
+        spider.parse_excels(
+            response,
+            item=item,
+            first_report_url="https://www.checkccmd.org/PublicReports/PrintTask.aspx?t=1&d=2",
+        )
+    )
+
+    # Record present (with coords) -> no PDF; coordinates captured.
+    assert len(results) == 1
+    assert results[0] is item
+    assert item["latitude"] == "39.29512"
+    # Address unchanged (no house-numbered street to adopt).
+    assert item["address"] == "N Howard Street, Baltimore, MD 21201"
 
 
 @pytest.mark.asyncio

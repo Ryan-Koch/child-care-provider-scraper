@@ -30,7 +30,7 @@ class ArkansasSpider(scrapy.Spider):
 
     async def parse_search_page(self, response):
         page = response.meta["playwright_page"]
-        
+
         try:
             self.logger.info("Page loaded, waiting for network idle...")
             try:
@@ -47,24 +47,24 @@ class ArkansasSpider(scrapy.Spider):
             # 1. Search Logic
             # User instruction: "go to the star level and select 'all levels'"
             # Let's try to identify the combobox or filter.
-            
+
             # Common Salesforce LWC combobox pattern
             # We look for a placeholder or label
-            
+
             # Strategy:
             # 1. Interact with filters to enable Search.
             # 2. Click Search.
             # 3. Switch to List View if needed.
-            
+
             # The Search button is disabled initially. We need to select a filter.
             # "Star Level (Better Beginnings)" -> "Select an Option"
-            
+
             try:
                 # Find the 'Select an Option' button specifically for Star Level
                 # We can try to find the button that has 'Select an Option' text.
                 # Since there might be multiple, we grab the one that appears after 'Star Level' text or just try the first one that works.
                 # However, the log text shows "Star Level ... Select an Option".
-                
+
                 # Try finding the combobox for Star Level
                 # Salesforce comboboxes often have a button with 'Select an Option'
                 star_level_dropdown = page.locator("button:has-text('Select an Option')").first
@@ -72,13 +72,13 @@ class ArkansasSpider(scrapy.Spider):
                     self.logger.info("Found dropdown, attempting to select option...")
                     await star_level_dropdown.click()
                     await page.wait_for_timeout(1000)
-                    
+
                     # Select the first option that isn't 'Select an Option' or explicitly 'All Levels'
                     # Usually the dropdown items are in a listbox.
                     # We'll try to find an item with text 'All' or just the first item.
                     # Let's try to click "All Levels" or "1 Star" if all isn't there, but usually for scrapers we want everything.
                     # If we can't find specific text, we click the first available option.
-                    
+
                     options = page.locator("lightning-base-combobox-item")
                     if await options.count() > 0:
                         # Try to find one that says "All"
@@ -92,7 +92,7 @@ class ArkansasSpider(scrapy.Spider):
                             self.logger.info("Selected first available option.")
                     else:
                         self.logger.warning("No options found in dropdown.")
-                        
+
                     await page.wait_for_timeout(1000)
             except Exception as e:
                 self.logger.warning(f"Error interacting with dropdown: {e}")
@@ -104,14 +104,14 @@ class ArkansasSpider(scrapy.Spider):
                  # Log if it's disabled
                  if not await search_btn.is_enabled():
                      self.logger.warning("Search button appears disabled. Attempting force click...")
-                 
+
                  try:
                      await search_btn.click(force=True, timeout=5000)
                      self.logger.info("Search button clicked (forced or normal).")
                      await page.wait_for_timeout(5000) # Wait for results load
                  except Exception as e:
                      self.logger.warning(f"Search click failed: {e}")
-            
+
             # Switch to List View
             # We want to ensure we are in list view.
             try:
@@ -123,7 +123,7 @@ class ArkansasSpider(scrapy.Spider):
                     await page.wait_for_timeout(3000)
             except Exception as e:
                 self.logger.warning(f"List View toggle failed: {e}")
-            
+
             # Pagination Loop
             self.logger.info("Starting pagination loop...")
             while True:
@@ -141,7 +141,7 @@ class ArkansasSpider(scrapy.Spider):
                 # Extract links
                 content = await page.content()
                 sel = scrapy.Selector(text=content)
-                
+
                 # Unconditional debug dump
                 # self.logger.info("Dumping HTML for inspection...")
                 # with open("arkansas_debug.html", "w", encoding="utf-8") as f:
@@ -151,12 +151,12 @@ class ArkansasSpider(scrapy.Spider):
                 # The buttons have name="a0k..."
                 ids = sel.css("button[name^='a0k']::attr(name)").getall()
                 self.logger.info(f"Found {len(ids)} providers on this page.")
-                
+
                 # DEBUG: Click the first one to see where it goes
                 # Removed debug click logic
 
                 for pid in ids:
-                    # Construct the URL based on what we saw in debug: 
+                    # Construct the URL based on what we saw in debug:
                     # /elicensing/s/search-provider/facility-details-cc?tab=CC&fid={pid}&language=en_US
                     relative_url = f"/elicensing/s/search-provider/facility-details-cc?tab=CC&fid={pid}&language=en_US"
                     url = response.urljoin(relative_url)
@@ -164,7 +164,7 @@ class ArkansasSpider(scrapy.Spider):
                         url,
                         meta={
                             "playwright": True,
-                            "playwright_include_page": True, 
+                            "playwright_include_page": True,
                         },
                         callback=self.parse_detail
                     )
@@ -172,13 +172,13 @@ class ArkansasSpider(scrapy.Spider):
                 # Next Button
                 # Based on HTML inspection, the next button is inside an anchor with class 'next-link'
                 # and the button itself has title 'chevronright'.
-                
+
                 next_button = page.locator(".next-link button").first
-                
+
                 if await next_button.count() > 0:
                     # Check if disabled
                     is_disabled = await next_button.is_disabled()
-                    
+
                     if not is_disabled:
                         # Check specific Salesforce disabled attributes/styles just in case
                         style = await page.locator(".next-link lightning-button-icon").first.get_attribute("style")
@@ -221,32 +221,32 @@ class ArkansasSpider(scrapy.Spider):
             sel = scrapy.Selector(text=content)
 
             item = ProviderItem()
-            item["source_state"] = "AR"
+            item["source_state"] = "Arkansas"
             item["provider_url"] = response.url
-            
+
             # Basic extraction
             # Try multiple selectors for title
             item["provider_name"] = sel.css(".forceHighlightsPanel .slds-page-header__title::text").get(default="").strip()
             if not item["provider_name"]:
                  # Fallback to h2
                  item["provider_name"] = sel.xpath("//h2[contains(@class, 'slds-align-middle')]/text()").get(default="").strip()
-            
+
             # Helper to extract by label
             def get_field_by_label(label):
                 # Strategy 1: Standard Salesforce View (test-id)
                 val = sel.xpath(f"//span[contains(@class, 'test-id__field-label') and contains(text(), '{label}')]/../../div[contains(@class, 'test-id__field-value')]//text()").getall()
                 if val: return val
-                
+
                 # Strategy 2: LWC structure (Label div followed by Value component/div)
                 # Matches: <div>Label</div> <lightning-formatted-rich-text>...</lightning-formatted-rich-text>
                 # Also handles cases where label is in a bold div
                 val = sel.xpath(f"//div[contains(text(), '{label}')]/following-sibling::*[1]//text()").getall()
                 if val: return val
-                
+
                 return []
 
             address_parts = get_field_by_label("Address")
-            
+
             # Extract Website specifically
             website_parts = get_field_by_label("Website Address")
             website_url = ""
@@ -266,7 +266,7 @@ class ArkansasSpider(scrapy.Spider):
                 clean_address = combined_text
                 for email in found_emails:
                     clean_address = clean_address.replace(email, "")
-                
+
                 # Remove specifically extracted website from address if present
                 if website_url:
                     clean_address = clean_address.replace(website_url, "")
@@ -298,7 +298,7 @@ class ArkansasSpider(scrapy.Spider):
                     item["ar_quality_rating"] = str(len(rating_imgs))
                 else:
                     item["ar_quality_rating"] = None
-            
+
             regulation = get_field_by_label("Regulation Type") or get_field_by_label("Facility Type")
             item["ar_regulation_type"] = regulation[0].strip() if regulation else None
 
@@ -314,10 +314,10 @@ class ArkansasSpider(scrapy.Spider):
                     await visits_link.first.click()
                     await page.wait_for_load_state("networkidle")
                     await page.wait_for_timeout(2000)
-                    
+
                     visits_content = await page.content()
                     v_sel = scrapy.Selector(text=visits_content)
-                    
+
                     rows = v_sel.css("table tbody tr")
                     for row in rows:
                         i_item = InspectionItem()

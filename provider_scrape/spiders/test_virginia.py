@@ -371,7 +371,7 @@ def test_parse_quality_programs_queues_profiles():
 def test_parse_quality_programs_empty_yields_providers():
     """With no programs, enrichment is skipped and accumulated providers are emitted."""
     spider = VadssSpider()
-    spider.providers_by_ID = {"1": ProviderItem(provider_name="Solo", source_state="VA")}
+    spider.providers_by_ID = {"1": ProviderItem(provider_name="Solo", source_state="Virginia")}
 
     out = list(spider.parse_quality_programs(make_programs_response('{"programs": []}')))
 
@@ -410,7 +410,7 @@ def test_parse_provider_page_keys_on_bare_id_matching_enrichment():
 def test_parse_quality_detail_enriches_match():
     """A profile whose DSS link matches a known provider copies quality fields over."""
     spider = VadssSpider()
-    provider = ProviderItem(provider_name="A Childs Dream", source_state="VA")
+    provider = ProviderItem(provider_name="A Childs Dream", source_state="Virginia")
     spider.providers_by_ID = {"46940": provider}
     spider.pending_enrichments = 2  # another enrichment still outstanding
 
@@ -433,7 +433,7 @@ def test_parse_quality_detail_extracts_points_from_first_of_duplicates():
     """Point cards appear twice (modal + visible); the first numeric value wins and
     comma-grouped values are normalized."""
     spider = VadssSpider()
-    provider = ProviderItem(provider_name="Big Center", source_state="VA")
+    provider = ProviderItem(provider_name="Big Center", source_state="Virginia")
     spider.providers_by_ID = {"46940": provider}
     spider.pending_enrichments = 1
 
@@ -455,7 +455,7 @@ def test_parse_quality_detail_extracts_points_from_first_of_duplicates():
 def test_parse_quality_detail_missing_points_leaves_fields_unset():
     """A profile without point cards should not set the point fields at all."""
     spider = VadssSpider()
-    provider = ProviderItem(provider_name="No Points", source_state="VA")
+    provider = ProviderItem(provider_name="No Points", source_state="Virginia")
     spider.providers_by_ID = {"46940": provider}
     spider.pending_enrichments = 1
 
@@ -471,7 +471,7 @@ def test_parse_quality_detail_no_matching_provider():
     """A DSS link with no corresponding provider leaves data untouched but still
     decrements the pending counter."""
     spider = VadssSpider()
-    spider.providers_by_ID = {"111": ProviderItem(provider_name="Other", source_state="VA")}
+    spider.providers_by_ID = {"111": ProviderItem(provider_name="Other", source_state="Virginia")}
     spider.pending_enrichments = 1
 
     response = create_response(make_profile_html(dss_id="99999"), url=PROFILE_URL)
@@ -486,8 +486,8 @@ def test_parse_quality_detail_no_matching_provider():
 def test_parse_quality_detail_final_enrichment_emits_all_providers():
     """When the last enrichment completes, every accumulated provider is yielded."""
     spider = VadssSpider()
-    matched = ProviderItem(provider_name="A Childs Dream", source_state="VA")
-    other = ProviderItem(provider_name="Untouched", source_state="VA")
+    matched = ProviderItem(provider_name="A Childs Dream", source_state="Virginia")
+    other = ProviderItem(provider_name="Untouched", source_state="Virginia")
     spider.providers_by_ID = {"46940": matched, "222": other}
     spider.pending_enrichments = 1
 

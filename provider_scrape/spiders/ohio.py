@@ -136,7 +136,7 @@ class OhdcySpider(Spider):
                 info = ""
 
         provider["provider_url"] = response.url
-        provider["source_state"] = "OH"
+        provider["source_state"] = "Ohio"
         yield provider
 
     def parse_inspections(self, response):

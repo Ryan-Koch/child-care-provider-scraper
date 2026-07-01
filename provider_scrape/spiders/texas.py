@@ -134,6 +134,7 @@ class TxhhsSpider(scrapy.Spider):
 
             for row in reader:
                 provider = ProviderItem()
+                provider['source_state'] = "Texas"
                 provider['provider_url'] = base_url + row['Operation #']
                 provider['tx_operation_id'] = row['Operation #']
                 provider['tx_agency_number'] = row['Agency Number']

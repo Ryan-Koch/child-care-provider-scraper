@@ -551,7 +551,7 @@ class NevadaSpider(scrapy.Spider):
 
     def build_provider_from_row(self, row_fields):
         item = ProviderItem()
-        item["source_state"] = "NV"
+        item["source_state"] = "Nevada"
 
         item["provider_name"] = clean_text(row_fields.get("hfName"))
         item["license_number"] = clean_text(row_fields.get("hfLicenseNumberToDisplay"))
@@ -1014,7 +1014,7 @@ class NevadaSpider(scrapy.Spider):
         same QRIS fields the enrichment path writes onto matched providers.
         """
         item = ProviderItem()
-        item["source_state"] = "NV"
+        item["source_state"] = "Nevada"
         license_number = row.get("LicenseNumber")
         item["license_number"] = license_number
         item["nv_license_base"] = license_number
