@@ -623,7 +623,7 @@ class HawaiiSpider(scrapy.Spider):
         self.seen_service_ids.add(service_id)
 
         item = ProviderItem()
-        item["source_state"] = "HI"
+        item["source_state"] = "Hawaii"
         item["provider_name"] = service.get("serviceName")
         item["license_holder"] = provider.get("name")
         item["county"] = island_name

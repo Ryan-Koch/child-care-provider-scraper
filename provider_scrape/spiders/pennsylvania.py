@@ -191,7 +191,7 @@ class PennsylvaniaSpider(scrapy.Spider):
                             # Parse Details
                             details_content = await page.content()
                             item = self.parse_provider_details(details_content)
-                            item["source_state"] = "PA"
+                            item["source_state"] = "Pennsylvania"
                             yield item
 
                         except Exception as e:

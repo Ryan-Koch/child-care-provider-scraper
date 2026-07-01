@@ -420,7 +420,7 @@ def test_parse_detail_golden(spider):
     item = results[0]
     assert isinstance(item, ProviderItem)
 
-    assert item["source_state"] == "SC"
+    assert item["source_state"] == "South Carolina"
     assert item["provider_url"].endswith("/provider/24680/bright-horizons/")
     assert item["sc_provider_id"] == "24680"
     assert item["latitude"] == "34.008744"
@@ -500,7 +500,7 @@ def test_parse_detail_exempt(spider):
     assert len(results) == 1
     item = results[0]
 
-    assert item["source_state"] == "SC"
+    assert item["source_state"] == "South Carolina"
     assert item["provider_name"] == "Grandma's House Family Care"
     assert item["provider_type"] == "Family Child Care Home"
     assert item["sc_license_category"] == "Exempt"

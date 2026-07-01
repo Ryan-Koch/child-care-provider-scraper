@@ -133,7 +133,7 @@ def test_parse_details_golden_path():
     provider = items[0]
 
     assert isinstance(provider, ProviderItem)
-    assert provider["source_state"] == "WV"
+    assert provider["source_state"] == "West Virginia"
     assert provider["provider_url"] == response.url
     assert provider["provider_name"] == (
         "10 Fingers 10 Toes at the Yellow Schoolhouse 6/13/2026"

@@ -70,7 +70,7 @@ class WestVirginiaSpider(scrapy.Spider):
 
     def parse_details(self, response):
         provider = ProviderItem()
-        provider["source_state"] = "WV"
+        provider["source_state"] = "West Virginia"
         provider["provider_url"] = response.url
 
         provider_data = self._parse_label_table(response, "centertablea")
