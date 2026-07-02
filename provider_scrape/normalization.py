@@ -687,9 +687,15 @@ def normalize_item(item: dict, state: str) -> dict:
 
     # 6. address cleanup (in place, D1) + best-effort component parse (additive,
     #    D2). Components are only set when clearly parsed and not already set.
+    #    When the scraper already supplied all of city/state/zip (e.g. from
+    #    structured source fields), skip the parse entirely: it can add nothing
+    #    and would otherwise log a spurious "no ZIP" warning for a street-only
+    #    `address`.
     if item.get("address") is not None:
         item["address"] = clean_address(item["address"])
-        if item.get("address"):
+        already_have_components = all(
+            _is_present(item.get(key)) for key in ("city", "state", "zip"))
+        if item.get("address") and not already_have_components:
             city, parsed_state, zip_code = parse_address_components(
                 item["address"])
             for key, parsed in (("city", city), ("state", parsed_state),
