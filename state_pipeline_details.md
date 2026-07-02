@@ -85,11 +85,11 @@ Raw status values mapped to each canonical bucket (replaced in place; unmapped -
 
 | Canonical | Raw values |
 |---|---|
-| `active` | `Active`, `Amended permit (AP)`, `CERTIFIED`, `CONTINUOUS LICENSE`, `Certified`, `Compliance Certificate`, `Full Permit`, `LICENSED`, `License`, `License issued (IL)`, `Licensed`, `Listed`, `Open`, `Open - Certified`, `Open - Payment Only`, `Operational`, `Original`, `Registered`, `Registration`, `Regular` |
+| `active` | `Active`, `Amended permit (AP)`, `CERTIFIED`, `CONTINUOUS LICENSE`, `Certified`, `Compliance Certificate`, `Continuing - Full`, `Full Permit`, `LICENSED`, `License`, `License issued (IL)`, `Licensed`, `Listed`, `Open`, `Open - Certified`, `Open - Payment Only`, `Operational`, `Original`, `Registered`, `Registration`, `Regular` |
 | `closed` | `CLOSED`, `Closed`, `INACTIVE`, `NOT LICENSED`, `Revoked`, `Surrendered under Investigation (SI)`, `Surrendered with Cause (SC)`, `Temporary Closure` |
-| `enforcement` | `ENFORCEMENT`, `ON PROBATION`, `Open – Pending Legal Action Outcome`, `Pending Revocation`, `Pending Revocation and Denial`, `Pending revocation (PR)`, `Refuse to Renew (RR)`, `RevocationPending`, `Revoke License (RL)`, `Suspended` |
+| `enforcement` | `ENFORCEMENT`, `ON PROBATION`, `Open – Pending Legal Action Outcome`, `Pending Revocation`, `Pending Revocation and Denial`, `Pending revocation (PR)`, `Refuse to Renew (RR)`, `RevocationPending`, `Revoke License (RL)`, `Suspended`, `Suspended - Emergency` |
 | `pending` | `PENDING`, `Pending`, `Pending - Certified`, `Pending address change application (AD)`, `Pending renewal application (RN)`, `Pending/Re-license` |
-| `provisional` | `Initial Permit`, `PROVISIONAL LICENSE`, `Permit issued (IP)`, `Provisional 1`, `Provisional 2`, `Provisional 3`, `Renewed Initial` |
+| `provisional` | `Initial - Full`, `Initial Permit`, `PROVISIONAL LICENSE`, `Permit issued (IP)`, `Provisional`, `Provisional 1`, `Provisional 2`, `Provisional 3`, `Renewed Initial` |
 
 ## Controlled vocabulary: `facility_category`
 
@@ -97,9 +97,9 @@ Raw `provider_type` values mapped to each canonical category (additive; unmapped
 
 | Canonical | Raw provider_type values |
 |---|---|
-| `center` | `Center`, `Certified Pre-School`, `Child Care Center`, `Child Care Commercial Preschool`, `Child Care Facility`, `Child Care Hourly Center`, `Child Care Learning Center`, `Child Care Registered Center Based Program`, `Child Day Center`, `DAY CARE CENTER`, `DAY CARE CENTER - ILL CENTER`, `DCC`, `Department of Defense`, `GA Early Head Start`, `GA Head Start`, `INFANT CENTER`, `Infant and Toddler Center`, `Licensed Center`, `Local School System`, `Outdoor Nature Based Program`, `Preschool Center`, `Preschool Program`, `Public School`, `SDCC`, `SINGLE LICENSED CHILD CARE CENTER`, `Short Term Child Day Center`, `Small Employer Based Child Care`, `University` |
+| `center` | `CTR`, `Center`, `Certified Pre-School`, `Child Care Center`, `Child Care Commercial Preschool`, `Child Care Facility`, `Child Care Hourly Center`, `Child Care Learning Center`, `Child Care Registered Center Based Program`, `Child Day Center`, `DAY CARE CENTER`, `DAY CARE CENTER - ILL CENTER`, `DCC`, `Department of Defense`, `GA Early Head Start`, `GA Head Start`, `INFANT CENTER`, `Infant and Toddler Center`, `LOC`, `Licensed Center`, `Local School System`, `Outdoor Nature Based Program`, `Preschool Center`, `Preschool Program`, `Public School`, `SDCC`, `SINGLE LICENSED CHILD CARE CENTER`, `Short Term Child Day Center`, `Small Employer Based Child Care`, `University` |
 | `exempt` | `Child Care Exempt Program`, `DWS Approved, Exempt Center`, `DWS Approved, Exempt School Age Program`, `Exempt Child Care Center`, `Exempt Only`, `Religious Exempt Child Day Center`, `Voluntary Registration` |
-| `family_home` | `Child Care Licensed Family`, `Child Care Residential Certificate`, `FAMILY DAY CARE HOME`, `FDC`, `Family`, `Family Child Care`, `Family Child Care Home`, `Family Child Care Learning Home`, `Family Day Care Home`, `Family Day Home`, `Family Home`, `Family Home Child Care`, `Large Family Child Care Home`, `Licensed Child-Care Home`, `Licensed Family Home`, `Listed Family Home`, `Registered Child-Care Home`, `Registered Home`, `System Approved FDH`, `Unlicensed/Unregistered FDH` |
+| `family_home` | `Child Care Licensed Family`, `Child Care Residential Certificate`, `FAMILY DAY CARE HOME`, `FCCH`, `FDC`, `Family`, `Family Child Care`, `Family Child Care Home`, `Family Child Care Learning Home`, `Family Day Care Home`, `Family Day Home`, `Family Home`, `Family Home Child Care`, `LFCCH`, `Large Family Child Care Home`, `Licensed Child-Care Home`, `Licensed Family Home`, `Listed Family Home`, `Registered Child-Care Home`, `Registered Home`, `System Approved FDH`, `Unlicensed/Unregistered FDH` |
 | `group_home` | `GFDC`, `Group`, `Group Child Care Home`, `Group Home`, `Group Home Child Care` |
 | `other` | `(FCC)Nanny Individual`, `Family, Friends & Neighbor (FFN) Providers`, `Neighborhood Youth Organization`, `Other`, `Resident Camp`, `Substitute Placement Agency`, `Summer Day Camp` |
 | `school_age` | `Child Care Out of School Time Program`, `SACC`, `SCHOOL AGE DAY CARE CENTER`, `School Age Program`, `School-age Center`, `School-age Program` |

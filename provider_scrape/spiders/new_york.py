@@ -39,7 +39,7 @@ class NewYorkSpider(scrapy.Spider):
         for row in reader:
             item = ProviderItem()
 
-            item['source_state'] = 'NY'
+            item['source_state'] = 'New York'
             item['ny_facility_id'] = row.get('Facility ID')
             item['provider_type'] = row.get('Program Type')
             item['ny_region_code'] = row.get('Region Code')

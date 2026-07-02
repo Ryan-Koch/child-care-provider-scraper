@@ -194,7 +194,7 @@ class VadssSpider(scrapy.Spider):
             ),
             inspections=extract_inspection_data(),
             provider_url=response.url,
-            source_state="VA",
+            source_state="Virginia",
         )
 
         self.providers_by_ID[provider_id] = provider

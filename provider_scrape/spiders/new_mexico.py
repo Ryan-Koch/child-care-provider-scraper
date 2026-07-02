@@ -40,7 +40,7 @@ class NewMexicoSpider(scrapy.Spider):
         try:
             # Wait for the first set of results
             await page.wait_for_selector('.listing-card')
-            
+
             # Get total count if possible to log progress
             total_expected = 0
             try:
@@ -56,7 +56,7 @@ class NewMexicoSpider(scrapy.Spider):
             # Keep clicking "Show More Results" until it disappears or we reach the total/limit
             consecutive_no_increase = 0
             clicks = 0
-            
+
             while True:
                 if self.max_clicks and clicks >= self.max_clicks:
                     self.logger.info(f"Reached max_clicks limit of {self.max_clicks}. Stopping.")
@@ -64,7 +64,7 @@ class NewMexicoSpider(scrapy.Spider):
 
                 show_more_button = page.locator('a:has-text("Show More Results")')
                 current_count = await page.locator('.listing-card').count()
-                
+
                 if total_expected and current_count >= total_expected:
                     self.logger.info(f"Reached expected count of {total_expected}. Stopping.")
                     break
@@ -73,7 +73,7 @@ class NewMexicoSpider(scrapy.Spider):
                     self.logger.info(f"Current results count: {current_count}. Clicking 'Show More Results' (Click {clicks + 1})...")
                     await show_more_button.click()
                     clicks += 1
-                    
+
                     try:
                         await page.wait_for_function(
                             f"document.querySelectorAll('.listing-card').length > {current_count}",
@@ -89,7 +89,7 @@ class NewMexicoSpider(scrapy.Spider):
                 else:
                     self.logger.info(" 'Show More Results' button no longer visible.")
                     break
-                
+
                 last_count = current_count
 
             # Final check of count
@@ -108,7 +108,7 @@ class NewMexicoSpider(scrapy.Spider):
                 yield scrapy.Request(
                     response.urljoin(link),
                     callback=self.parse_detail,
-                    meta={'source_state': 'NM'}
+                    meta={'source_state': 'New Mexico'}
                 )
 
         except Exception as e:
@@ -118,17 +118,17 @@ class NewMexicoSpider(scrapy.Spider):
 
     def parse_detail(self, response):
         provider = ProviderItem()
-        provider['source_state'] = 'NM'
+        provider['source_state'] = 'New Mexico'
         provider['provider_url'] = response.url
 
         provider['provider_name'] = response.css('h1#listing-name::text').get('').strip()
-        
+
         # Administrator
         provider['administrator'] = response.xpath('//div[div[contains(., "Program Director")]]/div[contains(@class, "text-lg")]/text()').get('').strip()
-        
+
         # Provider Type
         provider['provider_type'] = response.css('#program-type-text::text').get('').strip()
-        
+
         # License Number
         license_text = response.css('#license-number a::text').get('').strip()
         if license_text.startswith('#'):
@@ -168,13 +168,13 @@ class NewMexicoSpider(scrapy.Spider):
             ages_served = ages_banner.replace('Accepting new enrollments:', '').strip()
         else:
             ages_served = ""
-        
+
         # Fallback: from pricing tabs
         if not ages_served:
             tab_ages = [t.strip() for t in response.css(".tab-picker-tabs::text").getall() if t.strip()]
             if tab_ages:
                 ages_served = ", ".join(tab_ages)
-        
+
         provider['ages_served'] = ages_served
 
         # Robust helper for structured fields
@@ -186,7 +186,7 @@ class NewMexicoSpider(scrapy.Spider):
 
         # Meals
         provider['nm_meals'] = extract_structured_val("meals-provided")
-        
+
         # Snacks
         provider['nm_snacks'] = extract_structured_val("snacks-provided")
 

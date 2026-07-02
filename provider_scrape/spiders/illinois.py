@@ -101,7 +101,7 @@ class IllinoisSpider(scrapy.Spider):
             ]
 
             provider = ProviderItem()
-            provider["source_state"] = "IL"
+            provider["source_state"] = "Illinois"
             provider["il_provider_id"] = row.get("ProviderID")
             provider["provider_name"] = row.get("DoingBusinessAs")
             provider["address"] = (

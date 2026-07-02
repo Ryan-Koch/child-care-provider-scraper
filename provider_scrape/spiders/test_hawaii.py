@@ -129,7 +129,7 @@ def test_parse_search_emits_one_request_per_service(area_spider):
     for req in requests:
         item = req.meta["partial_item"]
         assert item["provider_url"] == req.url
-        assert item["source_state"] == "HI"
+        assert item["source_state"] == "Hawaii"
         assert item["county"] == "Lanai"
 
 
@@ -263,7 +263,7 @@ def test_parse_detail_invalid_service_id_yields_no_item(spider):
 
 def _detail_response(spider, service_id=92021, provider_kind="OR"):
     item = ProviderItem()
-    item["source_state"] = "HI"
+    item["source_state"] = "Hawaii"
     item["hi_service_id"] = service_id
     item["hi_provider_kind"] = provider_kind
     item["inspections"] = []

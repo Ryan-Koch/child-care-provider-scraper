@@ -6,7 +6,7 @@ from provider_scrape.items import ProviderItem
 class UtahSpider(scrapy.Spider):
     name = "utah"
     allowed_domains = ["jobs.utah.gov"]
-    
+
     # API Endpoints
     SEARCH_URL = "https://cac-api.jobs.utah.gov/program/v1/public/programs"
     DETAIL_URL_TEMPLATE = "https://cac-api.jobs.utah.gov/program/v1/public/program-details/programs/{}"
@@ -73,7 +73,7 @@ class UtahSpider(scrapy.Spider):
         }
         query_string = urllib.parse.urlencode(params)
         url = f"{self.SEARCH_URL}?{query_string}"
-        
+
         payload = {
             "andPredicates": {
                 "filters": [
@@ -85,7 +85,7 @@ class UtahSpider(scrapy.Spider):
                 ]
             }
         }
-        
+
         return scrapy.Request(
             url,
             method='POST',
@@ -121,7 +121,7 @@ class UtahSpider(scrapy.Spider):
         # Pagination
         current_page = data.get('number', 0)
         total_pages = data.get('totalPages', 0)
-        
+
         if current_page < total_pages - 1:
             yield self.generate_search_request(response.meta['zip_code'], current_page + 1)
 
@@ -131,67 +131,67 @@ class UtahSpider(scrapy.Spider):
             detail_data = json.loads(response.text)
         except json.JSONDecodeError:
             self.logger.error(f"Failed to parse detail JSON for {search_data.get('programId')}")
-            # Fallback to search data only? Or return partial? 
+            # Fallback to search data only? Or return partial?
             # Ideally we want the capacity from detail.
             # Let's try to proceed with what we have if detail fails, but it's unlikely.
-            return 
+            return
 
         item = ProviderItem()
-        item['source_state'] = 'UT'
+        item['source_state'] = 'Utah'
         item['provider_url'] = f"https://jobs.utah.gov/occ/cac/search/program-detail/{search_data.get('programId')}"
-        
+
         # Merge data strategies: Detail data > Search data
         # Common fields
         item['provider_name'] = detail_data.get('name') or search_data.get('program')
-        
+
         # Address
         addr1 = detail_data.get('addressOne') or search_data.get('address')
         addr2 = detail_data.get('addressTwo')
         city = detail_data.get('city') or search_data.get('city')
         state = detail_data.get('state') or search_data.get('state')
         zip_code = detail_data.get('zipCode') or search_data.get('zipCode')
-        
+
         full_address_parts = [addr1, addr2, city, state, zip_code]
         item['address'] = " ".join([p for p in full_address_parts if p])
-        
+
         item['phone'] = self.format_phone(detail_data.get('phone') or search_data.get('phone'))
         item['email'] = detail_data.get('email') or search_data.get('email')
-        
+
         # License/Quality
         item['ut_license_type'] = detail_data.get('licenseType') or search_data.get('licenseType')
         item['provider_type'] = item['ut_license_type'] # Common field mapping
         item['ut_quality_rating'] = detail_data.get('qrl') or search_data.get('qrl')
-        
+
         # Dates
         item['license_begin_date'] = detail_data.get('licenseStartDate') or detail_data.get('initialRegulationDate')
         item['ut_licensed_since'] = item['license_begin_date']
-        
+
         # Capacity & Vacancies
         # Detail has 'totalChildren' which is capacity
         item['capacity'] = detail_data.get('totalChildren')
         item['ut_vacancies'] = detail_data.get('vacancies') if 'vacancies' in detail_data else search_data.get('vacancy')
-        
+
         # Boolean/Yes-No fields
         subsidy = detail_data.get('acpDwsSub') or search_data.get('acpDwsSub')
         if subsidy == 'Y':
             item['scholarships_accepted'] = 'Yes'
         elif subsidy == 'N':
             item['scholarships_accepted'] = 'No'
-            
+
         # Attributes handling
         # Search data has comma-separated strings for many of these.
         # Detail data has 'attributes' list of objects.
-        # We can use search data for simplicity as it's already comma-separated, 
+        # We can use search data for simplicity as it's already comma-separated,
         # or process attributes from detail if search is missing.
-        
+
         item['ages_served'] = search_data.get('ageAccept')
         item['ut_school_district'] = search_data.get('school')
         item['ut_meals'] = search_data.get('meals')
         item['ut_environment'] = search_data.get('environment')
-        
+
         # If any of the above are None, try to extract from detail attributes (optional enhancement)
         # For now, the search data covers these well.
-        
+
         yield item
 
     def format_phone(self, phone):
