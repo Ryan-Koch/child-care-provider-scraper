@@ -339,6 +339,8 @@ FACILITY_CATEGORY_BUCKETS = {
         # Maryland (checkccmd.org) codes: CTR = center, LOC = a center-based
         # program operating under a Letter of Compliance.
         "CTR", "LOC",
+        # Ohio (childcaresearch.ohio.gov) program types.
+        "Licensed Child Care Center", "Licensed School-Based Preschool",
         # North Dakota (search.ec.hhs.nd.gov) facilityType labels. Facility- and
         # school-based institutional care -> center.
         "HHS-Licensed Child Care Center", "HHS-Licensed Group Child Care Facility",
@@ -355,6 +357,9 @@ FACILITY_CATEGORY_BUCKETS = {
         "System Approved FDH", "Child Care Residential Certificate",
         # Maryland codes: FCCH = family child care home, LFCCH = large FCCH.
         "FCCH", "LFCCH",
+        # Ohio program types: Type A/B are family child care homes.
+        "Licensed Type A Family Child Care Home",
+        "Licensed Type B Family Child Care Home",
         # North Dakota: family child care in a residence.
         "HHS-Licensed Family Child Care",
     ],
@@ -368,6 +373,8 @@ FACILITY_CATEGORY_BUCKETS = {
         "SACC", "SCHOOL AGE DAY CARE CENTER", "School-age Program",
         "School Age Program", "School-age Center",
         "Child Care Out of School Time Program",
+        # Ohio program type.
+        "Licensed School-Age Child Care",
         # North Dakota.
         "HHS-Licensed School Age Child Care",
     ],
@@ -384,6 +391,8 @@ FACILITY_CATEGORY_BUCKETS = {
         "Substitute Placement Agency",
         "Family, Friends & Neighbor (FFN) Providers",
         "Neighborhood Youth Organization", "(FCC)Nanny Individual",
+        # Ohio: camps -> other; in-home aide is informal in-home care -> other.
+        "Registered Day Camp or Approved Day Camp", "Certified In Home Aide",
         # North Dakota: a provider holding multiple license types (ambiguous
         # category) and tribal subsidy recipients (informal/subsidy).
         "HHS-Licensed Multiple License", "Tribal Subsidy Recipient",

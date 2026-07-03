@@ -40,6 +40,17 @@ PROVIDER_HTML = """
                 <span class="detailInfo">John Doe</span>
             </div>
             <div class="detailRow">
+                <span class="detailLabel">Program Type:</span>
+                <span class="detailInfo">Licensed Type B Family Child Care Home</span>
+            </div>
+            <div class="detailRow">
+                <span class="detailLabel">Address:</span>
+                <span class="detailInfo">
+                    12474 COUNTY ROAD K<br>
+                    WAUSEON, OH 43567
+                </span>
+            </div>
+            <div class="detailRow">
                 <span class="detailLabel">Email:</span>
                 <span class="detailInfo"><a href="mailto:test@example.com">test@example.com</a></span>
             </div>
@@ -136,6 +147,8 @@ def test_parse_provider_page_happy_path(spider):
     assert provider["license_begin_date"] == "01/01/2020"
     assert provider["license_expiration"] == "12/31/2025"
     assert provider["administrator"] == "John Doe"
+    assert provider["provider_type"] == "Licensed Type B Family Child Care Home"
+    assert provider["address"] == "12474 COUNTY ROAD K, WAUSEON, OH 43567"
     assert provider["email"] == "test@example.com"
     assert provider["phone"] == "View Inspections"
     assert (
@@ -162,6 +175,8 @@ def test_parse_provider_page_missing_fields(spider):
     assert provider["status"] == "Active"
     assert provider.get("oh_sutq_rating") is None
     assert provider["license_number"] == "54321"
+    assert provider.get("provider_type") is None
+    assert provider.get("address") is None
     assert provider.get("county") is None
     assert provider.get("license_begin_date") is None
     assert provider.get("license_expiration") is None

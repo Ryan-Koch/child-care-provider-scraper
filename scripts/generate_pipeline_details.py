@@ -35,6 +35,10 @@ DERIVED_FIELDS = (
     ("city", "address"),
     ("state", "address"),
     ("zip", "address"),
+    # Populated by the post-run geocoding enrichment step (geocoding.py), not
+    # the normalization pipeline; keyed off address.
+    ("geocode_source", "address"),
+    ("geocode_confidence", "address"),
 )
 DERIVED_FIELD_NAMES = {name for name, _ in DERIVED_FIELDS}
 

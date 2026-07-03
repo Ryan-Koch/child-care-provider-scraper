@@ -132,6 +132,19 @@ class OhdcySpider(Spider):
                         provider["license_expiration"] = info
                     if label == "Administrator(s):":
                         provider["administrator"] = info
+                    if label == "Program Type:":
+                        provider["provider_type"] = info
+                    if label == "Address:":
+                        # The address is split across two text nodes by a <br>
+                        # (street, then "CITY, ST ZIP"). Join them into one line
+                        # so the normalization pipeline can parse city/state/zip.
+                        address_parts = [
+                            part.strip()
+                            for part in info_selector.xpath("./text()").getall()
+                            if part.strip()
+                        ]
+                        if address_parts:
+                            provider["address"] = ", ".join(address_parts)
             else:
                 info = ""
 
