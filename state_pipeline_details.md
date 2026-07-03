@@ -62,6 +62,8 @@ These canonical fields are derived from a source field; the source is preserved 
 | `city` | `address` | City parsed from address when unambiguous; otherwise left empty (never guessed). |
 | `state` | `address` | USPS 2-letter state parsed from address (spelled-out names are converted); empty when no recognizable state is present. |
 | `zip` | `address` | 5-digit ZIP parsed from the end of address; empty when ambiguous. |
+| `geocode_source` | `address` | Where latitude/longitude came from, set by the post-run geocoding step: "state" (supplied by the source state), "census" (derived from address via the US Census geocoder), or "unmatched" (attempted, no usable point). Empty when geocoding was not attempted. |
+| `geocode_confidence` | `address` | Confidence of a geocoded coordinate: "exact" or "approximate" for a Census match, or "tie"/"no_match" when unmatched. Empty for state-supplied coordinates. |
 
 ## Field-collapse map
 

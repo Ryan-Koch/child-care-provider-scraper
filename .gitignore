@@ -13,3 +13,6 @@ analysis
 
 # Throwaway analysis scripts (Task 01)
 scratch/
+
+# Local geocoding cache (scripts/geocode_enrich.py); -wal/-shm are WAL sidecars
+geocode_cache.sqlite*

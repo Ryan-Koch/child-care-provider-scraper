@@ -78,6 +78,21 @@ def test_build_batch_row_none_when_no_address():
 
 
 # --------------------------------------------------------------------------- #
+# cache_key
+# --------------------------------------------------------------------------- #
+def test_cache_key_ignores_id_and_normalizes():
+    row_a = ["1", "123 Main St", "Springfield", "IL", "62704"]
+    row_b = ["9", "123   main st", "  springfield ", "il", "62704"]
+    assert geocoding.cache_key(row_a) == geocoding.cache_key(row_b)
+
+
+def test_cache_key_distinguishes_different_addresses():
+    row_a = ["1", "123 Main St", "Springfield", "IL", "62704"]
+    row_b = ["1", "124 Main St", "Springfield", "IL", "62704"]
+    assert geocoding.cache_key(row_a) != geocoding.cache_key(row_b)
+
+
+# --------------------------------------------------------------------------- #
 # parse_response_line
 # --------------------------------------------------------------------------- #
 def test_parse_match_exact_swaps_lon_lat():

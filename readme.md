@@ -22,9 +22,21 @@ Usage: ./run_spiders.sh [-c concurrency] [spider ...]
   -c   number of spiders to run in parallel (default: 5)
   -d   directory to use for spider logging and output files (default: ./)
   -f   file format to use for spider output can be json or csv (default: json)
+  -g   after each spider, geocode records missing coordinates (JSON output only)
   spider names default to the output of 'scrapy list'
 ```
 What this means is that you can add in options before the list of spiders to run (or you can provide no spiders and let it run on all of them). So an example command can look like: `./run_spider.sh -c 3 -d /some/path/you/can/write/to/ -f csv ohio new_jersey new_york texas north_carolina illinois` in the example we're setting the concurrency to 3, customizing the output path for output and logging, and choosing to use the CSV format. 
+
+### Geocoding records that are missing coordinates
+Some states don't publish latitude/longitude. For those, a post-run enrichment step derives coordinates from the scraped address using the free [US Census Bureau batch geocoder](https://geocoding.geo.census.gov/) and records where each coordinate came from in two fields: `geocode_source` (`state` when the spider supplied it, `census` when we derived it, `unmatched` when geocoding found nothing) and `geocode_confidence` (`exact`/`approximate` for a match, `tie`/`no_match` otherwise).
+
+Pass `-g` to `run_spiders.sh` to geocode each state's output right after it finishes (JSON output only — with `-f csv` the step is skipped). Geocoding failures are logged but never fail the scrape. Example: `./run_spiders.sh -g -c 3 ohio texas alabama`.
+
+You can also run it standalone on any JSON output file:
+```
+.venv/bin/python scripts/geocode_enrich.py state_output/alabama.json
+```
+Results are cached in `geocode_cache.sqlite` (git-ignored) keyed by address, so re-runs only geocode new or changed records. Useful flags: `--dry-run` (report candidates without calling the geocoder), `--limit N` (cap unique addresses queried), `--no-cache`, and `-o PATH` (write elsewhere instead of in place). Note: geocoding only helps states that emit an address — address-less states are reported as skipped.
 
 ## Running Tests
 The project uses pytest, so one can simply run `pytest` to go through the whole run of it.

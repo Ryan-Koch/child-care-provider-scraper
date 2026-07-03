@@ -11,6 +11,9 @@ OUTPUT_DIR=$DEFAULT_OUTPUT_DIR
 # Default format (override with -f)
 DEFAULT_FORMAT="json"
 FORMAT=$DEFAULT_FORMAT
+# Post-run geocoding enrichment (opt-in with -g); JSON output only.
+GEOCODE=false
+GEOCODE_SCRIPT="$(dirname "$0")/scripts/geocode_enrich.py"
 # Space-separated list of spiders that require a virtual display
 XVFB_SPIDERS="new_jersey rhode_island arizona"
 
@@ -19,14 +22,16 @@ usage() {
     echo "  -c   number of spiders to run in parallel (default: $DEFAULT_CONCURRENCY)" >&2
     echo "  -d   directory to use for spider logging and output files (default: $DEFAULT_OUTPUT_DIR)" >&2
     echo "  -f   file format to use for spider output can be json or csv (default: $DEFAULT_FORMAT)" >&2
+    echo "  -g   after each spider, geocode records missing coordinates (JSON output only)" >&2
     echo "  spider names default to the output of 'scrapy list'" >&2
 }
 
-while getopts ":c:d:f:h" opt; do
+while getopts ":c:d:f:gh" opt; do
     case $opt in
         c) CONCURRENCY=$OPTARG ;;
         d) OUTPUT_DIR=$OPTARG ;;
         f) FORMAT=$OPTARG ;;
+        g) GEOCODE=true ;;
         h) usage; exit 0 ;;
         \?) usage; exit 1 ;;
     esac
@@ -76,6 +81,22 @@ run_spider() {
           sleep 5
       else
           echo "Crawling $spider_name completed successfully."
+          # Geocoding is best-effort enrichment: a failure here must not fail
+          # the (already successful) scrape, so we swallow its exit status.
+          if [ "$GEOCODE" = true ]; then
+              if [ "$FORMAT" = "json" ]; then
+                  echo "Geocoding $spider_name..."
+                  if python "$GEOCODE_SCRIPT" \
+                      "${OUTPUT_DIR}${spider_name}.json" \
+                      >> "${OUTPUT_DIR}${log_file}" 2>&1; then
+                      echo "Geocoding $spider_name completed."
+                  else
+                      echo "Geocoding $spider_name failed (see ${log_file})."
+                  fi
+              else
+                  echo "Skipping geocoding for $spider_name: -g requires json output (got ${FORMAT})."
+              fi
+          fi
           return 0
       fi
     done
@@ -88,6 +109,7 @@ export -f run_spider
 export LOG_LEVEL
 export MAX_RETRIES
 export OUTPUT_DIR FORMAT XVFB_SPIDERS
+export GEOCODE GEOCODE_SCRIPT
 
 # Main
 echo "Starting spiders run..."

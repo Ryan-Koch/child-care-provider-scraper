@@ -104,6 +104,17 @@ def build_batch_row(unique_id, item):
     return [str(unique_id), street, city, state, zip_code]
 
 
+def cache_key(row):
+    """Stable cache key for a batch row (ignores the leading id).
+
+    ``row`` is ``[id, street, city, state, zip]``. Values are lowercased and
+    whitespace-collapsed so identical addresses across states and runs share a
+    single cache entry (and are queried once).
+    """
+    parts = (" ".join(str(p).split()).lower() for p in row[1:])
+    return "|".join(parts)
+
+
 def parse_response_line(fields):
     """Normalize one Census batch response row (already CSV-split) to a dict.
 

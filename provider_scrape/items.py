@@ -68,7 +68,6 @@ class ProviderItem(scrapy.Item):
     facility_category = scrapy.Field()
     status = scrapy.Field()
     status_date = scrapy.Field()
-    # sutq_rating = scrapy.Field()
     address = scrapy.Field()
     latitude = scrapy.Field()
     longitude = scrapy.Field()
