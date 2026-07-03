@@ -109,6 +109,13 @@ class ProviderItem(scrapy.Item):
     state = scrapy.Field()  # USPS 2-letter
     zip = scrapy.Field()
 
+    # Coordinate provenance, populated by the post-run geocoding enrichment step
+    # (see provider_scrape/geocoding.py). `latitude`/`longitude` are filled from
+    # the address for states that don't publish coordinates; these two fields
+    # record where each coordinate came from so downstream consumers can filter.
+    geocode_source = scrapy.Field()      # "state" | "census" | "unmatched" | None
+    geocode_confidence = scrapy.Field()  # "exact" | "approximate" | "tie" | "no_match" | None
+
     # Ohio specific fields
     oh_sutq_rating = scrapy.Field()
 
