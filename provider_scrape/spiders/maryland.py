@@ -52,6 +52,20 @@ MAX_NAV_ATTEMPTS = 5
 # endpoint can't loop forever; a final give-up is left to the closed() guardrail.
 MAX_CHAIN_RESTARTS = 3
 
+# Per-request download timeouts for the idempotent, non-chain-critical fetches.
+# These deliberately override the patient 180s default (kept only for the
+# chain-critical pagination postbacks — see custom_settings / _navigate_to).
+# A detail page or EXCELS lookup that has not responded by these thresholds is
+# almost certainly tarpitted by the per-IP throttle and would time out at 180s
+# anyway; cutting early frees the slot for a retry that may land in a calmer
+# moment, so failing fast is net faster and — because these requests are
+# idempotent and don't carry chain-critical ViewState — carries no truncation
+# risk. Measured full run: 2,165 requests timed out at the 180s default,
+# ~108 slot-hours. Detail pages render in ~16s nominal; EXCELS is a sub-5s JSON
+# API, so these leave generous headroom over the happy path.
+DETAIL_DOWNLOAD_TIMEOUT = 60
+EXCELS_DOWNLOAD_TIMEOUT = 30
+
 
 def extract_address_from_pdf(pdf_bytes):
     """Extract the precise address from an inspection report PDF via OCR.
@@ -348,7 +362,13 @@ class MarylandSpider(scrapy.Spider):
                         "school_name": school_name or None,
                         "program_type": program_type or None,
                     },
-                    meta={"cookiejar": county_key},
+                    # Idempotent, non-chain-critical: fail fast (not 180s) and let
+                    # RETRY_TIMES re-fetch a tarpitted page rather than tie up a
+                    # per-IP slot for three minutes.
+                    meta={
+                        "cookiejar": county_key,
+                        "download_timeout": DETAIL_DOWNLOAD_TIMEOUT,
+                    },
                 )
 
         # Advance the chain to the next page (sequential, with windowed-pager
@@ -604,6 +624,9 @@ class MarylandSpider(scrapy.Spider):
                 callback=self.parse_excels,
                 cb_kwargs={"item": item, "first_report_url": first_report_url},
                 headers={"Referer": EXCELS_REFERER, "Accept": "application/json"},
+                # Lightweight JSON API; fail fast and retry rather than inherit
+                # the 180s pagination default.
+                meta={"download_timeout": EXCELS_DOWNLOAD_TIMEOUT},
                 dont_filter=True,
             )
         else:
