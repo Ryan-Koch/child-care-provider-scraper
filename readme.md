@@ -79,7 +79,7 @@ The project uses pytest, so one can simply run `pytest` to go through the whole 
 | New Mexico               | [x]     | 
 | New York                 | [x]     | 
 | North Carolina           | [x]     | 
-| North Dakota             | [ ]     | 
+| North Dakota             | [x]     | 
 | Ohio                     | [x]     | 
 | Oklahoma                 | [ ]     | 
 | Oregon                   | [ ]     | 

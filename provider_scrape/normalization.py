@@ -341,6 +341,10 @@ FACILITY_CATEGORY_BUCKETS = {
         "CTR", "LOC",
         # Ohio (childcaresearch.ohio.gov) program types.
         "Licensed Child Care Center", "Licensed School-Based Preschool",
+        # North Dakota (search.ec.hhs.nd.gov) facilityType labels. Facility- and
+        # school-based institutional care -> center.
+        "HHS-Licensed Child Care Center", "HHS-Licensed Group Child Care Facility",
+        "HHS-Licensed Preschool", "HHS Four-Year Old Program", "Head Start Site",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME", "Family Child Care Home", "Family Home", "FDC",
@@ -356,10 +360,14 @@ FACILITY_CATEGORY_BUCKETS = {
         # Ohio program types: Type A/B are family child care homes.
         "Licensed Type A Family Child Care Home",
         "Licensed Type B Family Child Care Home",
+        # North Dakota: family child care in a residence.
+        "HHS-Licensed Family Child Care",
     ],
     "group_home": [
         "GFDC", "Group Home", "Group Home Child Care", "Group",
         "Group Child Care Home",
+        # North Dakota: group child care operated in a home.
+        "HHS-Licensed Group Child Care Home",
     ],
     "school_age": [
         "SACC", "SCHOOL AGE DAY CARE CENTER", "School-age Program",
@@ -367,12 +375,16 @@ FACILITY_CATEGORY_BUCKETS = {
         "Child Care Out of School Time Program",
         # Ohio program type.
         "Licensed School-Age Child Care",
+        # North Dakota.
+        "HHS-Licensed School Age Child Care",
     ],
     "exempt": [
         "Exempt Only", "Religious Exempt Child Day Center",
         "Exempt Child Care Center", "DWS Approved, Exempt Center",
         "DWS Approved, Exempt School Age Program", "Child Care Exempt Program",
         "Voluntary Registration",
+        # North Dakota: license-exempt self-declared programs.
+        "Self-Declared Provider",
     ],
     "other": [
         "Other", "Resident Camp", "Summer Day Camp",
@@ -381,6 +393,9 @@ FACILITY_CATEGORY_BUCKETS = {
         "Neighborhood Youth Organization", "(FCC)Nanny Individual",
         # Ohio: camps -> other; in-home aide is informal in-home care -> other.
         "Registered Day Camp or Approved Day Camp", "Certified In Home Aide",
+        # North Dakota: a provider holding multiple license types (ambiguous
+        # category) and tribal subsidy recipients (informal/subsidy).
+        "HHS-Licensed Multiple License", "Tribal Subsidy Recipient",
     ],
 }
 
@@ -681,9 +696,15 @@ def normalize_item(item: dict, state: str) -> dict:
 
     # 6. address cleanup (in place, D1) + best-effort component parse (additive,
     #    D2). Components are only set when clearly parsed and not already set.
+    #    When the scraper already supplied all of city/state/zip (e.g. from
+    #    structured source fields), skip the parse entirely: it can add nothing
+    #    and would otherwise log a spurious "no ZIP" warning for a street-only
+    #    `address`.
     if item.get("address") is not None:
         item["address"] = clean_address(item["address"])
-        if item.get("address"):
+        already_have_components = all(
+            _is_present(item.get(key)) for key in ("city", "state", "zip"))
+        if item.get("address") and not already_have_components:
             city, parsed_state, zip_code = parse_address_components(
                 item["address"])
             for key, parsed in (("city", city), ("state", parsed_state),
