@@ -23,6 +23,7 @@ Usage: ./run_spiders.sh [-c concurrency] [spider ...]
   -d   directory to use for spider logging and output files (default: ./)
   -f   file format to use for spider output can be json or csv (default: json)
   -g   after each spider, geocode records missing coordinates (JSON output only)
+  -u   after all spiders finish, upload the output files to a Hugging Face dataset
   spider names default to the output of 'scrapy list'
 ```
 What this means is that you can add in options before the list of spiders to run (or you can provide no spiders and let it run on all of them). So an example command can look like: `./run_spider.sh -c 3 -d /some/path/you/can/write/to/ -f csv ohio new_jersey new_york texas north_carolina illinois` in the example we're setting the concurrency to 3, customizing the output path for output and logging, and choosing to use the CSV format. 
@@ -37,6 +38,23 @@ You can also run it standalone on any JSON output file:
 .venv/bin/python scripts/geocode_enrich.py state_output/alabama.json
 ```
 Results are cached in `geocode_cache.sqlite` (git-ignored) keyed by address, so re-runs only geocode new or changed records. Useful flags: `--dry-run` (report candidates without calling the geocoder), `--limit N` (cap unique addresses queried), `--no-cache`, and `-o PATH` (write elsewhere instead of in place). Note: geocoding only helps states that emit an address — address-less states are reported as skipped.
+
+### Uploading the output to Hugging Face
+Pass `-u` to `run_spiders.sh` to upload the run's data files to a Hugging Face dataset repo once every spider has finished. Unlike `-g` (which runs per-spider), the upload runs a single time at the end so the repo gets one commit instead of one per state. It uploads the data files matching `-f` (the `.json` files by default, `.csv` with `-f csv`) and never uploads the `.log` files. Upload failures are logged but never fail the (already completed) scrape. Pair it with `-d` so it uploads a specific run's directory, e.g. `./run_spiders.sh -u -c 3 -d state_output/ ohio texas alabama`.
+
+The token and target repo are read from `huggingface.env` at the repo root (git-ignored):
+```
+hugging_face_token=hf_xxxxxxxx
+hugging_face_repo=owner/dataset-name
+```
+Use a **write** token, and create the dataset repo on the Hugging Face website first — the script uploads to an existing repo and does not create one.
+
+You can also run it standalone on a directory or specific files:
+```
+.venv/bin/python scripts/upload_to_huggingface.py state_output/
+.venv/bin/python scripts/upload_to_huggingface.py --dry-run state_output/alabama.json
+```
+Useful flags: `--dry-run` (list what would be uploaded without pushing), `--repo owner/name` and `--token …` (override the env file), `-f csv` (upload CSVs instead of JSON), and `--path-in-repo subdir/` (upload into a subdirectory of the repo).
 
 ## Running Tests
 The project uses pytest, so one can simply run `pytest` to go through the whole run of it.

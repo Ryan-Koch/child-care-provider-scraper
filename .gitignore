@@ -16,3 +16,6 @@ scratch/
 
 # Local geocoding cache (scripts/geocode_enrich.py); -wal/-shm are WAL sidecars
 geocode_cache.sqlite*
+
+# hugging face config 
+huggingface.env

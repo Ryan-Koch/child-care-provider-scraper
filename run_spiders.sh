@@ -14,6 +14,10 @@ FORMAT=$DEFAULT_FORMAT
 # Post-run geocoding enrichment (opt-in with -g); JSON output only.
 GEOCODE=false
 GEOCODE_SCRIPT="$(dirname "$0")/scripts/geocode_enrich.py"
+# Post-run upload of output files to Hugging Face (opt-in with -u); runs once
+# after all spiders finish. Repo/token come from huggingface.env.
+UPLOAD=false
+UPLOAD_SCRIPT="$(dirname "$0")/scripts/upload_to_huggingface.py"
 # Space-separated list of spiders that require a virtual display
 XVFB_SPIDERS="new_jersey rhode_island arizona"
 
@@ -23,15 +27,17 @@ usage() {
     echo "  -d   directory to use for spider logging and output files (default: $DEFAULT_OUTPUT_DIR)" >&2
     echo "  -f   file format to use for spider output can be json or csv (default: $DEFAULT_FORMAT)" >&2
     echo "  -g   after each spider, geocode records missing coordinates (JSON output only)" >&2
+    echo "  -u   after all spiders finish, upload the output files to a Hugging Face dataset" >&2
     echo "  spider names default to the output of 'scrapy list'" >&2
 }
 
-while getopts ":c:d:f:gh" opt; do
+while getopts ":c:d:f:guh" opt; do
     case $opt in
         c) CONCURRENCY=$OPTARG ;;
         d) OUTPUT_DIR=$OPTARG ;;
         f) FORMAT=$OPTARG ;;
         g) GEOCODE=true ;;
+        u) UPLOAD=true ;;
         h) usage; exit 0 ;;
         \?) usage; exit 1 ;;
     esac
@@ -119,3 +125,15 @@ echo "======================="
 printf "%s\n" "${SPIDERS_TO_RUN[@]}" | xargs -P "$CONCURRENCY" -I {} -n 1 bash -c 'run_spider "$@"' _ {}
 
 echo "Spider runs completed."
+
+# Upload is opt-in (-u) and best-effort: it runs once, after every spider has
+# finished, so the dataset repo gets a single commit instead of one per state.
+# A failure here must not fail the (already completed) run.
+if [ "$UPLOAD" = true ]; then
+    echo "Uploading ${OUTPUT_DIR} (${FORMAT}) to Hugging Face..."
+    if python "$UPLOAD_SCRIPT" -f "$FORMAT" "$OUTPUT_DIR"; then
+        echo "Upload completed."
+    else
+        echo "Upload failed."
+    fi
+fi
