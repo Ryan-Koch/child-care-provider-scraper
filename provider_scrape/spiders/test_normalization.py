@@ -317,6 +317,17 @@ def test_facility_category_maryland_codes():
     assert normalization.facility_category_from_type("LFCCH") == "family_home"
 
 
+def test_facility_category_ohio_program_types():
+    fc = normalization.facility_category_from_type
+    assert fc("Licensed Type A Family Child Care Home") == "family_home"
+    assert fc("Licensed Type B Family Child Care Home") == "family_home"
+    assert fc("Licensed Child Care Center") == "center"
+    assert fc("Licensed School-Based Preschool") == "center"
+    assert fc("Licensed School-Age Child Care") == "school_age"
+    assert fc("Registered Day Camp or Approved Day Camp") == "other"
+    assert fc("Certified In Home Aide") == "other"
+
+
 def test_facility_category_unmapped_is_other_and_logged(caplog):
     with caplog.at_level("WARNING"):
         assert normalization.facility_category_from_type("Spaceship Care") \
