@@ -38,7 +38,13 @@ to bring this data together.
 - Keep methodologies simple and focus on readability and maintainability.
 - When we discover new fields that don't yet exist in the item we have in items.py then add a new one using the
   following naming convention: stateabbreviation_fieldname. For example a 'cats' fields for 'Ohio' would be 
-  oh_cats.
+  oh_cats. Before inventing a new `xx_` field, check `docs/field_mapping_playbook.md` — if two or more states
+  already have a field for the concept it should be a common field, not a state-specific one (quality ratings are
+  the documented exception and stay state-specific).
+- After adding a state or changing a normalization transformation, re-run
+  `.venv/bin/python scripts/generate_pipeline_details.py` and commit the updated `state_pipeline_details.md`;
+  add an explanation to `FIELD_DOCS` (`provider_scrape/field_docs.py`) for any new common field. A pytest
+  drift-guard fails if the committed doc is stale.
 - Always write basic unit tests for spiders created. Cover at least a golden path scenario as well as ones where 
   data elements are missing.
 - Do not add new dependencies to this project unless absolutely necessary.

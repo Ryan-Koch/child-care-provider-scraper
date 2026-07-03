@@ -97,12 +97,12 @@ Raw `provider_type` values mapped to each canonical category (additive; unmapped
 
 | Canonical | Raw provider_type values |
 |---|---|
-| `center` | `CTR`, `Center`, `Certified Pre-School`, `Child Care Center`, `Child Care Commercial Preschool`, `Child Care Facility`, `Child Care Hourly Center`, `Child Care Learning Center`, `Child Care Registered Center Based Program`, `Child Day Center`, `DAY CARE CENTER`, `DAY CARE CENTER - ILL CENTER`, `DCC`, `Department of Defense`, `GA Early Head Start`, `GA Head Start`, `INFANT CENTER`, `Infant and Toddler Center`, `LOC`, `Licensed Center`, `Local School System`, `Outdoor Nature Based Program`, `Preschool Center`, `Preschool Program`, `Public School`, `SDCC`, `SINGLE LICENSED CHILD CARE CENTER`, `Short Term Child Day Center`, `Small Employer Based Child Care`, `University` |
-| `exempt` | `Child Care Exempt Program`, `DWS Approved, Exempt Center`, `DWS Approved, Exempt School Age Program`, `Exempt Child Care Center`, `Exempt Only`, `Religious Exempt Child Day Center`, `Voluntary Registration` |
-| `family_home` | `Child Care Licensed Family`, `Child Care Residential Certificate`, `FAMILY DAY CARE HOME`, `FCCH`, `FDC`, `Family`, `Family Child Care`, `Family Child Care Home`, `Family Child Care Learning Home`, `Family Day Care Home`, `Family Day Home`, `Family Home`, `Family Home Child Care`, `LFCCH`, `Large Family Child Care Home`, `Licensed Child-Care Home`, `Licensed Family Home`, `Listed Family Home`, `Registered Child-Care Home`, `Registered Home`, `System Approved FDH`, `Unlicensed/Unregistered FDH` |
-| `group_home` | `GFDC`, `Group`, `Group Child Care Home`, `Group Home`, `Group Home Child Care` |
-| `other` | `(FCC)Nanny Individual`, `Family, Friends & Neighbor (FFN) Providers`, `Neighborhood Youth Organization`, `Other`, `Resident Camp`, `Substitute Placement Agency`, `Summer Day Camp` |
-| `school_age` | `Child Care Out of School Time Program`, `SACC`, `SCHOOL AGE DAY CARE CENTER`, `School Age Program`, `School-age Center`, `School-age Program` |
+| `center` | `CTR`, `Center`, `Certified Pre-School`, `Child Care Center`, `Child Care Commercial Preschool`, `Child Care Facility`, `Child Care Hourly Center`, `Child Care Learning Center`, `Child Care Registered Center Based Program`, `Child Day Center`, `DAY CARE CENTER`, `DAY CARE CENTER - ILL CENTER`, `DCC`, `Department of Defense`, `GA Early Head Start`, `GA Head Start`, `HHS Four-Year Old Program`, `HHS-Licensed Child Care Center`, `HHS-Licensed Group Child Care Facility`, `HHS-Licensed Preschool`, `Head Start Site`, `INFANT CENTER`, `Infant and Toddler Center`, `LOC`, `Licensed Center`, `Local School System`, `Outdoor Nature Based Program`, `Preschool Center`, `Preschool Program`, `Public School`, `SDCC`, `SINGLE LICENSED CHILD CARE CENTER`, `Short Term Child Day Center`, `Small Employer Based Child Care`, `University` |
+| `exempt` | `Child Care Exempt Program`, `DWS Approved, Exempt Center`, `DWS Approved, Exempt School Age Program`, `Exempt Child Care Center`, `Exempt Only`, `Religious Exempt Child Day Center`, `Self-Declared Provider`, `Voluntary Registration` |
+| `family_home` | `Child Care Licensed Family`, `Child Care Residential Certificate`, `FAMILY DAY CARE HOME`, `FCCH`, `FDC`, `Family`, `Family Child Care`, `Family Child Care Home`, `Family Child Care Learning Home`, `Family Day Care Home`, `Family Day Home`, `Family Home`, `Family Home Child Care`, `HHS-Licensed Family Child Care`, `LFCCH`, `Large Family Child Care Home`, `Licensed Child-Care Home`, `Licensed Family Home`, `Listed Family Home`, `Registered Child-Care Home`, `Registered Home`, `System Approved FDH`, `Unlicensed/Unregistered FDH` |
+| `group_home` | `GFDC`, `Group`, `Group Child Care Home`, `Group Home`, `Group Home Child Care`, `HHS-Licensed Group Child Care Home` |
+| `other` | `(FCC)Nanny Individual`, `Family, Friends & Neighbor (FFN) Providers`, `HHS-Licensed Multiple License`, `Neighborhood Youth Organization`, `Other`, `Resident Camp`, `Substitute Placement Agency`, `Summer Day Camp`, `Tribal Subsidy Recipient` |
+| `school_age` | `Child Care Out of School Time Program`, `HHS-Licensed School Age Child Care`, `SACC`, `SCHOOL AGE DAY CARE CENTER`, `School Age Program`, `School-age Center`, `School-age Program` |
 
 ## Per-state fields
 
@@ -345,6 +345,24 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nc_star_rating_max_points` -> pass-through
 - `nc_star_rating_total_points` -> pass-through
 - `nc_violations` -> pass-through
+
+### North Dakota (ND)
+
+- `nd_desired_capacity` -> pass-through
+- `nd_enrollment_schedule` -> pass-through
+- `nd_max_age` -> pass-through
+- `nd_min_age` -> pass-through
+- `nd_org_id` -> pass-through
+- `nd_philosophy` -> pass-through
+- `nd_program_id` -> pass-through
+- `nd_quality_rating` -> pass-through
+- `nd_special_populations` -> pass-through
+- `nd_supplemental_care` -> pass-through
+- `nd_total_enrollment` -> pass-through
+- `nd_total_vacancies` -> pass-through
+- `nd_vacancies_by_age` -> pass-through
+- `nd_vacancies_details` -> pass-through
+- `nd_vacancies_updated` -> pass-through
 
 ### New Jersey (NJ)
 

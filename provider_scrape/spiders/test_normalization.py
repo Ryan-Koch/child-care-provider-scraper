@@ -465,3 +465,25 @@ def test_normalize_item_messy_address_keeps_original_components_none():
     assert out.get("city") is None
     assert out.get("state") is None
     assert out.get("zip") is None
+
+
+def test_normalize_item_skips_parse_when_components_present(caplog):
+    # Scraper supplied a street-only address plus structured city/state/zip;
+    # the component parse should be skipped (no spurious "no ZIP" warning) and
+    # the pre-set components left intact.
+    item = {"address": "303 1st Ave W", "city": "Carson",
+            "state": "ND", "zip": "58529"}
+    with caplog.at_level("WARNING"):
+        out = normalization.normalize_item(item, "north_dakota")
+    assert out["city"] == "Carson"
+    assert out["state"] == "ND"
+    assert out["zip"] == "58529"
+    assert "no ZIP" not in caplog.text
+
+
+def test_normalize_item_still_parses_when_a_component_missing():
+    # Only city/state present (no zip) -> the parse still runs and fills zip.
+    item = {"address": "849 Centerville Road Warwick, RI 02886",
+            "city": "Warwick", "state": "RI"}
+    out = normalization.normalize_item(item, "rhode_island")
+    assert out["zip"] == "02886"

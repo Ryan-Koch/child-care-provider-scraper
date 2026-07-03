@@ -483,5 +483,25 @@ class ProviderItem(scrapy.Item):
     nv_site_characteristic = scrapy.Field()
     nv_rating_priority = scrapy.Field()
 
+    # North Dakota specific fields (search.ec.hhs.nd.gov JSON API)
+    # Quality rating stays state-specific per the field-mapping playbook.
+    nd_quality_rating = scrapy.Field()  # qualityRatingLabel, e.g. "Step 1"
+    # Vacancy data (the registry's high-value, ND-unique content).
+    nd_total_vacancies = scrapy.Field()
+    nd_vacancies_by_age = scrapy.Field()  # list of {ageGroupLabel, numberVacancies}
+    nd_vacancies_details = scrapy.Field()  # free-text vacancies note
+    nd_vacancies_updated = scrapy.Field()  # vacanciesTimestamp
+    # Enrollment / capacity detail beyond the common `capacity`.
+    nd_desired_capacity = scrapy.Field()
+    nd_total_enrollment = scrapy.Field()
+    nd_enrollment_schedule = scrapy.Field()  # programEnrollmentScheduleLabel
+    nd_special_populations = scrapy.Field()  # specialPopulationsLabels
+    nd_supplemental_care = scrapy.Field()  # supplementalCareTypesLabels
+    nd_min_age = scrapy.Field()  # e.g. "0 Months"
+    nd_max_age = scrapy.Field()  # e.g. "12 Years"
+    nd_program_id = scrapy.Field()  # registry program id (also in provider_url)
+    nd_org_id = scrapy.Field()  # orgId
+    nd_philosophy = scrapy.Field()  # philosophyStatement
+
     # This will hold the list of inspections.
     inspections = scrapy.Field()

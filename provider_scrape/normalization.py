@@ -339,6 +339,10 @@ FACILITY_CATEGORY_BUCKETS = {
         # Maryland (checkccmd.org) codes: CTR = center, LOC = a center-based
         # program operating under a Letter of Compliance.
         "CTR", "LOC",
+        # North Dakota (search.ec.hhs.nd.gov) facilityType labels. Facility- and
+        # school-based institutional care -> center.
+        "HHS-Licensed Child Care Center", "HHS-Licensed Group Child Care Facility",
+        "HHS-Licensed Preschool", "HHS Four-Year Old Program", "Head Start Site",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME", "Family Child Care Home", "Family Home", "FDC",
@@ -351,27 +355,38 @@ FACILITY_CATEGORY_BUCKETS = {
         "System Approved FDH", "Child Care Residential Certificate",
         # Maryland codes: FCCH = family child care home, LFCCH = large FCCH.
         "FCCH", "LFCCH",
+        # North Dakota: family child care in a residence.
+        "HHS-Licensed Family Child Care",
     ],
     "group_home": [
         "GFDC", "Group Home", "Group Home Child Care", "Group",
         "Group Child Care Home",
+        # North Dakota: group child care operated in a home.
+        "HHS-Licensed Group Child Care Home",
     ],
     "school_age": [
         "SACC", "SCHOOL AGE DAY CARE CENTER", "School-age Program",
         "School Age Program", "School-age Center",
         "Child Care Out of School Time Program",
+        # North Dakota.
+        "HHS-Licensed School Age Child Care",
     ],
     "exempt": [
         "Exempt Only", "Religious Exempt Child Day Center",
         "Exempt Child Care Center", "DWS Approved, Exempt Center",
         "DWS Approved, Exempt School Age Program", "Child Care Exempt Program",
         "Voluntary Registration",
+        # North Dakota: license-exempt self-declared programs.
+        "Self-Declared Provider",
     ],
     "other": [
         "Other", "Resident Camp", "Summer Day Camp",
         "Substitute Placement Agency",
         "Family, Friends & Neighbor (FFN) Providers",
         "Neighborhood Youth Organization", "(FCC)Nanny Individual",
+        # North Dakota: a provider holding multiple license types (ambiguous
+        # category) and tribal subsidy recipients (informal/subsidy).
+        "HHS-Licensed Multiple License", "Tribal Subsidy Recipient",
     ],
 }
 
@@ -672,9 +687,15 @@ def normalize_item(item: dict, state: str) -> dict:
 
     # 6. address cleanup (in place, D1) + best-effort component parse (additive,
     #    D2). Components are only set when clearly parsed and not already set.
+    #    When the scraper already supplied all of city/state/zip (e.g. from
+    #    structured source fields), skip the parse entirely: it can add nothing
+    #    and would otherwise log a spurious "no ZIP" warning for a street-only
+    #    `address`.
     if item.get("address") is not None:
         item["address"] = clean_address(item["address"])
-        if item.get("address"):
+        already_have_components = all(
+            _is_present(item.get(key)) for key in ("city", "state", "zip"))
+        if item.get("address") and not already_have_components:
             city, parsed_state, zip_code = parse_address_components(
                 item["address"])
             for key, parsed in (("city", city), ("state", parsed_state),
