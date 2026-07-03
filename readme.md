@@ -63,7 +63,7 @@ You can run the scrapers as a containerized job without installing Python, the P
 ### One-time setup
 
 1. Install Docker and the Docker Compose plugin.
-2. Copy the Hugging Face config template. The compose file mounts this file, so it must exist even if you leave it blank; fill it in only if you plan to upload with `-u`:
+2. (Optional) Copy the Hugging Face config template. The compose file mounts this file, so it must exist even if you leave it blank; fill it in only if you plan to upload with `-u`:
    ```bash
    cp huggingface.env.example huggingface.env
    ```
