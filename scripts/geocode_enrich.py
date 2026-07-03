@@ -1,4 +1,4 @@
-"""Post-run geocoding enrichment for scraped state output (JSON).
+"""Post-run geocoding enrichment for scraped state output (JSON or CSV).
 
 Reads a state's scrape output, fills ``latitude`` / ``longitude`` for records
 that lack them by querying the free US Census Bureau batch geocoder, records
@@ -6,13 +6,21 @@ provenance (``geocode_source`` / ``geocode_confidence``), and writes the result
 back. Records that already carry coordinates are stamped ``source="state"``;
 records with no usable address are skipped.
 
+The file format is inferred from each path's extension: ``.csv`` is read/written
+as CSV (a header row plus one row per record), anything else as a JSON array. A
+CSV run gains the ``geocode_source`` / ``geocode_confidence`` columns (and
+``latitude`` / ``longitude`` if they were absent), appended after the original
+columns; existing column order is preserved. This means a csv-only scrape can be
+enriched on its own, without a JSON alongside it.
+
 All the pure decision logic lives in ``provider_scrape/geocoding.py``; this file
-owns the I/O: reading/writing JSON, the SQLite cache, and the HTTP calls.
+owns the I/O: reading/writing JSON or CSV, the SQLite cache, and the HTTP calls.
 
 Usage:
     .venv/bin/python scripts/geocode_enrich.py state_output/ohio.json
+    .venv/bin/python scripts/geocode_enrich.py state_output/ohio.csv
     .venv/bin/python scripts/geocode_enrich.py -o out.json ohio.json alabama.json
-    .venv/bin/python scripts/geocode_enrich.py --dry-run --limit 100 texas.json
+    .venv/bin/python scripts/geocode_enrich.py --dry-run --limit 100 texas.csv
 
 See ``tasks/geocoding_epic/geocoding_plan.md``.
 """
@@ -292,18 +300,65 @@ def _print_stats(path, counters):
     print("  match rate (of attempted): %.1f%%" % rate)
 
 
-def enrich_file(path, cache, args):
+def _is_csv(path):
+    """True when ``path`` should be treated as CSV (by its extension)."""
+    return os.path.splitext(path)[1].lower() == ".csv"
+
+
+def _read_records(path):
+    """Load records from a JSON array or a CSV file.
+
+    Returns ``(records, base_fieldnames)``: a list of dict records, and the CSV
+    header (so column order survives the round-trip) or ``None`` for JSON. CSV
+    cells come back as strings, which is exactly what the geocoding helpers
+    already expect (an empty cell reads as ``""`` and counts as "no coordinate").
+    """
+    if _is_csv(path):
+        with open(path, "r", newline="", encoding="utf-8") as handle:
+            reader = csv.DictReader(handle)
+            records = [dict(row) for row in reader]
+            return records, list(reader.fieldnames or [])
     with open(path, "r", encoding="utf-8") as handle:
         records = json.load(handle)
     if not isinstance(records, list):
         raise ValueError("%s is not a JSON array of records" % path)
+    return records, None
+
+
+def _csv_fieldnames(records, base_fieldnames):
+    """Column order for CSV output: the original header first, then any keys
+    enrichment added (e.g. ``geocode_source``), in first-seen order."""
+    fieldnames = list(base_fieldnames or [])
+    seen = set(fieldnames)
+    for record in records:
+        for key in record:
+            if key not in seen:
+                seen.add(key)
+                fieldnames.append(key)
+    return fieldnames
+
+
+def _write_records(path, records, base_fieldnames):
+    """Write records back out in the format implied by ``path``'s extension."""
+    if _is_csv(path):
+        fieldnames = _csv_fieldnames(records, base_fieldnames)
+        with open(path, "w", newline="", encoding="utf-8") as handle:
+            writer = csv.DictWriter(handle, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(records)
+    else:
+        with open(path, "w", encoding="utf-8") as handle:
+            json.dump(records, handle, ensure_ascii=False, indent=2)
+
+
+def enrich_file(path, cache, args):
+    records, base_fieldnames = _read_records(path)
 
     counters = enrich_records(records, cache, args)
 
     out_path = args.output or path
     if not args.dry_run:
-        with open(out_path, "w", encoding="utf-8") as handle:
-            json.dump(records, handle, ensure_ascii=False, indent=2)
+        _write_records(out_path, records, base_fieldnames)
         logger.info("Wrote %s", out_path)
     _print_stats(path, counters)
     return counters
@@ -312,9 +367,11 @@ def enrich_file(path, cache, args):
 def build_arg_parser():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("inputs", nargs="+",
-                        help="state output JSON file(s) to enrich")
+                        help="state output file(s) to enrich; JSON or CSV, "
+                             "detected by the .json/.csv extension")
     parser.add_argument("-o", "--output",
-                        help="write to this path instead of in place "
+                        help="write to this path instead of in place; its "
+                             "extension picks the output format "
                              "(only valid with a single input)")
     parser.add_argument("--cache", default=DEFAULT_CACHE_PATH,
                         help="SQLite cache path (default: %(default)s)")
