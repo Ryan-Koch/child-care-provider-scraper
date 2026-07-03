@@ -58,8 +58,23 @@ _DAY_ABBR = {
 #     strings flow through.
 # Stealth still patches navigator.webdriver, plugin arrays, etc. — the
 # things that genuinely *are* "wrong" by default.
+# navigator.platform must agree with the real (un-overridden) userAgent
+# and navigator.userAgentData.platform, both of which reflect the host OS.
+# Hardcoding "MacIntel" while running headed Chrome on a Linux server (where
+# the UA and userAgentData.platform both say "Linux") is a cross-check
+# inconsistency reCAPTCHA v3 weighs heavily — it was tripping the
+# isCaptchaInvalid/isV3Failed response. Derive it from the host OS so the
+# value stays consistent whether we run locally on macOS or on the Linux box
+# that runs the scheduled crawls.
+_NAV_PLATFORM_BY_OS = {
+    "Linux": "Linux x86_64",
+    "Darwin": "MacIntel",
+    "Windows": "Win32",
+}
+_NAV_PLATFORM = _NAV_PLATFORM_BY_OS.get(platform.system(), "Linux x86_64")
+
 _STEALTH_SCRIPT = Stealth(
-    navigator_platform_override="MacIntel",
+    navigator_platform_override=_NAV_PLATFORM,
     navigator_languages_override=("en-US", "en"),
     webgl_vendor=False,
 ).script_payload
@@ -472,6 +487,11 @@ class StealthContextMiddleware:
             return
 
         original = handler._create_browser_context
+        # Capture the spider from spider_opened for logging: the handler
+        # calls _create_browser_context during engine start with spider=None
+        # (see scrapy_playwright.handler._launch), so the `spider` argument
+        # below can't be relied on to be set.
+        log_spider = spider
 
         async def patched_create_context(name, context_kwargs=None, spider=None):
             wrapper = await original(
@@ -480,7 +500,7 @@ class StealthContextMiddleware:
             await wrapper.context.add_init_script(_STEALTH_SCRIPT)
             await wrapper.context.add_init_script(_CANVAS_PATCH)
             await wrapper.context.add_init_script(_HW_PATCH)
-            spider.logger.info(
+            log_spider.logger.info(
                 "StealthContextMiddleware: stealth patches applied to "
                 "context '%s'",
                 name,
