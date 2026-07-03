@@ -1,0 +1,39 @@
+# Run the scrapers as a one-shot job:
+#   docker compose build
+#   docker compose run --rm scraper -g -c 3 -f json,csv ohio texas alabama
+# Args after "scraper" are passed to run_spiders.sh (see its usage). A bare
+# `docker compose run --rm scraper` prints the usage help.
+services:
+  scraper:
+    build: .
+    image: child-care-provider-scraper
+    # Reap zombie browser/xvfb processes left behind by crawls.
+    init: true
+    # Chrome needs a large /dev/shm or it crashes mid-crawl; the default 64 MB
+    # is not enough.
+    shm_size: "2gb"
+    # Run as the host user so files written to the mounted ./state_output are
+    # owned by you and the bind mount stays writable. Defaults to 1000 (typical
+    # single-user host). On a host where you aren't UID 1000, override, e.g.:
+    #   DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose run --rm scraper ...
+    # or put DOCKER_UID/DOCKER_GID in a .env file next to this one.
+    user: "${DOCKER_UID:-1000}:${DOCKER_GID:-1000}"
+    environment:
+      # Writable HOME for any UID (xvfb Xauthority, huggingface_hub cache).
+      HOME: /tmp
+      # /app is owned by the image's build user, not the runtime UID, so don't
+      # try to write bytecode caches next to the source.
+      PYTHONDONTWRITEBYTECODE: "1"
+      # Default output to the mounted volume so files survive `--rm`. Still
+      # overridable per-run with -d.
+      OUTPUT_DIR: state_output
+      # Persist the geocode cache inside the same mounted volume, so re-runs
+      # only geocode new records. Only used when you pass -g.
+      GEOCODE_CACHE: state_output/geocode_cache.sqlite
+    volumes:
+      # Scraped output, logs, and the geocode cache (visible on the host).
+      # Must be writable by UID 1000 (the container's non-root user).
+      - ./state_output:/app/state_output
+      # Hugging Face token/repo, read-only, only used with -u. Kept out of the
+      # image; mounted at runtime. The file must exist (see huggingface.env.example).
+      - ./huggingface.env:/app/huggingface.env:ro

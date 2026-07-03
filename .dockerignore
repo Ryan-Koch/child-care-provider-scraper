@@ -1,0 +1,34 @@
+# Keep the build context small and secret-free. Anything the container needs
+# at runtime (outputs, geocode cache, HF token) is provided via volumes, not
+# baked into the image.
+
+# Virtualenvs / local tooling
+.venv/
+venv/
+.git/
+.github/
+.claude/
+.crush/
+.ropeproject/
+.pytest_cache/
+**/__pycache__/
+**/*.pyc
+
+# Secret — bind-mounted read-only at runtime, must never land in an image layer
+huggingface.env
+
+# Large local cache + scraped outputs — supplied via the state_output volume
+geocode_cache.sqlite*
+state_output/
+state_output_normal_run/
+
+# Working directories not needed to run the scrapers
+tasks/
+analysis/
+scratch/
+docs/
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+docker-compose.yml

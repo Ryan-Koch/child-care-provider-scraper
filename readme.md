@@ -56,6 +56,39 @@ You can also run it standalone on a directory or specific files:
 ```
 Useful flags: `--dry-run` (list what would be uploaded without pushing), `--repo owner/name` and `--token …` (override the env file), `-f csv` (upload CSVs instead of JSON), and `--path-in-repo subdir/` (upload into a subdirectory of the repo).
 
+## Running with Docker
+
+You can run the scrapers as a containerized job without installing Python, the Playwright browsers, xvfb, or the Tesseract model on the host — the image bakes all of that in. It's built on Microsoft's official Ubuntu-based Playwright image, so the browser system dependencies are handled for you.
+
+### One-time setup
+
+1. Install Docker and the Docker Compose plugin.
+2. Copy the Hugging Face config template. The compose file mounts this file, so it must exist even if you leave it blank; fill it in only if you plan to upload with `-u`:
+   ```bash
+   cp huggingface.env.example huggingface.env
+   ```
+3. Build the image (the first build downloads the browsers and Tesseract model, so give it a few minutes):
+   ```bash
+   docker compose build
+   ```
+
+### Running a job
+
+Use `docker compose run` and pass the same arguments you'd give `run_spiders.sh` (see the usage above). For example, crawl three states at concurrency 3, emitting JSON + CSV and geocoding as you go:
+
+```bash
+docker compose run --rm scraper -g -c 3 -f json,csv ohio texas alabama
+```
+
+Output files and logs land in `./state_output/` on the host, and the geocode cache persists there too, so re-runs only geocode new records. A bare `docker compose run --rm scraper` prints the usage help rather than running every spider. To upload to Hugging Face at the end, add `-u` (requires a filled-in `huggingface.env`).
+
+### How the container is wired up
+
+- **Output & cache** — `./state_output/` on the host is mounted into the container and is the default output directory, so scraped files, logs, and `geocode_cache.sqlite` all persist there. Override the in-container path with `-d` as usual.
+- **Secret** — `huggingface.env` is bind-mounted read-only at runtime and is never copied into the image, so the token stays on the host.
+- **Permissions** — the container runs as your host user (UID 1000 by default), so files written to `./state_output/` are owned by you. If you aren't UID 1000 on your host, pass your own IDs, e.g. `DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose run --rm scraper ...` (or set `DOCKER_UID`/`DOCKER_GID` in a `.env` file next to the compose file).
+- **Chrome** — the Cloudflare-sensitive spiders (`new_jersey`, `rhode_island`, `arizona`, `minnesota`) use real Google Chrome under a virtual display (xvfb); both are in the image and used automatically. The container gets a 2 GB `/dev/shm` so Chrome doesn't crash.
+
 ## Running Tests
 The project uses pytest, so one can simply run `pytest` to go through the whole run of it.
 
