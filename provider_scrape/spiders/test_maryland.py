@@ -9,6 +9,8 @@ from provider_scrape.spiders.maryland import (
     MAX_NAV_ATTEMPTS,
     MAX_CHAIN_RESTARTS,
     RESULTS_PRIORITY,
+    DETAIL_DOWNLOAD_TIMEOUT,
+    EXCELS_DOWNLOAD_TIMEOUT,
 )
 from twisted.python.failure import Failure
 from provider_scrape.items import ProviderItem
@@ -208,6 +210,9 @@ def test_parse_detail_page_chains_to_excels(spider):
     assert "findaprogram.marylandexcels.org" in excels_request.url
     assert "license=150301" in excels_request.url
     assert excels_request.callback == spider.parse_excels
+    # EXCELS is a lightweight JSON API off the critical path — fail fast, don't
+    # inherit the 180s pagination default.
+    assert excels_request.meta["download_timeout"] == EXCELS_DOWNLOAD_TIMEOUT
     # The first inspection report URL is carried for the PDF fallback path.
     assert "PrintTask.aspx?t=526&d=3384" in excels_request.cb_kwargs["first_report_url"]
 
@@ -298,6 +303,11 @@ def test_parse_results_page(spider):
     assert kwargs1["school_name"] == "Lincoln Elementary"
     assert kwargs1["program_type"] == "CTR"
 
+    # Detail requests are idempotent and not chain-critical, so they fail fast on
+    # a shorter per-request timeout (not the patient 180s default) and retry.
+    for dr in detail_requests:
+        assert dr.meta["download_timeout"] == DETAIL_DOWNLOAD_TIMEOUT
+
     # One pagination request to page 2, carrying its expected page and a high
     # priority so it isn't starved behind the detail-request backlog.
     assert len(form_requests) == 1
@@ -305,6 +315,10 @@ def test_parse_results_page(spider):
     assert form_requests[0].priority == RESULTS_PRIORITY
     assert form_requests[0].errback == spider._pagination_errback
     assert "Page%242" in form_requests[0].body.decode() or "Page$2" in form_requests[0].body.decode()
+    # Pagination postbacks are chain-critical: they must NOT get the fail-fast
+    # timeout — they keep the patient default so a stale-ViewState truncation
+    # can't be reintroduced.
+    assert "download_timeout" not in form_requests[0].meta
 
 
 def test_parse_results_deduplicates_on_reprocess(spider):
