@@ -5,15 +5,21 @@ MAX_RETRIES=6
 # Default concurrency (override with -c)
 DEFAULT_CONCURRENCY=5
 CONCURRENCY=$DEFAULT_CONCURRENCY
-# Default directory path (override with -d)
+# Default directory path (override with -d). An OUTPUT_DIR set in the
+# environment changes the default while still letting -d win — the Docker image
+# uses this to point output at a mounted volume.
 DEFAULT_OUTPUT_DIR="./"
-OUTPUT_DIR=$DEFAULT_OUTPUT_DIR
+OUTPUT_DIR="${OUTPUT_DIR:-$DEFAULT_OUTPUT_DIR}"
 # Default format (override with -f)
 DEFAULT_FORMAT="json"
 FORMAT=$DEFAULT_FORMAT
 # Post-run geocoding enrichment (opt-in with -g); enriches each format from -f.
 GEOCODE=false
 GEOCODE_SCRIPT="$(dirname "$0")/scripts/geocode_enrich.py"
+# Optional shared geocode cache path (opt-in via env). Unset -> the enrich
+# script uses its own default (repo-root geocode_cache.sqlite). Point it at a
+# mounted volume to persist the cache across runs (the Docker image does this).
+GEOCODE_CACHE="${GEOCODE_CACHE:-}"
 # Post-run upload of output files to Hugging Face (opt-in with -u); runs once
 # after all spiders finish. Repo/token come from huggingface.env.
 UPLOAD=false
@@ -124,10 +130,15 @@ run_spider() {
               # the second file's addresses are already resolved, so a both-run
               # costs one network pass, not one per format.
               echo "Geocoding $spider_name..."
+              # Opt-in: persist/reuse the cache at a caller-provided path (e.g.
+              # a mounted volume). Unset -> the script's default location.
+              local cache_args=()
+              [ -n "$GEOCODE_CACHE" ] && cache_args=(--cache "$GEOCODE_CACHE")
               local geocode_ok=true
               for fmt in "${formats[@]}"; do
                   python "$GEOCODE_SCRIPT" \
                       "${OUTPUT_DIR}${spider_name}.${fmt}" \
+                      "${cache_args[@]}" \
                       >> "${OUTPUT_DIR}${log_file}" 2>&1 || geocode_ok=false
               done
               if [ "$geocode_ok" = true ]; then
@@ -148,7 +159,7 @@ export -f run_spider
 export LOG_LEVEL
 export MAX_RETRIES
 export OUTPUT_DIR FORMAT XVFB_SPIDERS
-export GEOCODE GEOCODE_SCRIPT
+export GEOCODE GEOCODE_SCRIPT GEOCODE_CACHE
 
 # Main
 echo "Starting spiders run..."
