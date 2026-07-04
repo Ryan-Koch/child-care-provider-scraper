@@ -17,5 +17,8 @@ scratch/
 # Local geocoding cache (scripts/geocode_enrich.py); -wal/-shm are WAL sidecars
 geocode_cache.sqlite*
 
-# hugging face config 
+# hugging face config
 huggingface.env
+
+# Local docker-compose overrides (host-specific DOCKER_UID/DOCKER_GID, etc.)
+.env

@@ -32,8 +32,10 @@ services:
       GEOCODE_CACHE: state_output/geocode_cache.sqlite
     volumes:
       # Scraped output, logs, and the geocode cache (visible on the host).
-      # Must be writable by UID 1000 (the container's non-root user).
-      - ./state_output:/app/state_output
+      # Must be writable by the runtime UID (see the `user:` key above). The `:z`
+      # suffix relabels the path for SELinux hosts (Fedora/RHEL, which run
+      # Enforcing by default); it is silently ignored where SELinux is absent.
+      - ./state_output:/app/state_output:z
       # Hugging Face token/repo, read-only, only used with -u. Kept out of the
       # image; mounted at runtime. The file must exist (see huggingface.env.example).
-      - ./huggingface.env:/app/huggingface.env:ro
+      - ./huggingface.env:/app/huggingface.env:ro,z
