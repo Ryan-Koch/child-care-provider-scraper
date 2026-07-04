@@ -18,6 +18,15 @@ scheduled runs stay self-contained.
 The target repo must already exist; the script does not create it. If it is
 missing (or the token can't see it) the run fails with a clear message.
 
+Because each state file has its own set of columns, a single-table load fails
+Hugging Face's "all files must have the same columns" check. So a JSON upload
+also writes a ``README.md`` whose YAML frontmatter declares one dataset
+*configuration* per state file (``config_name`` = the file's stem). Each state
+is then parsed independently, which sidesteps the column/type/nested-struct
+mismatches entirely. Any existing hand-written card body and other frontmatter
+keys are preserved; only the ``configs`` key is regenerated. Disable with
+``--no-readme`` (the default is on for JSON, off for CSV).
+
 Usage:
     .venv/bin/python scripts/upload_to_huggingface.py state_output_normal_run/
     .venv/bin/python scripts/upload_to_huggingface.py --dry-run state_output/
@@ -31,13 +40,32 @@ import os
 import sys
 from datetime import datetime, timezone
 
+import yaml
 from huggingface_hub import CommitOperationAdd, HfApi
-from huggingface_hub.errors import HfHubHTTPError, RepositoryNotFoundError
+from huggingface_hub.errors import (
+    EntryNotFoundError,
+    HfHubHTTPError,
+    RepositoryNotFoundError,
+)
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_ENV_FILE = os.path.join(REPO_ROOT, "huggingface.env")
 TOKEN_KEY = "hugging_face_token"
 REPO_KEY = "hugging_face_repo"
+
+# The dataset card lives at the repo root (HF only reads config metadata there).
+README_FILENAME = "README.md"
+# Body used only when the repo has no README yet; an existing card's body is
+# preserved untouched.
+DEFAULT_README_BODY = """# US Child Care Providers
+
+Per-state child care provider licensing data. Each U.S. state is exposed as a
+separate dataset configuration: pick a state in the dataset viewer, or pass its
+name as the config argument, e.g.
+``load_dataset("<repo>", "alabama")``.
+
+The `configs` metadata above is generated automatically by the upload script,
+one entry per state data file."""
 
 logger = logging.getLogger("upload_to_huggingface")
 
@@ -105,6 +133,105 @@ def build_operations(files, path_in_repo):
     return operations
 
 
+def config_name_for(path):
+    """Derive a Hugging Face config name from a data file (its basename stem)."""
+    return os.path.splitext(os.path.basename(path))[0]
+
+
+def build_configs(files, path_in_repo):
+    """Build the ``configs`` list for the dataset card: one entry per file.
+
+    ``data_files`` is the file's path relative to the repo root (so it includes
+    any ``--path-in-repo`` prefix, matching what ``build_operations`` uploads).
+    Duplicate config names (same basename stem from two inputs) are dropped with
+    a warning, since Hugging Face rejects repeated config names.
+    """
+    prefix = path_in_repo.strip("/")
+    configs = []
+    seen = set()
+    for path in files:
+        name = os.path.basename(path)
+        cfg = config_name_for(path)
+        if cfg in seen:
+            logger.warning(
+                "Duplicate config name %r (%s); keeping the first.", cfg, path)
+            continue
+        seen.add(cfg)
+        data_file = "%s/%s" % (prefix, name) if prefix else name
+        configs.append({"config_name": cfg, "data_files": data_file})
+    return configs
+
+
+def split_frontmatter(text):
+    """Split a Markdown doc into ``(frontmatter_dict, body_str)``.
+
+    Handles the ``---`` YAML frontmatter block Hugging Face dataset cards use.
+    Returns an empty dict and the whole text as the body when there's no
+    frontmatter. Raises ``ValueError`` when a frontmatter block is present but
+    isn't valid YAML (or isn't a mapping), so callers can decline to overwrite a
+    card they can't safely edit.
+    """
+    if not text:
+        return {}, ""
+    stripped = text.lstrip("\ufeff")  # strip a leading BOM if present
+    lines = stripped.split("\n")
+    if lines[0].strip() != "---":
+        return {}, text
+    end = None
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            end = i
+            break
+    if end is None:
+        # Opening fence with no close: not real frontmatter, treat as body.
+        return {}, text
+    fm_text = "\n".join(lines[1:end])
+    body = "\n".join(lines[end + 1:])
+    try:
+        data = yaml.safe_load(fm_text)
+    except yaml.YAMLError as exc:
+        raise ValueError(str(exc))
+    if data is None:
+        data = {}
+    if not isinstance(data, dict):
+        raise ValueError("frontmatter is not a mapping")
+    return data, body
+
+
+def render_readme(existing_text, configs):
+    """Return README text with ``configs`` set, preserving everything else.
+
+    The existing card's body and any other frontmatter keys are kept as-is; only
+    the ``configs`` key is replaced. A fresh card gets a default body.
+    """
+    data, body = split_frontmatter(existing_text)
+    data = dict(data)
+    data["configs"] = configs
+    frontmatter = yaml.safe_dump(
+        data, sort_keys=False, allow_unicode=True,
+        default_flow_style=False).rstrip("\n")
+    body = body.strip("\n")
+    if not body:
+        body = DEFAULT_README_BODY.strip("\n")
+    return "---\n%s\n---\n\n%s\n" % (frontmatter, body)
+
+
+def fetch_existing_readme(api, repo):
+    """Return the repo's current README text, or None if it has none."""
+    try:
+        local = api.hf_hub_download(
+            repo_id=repo, repo_type="dataset", filename=README_FILENAME)
+    except EntryNotFoundError:
+        return None
+    except (RepositoryNotFoundError, HfHubHTTPError) as exc:
+        logger.warning(
+            "Couldn't fetch existing %s (%s); generating a fresh one.",
+            README_FILENAME, exc)
+        return None
+    with open(local, encoding="utf-8") as handle:
+        return handle.read()
+
+
 def build_arg_parser():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("inputs", nargs="+",
@@ -127,6 +254,12 @@ def build_arg_parser():
                              "(default: repo root)")
     parser.add_argument("--commit-message",
                         help="commit message (default: a timestamped message)")
+    parser.add_argument("--readme", dest="readme", action="store_true",
+                        default=None,
+                        help="also write a README.md declaring one dataset "
+                             "config per state file (default: on for json)")
+    parser.add_argument("--no-readme", dest="readme", action="store_false",
+                        help="don't touch the dataset README.md")
     parser.add_argument("--dry-run", action="store_true",
                         help="list what would be uploaded; no network, no push")
     parser.add_argument("-v", "--verbose", action="store_true",
@@ -165,15 +298,42 @@ def main(argv=None):
     for path in files:
         logger.info("  %s (%.1f MB)", path, os.path.getsize(path) / 1_048_576.0)
 
+    # Default: manage the README for JSON (the format HF parses into the
+    # per-state dataset), leave it alone for CSV. --readme/--no-readme override.
+    generate_readme = args.readme if args.readme is not None \
+        else (args.format == "json")
+
     if args.dry_run:
+        if generate_readme:
+            configs = build_configs(files, args.path_in_repo)
+            logger.info("Would write %s with %d per-state config(s): %s",
+                        README_FILENAME, len(configs),
+                        ", ".join(c["config_name"] for c in configs))
         logger.info("Dry run: nothing uploaded.")
         return 0
 
     message = args.commit_message or (
         "Scheduled data upload %s"
         % datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"))
-    operations = build_operations(files, args.path_in_repo)
     api = HfApi(token=token)
+    operations = build_operations(files, args.path_in_repo)
+
+    if generate_readme:
+        configs = build_configs(files, args.path_in_repo)
+        try:
+            readme_text = render_readme(fetch_existing_readme(api, repo), configs)
+        except ValueError as exc:
+            logger.warning(
+                "Existing %s frontmatter couldn't be parsed (%s); skipping the "
+                "README config update. Fix or delete it to let this script "
+                "regenerate it.", README_FILENAME, exc)
+        else:
+            operations.insert(0, CommitOperationAdd(
+                path_in_repo=README_FILENAME,
+                path_or_fileobj=readme_text.encode("utf-8")))
+            logger.info(
+                "Including auto-generated %s with %d per-state config(s).",
+                README_FILENAME, len(configs))
     try:
         commit = api.create_commit(
             repo_id=repo,
@@ -192,7 +352,8 @@ def main(argv=None):
         return 1
 
     commit_url = getattr(commit, "commit_url", None) or repo
-    logger.info("Uploaded %d file(s) to %s (%s)", len(files), repo, commit_url)
+    logger.info("Uploaded %d file(s) to %s (%s)",
+                len(operations), repo, commit_url)
     return 0
 
 

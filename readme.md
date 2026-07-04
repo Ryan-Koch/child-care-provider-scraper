@@ -49,12 +49,14 @@ hugging_face_repo=owner/dataset-name
 ```
 Use a **write** token, and create the dataset repo on the Hugging Face website first — the script uploads to an existing repo and does not create one.
 
+Because each state file has its own set of columns, loading them as one table fails Hugging Face's "all files must have the same columns" check. So a JSON upload also writes a `README.md` whose YAML frontmatter declares one dataset **configuration** per state file (`config_name` = the file's stem, e.g. `alabama`). Hugging Face then parses each state independently — pick a state in the dataset viewer, or `load_dataset("owner/dataset-name", "alabama")`. The card's body and any other frontmatter keys you've written are preserved; only the `configs` key is regenerated each upload. This is on by default for JSON and off for CSV; use `--no-readme` / `--readme` to override.
+
 You can also run it standalone on a directory or specific files:
 ```
 .venv/bin/python scripts/upload_to_huggingface.py state_output/
 .venv/bin/python scripts/upload_to_huggingface.py --dry-run state_output/alabama.json
 ```
-Useful flags: `--dry-run` (list what would be uploaded without pushing), `--repo owner/name` and `--token …` (override the env file), `-f csv` (upload CSVs instead of JSON), and `--path-in-repo subdir/` (upload into a subdirectory of the repo).
+Useful flags: `--dry-run` (list what would be uploaded without pushing), `--repo owner/name` and `--token …` (override the env file), `-f csv` (upload CSVs instead of JSON), `--path-in-repo subdir/` (upload into a subdirectory of the repo), and `--no-readme` (skip the per-state dataset card).
 
 ## Running with Docker
 
