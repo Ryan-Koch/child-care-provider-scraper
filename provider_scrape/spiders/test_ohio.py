@@ -9,6 +9,7 @@ PROVIDER_HTML = """
 <!DOCTYPE html>
 <html>
 <body>
+    <div class="detailHeader">"BECOMING ME" ENRICHMENT AFTER-SCHOOL PROGRAM</div>
     <div class="detailGroupContainer">
         <div class="detailGroup">
             <div class="detailRow">
@@ -140,6 +141,10 @@ def test_parse_provider_page_happy_path(spider):
 
     provider = inspection_request.meta["provider"]
 
+    assert (
+        provider["provider_name"]
+        == '"BECOMING ME" ENRICHMENT AFTER-SCHOOL PROGRAM'
+    )
     assert provider["status"] == "Active"
     assert provider["oh_sutq_rating"] == "Star 5"
     assert provider["license_number"] == "12345"
@@ -172,6 +177,7 @@ def test_parse_provider_page_missing_fields(spider):
 
     provider = inspection_request.meta["provider"]
 
+    assert provider.get("provider_name") is None
     assert provider["status"] == "Active"
     assert provider.get("oh_sutq_rating") is None
     assert provider["license_number"] == "54321"
