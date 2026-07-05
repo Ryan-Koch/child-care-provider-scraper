@@ -77,6 +77,14 @@ class OhdcySpider(Spider):
 
         provider = ProviderItem()
 
+        # The program name lives in the detailHeader div, a sibling of the
+        # detailGroupContainer in the detail view.
+        provider_name = response.xpath(
+            '//div[@class="detailHeader"]/text()'
+        ).get()
+        if provider_name:
+            provider["provider_name"] = provider_name.strip()
+
         detail_rows = response.xpath(
             './/div[@class="detailGroupContainer"]/div[@class="detailGroup"]/div[@class="detailRow"]'
         )
