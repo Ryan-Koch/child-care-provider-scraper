@@ -27,10 +27,14 @@ mismatches entirely. Any existing hand-written card body and other frontmatter
 keys are preserved; only the ``configs`` key is regenerated. Disable with
 ``--no-readme`` (the default is on for JSON, off for CSV).
 
+Extra non-data files (e.g. a generated ``SOURCES.md`` provenance table) can ride
+along in the same commit via one or more ``--extra-file`` flags.
+
 Usage:
     .venv/bin/python scripts/upload_to_huggingface.py state_output_normal_run/
     .venv/bin/python scripts/upload_to_huggingface.py --dry-run state_output/
     .venv/bin/python scripts/upload_to_huggingface.py -f csv --repo me/data out/
+    .venv/bin/python scripts/upload_to_huggingface.py --extra-file SOURCES.md out/
 
 Invoked automatically at the end of a run by ``run_spiders.sh -u``.
 """
@@ -126,6 +130,26 @@ def build_operations(files, path_in_repo):
     prefix = path_in_repo.strip("/")
     operations = []
     for path in files:
+        name = os.path.basename(path)
+        target = "%s/%s" % (prefix, name) if prefix else name
+        operations.append(
+            CommitOperationAdd(path_in_repo=target, path_or_fileobj=path))
+    return operations
+
+
+def build_extra_operations(extra_files, path_in_repo):
+    """CommitOperationAdd entries for explicit extra files (e.g. SOURCES.md).
+
+    Each file is uploaded under path_in_repo using its basename, alongside the
+    data files. A missing file is skipped with a warning so a best-effort upload
+    still proceeds.
+    """
+    prefix = path_in_repo.strip("/")
+    operations = []
+    for path in extra_files:
+        if not os.path.isfile(path):
+            logger.warning("Skipping extra file %s: not found", path)
+            continue
         name = os.path.basename(path)
         target = "%s/%s" % (prefix, name) if prefix else name
         operations.append(
@@ -252,6 +276,11 @@ def build_arg_parser():
     parser.add_argument("--path-in-repo", default="",
                         help="subdirectory in the repo to upload into "
                              "(default: repo root)")
+    parser.add_argument("--extra-file", dest="extra_files", action="append",
+                        default=[], metavar="PATH",
+                        help="additional file to include in the commit, as-is, "
+                             "under --path-in-repo (repeatable); e.g. a "
+                             "generated SOURCES.md. Missing files are skipped.")
     parser.add_argument("--commit-message",
                         help="commit message (default: a timestamped message)")
     parser.add_argument("--readme", dest="readme", action="store_true",
@@ -309,6 +338,11 @@ def main(argv=None):
             logger.info("Would write %s with %d per-state config(s): %s",
                         README_FILENAME, len(configs),
                         ", ".join(c["config_name"] for c in configs))
+        for path in args.extra_files:
+            if os.path.isfile(path):
+                logger.info("Would include extra file %s", path)
+            else:
+                logger.warning("Extra file %s not found; would be skipped", path)
         logger.info("Dry run: nothing uploaded.")
         return 0
 
@@ -317,6 +351,7 @@ def main(argv=None):
         % datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"))
     api = HfApi(token=token)
     operations = build_operations(files, args.path_in_repo)
+    operations.extend(build_extra_operations(args.extra_files, args.path_in_repo))
 
     if generate_readme:
         configs = build_configs(files, args.path_in_repo)

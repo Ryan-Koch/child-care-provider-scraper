@@ -134,3 +134,29 @@ def test_render_readme_roundtrips_through_split():
     data, body = up.split_frontmatter(out)
     assert data["configs"] == configs
     assert body.strip()
+
+
+# --------------------------------------------------------------------------- #
+# build_extra_operations
+# --------------------------------------------------------------------------- #
+def test_build_extra_operations_uploads_basename_at_root(tmp_path):
+    src = tmp_path / "SOURCES.md"
+    src.write_text("# sources", encoding="utf-8")
+    ops = up.build_extra_operations([str(src)], "")
+    assert len(ops) == 1
+    assert ops[0].path_in_repo == "SOURCES.md"
+
+
+def test_build_extra_operations_applies_path_in_repo_prefix(tmp_path):
+    src = tmp_path / "SOURCES.md"
+    src.write_text("# sources", encoding="utf-8")
+    ops = up.build_extra_operations([str(src)], "data/2026")
+    assert ops[0].path_in_repo == "data/2026/SOURCES.md"
+
+
+def test_build_extra_operations_skips_missing_files(tmp_path):
+    present = tmp_path / "SOURCES.md"
+    present.write_text("# sources", encoding="utf-8")
+    ops = up.build_extra_operations(
+        [str(present), str(tmp_path / "nope.md")], "")
+    assert [o.path_in_repo for o in ops] == ["SOURCES.md"]
