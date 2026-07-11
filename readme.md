@@ -51,6 +51,8 @@ Use a **write** token, and create the dataset repo on the Hugging Face website f
 
 Because each state file has its own set of columns, loading them as one table fails Hugging Face's "all files must have the same columns" check. So a JSON upload also writes a `README.md` whose YAML frontmatter declares one dataset **configuration** per state file (`config_name` = the file's stem, e.g. `alabama`). Hugging Face then parses each state independently — pick a state in the dataset viewer, or `load_dataset("owner/dataset-name", "alabama")`. The card's body and any other frontmatter keys you've written are preserved; only the `configs` key is regenerated each upload. This is on by default for JSON and off for CSV; use `--no-readme` / `--readme` to override.
 
+The `-u` upload also ships a `SOURCES.md` provenance table (state → source website(s)), regenerated at upload time from each spider's `allowed_domains`/`start_urls` by `scripts/generate_sources.py`. To refresh the committed copy after adding or changing a spider's source, run `.venv/bin/python scripts/generate_sources.py` (a pytest drift-guard enforces it stays current). Standalone uploads can include it with `--extra-file SOURCES.md` (repeatable for any extra file).
+
 You can also run it standalone on a directory or specific files:
 ```
 .venv/bin/python scripts/upload_to_huggingface.py state_output/
