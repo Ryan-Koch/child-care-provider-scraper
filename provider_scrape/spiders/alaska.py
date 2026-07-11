@@ -1,255 +1,235 @@
-import scrapy
-from provider_scrape.items import ProviderItem, InspectionItem
-from scrapy.selector import Selector
+import json
 import re
+from datetime import datetime
+
+import scrapy
+
+from provider_scrape.items import ProviderItem, InspectionItem
+
+
+# Age-range unit abbreviations used by the API (e.g. "0W - 12 Y") expanded to
+# the readable form the previous detail-page scrape produced ("0 Weeks - 12 Years").
+_AGE_UNITS = {"D": "Days", "W": "Weeks", "M": "Months", "Y": "Years"}
+
+
+def _clean(value):
+    """Trim to a non-empty string, or None. Ints (license #, etc.) are stringified."""
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _format_date(value):
+    """Convert the API's ``YYYYMMDD`` dates to ISO ``YYYY-MM-DD``.
+
+    The API dates are all-digit ``YYYYMMDD``. It uses several placeholders/corrupt
+    values that are *not* real dates — ``"0"``, ``"99999999"`` (its "no date"
+    sentinel), or malformed lengths (``"70506"``) — all of which become None so
+    they never reach the output or the pipeline's date parser. A genuine calendar
+    date is required (``"20250230"`` is rejected). Any non-digit value is passed
+    through untouched for the pipeline to handle (defensive; not seen in practice).
+    """
+    text = _clean(value)
+    if not text:
+        return None
+    if text.isdigit():
+        if len(text) == 8:
+            try:
+                return datetime.strptime(text, "%Y%m%d").strftime("%Y-%m-%d")
+            except ValueError:
+                return None  # sentinel (99999999) or invalid calendar date
+        return None  # wrong-length placeholder/corrupt value (0, 70506, ...)
+    return text
+
+
+def _parse_capacity(value):
+    """Extract the integer from ``"60 Children"`` -> ``60`` (raw kept if no digits)."""
+    text = _clean(value)
+    if not text:
+        return None
+    match = re.match(r"\d+", text)
+    return int(match.group()) if match else text
+
+
+def _expand_age_range(value):
+    """Expand ``"0W - 12 Y"`` -> ``"0 Weeks - 12 Years"`` (unknown units kept)."""
+    text = _clean(value)
+    if not text:
+        return None
+    return re.sub(
+        r"(\d+)\s*([A-Za-z])",
+        lambda m: f"{m.group(1)} {_AGE_UNITS.get(m.group(2).upper(), m.group(2))}",
+        text,
+    )
+
+
+def _build_address(street, city, state, zip_code):
+    """Assemble the state's ``"STREET CITY, ST ZIP"`` shape, tolerating gaps."""
+    left = _clean(street) or ""
+    city = _clean(city) or ""
+    state = _clean(state) or ""
+    if city and state:
+        mid = f"{city}, {state}"
+    else:
+        mid = city or state
+    right = _clean(zip_code) or ""
+    combined = " ".join(part for part in (left, mid, right) if part).strip()
+    return combined or None
+
 
 class AlaskaSpider(scrapy.Spider):
-    name = 'alaska'
-    allowed_domains = ['health.alaska.gov', 'findccprovider.health.alaska.gov']
-    start_urls = ['https://findccprovider.health.alaska.gov/']
+    """Alaska child care providers, read directly from the site's JSON API.
+
+    The public site (findccprovider.health.alaska.gov) is a Blazor WebAssembly
+    SPA. Its results grid intermittently fails to render even though the
+    underlying ``GET /api/Provider`` call returns 200 with the full dataset — a
+    client-side binding race we cannot control from the outside. Driving that UI
+    with Playwright therefore produced sporadic 0-item runs. We bypass the UI and
+    read the same API the app consumes:
+
+      * ``GET /api/Provider``            -> roster of every provider (no history)
+      * ``GET /api/Provider/{facilityId}`` -> that provider **with** complianceEvents
+
+    This is deterministic, needs no browser, and finishes in seconds.
+    """
+
+    name = "alaska"
+    allowed_domains = ["findccprovider.health.alaska.gov"]
+
+    SITE = "https://findccprovider.health.alaska.gov"
+    API_BASE = "https://findccprovider.health.alaska.gov/api/Provider"
+
+    custom_settings = {
+        # Plain JSON over HTTP — no browser. Override the project-wide Playwright
+        # download handler with the standard one so no chromium is launched.
+        "DOWNLOAD_HANDLERS": {
+            "http": "scrapy.core.downloader.handlers.http.HTTPDownloadHandler",
+            "https": "scrapy.core.downloader.handlers.http.HTTPDownloadHandler",
+        },
+        # Be polite across the ~400 per-provider detail calls.
+        "CONCURRENT_REQUESTS": 8,
+        "DOWNLOAD_DELAY": 0.25,
+        "RETRY_TIMES": 3,
+    }
 
     def start_requests(self):
         yield scrapy.Request(
-            self.start_urls[0],
-            meta={
-                'playwright': True,
-                'playwright_include_page': True,
-                'playwright_context_args': {
-                    "ignore_https_errors": True,
-                }
-            }
+            self.API_BASE,
+            callback=self.parse_list,
+            headers={"Accept": "application/json"},
         )
 
-    async def parse(self, response):
-        page = response.meta['playwright_page']
-        try:
-            # 1. Handle Agreement if present
-            await page.wait_for_selector('#app', timeout=20000)
+    def parse_list(self, response):
+        providers = json.loads(response.text)
+        self.logger.info(f"Provider roster returned {len(providers)} records.")
+        for roster in providers:
+            facility_id = roster.get("facilityId")
+            if facility_id is None:
+                continue
+            # The roster omits complianceEvents; the per-facility endpoint
+            # returns the same record with them populated. Carry the roster row
+            # through so an errback can still emit the provider if the detail
+            # call fails after retries.
+            yield scrapy.Request(
+                f"{self.API_BASE}/{facility_id}",
+                callback=self.parse_detail,
+                errback=self.errback_detail,
+                headers={"Accept": "application/json"},
+                cb_kwargs={"roster": roster},
+            )
 
-            # Wait for loader to disappear
-            try:
-                await page.wait_for_selector('.loader', state='hidden', timeout=45000)
-                self.logger.info("Loader disappeared.")
-            except:
-                self.logger.warning("Loader did not disappear or wasn't found.")
+    def parse_detail(self, response, roster):
+        data = json.loads(response.text)
+        yield self.build_item(data)
 
-            # Attempt to click agreement
-            agreement_btn = page.locator("button", has_text=re.compile(r"Accept|Agree", re.IGNORECASE))
-            if await agreement_btn.count() > 0:
-                self.logger.info("Found Agreement button, clicking...")
-                await agreement_btn.first.click()
-                await page.wait_for_timeout(2000)
+    def errback_detail(self, failure):
+        # Detail call failed after retries: fall back to the roster row so the
+        # provider is still emitted (just without compliance history).
+        roster = failure.request.cb_kwargs.get("roster", {})
+        self.logger.warning(
+            f"Detail fetch failed for facilityId={roster.get('facilityId')}: "
+            f"{failure.value!r}. Emitting roster record without inspections."
+        )
+        return [self.build_item(roster)]
 
-            # 2. Search Page
-            search_btn = page.locator("#app button", has_text=re.compile(r"Search|Submit", re.IGNORECASE))
-            if await search_btn.count() > 0:
-                self.logger.info("Found Search button, clicking...")
-                await search_btn.first.click()
-
-                # 3. Wait for Results
-                try:
-                    # Wait for pagination info to appear, confirming data load
-                    await page.wait_for_selector('.mud-table-page-number-information', timeout=30000)
-                    # Wait for actual data rows
-                    await page.wait_for_selector('tr.mud-table-row', timeout=30000)
-                    # Small buffer for rendering stability
-                    await page.wait_for_timeout(2000)
-                    self.logger.info("Results table loaded.")
-                except:
-                    self.logger.error("Results table did not load or timed out.")
-                    return
-
-                while True:
-                    # 4. Extract Links and Names
-                    content = await page.content()
-                    sel = Selector(text=content)
-
-                    # Find all rows in the results table
-                    rows = sel.css('tr.mud-table-row')
-                    self.logger.info(f"Found {len(rows)} rows in the table.")
-
-                    for row in rows:
-                        link_node = row.css('a[href*="ProviderInfo"]')
-                        if not link_node:
-                            continue
-
-                        link = link_node.css('::attr(href)').get()
-
-                        # Try to get name from cells or the link text
-                        name = row.css('td:nth-child(1)::text').get()
-                        if not name or name.strip() == "" or name.strip().lower() == "details":
-                            name = row.css('td:nth-child(2)::text').get()
-                        if not name or name.strip() == "" or name.strip().lower() == "details":
-                            name = link_node.css('::text').get()
-
-                        if name and name.strip().lower() == "details":
-                            name = None
-
-                        yield response.follow(
-                            link,
-                            callback=self.parse_detail,
-                            meta={
-                                'playwright': True,
-                                'playwright_include_page': True,
-                                'playwright_context_args': {
-                                    "ignore_https_errors": True,
-                                },
-                                'provider_name': name.strip() if name else None
-                            }
-                        )
-
-                    # Pagination Logic
-                    # Look for the button that likely represents "Next"
-                    # Based on the HTML provided:
-                    # <div class="mud-table-pagination-actions">
-                    #   <button ... disabled ...>First</button>
-                    #   <button ... disabled ...>Prev</button>
-                    #   <button ...>Next</button>
-                    #   <button ...>Last</button>
-                    # </div>
-                    # We want the 3rd button in that container generally, or select by icon.
-                    # Or simpler: The button that is NOT disabled and has an SVG path that looks like a right arrow.
-                    # The 3rd button has path "M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" which is a right arrow.
-
-                    # Let's try to find the "Next" button in the pagination actions container.
-                    # We will select the button that is the 3rd child of .mud-table-pagination-actions
-
-                    pagination_actions = page.locator('.mud-table-pagination-actions button')
-                    count = await pagination_actions.count()
-
-                    if count < 4:
-                        self.logger.info("Pagination buttons not found or insufficient.")
-                        break
-
-                    next_btn = pagination_actions.nth(2) # 0-indexed: 0=First, 1=Prev, 2=Next, 3=Last
-
-                    is_disabled = await next_btn.is_disabled()
-                    if is_disabled:
-                        self.logger.info("Next button is disabled. Reached last page.")
-                        break
-
-                    self.logger.info("Clicking Next page...")
-                    await next_btn.click()
-
-                    # Wait for table to update.
-                    # We can wait for the '1-10 of 406' text to change, but capturing the exact text to wait for is tricky.
-                    # Waiting for a short timeout and then network idle is a reasonable proxy for Blazor updates.
-                    await page.wait_for_timeout(2000)
-                    # Optionally wait for loader if it appears
-                    # await page.wait_for_selector('.loader', state='hidden', timeout=5000)
-
-            else:
-                self.logger.warning("Search button not found.")
-
-        finally:
-            await page.close()
-
-    async def parse_detail(self, response):
-        page = response.meta['playwright_page']
-        try:
-            await page.wait_for_selector('#app', timeout=20000)
-
-            # Handle Agreement again if redirected
-            agreement_btn = page.locator("button", has_text=re.compile(r"Accept|Agree", re.IGNORECASE))
-            if await agreement_btn.count() > 0 and await agreement_btn.first.is_visible():
-                self.logger.info("Agreement found on detail page, clicking...")
-                await agreement_btn.first.click()
-                await page.wait_for_timeout(2000)
-
-            # Wait for loader to disappear
-            try:
-                await page.wait_for_selector('.loader', state='hidden', timeout=45000)
-            except:
-                self.logger.warning("Loader did not disappear on detail page.")
-
-            try:
-                await page.wait_for_load_state("networkidle", timeout=60000)
-            except Exception as e:
-                self.logger.warning(f"Network idle timeout on detail page: {e}")
-
-            await page.wait_for_timeout(3000)
-
-            content = await page.content()
-            item = self.extract_detail(content, response.url)
-
-            # Use name from meta if detail page extraction is empty
-            if not item.get('provider_name') or item['provider_name'].lower() == 'details':
-                if response.meta.get('provider_name'):
-                    item['provider_name'] = response.meta['provider_name']
-
-            yield item
-
-        finally:
-            await page.close()
-
-    def extract_detail(self, html, url):
-        sel = Selector(text=html)
+    def build_item(self, data):
         item = ProviderItem()
-        item['source_state'] = 'Alaska'
-        item['provider_url'] = url
+        item["source_state"] = "Alaska"
 
-        app_sel = sel.css('#app')
-        if not app_sel:
-            app_sel = sel
+        facility_id = data.get("facilityId")
+        if facility_id is not None:
+            item["provider_url"] = f"{self.SITE}/ProviderInfo/{facility_id}"
 
-        full_text = " ".join(app_sel.xpath('.//text()[not(parent::script or parent::style)]').getall())
-        full_text = re.sub(r'\s+', ' ', full_text).strip()
+        item["provider_name"] = _clean(data.get("facilityName"))
+        item["license_number"] = _clean(data.get("licenseNumber"))
+        item["phone"] = _clean(data.get("phoneNumber"))
+        item["capacity"] = _parse_capacity(data.get("capacity"))
+        item["ages_served"] = _expand_age_range(data.get("ageRange"))
 
-        def extract_field(regex):
-            match = re.search(regex, full_text, re.IGNORECASE)
-            return match.group(1).strip() if match else None
+        first = _clean(data.get("firstName"))
+        last = _clean(data.get("lastName"))
+        item["administrator"] = " ".join(p for p in (first, last) if p) or None
 
-        # Basic Fields
-        item['provider_name'] = extract_field(r'Facility Name:\s*(.*?)(?:First Name|$)')
+        # CCAP = Child Care Assistance Program (state subsidy) -> scholarships.
+        item["scholarships_accepted"] = _clean(data.get("acceptsCCAP"))
 
-        first_name = extract_field(r'First Name:\s*(.*?)(?:Last Name|$)')
-        last_name = extract_field(r'Last Name:\s*(.*?)(?:Provider|$)')
-        if first_name and last_name:
-            item['administrator'] = f"{first_name} {last_name}"
-        elif first_name or last_name:
-            item['administrator'] = (first_name or last_name)
+        effective = _format_date(data.get("effectiveDate"))
+        item["status_date"] = effective
+        item["license_begin_date"] = effective
+        item["license_expiration"] = _format_date(data.get("expirationDate"))
 
-        url_match = re.search(r'/ProviderInfo/(\d+)', url)
-        if url_match:
-            item['license_number'] = url_match.group(1)
-        else:
-            item['license_number'] = extract_field(r'License\s*(?:Number|#|ID)?\s*:?\s*([A-Z0-9-]+)')
+        city = _clean(data.get("city"))
+        state = _clean(data.get("state"))
+        zip_code = _clean(data.get("zip"))
+        item["address"] = _build_address(
+            data.get("address"), city, state, zip_code
+        )
+        # Structured components straight from the API (the pipeline skips its
+        # best-effort address parse when all three are already present).
+        if city:
+            item["city"] = city
+        if state:
+            item["state"] = state
+        if zip_code:
+            item["zip"] = zip_code
 
-        item['phone'] = extract_field(r'Phone\s*(?:Number)?\s*:?\s*(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})')
-        item['address'] = extract_field(r'Address\s*:?\s*(.*?)(?:Phone|License|Email|Status|Capacity|Compliance|$)')
-        item['status'] = extract_field(r'(?:Facility\s*)?Status\s*:?\s*(\w+)')
-        item['capacity'] = extract_field(r'Capacity\s*:?\s*(\d+)')
-        item['email'] = extract_field(r'Email\s*:?\s*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})')
-
-        # New Fields identified from logs
-        item['status_date'] = extract_field(r'License\s*Effective\s*Date\s*:?\s*(\d{2}/\d{2}/\d{4})')
-        item['license_begin_date'] = item['status_date']
-        item['license_expiration'] = extract_field(r'License\s*Expiration\s*Date\s*:?\s*(\d{2}/\d{2}/\d{4})')
-        item['ages_served'] = extract_field(r'Children\s*Age\s*Range\s*:?\s*(.*?)(?:Phone|Address|Compliance|$)')
-
-        # Inspections
-        item['inspections'] = []
-        seen_inspections = set()
-        insp_pattern = r'(\d{2}/\d{2}/\d{4}|Not Available)\s+(INSPECTION|COMPLAINT)(.*?)(IN-COMPLIANCE|NON-COMPLIANCE|SUBSTANTIATED|UNSUBSTANTIATED|N/A)\s+(.*?)\s+Details'
-        matches = re.finditer(insp_pattern, full_text, re.IGNORECASE)
-        for m in matches:
-            date = m.group(1).strip()
-            type_part = m.group(3).strip()
-            type_str = f"{m.group(2)} {type_part}".strip()
-            # Normalize whitespace
-            type_str = " ".join(type_str.split())
-
-            findings = m.group(4).strip()
-            action = m.group(5).strip()
-
-            fingerprint = (date, type_str, findings, action)
-            if fingerprint not in seen_inspections:
-                insp = InspectionItem()
-                insp['date'] = date
-                insp['type'] = type_str
-                insp['original_status'] = findings
-                insp['corrective_status'] = action
-                item['inspections'].append(insp)
-                seen_inspections.add(fingerprint)
-
+        item["inspections"] = self.build_inspections(data.get("complianceEvents"))
         return item
+
+    @staticmethod
+    def build_inspections(events):
+        # The API returns one row per violated regulation, so a single
+        # inspection often appears as many rows that are identical once reduced
+        # to these generic fields (the per-violation detail — section, statute,
+        # comments — is not captured). Deduplicate on the reduced fingerprint,
+        # mirroring the previous detail-page scrape.
+        inspections = []
+        seen = set()
+        for event in events or []:
+            # The inspection/investigation date is the primary event date; fall
+            # back through the other timestamps if it is a "0" placeholder.
+            date = (
+                _format_date(event.get("insInvDate"))
+                or _format_date(event.get("violationDate"))
+                or _format_date(event.get("intakeDate"))
+                or _format_date(event.get("complianceDate"))
+            )
+            type_ = _clean(event.get("complianceType"))
+            findings = _clean(event.get("findings"))
+            action = _clean(event.get("actionTaken"))
+            status_updated = _format_date(event.get("complianceDate"))
+
+            fingerprint = (date, type_, findings, action, status_updated)
+            if fingerprint in seen:
+                continue
+            seen.add(fingerprint)
+
+            insp = InspectionItem()
+            insp["date"] = date
+            insp["type"] = type_
+            insp["original_status"] = findings
+            insp["corrective_status"] = action
+            insp["status_updated"] = status_updated
+            inspections.append(insp)
+        return inspections
