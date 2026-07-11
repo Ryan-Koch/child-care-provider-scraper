@@ -24,6 +24,8 @@ GEOCODE_CACHE="${GEOCODE_CACHE:-}"
 # after all spiders finish. Repo/token come from huggingface.env.
 UPLOAD=false
 UPLOAD_SCRIPT="$(dirname "$0")/scripts/upload_to_huggingface.py"
+# Generates the per-state source-provenance doc shipped with the upload (-u).
+SOURCES_SCRIPT="$(dirname "$0")/scripts/generate_sources.py"
 # Space-separated list of spiders that require a virtual display
 XVFB_SPIDERS="new_jersey rhode_island arizona"
 
@@ -174,11 +176,24 @@ echo "Spider runs completed."
 # finished, so the dataset repo gets a single commit instead of one per state.
 # A failure here must not fail the (already completed) run.
 if [ "$UPLOAD" = true ]; then
+    # Ship a state -> source-URL provenance table with the dataset. Best-effort:
+    # a failure here must not abort the (already completed) upload, so we just
+    # skip the extra file if generation fails.
+    SOURCES_FILE="${OUTPUT_DIR}SOURCES.md"
+    extra_upload_args=()
+    echo "Generating source list ${SOURCES_FILE}..."
+    if python "$SOURCES_SCRIPT" --output "$SOURCES_FILE"; then
+        extra_upload_args=(--extra-file "$SOURCES_FILE")
+    else
+        echo "Source list generation failed; uploading without it."
+    fi
+
     # The upload script takes one format at a time, so push each requested
     # format (one commit per format) rather than one commit for the whole run.
+    # SOURCES.md is format-independent; it rides along with every format's commit.
     for fmt in $FORMAT; do
         echo "Uploading ${OUTPUT_DIR} (${fmt}) to Hugging Face..."
-        if python "$UPLOAD_SCRIPT" -f "$fmt" "$OUTPUT_DIR"; then
+        if python "$UPLOAD_SCRIPT" -f "$fmt" "${extra_upload_args[@]}" "$OUTPUT_DIR"; then
             echo "Upload completed."
         else
             echo "Upload failed."
