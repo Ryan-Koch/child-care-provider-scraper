@@ -9,13 +9,13 @@ To regenerate: `.venv/bin/python scripts/generate_sources.py`.
 | State | Source(s) |
 |---|---|
 | Alabama | https://apps.dhr.alabama.gov/ |
-| Alaska | https://health.alaska.gov/<br>https://findccprovider.health.alaska.gov/ |
+| Alaska | https://findccprovider.health.alaska.gov/ |
 | Arizona | https://azchildcaresearch.azdes.gov/<br>https://azchildcareprovidersearch.azdes.gov/ |
 | Arkansas | https://ardhslicensing.my.site.com/ |
 | California | https://www.ccld.dss.ca.gov/ |
 | Colorado | https://coloradoshines.com/ |
 | Florida | https://caressearch.myflfamilies.com/<br>https://caresapi.myflfamilies.com/ |
-| Georgia | https://families.decal.ga.gov/ |
+| Georgia | https://families.decal.ga.gov/<br>https://dcle2-decalapiprd.azurewebsites.net/ |
 | Hawaii | https://childcareprovidersearch.dhs.hawaii.gov/<br>https://usgovtexas.logic.azure.us/ |
 | Illinois | https://sunshine.dcfs.illinois.gov/ |
 | Maryland | https://checkccmd.org/<br>https://findaprogram.marylandexcels.org/ |

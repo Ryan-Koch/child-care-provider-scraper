@@ -1,453 +1,424 @@
 import csv
 import io
-import re
+import json
 
 import scrapy
+from scrapy.http import JsonRequest
 
 from provider_scrape.items import InspectionItem, ProviderItem
 
-DATA_PAGE_URL = "https://families.decal.ga.gov/Provider/Data"
-DETAIL_BASE_URL = "https://families.decal.ga.gov/ChildCare/detail/"
+SITE = "https://families.decal.ga.gov"
+API_BASE = "https://dcle2-decalapiprd.azurewebsites.net/api"
+TOKEN_URL = f"{API_BASE}/Token"
+EXPORT_URL = f"{API_BASE}/Provider/Export"
+SEARCH_URL = f"{API_BASE}/provider/search"
+VISITS_URL = f"{API_BASE}/visits/public"  # /{location_id}
+COMPLIANCE_URL = f"{API_BASE}/PDGData/GetComplianceStatus"  # /{location_id}
+DETAIL_PAGE_URL = f"{SITE}/ChildCare/detail"  # /{location_id}
 
-# The download button triggers an ASP.NET postback with this event target
-DOWNLOAD_EVENT_TARGET = "ctl00$Content_Main$btnExportToExcel"
+# Public client credentials shipped in the site's JS bundle (assets/index-*.js).
+# The React app exchanges these for a short-lived (1h) bearer token that every
+# API call requires. They are not secret: anyone loading the site receives them.
+CLIENT_ID = "9a16d2db-a557-40dd-b2ab-b55e3e6da721"
+CLIENT_SECRET = "5a345818-f2f9-4523-bec9-e640e8898383"
+AUDIENCE = "Families"
 
-
-def extract_checked_labels(response, table_id):
-    """Extract label text for all checked checkboxes in an ASP.NET CheckBoxList."""
-    checked = []
-    table = response.css(f"#{table_id}")
-    if table:
-        for inp in table.css("input[type=checkbox][checked]"):
-            inp_id = inp.attrib.get("id", "")
-            label = table.css(f'label[for="{inp_id}"]::text').get()
-            if label:
-                checked.append(label.strip())
-    return "; ".join(checked) if checked else None
-
-
-def extract_list_items(response, span_id):
-    """Extract text from <li> elements inside a span, joined by semicolons."""
-    items = response.css(f"#{span_id} li::text").getall()
-    return "; ".join(i.strip() for i in items if i.strip()) if items else None
+# Every licensed + non-licensed program-type id from the export form's option
+# list. The export rejects an empty selection ("Please select at least one
+# County or Program Type."), so we request all of them for the full roster.
+PROGRAM_TYPE_IDS = [100, 102, 104, 110, 111, 112, 113, 115, 116]
 
 
-def extract_radio_checked(response, table_id):
-    """Extract label text for the checked radio button in a RadioButtonList."""
-    table = response.css(f"#{table_id}")
-    if table:
-        checked = table.css("input[type=radio][checked]")
-        if checked:
-            inp_id = checked.attrib.get("id", "")
-            label = table.css(f'label[for="{inp_id}"]::text').get()
-            if label:
-                return label.strip()
-    return None
-
-
-def extract_numeric_id(license_number):
-    """Extract the numeric portion from a license number like CCLC-38436 -> 38436."""
-    if not license_number:
+def _clean(value):
+    """Trim to a non-empty string, or None. Non-strings are stringified."""
+    if value is None:
         return None
-    match = re.search(r"(\d+)$", license_number)
-    return match.group(1) if match else None
+    text = str(value).strip()
+    return text or None
 
 
-def parse_weekly_rates(response):
-    """Parse the weekly rates table into a list of dicts."""
+def _split_multi(value, sep="|"):
+    """Turn a delimited API string ("A|B|C") into "A; B; C"; empty -> None.
+
+    The detail page used to render these as checkbox lists / <li> items joined
+    with "; "; the API returns the same values delimited by ``sep`` instead.
+    """
+    text = _clean(value)
+    if not text:
+        return None
+    parts = [p.strip() for p in text.split(sep) if p.strip()]
+    return "; ".join(parts) if parts else None
+
+
+def _yes_no(value):
+    """Map an API boolean to the "Yes"/"No" strings the detail scrape produced."""
+    if value is None:
+        return None
+    return "Yes" if value else "No"
+
+
+def _format_fee(value):
+    """Render a numeric fee (95.0) as the "$95.00" string the old page showed."""
+    if value is None:
+        return None
+    try:
+        return f"${float(value):.2f}"
+    except (TypeError, ValueError):
+        return _clean(value)
+
+
+def parse_weekly_rates(value):
+    """Parse "Under 1 year - $110.00|1 year - $95.00" into a list of dicts.
+
+    The old detail-page table exposed nine rate columns per age group; the API
+    now publishes only the full-day weekly rate, so that is the one column we
+    can preserve (keyed the same way for output compatibility).
+    """
+    text = _clean(value)
+    if not text:
+        return []
     rates = []
-    table = response.css("#Content_Main_gvFacilityRates")
-    if not table:
-        return rates
-
-    rows = table.css("tr")
-    if len(rows) < 2:
-        return rates
-
-    for row in rows[1:]:
-        cells = row.css("td")
-        if len(cells) < 9:
+    for chunk in text.split("|"):
+        chunk = chunk.strip()
+        if not chunk:
             continue
-
-        def cell_text(idx):
-            # Get text from the div inside, or fall back to td text
-            text = cells[idx].css("div::text").get()
-            if text:
-                return text.strip()
-            # Fall back to direct text content (skip the visible-xs span)
-            all_text = cells[idx].css("::text").getall()
-            # Filter out the mobile label spans
-            filtered = [
-                t.strip()
-                for t in all_text
-                if t.strip() and not t.strip().endswith(":")
-            ]
-            return filtered[-1] if filtered else None
-
-        rate = {
-            "age": cell_text(0),
-            "weekly_full_day": cell_text(1),
-            "weekly_before_school": cell_text(2),
-            "weekly_after_school": cell_text(3),
-            "vacancies": cell_text(4),
-            "num_rooms": cell_text(5),
-            "staff_child_ratio": cell_text(6),
-            "daily_drop_in": cell_text(7),
-            "day_camp": cell_text(8),
-        }
-        # Only include if at least the age is present
-        if rate["age"]:
-            rates.append(rate)
+        age, sep, rate = chunk.rpartition(" - ")
+        if sep:
+            rates.append({"age": age.strip(), "weekly_full_day": rate.strip()})
+        else:
+            rates.append({"age": chunk, "weekly_full_day": None})
     return rates
 
 
-class GeorgiaSpider(scrapy.Spider):
-    """Spider for Georgia child care provider data from families.decal.ga.gov.
+def build_mailing_address(record):
+    """Assemble "street, city, ST zip" from the search record's ml* fields."""
+    street = _clean(record.get("mlAddress"))
+    city = _clean(record.get("mlCity"))
+    state = _clean(record.get("mlState"))
+    zip_code = _clean(record.get("mlZip"))
+    if street and city:
+        return f"{street}, {city}, {state or 'GA'} {zip_code or ''}".strip()
+    parts = [p for p in (street, city, state, zip_code) if p]
+    return ", ".join(parts) if parts else None
 
-    Phase 1: Downloads a CSV of all providers from the Provider Data page.
-    Phase 2: Visits each provider's detail page for additional fields.
+
+class GeorgiaSpider(scrapy.Spider):
+    """Georgia child care providers, read from the DECAL Family Portal JSON API.
+
+    The public site (families.decal.ga.gov) used to be an ASP.NET WebForms app:
+    a form POST downloaded a CSV roster and each provider had a server-rendered
+    detail page. It is now a React SPA backed by a JSON API, so there is no form
+    to submit and the detail pages return an empty app shell. We consume the same
+    API the SPA does:
+
+      * POST /Token                             -> short-lived bearer token
+      * POST /Provider/Export                   -> CSV roster of every provider
+      * POST /provider/search {ProviderNumber}  -> one provider's rich detail
+      * GET  /visits/public/{id}                -> that provider's inspections
+      * GET  /PDGData/GetComplianceStatus/{id}  -> compliance tooltip
+
+    The token lasts one hour and a full run finishes comfortably inside that, so
+    a single token is fetched at start and reused for every request.
+
+    The compliance-status call is an extra GET per provider (the roster/search
+    endpoints no longer expose ``ga_compliance_status``); it is on by default.
+    Pass ``-a fetch_compliance=0`` to skip it and save that request per provider.
     """
 
     name = "georgia"
-    allowed_domains = ["families.decal.ga.gov"]
+    allowed_domains = [
+        "families.decal.ga.gov",
+        "dcle2-decalapiprd.azurewebsites.net",
+    ]
 
     custom_settings = {
-        "DOWNLOAD_DELAY": 0.5,
-        "CONCURRENT_REQUESTS": 4,
-        "CONCURRENT_REQUESTS_PER_DOMAIN": 4,
+        # Plain JSON/CSV over HTTP: use the standard download handler instead of
+        # the project-wide Playwright one (no chromium, and POST bodies work).
+        "DOWNLOAD_HANDLERS": {
+            "http": "scrapy.core.downloader.handlers.http.HTTPDownloadHandler",
+            "https": "scrapy.core.downloader.handlers.http.HTTPDownloadHandler",
+        },
+        # Three API calls per provider by default (~24k total; ~16k with
+        # fetch_compliance=0). Keep the whole run well under the 1h token
+        # lifetime while staying polite to the API — one token for every request.
+        "CONCURRENT_REQUESTS": 8,
+        "CONCURRENT_REQUESTS_PER_DOMAIN": 8,
+        "DOWNLOAD_DELAY": 0.05,
         "RETRY_TIMES": 5,
-        # CSV download can be large
-        "DOWNLOAD_MAXSIZE": 50 * 1024 * 1024,  # 50MB
+        "RETRY_HTTP_CODES": [408, 429, 500, 502, 503, 504, 522, 524],
+        "DOWNLOAD_MAXSIZE": 50 * 1024 * 1024,  # export CSV is several MB
     }
 
+    def __init__(self, fetch_compliance=True, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # On by default; one extra GET per provider recovers ga_compliance_status.
+        # Pass ``-a fetch_compliance=0`` (or false/no) to skip that call.
+        self.fetch_compliance = str(fetch_compliance).lower() not in ("0", "false", "no")
+        self.token = None
+
+    # -- auth --------------------------------------------------------------
+
     def start_requests(self):
-        yield scrapy.Request(DATA_PAGE_URL, callback=self.parse_data_page)
-
-    def parse_data_page(self, response):
-        """Extract checkbox names from the Data page, then submit the form."""
-        # Find all program type checkboxes and check them all
-        checkboxes = response.css(
-            "input[type=checkbox][name*='Content_Main']"
-        )
-        formdata = {}
-        for cb in checkboxes:
-            name = cb.attrib.get("name", "")
-            value = cb.attrib.get("value", "on")
-            if name:
-                formdata[name] = value
-
-        self.logger.info(
-            f"Found {len(formdata)} program type checkboxes, submitting form..."
-        )
-
-        # Trigger the download button via __doPostBack
-        formdata["__EVENTTARGET"] = DOWNLOAD_EVENT_TARGET
-        formdata["__EVENTARGUMENT"] = ""
-
-        yield scrapy.FormRequest.from_response(
-            response,
-            formdata=formdata,
-            callback=self.parse_csv,
-            dont_click=True,
+        yield JsonRequest(
+            url=TOKEN_URL,
+            data={
+                "clientId": CLIENT_ID,
+                "clientSecret": CLIENT_SECRET,
+                "audience": AUDIENCE,
+            },
+            callback=self.parse_token,
             dont_filter=True,
         )
 
-    def parse_csv(self, response):
-        """Parse the downloaded CSV and yield detail page requests."""
-        content_type = response.headers.get("Content-Type", b"").decode("utf-8", "ignore")
-        self.logger.info(
-            f"CSV response: {len(response.body)} bytes, "
-            f"Content-Type: {content_type}"
+    def parse_token(self, response):
+        self.token = json.loads(response.text)["access_token"]
+        self.logger.info("Obtained API bearer token; requesting provider export.")
+        yield self._export_request()
+
+    def _auth_headers(self):
+        return {"Authorization": f"Bearer {self.token}"}
+
+    def _export_request(self):
+        return JsonRequest(
+            url=EXPORT_URL,
+            data={
+                "qualityRatedOnly": False,
+                "preKOnly": False,
+                "selectedProgramTypes": PROGRAM_TYPE_IDS,
+                "selectedCountyId": None,
+            },
+            headers=self._auth_headers(),
+            callback=self.parse_export,
+            dont_filter=True,
         )
 
-        # Detect encoding from Content-Type header (live site sends charset=utf-16).
-        # Fall back to BOM detection and common encodings.
-        charset = None
-        if "charset=" in content_type.lower():
-            charset = content_type.lower().split("charset=")[-1].strip().split(";")[0]
+    # -- phase 1: roster CSV ----------------------------------------------
 
-        # Build encoding priority: header charset first, then common fallbacks
-        encodings = []
-        if charset:
-            encodings.append(charset)
-        encodings.extend(["utf-16", "utf-8-sig", "utf-8", "latin-1"])
-
-        text = None
-        for encoding in encodings:
-            try:
-                text = response.body.decode(encoding)
-                self.logger.info(f"Decoded CSV with encoding: {encoding}")
-                break
-            except (UnicodeDecodeError, UnicodeError):
-                continue
+    def parse_export(self, response):
+        """Parse the exported CSV and fan out one search request per provider."""
+        text = self._decode_csv(response)
         if text is None:
-            self.logger.error("Could not decode CSV with any known encoding")
+            self.logger.error("Could not decode export CSV with any known encoding")
             return
 
-        # csv module needs consistent line endings
+        # csv module needs consistent line endings.
         text = text.replace("\r\n", "\n").replace("\r", "\n")
-
         reader = csv.DictReader(io.StringIO(text))
-        field_names = reader.fieldnames
-        self.logger.info(f"CSV columns: {field_names}")
+        self.logger.info(f"Export CSV columns: {reader.fieldnames}")
 
         count = 0
         for row in reader:
             count += 1
             item = self._map_csv_row(row)
-
-            # Extract numeric ID for the detail page
-            license_number = item.get("license_number")
-            numeric_id = extract_numeric_id(license_number)
-
-            if numeric_id:
-                detail_url = f"{DETAIL_BASE_URL}{numeric_id}"
-                yield scrapy.Request(
-                    detail_url,
+            provider_number = item.get("license_number")
+            if provider_number:
+                yield JsonRequest(
+                    url=SEARCH_URL,
+                    data={"ProviderNumber": provider_number},
+                    headers=self._auth_headers(),
                     callback=self.parse_detail,
-                    cb_kwargs={"item": item},
+                    errback=self.errback_enrich,
+                    cb_kwargs={"item": item, "provider_number": provider_number},
                     dont_filter=True,
                 )
             else:
-                # No detail page available, yield the CSV-only item
+                # No provider number -> no detail lookup possible.
                 yield item
+        self.logger.info(f"Parsed {count} providers from export CSV.")
 
-        self.logger.info(f"Parsed {count} rows from CSV")
+    @staticmethod
+    def _decode_csv(response):
+        """Decode the export bytes, honoring the header charset then falling back.
 
-    def parse_detail(self, response, item):
-        """Parse a provider detail page for additional fields."""
-        # Verify we got a detail page
-        if "panel-primary" not in response.text:
+        The live export is UTF-8 with a BOM; older responses used UTF-16. We try
+        the header-declared charset first, then the common encodings.
+        """
+        content_type = response.headers.get("Content-Type", b"").decode(
+            "utf-8", "ignore"
+        )
+        charset = None
+        if "charset=" in content_type.lower():
+            charset = content_type.lower().split("charset=")[-1].split(";")[0].strip()
+
+        encodings = []
+        if charset:
+            encodings.append(charset)
+        encodings.extend(["utf-8-sig", "utf-16", "utf-8", "latin-1"])
+
+        for encoding in encodings:
+            try:
+                return response.body.decode(encoding)
+            except (UnicodeDecodeError, UnicodeError, LookupError):
+                continue
+        return None
+
+    # -- phase 2: per-provider detail -------------------------------------
+
+    def parse_detail(self, response, item, provider_number):
+        """Enrich the CSV item with the provider's rich search record."""
+        records = json.loads(response.text)
+        record = None
+        if isinstance(records, list) and records:
+            # The ProviderNumber filter returns a single row; match defensively.
+            record = next(
+                (r for r in records if r.get("providerNumber") == provider_number),
+                records[0],
+            )
+
+        if not record:
             self.logger.warning(
-                f"Expected detail page but got unexpected content at {response.url}"
+                f"No search record for {provider_number}; emitting CSV-only item."
             )
             yield item
             return
 
-        item["provider_url"] = response.url
+        self._enrich_from_search(item, record)
 
-        # Quality Rated level from the image alt text
-        qr_img = response.css("#Content_Main_imgQRLevel")
-        if qr_img:
-            alt = qr_img.attrib.get("alt", "")
-            level_match = re.search(r"(\d+)", alt)
-            if level_match:
-                item["ga_quality_rated_level"] = level_match.group(1)
+        location_id = record.get("id")
+        if location_id is None:
+            yield item
+            return
+        item["provider_url"] = f"{DETAIL_PAGE_URL}/{location_id}"
 
-        # Administrator
-        admin = response.css("#Content_Main_lblAdmin::text").get()
+        yield scrapy.Request(
+            url=f"{VISITS_URL}/{location_id}",
+            headers=self._auth_headers(),
+            callback=self.parse_visits,
+            errback=self.errback_enrich,
+            cb_kwargs={"item": item, "location_id": location_id},
+            dont_filter=True,
+        )
+
+    def parse_visits(self, response, item, location_id):
+        """Attach inspection history, then optionally fetch compliance status."""
+        item["inspections"] = self._build_inspections(json.loads(response.text))
+
+        if self.fetch_compliance:
+            yield scrapy.Request(
+                url=f"{COMPLIANCE_URL}/{location_id}",
+                headers=self._auth_headers(),
+                callback=self.parse_compliance,
+                errback=self.errback_enrich,
+                cb_kwargs={"item": item},
+                dont_filter=True,
+            )
+        else:
+            yield item
+
+    def parse_compliance(self, response, item):
+        data = json.loads(response.text)
+        item["ga_compliance_status"] = _clean(data.get("tooltip"))
+        yield item
+
+    def errback_enrich(self, failure):
+        """A detail/visits/compliance call failed after retries: emit what we have."""
+        item = failure.request.cb_kwargs.get("item")
+        self.logger.warning(
+            f"Enrichment request failed ({failure.request.url}): "
+            f"{failure.value!r}. Emitting item without the missing fields."
+        )
+        return [item] if item is not None else []
+
+    # -- mapping helpers ---------------------------------------------------
+
+    def _enrich_from_search(self, item, record):
+        """Fill the detail-only fields from a /provider/search record.
+
+        Only fields the export CSV cannot supply are set here (and a few the
+        API supplies in a richer form); the CSV base values are otherwise left
+        untouched so we do not downgrade nicely-formatted columns.
+        """
+
+        def r(key):
+            return record.get(key)
+
+        # Administrator (two separate labels on the old detail page).
+        admin = " ".join(
+            p
+            for p in (_clean(r("adminFirstName")), _clean(r("adminLastName")))
+            if p
+        )
         if admin:
-            item["administrator"] = admin.strip()
+            item["administrator"] = admin
 
-        # Licensed capacity
-        capacity = response.css("#Content_Main_lblCapacity::text").get()
-        if capacity:
-            item["capacity"] = capacity.strip()
+        if r("capacity") is not None:
+            item["capacity"] = str(r("capacity"))
+        if r("qualityRating") is not None:
+            item["ga_quality_rated_level"] = str(r("qualityRating"))
 
-        # Liability insurance
-        insurance = response.css("#Content_Main_lblLiabilityInsurance::text").get()
-        if insurance:
-            item["ga_liability_insurance"] = insurance.strip()
+        item["ga_liability_insurance"] = _yes_no(r("liabilityInsurance"))
+        item["ga_accepting_new_children"] = _yes_no(r("isAcceptingNewChildren"))
+        item["ga_registration_fee"] = _format_fee(r("rateRegistrationFee"))
+        item["ga_activity_fee"] = _format_fee(r("rateActivityFee"))
 
-        # Accepting new children
-        accepting = response.css(
-            "#Content_Main_chkIsAcceptingNewChildren[checked]"
+        # Pipe-delimited multi-value fields. For services/transportation the CSV
+        # already derives a value from boolean flags; keep it if the API is empty.
+        item["ga_services"] = _split_multi(r("servicesProvided")) or item.get(
+            "ga_services"
         )
-        item["ga_accepting_new_children"] = "Yes" if accepting else "No"
-
-        # Mailing address
-        mail_street = response.css("#Content_Main_lblMailStreet::text").get()
-        mail_csz = response.css("#Content_Main_lblMailCityStateZip::text").get()
-        if mail_street or mail_csz:
-            parts = []
-            if mail_street:
-                parts.append(mail_street.strip())
-            if mail_csz:
-                parts.append(mail_csz.strip())
-            item["ga_mailing_address"] = " ".join(parts)
-
-        # Fees
-        reg_fee = response.css("#Content_Main_lblRegistrationFee::text").get()
-        if reg_fee:
-            item["ga_registration_fee"] = reg_fee.strip()
-
-        activity_fee = response.css("#Content_Main_lblActivityFee::text").get()
-        if activity_fee:
-            item["ga_activity_fee"] = activity_fee.strip()
-
-        # Program status
-        program_status = response.css(
-            "#Content_Main_lblCurrentProgramStatus::text"
-        ).get()
-        if program_status:
-            item["ga_program_status"] = program_status.strip()
-
-        # Compliance status from image title
-        compliance_img = response.css("#Content_Main_imgCompliance")
-        if compliance_img:
-            item["ga_compliance_status"] = compliance_img.attrib.get(
-                "title", ""
-            ).strip()
-
-        # Operating schedule
-        op_months = response.css(
-            "#Content_Main_lblMonthsOfOperation::text"
-        ).get()
-        if op_months:
-            item["ga_operating_months"] = op_months.strip()
-
-        op_days = response.css("#Content_Main_lblDaysOfOperation::text").get()
-        if op_days:
-            item["ga_operating_days"] = op_days.strip()
-
-        # Hours - may contain <br> tags
-        hours_span = response.css("#Content_Main_lblHoursOfOperation")
-        if hours_span:
-            hours_texts = hours_span.css("::text").getall()
-            hours = "; ".join(h.strip() for h in hours_texts if h.strip())
-            if hours:
-                item["hours"] = hours
-
-        # Phone (may override CSV if present)
-        phone = response.css("#Content_Main_lblPhone::text").get()
-        if phone:
-            item["phone"] = phone.strip()
-
-        # Checkbox list fields
-        item["ga_services"] = extract_checked_labels(
-            response, "Content_Main_cblServicesProvided"
+        item["ga_transportation"] = _split_multi(r("transportation")) or item.get(
+            "ga_transportation"
         )
-        item["ages_served"] = extract_checked_labels(
-            response, "Content_Main_cblAgesServed"
-        )
-        item["ga_transportation"] = extract_checked_labels(
-            response, "Content_Main_cblTransportation"
-        )
-        item["ga_meals"] = extract_checked_labels(
-            response, "Content_Main_cblMeals"
-        )
-        item["ga_environment"] = extract_checked_labels(
-            response, "Content_Main_cblEnvironment"
-        )
-        item["ga_summer_camp"] = extract_checked_labels(
-            response, "Content_Main_cblCampCare"
-        )
-        item["ga_accepts_children_type"] = extract_checked_labels(
-            response, "Content_Main_cblAcceptingChildrenType"
-        )
+        item["ga_meals"] = _split_multi(r("mealInfo"))
+        item["ga_environment"] = _split_multi(r("environmentInfo"))
+        item["ga_summer_camp"] = _split_multi(r("campCareInfo"))
+        item["ga_accepts_children_type"] = _split_multi(r("acceptingChildrenTimeType"))
+        item["ga_activities"] = _split_multi(r("activities"))
+        item["ga_other_care_type"] = _split_multi(r("otherChildCareTypes"))
+        item["ga_financial_info"] = _split_multi(r("financialInfo"))
+        item["ga_special_hours"] = _split_multi(r("specialHourInfo"))
+        item["ga_family_engagement"] = _split_multi(r("familyEngagement"))
+        item["languages"] = _split_multi(r("languages"))
 
-        # Accreditation
-        accreditation = response.css(
-            "#Content_Main_lblAccreditation::text"
-        ).get()
+        # ages_served is comma-delimited on this endpoint (the labels contain no
+        # commas). It is richer than the CSV's boolean-derived value, so prefer
+        # it when present.
+        ages = _split_multi(r("agesServed"), sep=",")
+        if ages:
+            item["ages_served"] = ages
+
+        # Accreditation: keep the CSV value unless the API supplies a code.
+        accreditation = _clean(r("accreditations"))
         if accreditation:
-            item["ga_accreditation"] = accreditation.strip()
+            item["ga_accreditation"] = accreditation
 
-        # Profit status
-        item["ga_profit_status"] = extract_radio_checked(
-            response, "Content_Main_rblForProfit"
-        )
+        item["ga_profit_status"] = _clean(r("profitStatus"))
 
-        # Weekly rates
-        rates = parse_weekly_rates(response)
+        rates = parse_weekly_rates(r("weeklyFullDayRates"))
         if rates:
             item["ga_weekly_rates"] = rates
 
-        # List-based fields
-        item["ga_activities"] = extract_list_items(
-            response, "Content_Main_lblActivities"
-        )
-        item["ga_other_care_type"] = extract_list_items(
-            response, "Content_Main_lblOtherChildCareType"
-        )
-        item["ga_financial_info"] = (
-            response.css("#Content_Main_lblFinancialInformation::text").get()
-        )
-        if item.get("ga_financial_info") == "N/A":
-            item["ga_financial_info"] = None
+        if not item.get("ga_mailing_address"):
+            mailing = build_mailing_address(record)
+            if mailing:
+                item["ga_mailing_address"] = mailing
 
-        item["languages"] = extract_list_items(
-            response, "Content_Main_lblLanguages"
-        )
-        item["ga_special_hours"] = extract_list_items(
-            response, "Content_Main_lblSpecialHours"
-        )
-        item["ga_curriculum"] = extract_list_items(
-            response, "Content_Main_lblCurriculum"
-        )
-        item["ga_family_engagement"] = extract_list_items(
-            response, "Content_Main_lblFamilyEngagement"
+        # Notes fields the new API rarely populates, mapped defensively.
+        item["ga_transportation_notes"] = _clean(r("transportToFromSchool"))
+        item["ga_school_break_notes"] = _clean(
+            r("schoolCareBreakAdditionalSchedulingInfo")
         )
 
-        # Transportation and scheduling notes
-        transport_notes = response.css(
-            "#Content_Main_pnlTransportationNotes span::text"
-        ).get()
-        if transport_notes:
-            item["ga_transportation_notes"] = transport_notes.strip()
-
-        school_break = response.css(
-            "#Content_Main_pnlSchoolBreakNotes span::text"
-        ).get()
-        if school_break:
-            item["ga_school_break_notes"] = school_break.strip()
-
-        # Inspections
-        item["inspections"] = self._extract_inspections(response)
-
-        yield item
-
-    def _extract_inspections(self, response):
-        """Extract inspection report data from the detail page table."""
+    @staticmethod
+    def _build_inspections(visits):
+        """Build InspectionItems from the /visits/public list."""
         inspections = []
-        rows = response.css("#Content_Main_gvReports tr")
-
-        for row in rows[1:]:  # skip header
-            cells = row.css("td")
-            if len(cells) < 5:
-                continue
-
+        for visit in visits or []:
             insp = InspectionItem()
-
-            # Report date
-            date_text = cells[1].css("::text").getall()
-            date_filtered = [
-                t.strip()
-                for t in date_text
-                if t.strip() and not t.strip().startswith("Report Date")
-            ]
-            if date_filtered:
-                insp["date"] = date_filtered[-1]
-
-            # Visit status
-            status_text = cells[3].css("::text").getall()
-            status_filtered = [
-                t.strip()
-                for t in status_text
-                if t.strip() and not t.strip().startswith("Visit Status")
-            ]
-            if status_filtered:
-                insp["original_status"] = status_filtered[-1]
-
-            # Report type
-            type_text = cells[4].css("::text").getall()
-            type_filtered = [
-                t.strip()
-                for t in type_text
-                if t.strip() and not t.strip().startswith("Report Type")
-            ]
-            if type_filtered:
-                insp["type"] = type_filtered[-1]
-
+            date = _clean(visit.get("visitDate"))
+            if date and "T" in date:
+                date = date.split("T", 1)[0]  # ISO datetime -> YYYY-MM-DD
+            insp["date"] = date
+            insp["type"] = _clean(visit.get("visitType"))
+            insp["original_status"] = _clean(visit.get("visitStatus"))
             if insp.get("date") or insp.get("type"):
                 inspections.append(insp)
-
         return inspections
 
     def _map_csv_row(self, row):
         """Map a CSV row dict to a ProviderItem.
 
-        CSV columns (discovered from live site):
+        CSV columns (from the /Provider/Export endpoint):
         Provider_Number, Location, County, Address, City, State, Zip,
         MailingAddress, MailingCity, MailingState, MailingZip, Email, Phone,
         LicenseCapacity, Operation_Months, Operation_Days, Hours_Open,
