@@ -196,7 +196,13 @@ class ArizonaSpider(scrapy.Spider):
                 "viewport": {"width": 1920, "height": 1080},
                 "device_scale_factor": 1,
                 "locale": "en-US",
-                "timezone_id": "America/Phoenix",
+                # Match the browser timezone to our egress IP, not to
+                # Arizona. The whole scraper job runs from a single
+                # Eastern-time VPN endpoint, so every browser-driven spider
+                # reports Eastern to keep the browser timezone consistent
+                # with the IP's geolocation — reCAPTCHA v3 cross-checks the
+                # two (see docs/browser_signature.md).
+                "timezone_id": "America/New_York",
             }
         },
     }
