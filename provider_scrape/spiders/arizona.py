@@ -174,8 +174,16 @@ class ArizonaSpider(scrapy.Spider):
         "PLAYWRIGHT_LAUNCH_OPTIONS": {
             "headless": False,
             "channel": "chrome",
+            # `--enable-unsafe-swiftshader` restores software WebGL under
+            # xvfb on Linux. Chrome 150 dropped the automatic SwiftShader
+            # fallback for WebGL, so on a GPU-less server WebGL context
+            # creation returns null — the page reports *no* WebGL, a strong
+            # headless/bot signal Cloudflare fingerprints. It only permits
+            # SwiftShader as a fallback, so a real GPU (e.g. a dev Mac) is
+            # still used when present.
             "args": (
-                ["--ozone-platform=x11"] if platform.system() == "Linux" else []
+                ["--ozone-platform=x11", "--enable-unsafe-swiftshader"]
+                if platform.system() == "Linux" else []
             ) + (
                 ["--window-size=1920,1080"]
             ),
@@ -206,7 +214,6 @@ class ArizonaSpider(scrapy.Spider):
                 "playwright_include_page": True,
                 "playwright_page_methods": [
                     PageMethod("wait_for_load_state", "domcontentloaded", timeout=60000),
-                    PageMethod("mouse.move", 150, 150),
                     PageMethod("wait_for_timeout", 5000),
                     PageMethod("reload", wait_until="domcontentloaded", timeout=60000),
                     PageMethod("wait_for_timeout", 3000),
@@ -242,6 +249,16 @@ class ArizonaSpider(scrapy.Spider):
 
         try:
             self.logger.info(f"Loaded initial page: {page.url}")
+
+            # Seed a little early cursor activity before the Cloudflare-seeding
+            # click. This used to be a `PageMethod("mouse.move", 150, 150)` in
+            # start_requests, but PageMethod resolves a single attribute name
+            # (`getattr(page, "mouse.move")`) and so raised AttributeError every
+            # run — the move never happened. Do it here with the real API.
+            try:
+                await page.mouse.move(150, 150, steps=15)
+            except Exception as e:
+                self.logger.debug("initial mouse.move failed: %s", e)
 
             # Click the landing page search button to navigate to the Aura app
             # This helps seed Cloudflare cookies and provides a valid Referer

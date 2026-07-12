@@ -321,10 +321,19 @@ class NewJerseySpider(scrapy.Spider):
         # on a server where xvfb-run only provides X11, Chrome would
         # otherwise fail to start because its compiled-in Ozone default
         # is Wayland. Harmless on X11-only systems and on macOS.
+        #
+        # `--enable-unsafe-swiftshader` restores software WebGL under
+        # xvfb. Chrome 150 dropped the automatic SwiftShader fallback for
+        # WebGL, so on a GPU-less server `canvas.getContext('webgl')`
+        # returns null — the page reports *no* WebGL at all, a strong
+        # headless/bot signal Cloudflare fingerprints. The flag lets a
+        # real (software) GL context and honest renderer string flow
+        # through again. Harmless where a GPU exists: it only permits
+        # SwiftShader as a fallback, it doesn't force it.
         "PLAYWRIGHT_LAUNCH_OPTIONS": {
             "headless": False,
             "channel": "chrome",
-            "args": ["--ozone-platform=x11"],
+            "args": ["--ozone-platform=x11", "--enable-unsafe-swiftshader"],
             "timeout": 30 * 1000,
         },
         # scrapy-playwright reads PLAYWRIGHT_CONTEXTS (plural) — there is

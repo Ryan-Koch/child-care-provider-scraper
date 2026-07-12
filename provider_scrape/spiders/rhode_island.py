@@ -544,8 +544,20 @@ class RhodeIslandSpider(scrapy.Spider):
             "headless": False,
             "channel": "chrome",
             # Launch flags vary by OS:
-            #   Linux (server, xvfb-run): just `--ozone-platform=x11` so
-            #     Chrome uses the X11 backend provided by xvfb. We do NOT
+            #   Linux (server, xvfb-run): `--ozone-platform=x11` so Chrome
+            #     uses the X11 backend provided by xvfb, plus
+            #     `--enable-unsafe-swiftshader`. The latter is load-bearing
+            #     for the reCAPTCHA v3 score: Chrome 150 removed the
+            #     automatic SwiftShader fallback for WebGL, so on a GPU-less
+            #     server under xvfb `canvas.getContext('webgl')` now returns
+            #     null — i.e. the page reports *no* WebGL at all, which is a
+            #     strong headless/bot signal reCAPTCHA weighs heavily (this
+            #     is what started tripping isCaptchaInvalid/isV3Failed after
+            #     the Chrome bump). The flag re-enables software WebGL via
+            #     ANGLE+SwiftShader so a real (if software) GL context and
+            #     honest renderer string flow through again. If the host ever
+            #     gets a real GPU, ANGLE uses it — the flag only permits
+            #     SwiftShader as a fallback, it doesn't force it. We do NOT
             #     pass `--window-size=1440,900` or
             #     `--force-device-scale-factor=2` here — those were chosen
             #     to make our fingerprint look like a Retina MacBook, but
@@ -560,7 +572,7 @@ class RhodeIslandSpider(scrapy.Spider):
             #     uses Cocoa) and can interfere with later arg parsing,
             #     so it's left off.
             "args": (
-                ["--ozone-platform=x11"]
+                ["--ozone-platform=x11", "--enable-unsafe-swiftshader"]
                 if platform.system() == "Linux" else []
             ) + (
                 [
