@@ -7,6 +7,10 @@ class ArkansasSpider(scrapy.Spider):
     allowed_domains = ["ardhslicensing.my.site.com"]
     start_urls = ["https://ardhslicensing.my.site.com/elicensing/s/search-provider/find-provider-cc?language=en_US&tab=CC"]
 
+    # A timed-out detail page is re-scheduled from the errback (after its
+    # leaked page is closed) up to this many times before it is given up on.
+    MAX_DETAIL_RETRIES = 3
+
     custom_settings = {
         "DOWNLOAD_HANDLERS": {
             "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
@@ -16,6 +20,11 @@ class ArkansasSpider(scrapy.Spider):
             "headless": True,
         },
         "PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT": 60000,
+        # Each detail request is a full headless-browser page. Firing 16 of
+        # them (the Scrapy default) at this single Salesforce host is what
+        # drove the goto timeouts; keep the browser page pressure modest.
+        "CONCURRENT_REQUESTS": 4,
+        "CONCURRENT_REQUESTS_PER_DOMAIN": 4,
     }
 
     def start_requests(self):
@@ -26,6 +35,7 @@ class ArkansasSpider(scrapy.Spider):
                 "playwright_include_page": True,
             },
             callback=self.parse_search_page,
+            errback=self.errback_close_page,
         )
 
     async def parse_search_page(self, response):
@@ -165,8 +175,15 @@ class ArkansasSpider(scrapy.Spider):
                         meta={
                             "playwright": True,
                             "playwright_include_page": True,
+                            # Return from goto once the DOM is parsed rather
+                            # than waiting on every subresource ("load"); the
+                            # callback still waits for the fields it needs.
+                            "playwright_page_goto_kwargs": {
+                                "wait_until": "domcontentloaded"
+                            },
                         },
-                        callback=self.parse_detail
+                        callback=self.parse_detail,
+                        errback=self.errback_close_page,
                     )
 
                 # Next Button
@@ -340,3 +357,40 @@ class ArkansasSpider(scrapy.Spider):
             self.logger.error(f"Error parsing detail page {response.url}: {e}")
         finally:
             await page.close()
+
+    async def errback_close_page(self, failure):
+        """Close the page of a failed Playwright request and (for detail pages)
+        re-schedule it.
+
+        This is what keeps a timed-out detail request from wedging the whole
+        crawl. scrapy-playwright does not close pages for
+        ``playwright_include_page`` requests that fail at download time, and the
+        page-per-context semaphore slot is only released on the page's ``close``
+        event. Without this errback each timeout permanently leaks a slot until
+        the pool is exhausted and every remaining request blocks forever.
+        Closing the page here frees the slot; re-yielding afterwards is
+        therefore leak-safe.
+        """
+        request = failure.request
+        page = request.meta.get("playwright_page")
+        if page is not None and not page.is_closed():
+            await page.close()
+
+        if request.callback == self.parse_detail:
+            retries = request.meta.get("detail_retries", 0)
+            if retries < self.MAX_DETAIL_RETRIES:
+                self.logger.warning(
+                    f"Retrying detail page ({retries + 1}/{self.MAX_DETAIL_RETRIES}) "
+                    f"after {failure.value!r}: {request.url}"
+                )
+                meta = dict(request.meta)
+                meta.pop("playwright_page", None)  # drop the now-closed page
+                meta["detail_retries"] = retries + 1
+                yield request.replace(meta=meta, dont_filter=True)
+                return
+            self.logger.error(
+                f"Giving up on detail page after {self.MAX_DETAIL_RETRIES} "
+                f"retries: {request.url}"
+            )
+        else:
+            self.logger.error(repr(failure))

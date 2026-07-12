@@ -262,5 +262,63 @@ class TestArkansasSpider(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(insp["type"], "Routine")
         self.assertEqual(insp["report_url"], "http://example.com/report1.pdf")
 
+    async def test_errback_closes_page_and_retries_detail(self):
+        """A failed detail request must close its leaked page (freeing the
+        page-per-context slot) and re-schedule itself."""
+        mock_page = MagicMock()
+        mock_page.is_closed = MagicMock(return_value=False)
+        mock_page.close = AsyncMock()
+
+        failure = MagicMock()
+        failure.value = TimeoutError("Page.goto: Timeout 60000ms exceeded")
+        request = MagicMock()
+        request.url = "http://example.com/details?fid=abc"
+        request.callback = self.spider.parse_detail
+        request.meta = {"playwright_page": mock_page}
+        # request.replace(...) returns a new request; capture the kwargs.
+        replaced = MagicMock()
+        request.replace = MagicMock(return_value=replaced)
+        failure.request = request
+
+        results = []
+        async for out in self.spider.errback_close_page(failure):
+            results.append(out)
+
+        # The leaked page was closed.
+        mock_page.close.assert_awaited_once()
+        # Exactly one retry request was yielded.
+        self.assertEqual(results, [replaced])
+        # The retry drops the stale page and bumps the retry counter.
+        replace_kwargs = request.replace.call_args.kwargs
+        self.assertEqual(replace_kwargs["meta"]["detail_retries"], 1)
+        self.assertNotIn("playwright_page", replace_kwargs["meta"])
+        self.assertTrue(replace_kwargs["dont_filter"])
+
+    async def test_errback_gives_up_after_max_retries(self):
+        """Once the retry budget is spent the detail request is dropped, not
+        re-scheduled (so the crawl can drain and finish)."""
+        mock_page = MagicMock()
+        mock_page.is_closed = MagicMock(return_value=True)  # already closed
+        mock_page.close = AsyncMock()
+
+        failure = MagicMock()
+        failure.value = TimeoutError("boom")
+        request = MagicMock()
+        request.url = "http://example.com/details?fid=xyz"
+        request.callback = self.spider.parse_detail
+        request.meta = {"detail_retries": self.spider.MAX_DETAIL_RETRIES}
+        request.replace = MagicMock()
+        failure.request = request
+
+        results = []
+        async for out in self.spider.errback_close_page(failure):
+            results.append(out)
+
+        # No page to close (already closed) and no retry scheduled.
+        mock_page.close.assert_not_awaited()
+        request.replace.assert_not_called()
+        self.assertEqual(results, [])
+
+
 if __name__ == '__main__':
     unittest.main()
