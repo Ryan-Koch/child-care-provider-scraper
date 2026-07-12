@@ -1,13 +1,22 @@
 import scrapy
 from scrapy_playwright.page import PageMethod
 from provider_scrape.items import ProviderItem, InspectionItem
+from provider_scrape.playwright_utils import PlaywrightErrbackMixin
 import re
 
-class MontanaSpider(scrapy.Spider):
+class MontanaSpider(PlaywrightErrbackMixin, scrapy.Spider):
     name = "montana"
     allowed_domains = ["mtdphhs.my.site.com"]
     start_urls = ["https://mtdphhs.my.site.com/MAQCSChildCareLicensing/s/provider-search?language=en_US"]
-    
+
+    custom_settings = {
+        # Each detail request is a full headless-browser page. Firing 16 of
+        # them (the Scrapy default) at this single Salesforce host is what
+        # drove the goto timeouts; keep the browser page pressure modest.
+        "CONCURRENT_REQUESTS": 4,
+        "CONCURRENT_REQUESTS_PER_DOMAIN": 4,
+    }
+
     def start_requests(self):
         for url in self.start_urls:
             yield scrapy.Request(
@@ -17,6 +26,7 @@ class MontanaSpider(scrapy.Spider):
                     "playwright_include_page": True,
                 },
                 callback=self.parse_search_page,
+                errback=self.errback_close_page,
             )
 
     async def parse_search_page(self, response):
@@ -92,11 +102,19 @@ class MontanaSpider(scrapy.Spider):
                     yield scrapy.Request(
                         detail_url,
                         callback=self.parse_detail_page,
+                        errback=self.errback_close_page,
                         meta={
                             "latitude": lat,
                             "longitude": lon,
                             "playwright": True,
-                            "playwright_include_page": True
+                            "playwright_include_page": True,
+                            "playwright_retry": True,
+                            # Return from goto once the DOM is parsed rather
+                            # than waiting on every subresource ("load"); the
+                            # callback still waits for "Provider Name".
+                            "playwright_page_goto_kwargs": {
+                                "wait_until": "domcontentloaded"
+                            },
                         }
                     )
         finally:
