@@ -1,3 +1,4 @@
+import asyncio
 import re
 
 import scrapy
@@ -36,6 +37,11 @@ class PennsylvaniaSpider(scrapy.Spider):
         page = response.meta["playwright_page"]
         counties = response.meta["counties"]
         self.logger.info(f"Starting search for counties: {counties}")
+
+        # Bound every Playwright action so a wedged SPA raises instead of
+        # stalling this (otherwise-unbounded) callback forever.
+        page.set_default_timeout(30000)
+        page.set_default_navigation_timeout(30000)
 
         try:
             # Wait for initial load
@@ -168,6 +174,22 @@ class PennsylvaniaSpider(scrapy.Spider):
                                     except:
                                         pass
 
+                                    # Re-query the link on each attempt. The prior
+                                    # attempt (or a background re-render) can detach
+                                    # the row, and clicking a stale handle just times
+                                    # out identically every retry — which is exactly
+                                    # the Attempt 2/Attempt 3 timeouts we saw.
+                                    fresh_results = await page.query_selector_all(
+                                        ".result-box"
+                                    )
+                                    if i >= len(fresh_results):
+                                        raise Exception("Result row detached before click")
+                                    link = await fresh_results[i].query_selector(
+                                        "a.hyperlink.h4"
+                                    )
+                                    if not link:
+                                        raise Exception("Details link not found on retry")
+
                                     # Click and wait for details page (SPA navigation)
                                     await link.click(force=True)
 
@@ -188,8 +210,14 @@ class PennsylvaniaSpider(scrapy.Spider):
                                         2000
                                     )  # Wait before retry
 
-                            # Parse Details
-                            details_content = await page.content()
+                            # Parse Details. page.content() takes no timeout and
+                            # ignores the default action timeout, so it can hang
+                            # forever while the SPA is mid-transition — the one
+                            # await that can silently wedge the whole crawl. Bound
+                            # it explicitly so a stuck page raises and recovers.
+                            details_content = await asyncio.wait_for(
+                                page.content(), timeout=30
+                            )
                             item = self.parse_provider_details(details_content)
                             item["source_state"] = "Pennsylvania"
                             yield item
@@ -252,8 +280,6 @@ class PennsylvaniaSpider(scrapy.Spider):
                                             state="visible",
                                             timeout=60000,
                                         )
-                            except Exception as nav_e:
-                                self.logger.error(f"Error navigating back: {nav_e}")
                             except Exception as nav_e:
                                 self.logger.error(f"Error navigating back: {nav_e}")
 
