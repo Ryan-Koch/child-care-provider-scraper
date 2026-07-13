@@ -1,9 +1,14 @@
-scrapy
+# Pin the Playwright/Scrapy stack to the versions proven in the local .venv so
+# the Docker build stays reproducible. These were previously unpinned, and a
+# rebuild pulled Scrapy 2.17 — which no longer calls the deprecated
+# start_requests() our spiders rely on, so every browser spider silently
+# scraped 0 items (spider opened, browser launched, closed in <1s, 0 requests).
+scrapy>=2.13.3,<2.14  # 2.14 removed the start_requests() delegation; our spiders still define start_requests(), not async start()
 pytest
 pytest-asyncio
-scrapy-playwright
-playwright>=1.42.0
-playwright-stealth
+scrapy-playwright==0.0.44
+playwright==1.55.0  # keep in sync with the Docker base image (mcr.microsoft.com/playwright/python:v1.55.0-noble)
+playwright-stealth==2.0.3
 pypdfium2
 tesserocr
 huggingface_hub
