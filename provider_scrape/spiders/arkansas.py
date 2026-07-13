@@ -1,8 +1,9 @@
 import scrapy
 from provider_scrape.items import ProviderItem, InspectionItem
+from provider_scrape.playwright_utils import PlaywrightErrbackMixin
 import re
 
-class ArkansasSpider(scrapy.Spider):
+class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
     name = "arkansas"
     allowed_domains = ["ardhslicensing.my.site.com"]
     start_urls = ["https://ardhslicensing.my.site.com/elicensing/s/search-provider/find-provider-cc?language=en_US&tab=CC"]
@@ -16,6 +17,11 @@ class ArkansasSpider(scrapy.Spider):
             "headless": True,
         },
         "PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT": 60000,
+        # Each detail request is a full headless-browser page. Firing 16 of
+        # them (the Scrapy default) at this single Salesforce host is what
+        # drove the goto timeouts; keep the browser page pressure modest.
+        "CONCURRENT_REQUESTS": 4,
+        "CONCURRENT_REQUESTS_PER_DOMAIN": 4,
     }
 
     def start_requests(self):
@@ -26,6 +32,7 @@ class ArkansasSpider(scrapy.Spider):
                 "playwright_include_page": True,
             },
             callback=self.parse_search_page,
+            errback=self.errback_close_page,
         )
 
     async def parse_search_page(self, response):
@@ -165,8 +172,16 @@ class ArkansasSpider(scrapy.Spider):
                         meta={
                             "playwright": True,
                             "playwright_include_page": True,
+                            "playwright_retry": True,
+                            # Return from goto once the DOM is parsed rather
+                            # than waiting on every subresource ("load"); the
+                            # callback still waits for the fields it needs.
+                            "playwright_page_goto_kwargs": {
+                                "wait_until": "domcontentloaded"
+                            },
                         },
-                        callback=self.parse_detail
+                        callback=self.parse_detail,
+                        errback=self.errback_close_page,
                     )
 
                 # Next Button

@@ -44,18 +44,25 @@ _DAY_ABBR = {
     "Sunday": "Sun",
 }
 
-# We deliberately do NOT override navigator.userAgent or apply the
-# webgl_vendor patch here. The fingerprint audit (-a audit=1) showed
-# those produced cross-checkable inconsistencies that reCAPTCHA v3
-# weighs heavily:
+# We deliberately do NOT override navigator.userAgent here. The
+# fingerprint audit (-a audit=1) showed it produced a cross-checkable
+# inconsistency that reCAPTCHA v3 weighs heavily:
 #   - navigator.userAgent reported Chrome/124 while navigator.appVersion
 #     and navigator.userAgentData.brands reported the real Chrome version
 #     (e.g. 147) — instant "this UA is spoofed" signal.
-#   - playwright-stealth's webgl_vendor patch defaults to "Intel Inc." /
-#     "Intel Iris OpenGL Engine" — wrong on Apple Silicon, where real
-#     Chrome reports "Google Inc. (Apple)" / "ANGLE (Apple, Apple M…)".
-#     `webgl_vendor=False` disables that patch entirely so the real GPU
-#     strings flow through.
+# The webgl_vendor patch is OS-conditional (see _stealth_kwargs below):
+#   - macOS (dev): disabled. playwright-stealth's patch defaults to
+#     "Intel Inc." / "Intel Iris OpenGL Engine" — wrong on Apple Silicon,
+#     where real Chrome reports "Google Inc. (Apple)" / "ANGLE (Apple,
+#     Apple M…)". Disabling it lets the genuine GPU strings flow through.
+#   - Linux (server, xvfb): enabled, with Intel-on-Mesa override strings.
+#     The only WebGL backend available under xvfb is SwiftShader (Chrome
+#     150 needs --enable-unsafe-swiftshader just to get that far), and its
+#     honest renderer string ("ANGLE (Google, …SwiftShader…)") is a
+#     textbook GPU-less-datacenter tell that the audit confirmed we were
+#     leaking. Masking it to a plausible integrated-GPU string a real
+#     Linux Chrome would report removes that signal while staying
+#     consistent with the Linux userAgent.
 # Stealth still patches navigator.webdriver, plugin arrays, etc. — the
 # things that genuinely *are* "wrong" by default.
 # navigator.platform must agree with the real (un-overridden) userAgent
@@ -73,11 +80,28 @@ _NAV_PLATFORM_BY_OS = {
 }
 _NAV_PLATFORM = _NAV_PLATFORM_BY_OS.get(platform.system(), "Linux x86_64")
 
-_STEALTH_SCRIPT = Stealth(
+# Intel-on-Mesa WebGL strings a real Linux Chrome with integrated graphics
+# reports. Same "ANGLE (...)" shape as the SwiftShader string we're hiding,
+# so the masked value stays structurally consistent with a genuine Chrome.
+_WEBGL_VENDOR_LINUX = "Google Inc. (Intel)"
+_WEBGL_RENDERER_LINUX = (
+    "ANGLE (Intel, Mesa Intel(R) UHD Graphics 630 (CFL GT2), "
+    "OpenGL 4.6 (Core Profile) Mesa 23.2.1)"
+)
+
+_stealth_kwargs = dict(
     navigator_platform_override=_NAV_PLATFORM,
     navigator_languages_override=("en-US", "en"),
     webgl_vendor=False,
-).script_payload
+)
+if platform.system() == "Linux":
+    _stealth_kwargs.update(
+        webgl_vendor=True,
+        webgl_vendor_override=_WEBGL_VENDOR_LINUX,
+        webgl_renderer_override=_WEBGL_RENDERER_LINUX,
+    )
+
+_STEALTH_SCRIPT = Stealth(**_stealth_kwargs).script_payload
 
 _CANVAS_PATCH = """
 const origToDataURL = HTMLCanvasElement.prototype.toDataURL;
@@ -544,8 +568,20 @@ class RhodeIslandSpider(scrapy.Spider):
             "headless": False,
             "channel": "chrome",
             # Launch flags vary by OS:
-            #   Linux (server, xvfb-run): just `--ozone-platform=x11` so
-            #     Chrome uses the X11 backend provided by xvfb. We do NOT
+            #   Linux (server, xvfb-run): `--ozone-platform=x11` so Chrome
+            #     uses the X11 backend provided by xvfb, plus
+            #     `--enable-unsafe-swiftshader`. The latter is load-bearing
+            #     for the reCAPTCHA v3 score: Chrome 150 removed the
+            #     automatic SwiftShader fallback for WebGL, so on a GPU-less
+            #     server under xvfb `canvas.getContext('webgl')` now returns
+            #     null — i.e. the page reports *no* WebGL at all, which is a
+            #     strong headless/bot signal reCAPTCHA weighs heavily (this
+            #     is what started tripping isCaptchaInvalid/isV3Failed after
+            #     the Chrome bump). The flag re-enables software WebGL via
+            #     ANGLE+SwiftShader so a real (if software) GL context and
+            #     honest renderer string flow through again. If the host ever
+            #     gets a real GPU, ANGLE uses it — the flag only permits
+            #     SwiftShader as a fallback, it doesn't force it. We do NOT
             #     pass `--window-size=1440,900` or
             #     `--force-device-scale-factor=2` here — those were chosen
             #     to make our fingerprint look like a Retina MacBook, but
@@ -560,7 +596,7 @@ class RhodeIslandSpider(scrapy.Spider):
             #     uses Cocoa) and can interfere with later arg parsing,
             #     so it's left off.
             "args": (
-                ["--ozone-platform=x11"]
+                ["--ozone-platform=x11", "--enable-unsafe-swiftshader"]
                 if platform.system() == "Linux" else []
             ) + (
                 [
