@@ -728,7 +728,7 @@ def test_parse_excels_family_home_no_report_keeps_coords(spider):
 
 
 def test_parse_excels_miss_falls_back_to_pdf(spider):
-    """An EXCELS miss with a report URL yields a PDF request on its own slot."""
+    """An EXCELS miss with a report URL yields a PDF request on the host slot."""
     item = ProviderItem()
     item["license_number"] = "999999"
     item["address"] = "Some Street, Baltimore, MD 21201"
@@ -747,7 +747,9 @@ def test_parse_excels_miss_falls_back_to_pdf(spider):
     assert isinstance(pdf_request, scrapy.Request)
     assert "PrintTask.aspx?t=1&d=2" in pdf_request.url
     assert pdf_request.callback == spider.parse_inspection_pdf
-    assert pdf_request.meta.get("download_slot") == "checkccmd-pdf"
+    # The PDF is on the same checkccmd host and must share the single-flight
+    # host slot (per-IP rate limit) — NOT a separate download slot.
+    assert "download_slot" not in pdf_request.meta
 
 
 def test_parse_excels_miss_without_report_yields_item(spider):

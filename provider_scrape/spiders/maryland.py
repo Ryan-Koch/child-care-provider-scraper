@@ -66,6 +66,25 @@ MAX_CHAIN_RESTARTS = 3
 DETAIL_DOWNLOAD_TIMEOUT = 60
 EXCELS_DOWNLOAD_TIMEOUT = 30
 
+# Seconds between consecutive requests to the checkccmd.org host. The site now
+# enforces a hard per-IP request-rate limit (IIS Dynamic IP Restrictions): a
+# **trailing ~60s window that allows only 2 requests**, returning a stock IIS
+# 403 once exceeded — site-wide per IP. While over the limit the block is
+# self-sustaining (each blocked request keeps the window saturated); it clears
+# only after ~60s of silence. Safe condition: no 3 requests within any 60s
+# window, i.e. spacing must be strictly > 30s (three requests must span > 60s).
+# 30.0s sits *exactly* on the failing edge (verified live: a 30s-spaced crawl
+# tripped on its 3rd request), so we use 33s for ~10% margin — three requests
+# span 66s. Single-flight (CONCURRENT_REQUESTS_PER_DOMAIN=1), jitter off
+# (RANDOMIZE_DOWNLOAD_DELAY's 0.5x low end would dip under 30s); Scrapy's single
+# slot enforces this floor between dispatches regardless of request priority.
+# Tune with ``-a delay=<seconds>`` but do NOT go <= 30 without a proxy pool.
+# NOTE: at ~1.8/min a full ~12k-request run is ~4-5 days from one IP — the
+# per-IP wall, not concurrency, is the limiter, so a real speed-up needs IP
+# rotation. See maryland_performance_epic + RateLimitBackoffMiddleware (recovers
+# the occasional edge trip instead of dropping it).
+DEFAULT_DELAY = 33
+
 
 def extract_address_from_pdf(pdf_bytes):
     """Extract the precise address from an inspection report PDF via OCR.
@@ -128,38 +147,66 @@ class MarylandSpider(scrapy.Spider):
     start_urls = ["https://www.checkccmd.org/"]
 
     custom_settings = {
-        # Detail/results pages on checkccmd are cheap and parallelize cleanly
-        # (measured: 8 concurrent → 4.5s wall, no penalty). The slow part —
-        # inspection-report PDFs — is now only a small EXCELS-miss fallback,
-        # routed to its own low-concurrency "checkccmd-pdf" slot so it can't
-        # stall the detail scrape.
-        "DOWNLOAD_DELAY": 0.25,
-        "CONCURRENT_REQUESTS": 16,
-        "CONCURRENT_REQUESTS_PER_DOMAIN": 6,
+        # checkccmd.org enforces a hard per-IP request-rate limit (see
+        # DEFAULT_DELAY): crawl the licensing host strictly single-flight. Every
+        # checkccmd request (search, detail, pagination, and the PDF fallback —
+        # all the same IP) shares this one slot, so the whole host stays under
+        # the ceiling. DOWNLOAD_DELAY is set from the ``delay`` arg in
+        # from_crawler (default DEFAULT_DELAY); jitter is off so the spacing has
+        # a hard floor under the limit.
+        "CONCURRENT_REQUESTS_PER_DOMAIN": 1,
+        "RANDOMIZE_DOWNLOAD_DELAY": False,
+        # EXCELS is a separate, non-throttling JSON API — give its host its own
+        # fast slot so address/coord enrichment never bottlenecks behind the
+        # single-flight, delayed licensing crawl. CONCURRENT_REQUESTS stays high
+        # enough that EXCELS lookups run concurrently with the one checkccmd hit.
+        "CONCURRENT_REQUESTS": 8,
+        "DOWNLOAD_SLOTS": {
+            "findaprogram.marylandexcels.org": {"concurrency": 4, "delay": 0.0},
+        },
         # Pagination postbacks are chain-critical, so they keep the patient
         # default download timeout (180s) and retry budget rather than
         # fail-fast: a verification run with a short 45s timeout caused a
         # postback to *give up at the downloader level* (callback never runs, so
         # self-healing can't engage) and silently truncated a county at page
-        # 57/106. With RESULTS_PRIORITY they no longer sit queued long enough to
-        # go stale, so a generous timeout is safe. The terminal-failure case is
-        # caught by the pagination errback (_pagination_errback). AutoThrottle
-        # is intentionally NOT enabled — the server's per-IP ceiling is the real
-        # limiter, and latency-driven backoff only compounded the slowdown.
+        # 57/106. The terminal-failure case is caught by the pagination errback
+        # (_pagination_errback). AutoThrottle is intentionally NOT enabled — the
+        # server's per-IP ceiling is the real limiter, and latency-driven
+        # backoff only compounded the slowdown.
         "RETRY_TIMES": 10,
         "USER_AGENT": USER_AGENT,
-        # The slow, server-rendered inspection PDF is only fetched for the small
-        # set of providers absent from EXCELS (when ocr_fallback is on). Pin
-        # those to a dedicated low-concurrency slot so they can't stall the fast
-        # detail scrape and stay below the ~6-concurrent point where the PDF
-        # endpoint starts to tarpit.
-        "DOWNLOAD_SLOTS": {
-            "checkccmd-pdf": {"concurrency": 3, "delay": 0.4},
-        },
+        # Recover a per-IP rate-limit 403 instead of dropping it: pause the
+        # checkccmd slot for a cooldown (real silence clears the rolling window;
+        # a fast retry just re-trips it) and re-issue the request. 403 is NOT in
+        # Scrapy's default RETRY_HTTP_CODES, so without this a blocked request is
+        # silently lost — a prior run shed ~50% of providers exactly this way.
+        # Scoped to checkccmd so the clean EXCELS API is never throttled.
+        "RATELIMIT_BACKOFF_ENABLED": True,
+        "RATELIMIT_BACKOFF_DOMAINS": ["checkccmd.org"],
+        "RATELIMIT_BACKOFF_HTTP_CODES": [403],
+        "RATELIMIT_BACKOFF_COOLDOWN": 60,
+        "RATELIMIT_BACKOFF_MAX_RETRIES": 8,
     }
 
-    def __init__(self, ocr_fallback=True, counties=None, *args, **kwargs):
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        spider = super().from_crawler(crawler, *args, **kwargs)
+        # Apply the (tunable) single-flight spacing to the checkccmd host. Set
+        # here rather than in custom_settings so ``-a delay=<seconds>`` works.
+        crawler.settings.set("DOWNLOAD_DELAY", spider.delay, priority="spider")
+        spider.logger.info(
+            "MarylandSpider: checkccmd single-flight, DOWNLOAD_DELAY=%ss "
+            "(per-IP rate limit); EXCELS on its own fast slot.",
+            spider.delay,
+        )
+        return spider
+
+    def __init__(
+        self, ocr_fallback=True, counties=None, delay=DEFAULT_DELAY, *args, **kwargs
+    ):
         super().__init__(*args, **kwargs)
+        # Seconds between consecutive checkccmd.org requests (single-flight).
+        self.delay = float(delay)
         self.seen_fi = set()
         # Pages whose rows we've successfully parsed, per county. Used to avoid
         # re-extracting a page that's delivered twice (e.g. a late retry) and to
@@ -702,16 +749,17 @@ class MarylandSpider(scrapy.Spider):
     def _address_fallback(self, item, first_report_url):
         """Yield the item, using PDF/OCR for a precise address when enabled.
 
-        The PDF request is pinned to the low-concurrency ``checkccmd-pdf``
-        download slot so the slow, server-rendered reports can't stall the
-        detail/results crawl.
+        The PDF report lives on the same checkccmd.org host, so it goes through
+        the default (single-flight, delayed) host slot — NOT a separate slot.
+        Splitting it out would put a second concurrent stream on the same IP and
+        trip the per-IP rate limit; the throttle now caps total host throughput,
+        so every checkccmd request must share one budget.
         """
         if self.ocr_fallback and first_report_url:
             yield scrapy.Request(
                 first_report_url,
                 callback=self.parse_inspection_pdf,
                 cb_kwargs={"item": item},
-                meta={"download_slot": "checkccmd-pdf"},
                 dont_filter=True,
             )
         else:
