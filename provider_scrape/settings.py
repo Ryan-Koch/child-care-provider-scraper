@@ -52,6 +52,10 @@ ROBOTSTXT_OBEY = False
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
     "provider_scrape.middlewares.VaScrapeDownloaderMiddleware": 543,
+    # Cooldown-and-retry for per-IP rate-limit 403s. Disabled unless a spider
+    # sets RATELIMIT_BACKOFF_ENABLED (e.g. maryland). Placed just after the
+    # built-in RetryMiddleware (550) so it inspects the response first.
+    "provider_scrape.middlewares.RateLimitBackoffMiddleware": 560,
 }
 
 # Enable or disable extensions

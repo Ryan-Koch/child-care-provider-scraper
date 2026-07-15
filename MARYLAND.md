@@ -50,6 +50,34 @@ No system-level Tesseract installation is required — `tesserocr` bundles its o
 scrapy crawl maryland -o maryland.json
 ```
 
+### Rate limiting (checkccmd.org)
+
+The licensing site enforces a **hard per-IP request-rate limit** (IIS Dynamic IP
+Restrictions): a **trailing ~60s window that allows only 2 requests**, returning
+a stock IIS `403 - Forbidden` once exceeded — site-wide per IP. While over the
+limit the block is *self-sustaining* (each blocked request keeps the window
+saturated); it clears only after ~60s of silence. Safe condition: no 3 requests
+in any 60s window, i.e. spacing strictly **> 30s**. 30.0s sits exactly on the
+edge (a 30s-spaced crawl tripped on its 3rd request), so the spider crawls
+checkccmd **strictly single-flight** (`CONCURRENT_REQUESTS_PER_DOMAIN=1`) at a
+fixed **33s** spacing (~10% margin). Every checkccmd request (search, detail,
+pagination, PDF fallback) shares that one throttled slot; the EXCELS API is on a
+separate, non-throttling host and keeps its own fast slot.
+
+- `-a delay=<seconds>` tunes the per-request spacing (default 33). Do **not** go
+  `<= 30` without a proxy pool — 2 requests per 60s is the ceiling from one IP.
+- A per-IP 403 is **recovered, not dropped**: `RateLimitBackoffMiddleware` pauses
+  the checkccmd slot for a 60s cooldown (real silence clears the window) then
+  retries, bounded by `RATELIMIT_BACKOFF_MAX_RETRIES`. (403 is not in Scrapy's
+  default `RETRY_HTTP_CODES`, so without this a blocked request is silently lost —
+  a prior run shed ~50% of providers exactly this way.)
+
+**Run time:** at 33s/request a full ~12k-request run is **~4–5 days** from one IP
+(up from ~53h before the site tightened the limit). The per-IP wall, not
+concurrency, is the limiter, so a real speed-up requires **IP rotation / a proxy
+pool** — the block is per-IP and clears in ~60s, so N exit IPs each just under
+2/min gives ~N× throughput.
+
 ## Running Tests
 
 ```bash
