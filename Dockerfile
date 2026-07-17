@@ -49,6 +49,45 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
 # resolved browser build needs on top of what the base image provides.
 RUN playwright install --with-deps chromium chrome
 
+# !!! TEMPORARY PIN (2026-07-17). Remove once a newer Chrome passes v3. !!!
+#
+# Chrome 150.0.7871.128 drops rhode_island's reCAPTCHA v3 score below the
+# threshold: the Aura search returns isCaptchaInvalid/isV3Failed on every
+# attempt. 150.0.7871.114 passes. Established by A/B inside this image — same
+# code, same egress IP, channel="chrome" both times, only the Chrome version
+# varying: .114 scraped providers on 3/3 runs, .128 failed 3/3 attempts.
+# The line above resolves to *current* stable, which is what makes the break
+# recur on every rebuild; this layer pins the version back down.
+#
+# The `-a audit=1` fingerprint is IDENTICAL on both versions (Chrome's reduced
+# UA reports "150.0.0.0", hiding the patch), so a clean audit does NOT clear
+# Chrome and cannot diagnose this. See docs/browser_signature.md.
+#
+# Why downgrade-in-place instead of just installing the pinned .deb directly:
+# doing that with --no-install-recommends yields an image that still FAILS v3
+# despite carrying an identical .114 binary and an identical JS fingerprint —
+# it silently drops packages Chrome's own dep closure pulls in (libxft2,
+# libxcb-shape0, x11-utils, x11-xserver-utils). Whatever v3 reads there, it is
+# invisible to the audit. So: let upstream install Chrome and its full
+# dependency+recommends closure, then swap only the binary's version and hold
+# the package so a later apt layer can't bump it.
+#
+# Retest a newer Chrome (do this periodically — a pin is an unpatched browser):
+#   docker build --build-arg CHROME_VERSION=<version>-1 -t cc-test .
+#   docker run --rm --init --shm-size=2gb --user 1000:1000 -e HOME=/tmp \
+#     --entrypoint bash cc-test -c 'xvfb-run -a -s "-screen 0 1920x1080x24" \
+#     scrapy crawl rhode_island -a max_providers=3 -s LOG_LEVEL=INFO'
+# No isV3Failed in the log => that version is good; delete this whole layer.
+ARG CHROME_VERSION=150.0.7871.114-1
+RUN curl -fsSL -o /tmp/chrome.deb \
+        "https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb" \
+    && apt-get update \
+    && apt-get install -y --allow-downgrades /tmp/chrome.deb \
+    && rm -f /tmp/chrome.deb \
+    && apt-mark hold google-chrome-stable \
+    && rm -rf /var/lib/apt/lists/* \
+    && google-chrome --version
+
 # Application code.
 COPY . .
 
