@@ -23,7 +23,9 @@ from unittest.mock import patch
 
 @pytest.fixture
 def spider():
-    return MarylandSpider()
+    # proxies="off" pins single-IP mode so tests are deterministic regardless of
+    # whether a webshare.env happens to exist at the repo root.
+    return MarylandSpider(proxies="off")
 
 
 def _excels_response(data, license_number="150301"):
@@ -501,6 +503,49 @@ def test_check_stall_quiet_when_items_advance(spider, caplog):
     assert "STALL" not in "\n".join(r.message for r in caplog.records)
 
 
+def test_single_ip_mode_by_default_when_proxies_off():
+    """`-a proxies=off` (and no env) means no pool — single-IP behavior."""
+    s = MarylandSpider(proxies="off")
+    assert s.proxy_pool is None
+    assert s.proxy_pool_domains == ["checkccmd.org"]
+
+
+def test_pool_built_from_inline_endpoints():
+    """`-a proxies="h:p,h:p"` builds a pool without needing an env file."""
+    s = MarylandSpider(
+        proxies="1.1.1.1:80,2.2.2.2:81", proxy_env="/nonexistent.env"
+    )
+    assert s.proxy_pool is not None
+    assert len(s.proxy_pool) == 2
+
+
+def test_detail_requests_carry_no_proxy_affinity(spider):
+    """Detail GETs rotate across the pool, so they must not pin to a proxy."""
+    request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
+    response = HtmlResponse(
+        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
+    )
+    results = list(spider.parse_results(response, county_key="TestCounty"))
+    detail_requests = [r for r in results if not isinstance(r, scrapy.FormRequest)]
+    assert detail_requests
+    for dr in detail_requests:
+        assert "proxy_affinity" not in dr.meta
+
+
+def test_pagination_request_pins_proxy_affinity_to_county(spider):
+    """A county's pagination postback sticks to that county's proxy."""
+    request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
+    response = HtmlResponse(  # renders as page 1; expected_page=2 -> re-navigation
+        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
+    )
+    results = list(
+        spider.parse_results(response, county_key="TestCounty", expected_page=2)
+    )
+    renav = results[0]
+    assert isinstance(renav, scrapy.FormRequest)
+    assert renav.meta["proxy_affinity"] == "TestCounty"
+
+
 def test_pagination_gives_up_after_max_nav_attempts(spider, caplog):
     """Repeated stale postbacks for one page are capped, not looped forever."""
     request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
@@ -932,7 +977,7 @@ def test_parse_excels_miss_without_report_yields_item(spider):
 
 def test_parse_excels_miss_with_ocr_disabled_yields_item():
     """With ocr_fallback off, an EXCELS miss never produces a PDF request."""
-    spider = MarylandSpider(ocr_fallback="false")
+    spider = MarylandSpider(ocr_fallback="false", proxies="off")
     assert spider.ocr_fallback is False
 
     item = ProviderItem()

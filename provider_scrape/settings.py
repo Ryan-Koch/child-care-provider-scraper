@@ -56,6 +56,10 @@ DOWNLOADER_MIDDLEWARES = {
     # sets RATELIMIT_BACKOFF_ENABLED (e.g. maryland). Placed just after the
     # built-in RetryMiddleware (550) so it inspects the response first.
     "provider_scrape.middlewares.RateLimitBackoffMiddleware": 560,
+    # Optional per-proxy egress + download slot for rate-limited hosts. No-op
+    # unless a spider exposes a truthy `proxy_pool`. Must run before the built-in
+    # HttpProxyMiddleware (750) so the proxy it sets is honored.
+    "provider_scrape.middlewares.ProxyPoolMiddleware": 610,
 }
 
 # Enable or disable extensions

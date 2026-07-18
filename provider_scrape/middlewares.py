@@ -105,6 +105,73 @@ class VaScrapeDownloaderMiddleware:
         spider.logger.info("Spider opened: %s" % spider.name)
 
 
+class ProxyPoolMiddleware:
+    """Assign a per-proxy egress + download slot to rate-limited requests.
+
+    Opt-in and spider-driven: the middleware is a pass-through unless the spider
+    exposes a truthy ``proxy_pool`` (a :class:`provider_scrape.proxy_pool.ProxyPool`).
+    For a request whose host matches ``spider.proxy_pool_domains`` it sets both
+    ``request.meta['proxy']`` (so the built-in ``HttpProxyMiddleware`` tunnels it)
+    and ``request.meta['download_slot'] = <proxy_id>`` — the latter gives each
+    proxy its **own** download slot, so Scrapy's ``DOWNLOAD_DELAY`` /
+    per-domain-concurrency (the single-IP cadence) is enforced independently per
+    IP. N proxies ⇒ ~N parallel single-flight slots.
+
+    Assignment respects a request-set affinity: requests carrying
+    ``meta['proxy_affinity']`` (e.g. a county's ViewState-bound pagination chain)
+    stick to one proxy; the rest (session-independent detail/PDF GETs) rotate
+    round-robin. Requests to other hosts (e.g. the EXCELS API) are left direct on
+    their own slot. An already-assigned proxy (a retry) is never reassigned, so a
+    request rides out its slot's rate-limit cooldown on the same IP.
+
+    Must run **before** ``HttpProxyMiddleware`` (default order 750) so the proxy
+    it sets is honored; register it at a lower order (see settings).
+    """
+
+    def __init__(self):
+        import logging
+
+        self.logger = logging.getLogger(__name__)
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls()
+
+    @staticmethod
+    def _host(request):
+        return (urlparse(request.url).hostname or "").lower()
+
+    def _should_proxy(self, request, spider, pool):
+        if not pool or request.meta.get("proxy"):
+            return False
+        domains = getattr(spider, "proxy_pool_domains", None)
+        if not domains:
+            return False
+        host = self._host(request)
+        return any(d.lower() in host for d in domains)
+
+    def process_request(self, request, spider):
+        pool = getattr(spider, "proxy_pool", None)
+        if not self._should_proxy(request, spider, pool):
+            return None
+        affinity = request.meta.get("proxy_affinity")
+        if affinity is not None:
+            proxy_id, proxy_url = pool.for_key(affinity)
+        else:
+            proxy_id, proxy_url = pool.next_rotating()
+        request.meta["proxy"] = proxy_url
+        # Give each proxy its own download slot so the per-IP delay/concurrency
+        # is enforced independently — this is what buys the parallel throughput.
+        request.meta["download_slot"] = proxy_id
+        self.logger.debug(
+            "Proxy %s -> %s%s",
+            proxy_id,
+            request.url,
+            f" (affinity={affinity})" if affinity is not None else "",
+        )
+        return None
+
+
 class RateLimitBackoffMiddleware:
     """Cooldown-and-retry for per-IP rate-limit blocks (hard ``403`` s).
 
