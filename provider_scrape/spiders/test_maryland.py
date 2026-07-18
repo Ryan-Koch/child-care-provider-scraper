@@ -9,6 +9,7 @@ from provider_scrape.spiders.maryland import (
     MAX_NAV_ATTEMPTS,
     MAX_CHAIN_RESTARTS,
     MAX_DETAIL_REPRIMES,
+    STALL_ALERT_WINDOWS,
     RESULTS_PRIORITY,
     DETAIL_DOWNLOAD_TIMEOUT,
     EXCELS_DOWNLOAD_TIMEOUT,
@@ -458,11 +459,13 @@ def _stats_from(values):
     return SimpleNamespace(get_value=lambda key, default=None: values.get(key, default))
 
 
-def test_check_stall_fires_when_responses_flow_without_progress(spider, caplog):
-    """Responses advancing while pages+items stay flat is reported as a wedge."""
+def test_check_stall_fires_after_consecutive_no_progress_windows(spider, caplog):
+    """A persistent stall (enough consecutive no-progress windows) is reported."""
     spider._pages_parsed = 50
     spider._stall_last_responses = 8000
     spider._stall_last_progress = 50 + 3351  # pages + items from the prior tick
+    # One window short of the alert threshold; this call reaches it.
+    spider._stall_windows = STALL_ALERT_WINDOWS - 1
     spider.crawler = SimpleNamespace(
         stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 3351})
     )
@@ -473,11 +476,29 @@ def test_check_stall_fires_when_responses_flow_without_progress(spider, caplog):
     assert "STALL" in "\n".join(r.message for r in caplog.records)
 
 
-def test_check_stall_quiet_during_pagination_phase(spider, caplog):
-    """New pages (items flat by design) count as progress — no false stall alarm."""
-    spider._pages_parsed = 60  # advanced from 50 since the last tick
+def test_check_stall_single_window_does_not_fire(spider, caplog):
+    """A single no-progress window (e.g. the search ramp-up) must not cry wolf."""
+    spider._pages_parsed = 0
+    spider._stall_last_responses = 0
+    spider._stall_last_progress = 0
+    spider._stall_windows = 0
+    spider.crawler = SimpleNamespace(
+        stats=_stats_from({"response_received_count": 18, "item_scraped_count": 0})
+    )
+
+    with caplog.at_level("ERROR"):
+        spider._check_stall()
+
+    assert spider._stall_windows == 1
+    assert "STALL" not in "\n".join(r.message for r in caplog.records)
+
+
+def test_check_stall_resets_counter_on_progress(spider, caplog):
+    """Any progress clears accumulated no-progress windows, so the alarm re-arms."""
+    spider._pages_parsed = 60  # advanced since the prior tick
     spider._stall_last_responses = 8000
     spider._stall_last_progress = 50 + 3351
+    spider._stall_windows = STALL_ALERT_WINDOWS - 1  # was nearly at threshold
     spider.crawler = SimpleNamespace(
         stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 3351})
     )
@@ -485,6 +506,7 @@ def test_check_stall_quiet_during_pagination_phase(spider, caplog):
     with caplog.at_level("ERROR"):
         spider._check_stall()
 
+    assert spider._stall_windows == 0
     assert "STALL" not in "\n".join(r.message for r in caplog.records)
 
 
@@ -493,6 +515,7 @@ def test_check_stall_quiet_when_items_advance(spider, caplog):
     spider._pages_parsed = 50
     spider._stall_last_responses = 8000
     spider._stall_last_progress = 50 + 3351
+    spider._stall_windows = STALL_ALERT_WINDOWS - 1
     spider.crawler = SimpleNamespace(
         stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 3400})
     )
@@ -500,6 +523,7 @@ def test_check_stall_quiet_when_items_advance(spider, caplog):
     with caplog.at_level("ERROR"):
         spider._check_stall()
 
+    assert spider._stall_windows == 0
     assert "STALL" not in "\n".join(r.message for r in caplog.records)
 
 
