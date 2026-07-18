@@ -8,10 +8,14 @@ from provider_scrape.spiders.maryland import (
     extract_address_from_pdf,
     MAX_NAV_ATTEMPTS,
     MAX_CHAIN_RESTARTS,
+    MAX_DETAIL_REPRIMES,
     RESULTS_PRIORITY,
     DETAIL_DOWNLOAD_TIMEOUT,
     EXCELS_DOWNLOAD_TIMEOUT,
+    DETAIL_COOKIEJAR,
+    SEARCH_RESULTS_REFERER,
 )
+from types import SimpleNamespace
 from twisted.python.failure import Failure
 from provider_scrape.items import ProviderItem
 from unittest.mock import patch
@@ -406,6 +410,97 @@ def test_closed_reports_complete_crawl(spider, caplog):
     assert "INCOMPLETE" not in msgs
 
 
+def test_closed_reports_item_shortfall(spider, caplog):
+    """Full pagination but too few scraped items is reported loudly at close.
+
+    Guards the 2026-07 failure mode: every county paginated to its declared
+    total, but the detail backlog stalled and most rows never became items. The
+    paginated-row check alone would have called this a clean run.
+    """
+    spider.declared_total_by_county = {"Kent County": 35, "Garrett County": 44}
+    spider.found_count_by_county = {"Kent County": 35, "Garrett County": 44}
+    # Only 10 of the 79 declared providers actually became items.
+    spider.crawler = SimpleNamespace(
+        stats=SimpleNamespace(get_value=lambda key, default=None: 10)
+    )
+
+    with caplog.at_level("INFO"):
+        spider.closed("finished")
+
+    msgs = "\n".join(r.message for r in caplog.records)
+    # Pagination looks complete, but the item-level check screams.
+    assert "Crawl complete" in msgs
+    assert "INCOMPLETE" in msgs
+    assert "scraped 10 items" in msgs
+    assert "69 missing" in msgs
+
+
+def test_closed_no_item_shortfall_when_items_meet_declared(spider, caplog):
+    """When scraped items meet the declared total, no item-shortfall error fires."""
+    spider.declared_total_by_county = {"Kent County": 35, "Garrett County": 44}
+    spider.found_count_by_county = {"Kent County": 35, "Garrett County": 44}
+    spider.crawler = SimpleNamespace(
+        stats=SimpleNamespace(get_value=lambda key, default=None: 80)
+    )
+
+    with caplog.at_level("INFO"):
+        spider.closed("finished")
+
+    msgs = "\n".join(r.message for r in caplog.records)
+    assert "Crawl complete" in msgs
+    assert "INCOMPLETE" not in msgs
+
+
+def _stats_from(values):
+    """A minimal stats stand-in returning fixed counter values."""
+    return SimpleNamespace(get_value=lambda key, default=None: values.get(key, default))
+
+
+def test_check_stall_fires_when_responses_flow_without_progress(spider, caplog):
+    """Responses advancing while pages+items stay flat is reported as a wedge."""
+    spider._pages_parsed = 50
+    spider._stall_last_responses = 8000
+    spider._stall_last_progress = 50 + 3351  # pages + items from the prior tick
+    spider.crawler = SimpleNamespace(
+        stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 3351})
+    )
+
+    with caplog.at_level("ERROR"):
+        spider._check_stall()
+
+    assert "STALL" in "\n".join(r.message for r in caplog.records)
+
+
+def test_check_stall_quiet_during_pagination_phase(spider, caplog):
+    """New pages (items flat by design) count as progress — no false stall alarm."""
+    spider._pages_parsed = 60  # advanced from 50 since the last tick
+    spider._stall_last_responses = 8000
+    spider._stall_last_progress = 50 + 3351
+    spider.crawler = SimpleNamespace(
+        stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 3351})
+    )
+
+    with caplog.at_level("ERROR"):
+        spider._check_stall()
+
+    assert "STALL" not in "\n".join(r.message for r in caplog.records)
+
+
+def test_check_stall_quiet_when_items_advance(spider, caplog):
+    """Items advancing (detail-drain phase) is progress — no false stall alarm."""
+    spider._pages_parsed = 50
+    spider._stall_last_responses = 8000
+    spider._stall_last_progress = 50 + 3351
+    spider.crawler = SimpleNamespace(
+        stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 3400})
+    )
+
+    with caplog.at_level("ERROR"):
+        spider._check_stall()
+
+    assert "STALL" not in "\n".join(r.message for r in caplog.records)
+
+
 def test_pagination_gives_up_after_max_nav_attempts(spider, caplog):
     """Repeated stale postbacks for one page are capped, not looped forever."""
     request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
@@ -594,16 +689,83 @@ def test_parse_detail_non_operating(spider):
     assert len(item["inspections"]) == 0
 
 
-def test_parse_detail_skips_non_detail_url(spider):
-    """Test that parse_detail skips responses that aren't detail pages."""
+def test_parse_detail_drops_loudly_when_unrecoverable(spider, caplog):
+    """A non-detail response with no recoverable detail URL is dropped at ERROR.
+
+    Without a ``redirect_urls`` trail (so no original ``FacilityDetail`` URL to
+    re-issue) the provider can't be recovered — it must be surfaced loudly, never
+    silently swallowed the way the old code did.
+    """
     html_content = "<html><body>Search form</body></html>"
     request = Request(url="https://www.checkccmd.org/")
     response = HtmlResponse(
         url=request.url, body=html_content, encoding="utf-8", request=request
     )
 
-    items = list(spider.parse_detail(response))
-    assert len(items) == 0
+    with caplog.at_level("ERROR"):
+        results = list(spider.parse_detail(response))
+
+    assert len(results) == 0
+    assert "Detail dropped" in "\n".join(r.message for r in caplog.records)
+
+
+def test_parse_detail_reissues_on_session_bounce(spider, caplog):
+    """A detail that bounced to the search page is re-issued, not dropped.
+
+    Simulates the cold-session redirect: the response is the search page, but the
+    original detail URL is preserved in ``redirect_urls``. The spider re-issues
+    that fi on the shared detail jar with the SearchResults referer restored.
+    """
+    detail_url = (
+        "https://www.checkccmd.org/FacilityDetail.aspx?ft=&fn=&sn=&z=&c=&co=&lc=&fi=463466"
+    )
+    request = Request(
+        url="https://www.checkccmd.org/default.aspx",
+        meta={"redirect_urls": [detail_url], "cookiejar": DETAIL_COOKIEJAR},
+    )
+    response = HtmlResponse(
+        url=request.url, body=b"<html>search</html>", encoding="utf-8", request=request
+    )
+
+    with caplog.at_level("WARNING"):
+        results = list(
+            spider.parse_detail(response, address="A St", program_type="CTR")
+        )
+
+    assert len(results) == 1
+    retry = results[0]
+    assert retry.url == detail_url
+    assert retry.callback == spider.parse_detail
+    assert retry.meta["cookiejar"] == DETAIL_COOKIEJAR
+    assert retry.meta["detail_reprimes"] == 1
+    assert retry.meta["download_timeout"] == DETAIL_DOWNLOAD_TIMEOUT
+    assert retry.headers.get("Referer").decode() == SEARCH_RESULTS_REFERER
+    # cb_kwargs from the results page ride along so the retry parses identically.
+    assert retry.cb_kwargs["address"] == "A St"
+    assert retry.cb_kwargs["program_type"] == "CTR"
+    assert "session bounce" in "\n".join(r.message for r in caplog.records)
+
+
+def test_parse_detail_gives_up_after_max_reprimes(spider, caplog):
+    """Re-priming is bounded: a fi that keeps bouncing is dropped loudly."""
+    detail_url = "https://www.checkccmd.org/FacilityDetail.aspx?fi=463466"
+    request = Request(
+        url="https://www.checkccmd.org/default.aspx",
+        meta={
+            "redirect_urls": [detail_url],
+            "cookiejar": DETAIL_COOKIEJAR,
+            "detail_reprimes": MAX_DETAIL_REPRIMES,
+        },
+    )
+    response = HtmlResponse(
+        url=request.url, body=b"<html>search</html>", encoding="utf-8", request=request
+    )
+
+    with caplog.at_level("ERROR"):
+        results = list(spider.parse_detail(response))
+
+    assert len(results) == 0
+    assert "Detail dropped" in "\n".join(r.message for r in caplog.records)
 
 
 @pytest.mark.asyncio

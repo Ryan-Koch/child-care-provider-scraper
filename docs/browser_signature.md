@@ -72,6 +72,42 @@ The classic automation tells (`webdriver`, `cdcHooks`, empty plugins) are all
 handled by playwright-stealth. The ones we hand-tuned are WebGL, timezone, and
 UA consistency.
 
+> ### ⚠️ A clean audit does NOT mean the browser is fine
+>
+> **The audit is blind to at least two things that fail v3 outright** (both
+> found 2026-07-17). In each case the FINGERPRINT_AUDIT blobs of a passing and
+> a failing browser were **byte-identical** except `connection.rtt`/`downlink`
+> (live network jitter) — yet one scraped providers and the other failed every
+> attempt:
+>
+> 1. **The Chrome patch version.** `150.0.7871.128` fails; `150.0.7871.114`
+>    passes. Chrome's reduced UA reports `Chrome/150.0.0.0`, so the patch
+>    version is invisible to the probe. The host auto-updated to `.128` four
+>    minutes before the crawl started failing.
+> 2. **Chrome's apt dependency closure.** An image with the same `.114` binary
+>    still failed when Chrome was installed with `--no-install-recommends`
+>    (dropping `libxft2`, `libxcb-shape0`, `x11-utils`, `x11-xserver-utils`).
+>
+> So the table above can only *falsify* the fingerprint, never clear it. If the
+> audit is clean and the exit IP's timezone matches, **check
+> `google-chrome --version` and `/var/log/dpkg.log*` for a recent bump before
+> touching the IP or the spider.** On 2026-07-17 an hour went into swapping VPN
+> exits while the real cause was a Chrome auto-update; three "bad" Eastern exits
+> were all fine, and the same exit passed once Chrome was pinned.
+>
+> Chrome is currently **pinned to `150.0.7871.114` in the `Dockerfile`** (see
+> `CHROME_VERSION`); that pin is why RI works in Docker and not on the host.
+> **RI cannot currently pass v3 on a host with an auto-updated Chrome** — run it
+> via `docker compose run --rm scraper rhode_island`.
+>
+> **Beware of confounded A/B tests here.** Swapping the binary with Playwright's
+> `executable_path` drops `channel: "chrome"`, and Playwright's different
+> default launch flags fail v3 on their own — that produced a convincing but
+> false "Chrome is exonerated" result. Vary the version where
+> `channel: "chrome"` finds it (`apt-get install --only-upgrade
+> google-chrome-stable` in a throwaway container), and re-run a known-good
+> control at the same moment to rule out IP degradation from your own testing.
+
 ---
 
 ## The browser signature, patch by patch
@@ -291,14 +327,20 @@ Spider returns zero rows / you suspect a v3 block:
 
 1. Grep the log for `isV3Failed` / `isCaptchaInvalid`. Present → score problem,
    not a parser bug.
-2. `curl -s https://ipinfo.io/json` — is the exit IP's timezone/city consistent
-   with the spider's `timezone_id`? **Fix this first**; it's the cheapest and was
-   the actual RI cause. (For RI: use an **Eastern-time** exit.)
-3. `-a audit=1` under xvfb — check the table in [Step 1](#step-1--dump-the-fingerprint--a-audit1).
+2. **Did Chrome just update?** `google-chrome --version` and
+   `zgrep google-chrome-stable /var/log/dpkg.log*`. A patch bump alone fails v3
+   with a spotless fingerprint (see the warning in Step 1). If the version moved
+   since the last good run, that's your cause — run via Docker, which pins it.
+   Cheap to check, and it was the real cause on 2026-07-17.
+3. `curl -s https://ipinfo.io/json` — is the exit IP's timezone/city consistent
+   with the spider's `timezone_id`? Cheap to check and it was the cause on
+   2026-07-13. (For RI: use an **Eastern-time** exit.) Don't over-index on this:
+   on 2026-07-17 it burned an hour while Chrome was the actual culprit.
+4. `-a audit=1` under xvfb — check the table in [Step 1](#step-1--dump-the-fingerprint--a-audit1).
    Look especially for `SwiftShader` in `webglRenderer` and any UA-version
    disagreement (a Chrome upgrade may have shifted things — see the SwiftShader
    saga).
-4. Still failing? Try a different / cleaner exit IP (residential beats hosting),
+5. Still failing? Try a different / cleaner exit IP (residential beats hosting),
    or fall back to `-a manual_captcha=1` for an attended run.
 
 **Cloudflare spiders (NJ) fail differently:** the symptom is an HTTP `403` on the
