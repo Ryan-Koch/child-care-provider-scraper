@@ -39,3 +39,7 @@ services:
       # Hugging Face token/repo, read-only, only used with -u. Kept out of the
       # image; mounted at runtime. The file must exist (see huggingface.env.example).
       - ./huggingface.env:/app/huggingface.env:ro,z
+      # Optional Maryland proxy-pool credentials (see webshare.env.example).
+      # Uncomment to run Maryland through a multi-IP pool under Docker; the file
+      # must exist for the bind mount. Absent ⇒ single-IP mode.
+      # - ./webshare.env:/app/webshare.env:ro,z

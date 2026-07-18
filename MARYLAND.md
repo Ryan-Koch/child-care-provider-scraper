@@ -78,6 +78,46 @@ concurrency, is the limiter, so a real speed-up requires **IP rotation / a proxy
 pool** — the block is per-IP and clears in ~60s, so N exit IPs each just under
 2/min gives ~N× throughput.
 
+### Optional proxy pool (multi-IP, opt-in)
+
+The spider can rotate a pool of egress IPs to beat the per-IP wall. This is
+**opt-in** — with nothing configured it runs single-IP exactly as above.
+
+Enable it by creating `webshare.env` at the repo root (see
+`webshare.env.example`):
+
+```
+webshare_proxy_username=<user>
+webshare_proxy_password=<pass>
+webshare_proxy_endpoints=host1:port1,host2:port2,host3:port3,host4:port4
+```
+
+Then run normally — `scrapy crawl maryland -o maryland.json` picks the pool up
+and logs `proxy pool ENABLED — N egress IPs`. How it works:
+
+- **Each proxy gets its own download slot**, so the 33s single-flight cadence is
+  enforced *per IP* and the proxies run in parallel — N IPs ≈ N× throughput
+  (4 free Webshare US proxies ≈ ~1 day vs ~4–5 days).
+- **Detail/PDF GETs rotate** across all proxies (they're session-independent —
+  the only requirement is the SearchResults referer, which the crawl always
+  sends). **Each county's pagination chain sticks to one proxy** so its
+  ViewState/session and IP stay consistent.
+- `RateLimitBackoffMiddleware` cools down **per slot**, so one throttled proxy
+  pauses only itself while the others keep flowing.
+- The EXCELS API stays **direct** (separate non-throttling host).
+
+Toggles:
+
+- `-a proxies=off` — force single-IP even if `webshare.env` exists.
+- `-a proxies="host:port,host:port"` — supply endpoints inline (credentials
+  still come from `webshare.env`, or embed full `http://user:pass@host:port`).
+- `-a proxy_env=/path/to/file` — use a different env file.
+
+Under Docker, mount the file (see the commented line in `docker-compose.yml`).
+Datacenter IPs are fine here — the site only rate-limits; there is no reputation
+block or captcha. Traffic transits the proxy operator, but this is public
+government data, so that's not a confidentiality concern.
+
 ## Running Tests
 
 ```bash

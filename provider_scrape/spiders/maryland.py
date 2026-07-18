@@ -11,9 +11,17 @@ from scrapy import signals
 from twisted.internet import task
 
 from provider_scrape.items import InspectionItem, ProviderItem
+from provider_scrape.proxy_pool import load_pool
 
 # tessdata path for tesserocr — bundled fast model
 TESSDATA_DIR = os.environ.get("TESSDATA_PREFIX", "/tmp/tessdata")
+
+# Default location of the (git-ignored) proxy-pool env file, at the repo root —
+# same convention as huggingface.env. Absent ⇒ single-IP mode.
+DEFAULT_PROXY_ENV = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "webshare.env",
+)
 
 # Maryland EXCELS "Find a Program" public API. Keyed by license number, it
 # returns the precise street address (with the house number the licensing site
@@ -195,13 +203,18 @@ class MarylandSpider(scrapy.Spider):
         # the ceiling. DOWNLOAD_DELAY is set from the ``delay`` arg in
         # from_crawler (default DEFAULT_DELAY); jitter is off so the spacing has
         # a hard floor under the limit.
+        # Per-slot concurrency 1 = single-flight. In single-IP mode there is one
+        # checkccmd slot; with a proxy pool each proxy gets its own download slot
+        # (ProxyPoolMiddleware), so this cap applies per IP and the proxies run
+        # single-flight in parallel.
         "CONCURRENT_REQUESTS_PER_DOMAIN": 1,
         "RANDOMIZE_DOWNLOAD_DELAY": False,
         # EXCELS is a separate, non-throttling JSON API — give its host its own
         # fast slot so address/coord enrichment never bottlenecks behind the
-        # single-flight, delayed licensing crawl. CONCURRENT_REQUESTS stays high
-        # enough that EXCELS lookups run concurrently with the one checkccmd hit.
-        "CONCURRENT_REQUESTS": 8,
+        # delayed licensing crawl. Global concurrency is high enough that EXCELS
+        # runs alongside the checkccmd hits AND, under a proxy pool, every proxy
+        # slot can be in flight at once (N proxies + the EXCELS slot + PDFs).
+        "CONCURRENT_REQUESTS": 16,
         "DOWNLOAD_SLOTS": {
             "findaprogram.marylandexcels.org": {"concurrency": 4, "delay": 0.0},
         },
@@ -235,23 +248,61 @@ class MarylandSpider(scrapy.Spider):
         # Apply the (tunable) single-flight spacing to the checkccmd host. Set
         # here rather than in custom_settings so ``-a delay=<seconds>`` works.
         crawler.settings.set("DOWNLOAD_DELAY", spider.delay, priority="spider")
-        spider.logger.info(
-            "MarylandSpider: checkccmd single-flight, DOWNLOAD_DELAY=%ss "
-            "(per-IP rate limit); EXCELS on its own fast slot.",
-            spider.delay,
-        )
+        if spider.proxy_pool:
+            spider.logger.info(
+                "MarylandSpider: proxy pool ENABLED — %d egress IPs (%s); each "
+                "held to single-flight DOWNLOAD_DELAY=%ss on its own slot; "
+                "EXCELS direct.",
+                len(spider.proxy_pool),
+                ", ".join(spider.proxy_pool.ids),
+                spider.delay,
+            )
+        else:
+            spider.logger.info(
+                "MarylandSpider: single-IP mode, checkccmd single-flight "
+                "DOWNLOAD_DELAY=%ss (per-IP rate limit); EXCELS on its own fast "
+                "slot.",
+                spider.delay,
+            )
         # Start/stop the no-progress stall watchdog with the crawl.
         crawler.signals.connect(
             spider._start_stall_watch, signal=signals.spider_opened
         )
         return spider
 
+    # Only checkccmd.org egresses through the proxy pool; the EXCELS API is a
+    # separate, non-throttling host and stays direct on its own fast slot.
+    proxy_pool_domains = ["checkccmd.org"]
+
     def __init__(
-        self, ocr_fallback=True, counties=None, delay=DEFAULT_DELAY, *args, **kwargs
+        self,
+        ocr_fallback=True,
+        counties=None,
+        delay=DEFAULT_DELAY,
+        proxies=None,
+        proxy_env=None,
+        *args,
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        # Seconds between consecutive checkccmd.org requests (single-flight).
+        # Seconds between consecutive checkccmd.org requests, per egress IP.
         self.delay = float(delay)
+        # Optional multi-IP proxy pool (opt-in). Off by default: with no
+        # webshare.env and no ``-a proxies=``, the crawl egresses from the single
+        # host IP exactly as before. Disable explicitly with ``-a proxies=off``
+        # even when an env file is present; supply endpoints inline with
+        # ``-a proxies="host:port,host:port"`` (credentials still read from the
+        # env file, or embed full ``http://user:pass@host:port`` URLs).
+        if proxies is not None and str(proxies).lower() in (
+            "off", "none", "false", "0", "no", ""
+        ):
+            self.proxy_pool = None
+        else:
+            self.proxy_pool = load_pool(
+                env_path=proxy_env or DEFAULT_PROXY_ENV,
+                endpoints=None if proxies is None else proxies,
+                id_prefix="webshare",
+            )
         self.seen_fi = set()
         # Pages whose rows we've successfully parsed, per county. Used to avoid
         # re-extracting a page that's delivered twice (e.g. a late retry) and to
@@ -330,7 +381,9 @@ class MarylandSpider(scrapy.Spider):
                 "https://www.checkccmd.org/",
                 callback=self.parse_county_search,
                 cb_kwargs={"county_key": county},
-                meta={"cookiejar": county},
+                # Pin this county's whole session/ViewState chain to one proxy
+                # (no-op in single-IP mode) so its cookies and IP stay consistent.
+                meta={"cookiejar": county, "proxy_affinity": county},
                 dont_filter=True,
                 priority=RESULTS_PRIORITY,
             )
@@ -349,7 +402,7 @@ class MarylandSpider(scrapy.Spider):
             },
             callback=self.parse_results,
             cb_kwargs={"county_key": county_key, "expected_page": 1},
-            meta={"cookiejar": county_key},
+            meta={"cookiejar": county_key, "proxy_affinity": county_key},
             dont_click=True,
             dont_filter=True,
             priority=RESULTS_PRIORITY,
@@ -531,7 +584,7 @@ class MarylandSpider(scrapy.Spider):
             callback=self.parse_results,
             errback=self._pagination_errback,
             cb_kwargs={"county_key": county_key, "expected_page": target_page},
-            meta={"cookiejar": county_key},
+            meta={"cookiejar": county_key, "proxy_affinity": county_key},
             dont_click=True,
             dont_filter=True,
             priority=RESULTS_PRIORITY,

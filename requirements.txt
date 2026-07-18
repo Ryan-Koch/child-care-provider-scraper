@@ -12,3 +12,4 @@ playwright-stealth==2.0.3
 pypdfium2
 tesserocr
 huggingface_hub
+pillow
