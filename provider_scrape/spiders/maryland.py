@@ -112,8 +112,15 @@ MAX_DETAIL_REPRIMES = 3
 # so keying only off items would cry wolf for hours — but a new page IS progress,
 # so the watchdog stays quiet then and fires only on a true wedge. Log-only: it
 # never closes the spider, so it can't truncate a run that is merely slow.
+#
+# It alerts only after STALL_ALERT_WINDOWS *consecutive* no-progress windows, so
+# a transient slow patch (e.g. the search-submission ramp-up, where county home
+# pages return but no results page has parsed yet, or a burst of tarpitted
+# searches that later resolve) doesn't cry wolf. A genuine wedge persists and
+# still trips within ~STALL_ALERT_WINDOWS * STALL_CHECK_INTERVAL seconds.
 STALL_CHECK_INTERVAL = 600
 STALL_MIN_RESPONSES = 4
+STALL_ALERT_WINDOWS = 3
 
 # Seconds between consecutive requests to the checkccmd.org host. The site now
 # enforces a hard per-IP request-rate limit (IIS Dynamic IP Restrictions): a
@@ -324,6 +331,9 @@ class MarylandSpider(scrapy.Spider):
         # counties. Feeds the no-progress stall watchdog: a new page is forward
         # progress even while items are (by design) flat during pagination.
         self._pages_parsed = 0
+        # Consecutive no-progress windows seen by the stall watchdog (reset by
+        # _start_stall_watch at open; here so a direct _check_stall is safe).
+        self._stall_windows = 0
         # When EXCELS has no address for a provider, fall back to the slow
         # inspection-report PDF + OCR. Disable (``-a ocr_fallback=false``) for a
         # pure-fast run that downloads zero PDFs.
@@ -637,6 +647,7 @@ class MarylandSpider(scrapy.Spider):
         """
         self._stall_last_responses = 0
         self._stall_last_progress = 0
+        self._stall_windows = 0
         self._stall_task = task.LoopingCall(self._check_stall)
         # now=False: first check one interval in, once the crawl is underway.
         self._stall_task.start(STALL_CHECK_INTERVAL, now=False)
@@ -645,7 +656,10 @@ class MarylandSpider(scrapy.Spider):
         """Log loudly if responses kept flowing but nothing progressed.
 
         Progress = new pages parsed + items scraped, so the healthy pagination
-        phase (pages advancing, items flat) is not mistaken for a wedge.
+        phase (pages advancing, items flat) is not mistaken for a wedge. Only a
+        run of ``STALL_ALERT_WINDOWS`` consecutive no-progress windows alerts, so
+        a transient slow patch (search ramp-up, tarpitted searches that later
+        resolve) is tolerated while a persistent wedge is not.
         """
         stats = getattr(getattr(self, "crawler", None), "stats", None)
         if stats is None:
@@ -658,11 +672,16 @@ class MarylandSpider(scrapy.Spider):
         self._stall_last_responses = responses
         self._stall_last_progress = progress
         if d_resp >= STALL_MIN_RESPONSES and d_prog == 0:
+            self._stall_windows += 1
+        else:
+            self._stall_windows = 0
+        if self._stall_windows >= STALL_ALERT_WINDOWS:
+            stalled_s = self._stall_windows * STALL_CHECK_INTERVAL
             self.logger.error(
-                f"STALL: {d_resp} responses in the last {STALL_CHECK_INTERVAL}s "
-                f"produced no new pages or items (pages_parsed="
-                f"{self._pages_parsed}, items={items}) — the crawl appears "
-                f"wedged, not merely slow."
+                f"STALL: no new pages or items for ~{stalled_s}s across "
+                f"{self._stall_windows} checks while responses kept arriving "
+                f"(pages_parsed={self._pages_parsed}, items={items}) — the crawl "
+                f"appears wedged, not merely slow."
             )
 
     def closed(self, reason):
