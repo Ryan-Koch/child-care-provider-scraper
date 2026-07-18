@@ -7,6 +7,8 @@ import re
 import pypdfium2 as pdfium
 import scrapy
 import tesserocr
+from scrapy import signals
+from twisted.internet import task
 
 from provider_scrape.items import InspectionItem, ProviderItem
 
@@ -65,6 +67,45 @@ MAX_CHAIN_RESTARTS = 3
 # API, so these leave generous headroom over the happy path.
 DETAIL_DOWNLOAD_TIMEOUT = 60
 EXCELS_DOWNLOAD_TIMEOUT = 30
+
+# All provider-detail GETs share one long-lived cookie jar instead of pinning to
+# their county's pagination session. A detail page needs only *any* warm
+# checkccmd session cookie plus the SearchResults referer — the ``fi`` is a
+# global key, not county-scoped (verified live 2026-07-18) — so it does NOT need
+# the session that ran the county search. Pinning details to the county jar was
+# the 2026-07 stall: pagination holds the single 33s slot for many hours, so the
+# huge detail backlog only drains afterwards, by which point every county session
+# has idled out and each detail silently bounced to the search page (~70% of
+# providers dropped, invisibly). One jar used continuously (a detail every ~33s)
+# stays warm for the whole run, and single-flight (concurrency 1 on the host)
+# means sharing it never causes ASP.NET session-lock contention.
+DETAIL_COOKIEJAR = "__details__"
+
+# The referer the licensing site requires on a detail GET (it redirects to the
+# search page otherwise). RefererMiddleware sets it automatically on the normal
+# path — details are followed from the SearchResults page — so we only set it
+# explicitly when re-issuing a bounced detail.
+SEARCH_RESULTS_REFERER = "https://www.checkccmd.org/SearchResults.aspx"
+
+# A detail GET that lands on a non-detail page means the shared session was cold
+# (the first detail of the run) or briefly expired. The bounce response itself
+# sets a fresh session cookie on the shared jar, so we simply re-issue the
+# request. Bounded so a genuinely bad ``fi`` can't loop, and the final give-up is
+# loud (ERROR) — never the old silent drop that let the stall hide.
+MAX_DETAIL_REPRIMES = 3
+
+# No-progress stall watchdog. The 2026-07 stall spun at ~2 responses/min for ~50h
+# while items stayed frozen and nothing above DEBUG was logged, so it never
+# surfaced until noticed by hand. This watchdog periodically checks whether real
+# forward progress — a newly parsed results page OR a scraped item — happened
+# while responses kept flowing; if responses advanced but progress did not, it
+# logs loudly (ERROR). Combining pages+items is deliberate: during the long,
+# healthy pagination phase items stay ~flat by design (details are deprioritized),
+# so keying only off items would cry wolf for hours — but a new page IS progress,
+# so the watchdog stays quiet then and fires only on a true wedge. Log-only: it
+# never closes the spider, so it can't truncate a run that is merely slow.
+STALL_CHECK_INTERVAL = 600
+STALL_MIN_RESPONSES = 4
 
 # Seconds between consecutive requests to the checkccmd.org host. The site now
 # enforces a hard per-IP request-rate limit (IIS Dynamic IP Restrictions): a
@@ -199,6 +240,10 @@ class MarylandSpider(scrapy.Spider):
             "(per-IP rate limit); EXCELS on its own fast slot.",
             spider.delay,
         )
+        # Start/stop the no-progress stall watchdog with the crawl.
+        crawler.signals.connect(
+            spider._start_stall_watch, signal=signals.spider_opened
+        )
         return spider
 
     def __init__(
@@ -224,6 +269,10 @@ class MarylandSpider(scrapy.Spider):
         # silently "finished" short run (see closed()).
         self.declared_total_by_county = {}
         self.found_count_by_county = {}
+        # Monotonic count of results pages whose rows we've parsed, across all
+        # counties. Feeds the no-progress stall watchdog: a new page is forward
+        # progress even while items are (by design) flat during pagination.
+        self._pages_parsed = 0
         # When EXCELS has no address for a provider, fall back to the slow
         # inspection-report PDF + OCR. Disable (``-a ocr_fallback=false``) for a
         # pure-fast run that downloads zero PDFs.
@@ -357,6 +406,9 @@ class MarylandSpider(scrapy.Spider):
             )
             return
         parsed_pages.add(current_page)
+        # Forward progress for the stall watchdog (a new page, even while items
+        # stay flat during the pagination phase).
+        self._pages_parsed += 1
 
         # Extract provider detail links, deduplicating by facility ID
         rows = response.css("#grdResults tr.rowStyle")
@@ -394,13 +446,14 @@ class MarylandSpider(scrapy.Spider):
                     cols[5].css("::text").get("").strip() if len(cols) > 5 else None
                 )
 
-                # Pin the detail request to this county's cookie session. The
-                # licensing site is ASP.NET, which holds a per-session request
-                # lock — requests sharing one session are processed serially by
-                # the server (~16s each). Without this, every detail request
-                # across all counties shares the one default session and the
-                # whole crawl serializes. Per-county jars let the ~24 counties'
-                # detail requests run concurrently.
+                # Details ride one shared, self-warming session jar rather than
+                # this county's pagination session (see DETAIL_COOKIEJAR): the fi
+                # is a global key and a detail needs only a warm session + the
+                # SearchResults referer, so pinning to the county jar bought no
+                # concurrency under single-flight and only created the stall where
+                # details drained after their county session had died.
+                # response.follow sets the referer from this results page
+                # (SearchResults.aspx) automatically.
                 yield response.follow(
                     link,
                     callback=self.parse_detail,
@@ -413,7 +466,7 @@ class MarylandSpider(scrapy.Spider):
                     # RETRY_TIMES re-fetch a tarpitted page rather than tie up a
                     # per-IP slot for three minutes.
                     meta={
-                        "cookiejar": county_key,
+                        "cookiejar": DETAIL_COOKIEJAR,
                         "download_timeout": DETAIL_DOWNLOAD_TIMEOUT,
                     },
                 )
@@ -524,6 +577,41 @@ class MarylandSpider(scrapy.Spider):
             errback=self._pagination_errback,
         )
 
+    def _start_stall_watch(self, *args, **kwargs):
+        """Begin the periodic no-progress check (on spider_opened).
+
+        Accepts the signal's ``spider`` kwarg; ``self`` is already the spider.
+        """
+        self._stall_last_responses = 0
+        self._stall_last_progress = 0
+        self._stall_task = task.LoopingCall(self._check_stall)
+        # now=False: first check one interval in, once the crawl is underway.
+        self._stall_task.start(STALL_CHECK_INTERVAL, now=False)
+
+    def _check_stall(self):
+        """Log loudly if responses kept flowing but nothing progressed.
+
+        Progress = new pages parsed + items scraped, so the healthy pagination
+        phase (pages advancing, items flat) is not mistaken for a wedge.
+        """
+        stats = getattr(getattr(self, "crawler", None), "stats", None)
+        if stats is None:
+            return
+        responses = stats.get_value("response_received_count", 0) or 0
+        items = stats.get_value("item_scraped_count", 0) or 0
+        progress = self._pages_parsed + items
+        d_resp = responses - self._stall_last_responses
+        d_prog = progress - self._stall_last_progress
+        self._stall_last_responses = responses
+        self._stall_last_progress = progress
+        if d_resp >= STALL_MIN_RESPONSES and d_prog == 0:
+            self.logger.error(
+                f"STALL: {d_resp} responses in the last {STALL_CHECK_INTERVAL}s "
+                f"produced no new pages or items (pages_parsed="
+                f"{self._pages_parsed}, items={items}) — the crawl appears "
+                f"wedged, not merely slow."
+            )
+
     def closed(self, reason):
         """Report per-county completeness when the spider closes.
 
@@ -533,6 +621,10 @@ class MarylandSpider(scrapy.Spider):
         actually paginated through against the count each county's results page
         declared and make any shortfall loud (ERROR) instead of silent.
         """
+        stall_task = getattr(self, "_stall_task", None)
+        if stall_task is not None and stall_task.running:
+            stall_task.stop()
+
         incomplete = []
         total_declared = 0
         total_found = 0
@@ -563,12 +655,36 @@ class MarylandSpider(scrapy.Spider):
                 f"{len(self.declared_total_by_county)} counties."
             )
 
+        # Item-level completeness. The paginated-row check above only proves we
+        # walked each county's result rows — NOT that those rows became items.
+        # The 2026-07 stall paginated fully but dropped most details, and this
+        # guardrail was blind to it. Compare items actually scraped against the
+        # declared total so a detail-draining shortfall is loud too.
+        stats = getattr(getattr(self, "crawler", None), "stats", None)
+        if stats is not None and total_declared:
+            scraped = stats.get_value("item_scraped_count", 0) or 0
+            if scraped < total_declared:
+                self.logger.error(
+                    f"Crawl INCOMPLETE ({reason}): scraped {scraped} items but "
+                    f"{total_declared} providers were declared "
+                    f"({total_declared - scraped} missing) — details did not "
+                    f"fully drain."
+                )
+
     def parse_detail(self, response, address=None, school_name=None, program_type=None):
-        """Parse a provider detail page."""
-        # Check if we actually got the detail page (not redirected to search)
+        """Parse a provider detail page.
+
+        A detail GET that redirects away from ``FacilityDetail`` means the shared
+        detail session (``DETAIL_COOKIEJAR``) was cold — the first detail of the
+        run, or a rare mid-run expiry. Rather than silently dropping the provider
+        (the old behavior, which let the 2026-07 stall hide), re-issue it: the
+        bounce itself set a fresh session cookie on the shared jar, so the retry —
+        same fi, SearchResults referer restored — succeeds. Bounded by
+        ``MAX_DETAIL_REPRIMES``; an unrecoverable fi is dropped loudly (ERROR).
+        """
         if "FacilityDetail" not in response.url:
-            self.logger.warning(
-                f"Expected detail page but got: {response.url}. Skipping."
+            yield from self._reissue_bounced_detail(
+                response, address, school_name, program_type
             )
             return
 
@@ -678,6 +794,45 @@ class MarylandSpider(scrapy.Spider):
             )
         else:
             yield from self._address_fallback(item, first_report_url)
+
+    def _reissue_bounced_detail(self, response, address, school_name, program_type):
+        """Re-issue a detail GET that bounced to the search page (cold session).
+
+        The bounce set a fresh session cookie on the shared detail jar, so the
+        re-issued request (same fi, SearchResults referer restored) succeeds.
+        Bounded by ``MAX_DETAIL_REPRIMES``; a genuinely unrecoverable fi is
+        dropped loudly rather than silently.
+        """
+        reprimes = response.meta.get("detail_reprimes", 0)
+        # After a redirect, ``response.url`` is the search page; the originally
+        # requested detail URL is the first entry of ``redirect_urls``.
+        original = (response.meta.get("redirect_urls") or [response.url])[0]
+        if "FacilityDetail" not in original or reprimes >= MAX_DETAIL_REPRIMES:
+            self.logger.error(
+                f"Detail dropped: {original} still bounces to {response.url} "
+                f"after {reprimes} re-prime(s)."
+            )
+            return
+        self.logger.warning(
+            f"Detail session bounce for {original} -> {response.url}; re-issuing "
+            f"({reprimes + 1}/{MAX_DETAIL_REPRIMES})."
+        )
+        yield scrapy.Request(
+            original,
+            callback=self.parse_detail,
+            cb_kwargs={
+                "address": address,
+                "school_name": school_name,
+                "program_type": program_type,
+            },
+            headers={"Referer": SEARCH_RESULTS_REFERER},
+            meta={
+                "cookiejar": DETAIL_COOKIEJAR,
+                "download_timeout": DETAIL_DOWNLOAD_TIMEOUT,
+                "detail_reprimes": reprimes + 1,
+            },
+            dont_filter=True,
+        )
 
     def parse_excels(self, response, item, first_report_url=None):
         """Enrich the item with a precise address + coordinates from EXCELS.
