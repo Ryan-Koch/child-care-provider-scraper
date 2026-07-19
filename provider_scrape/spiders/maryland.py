@@ -102,25 +102,37 @@ SEARCH_RESULTS_REFERER = "https://www.checkccmd.org/SearchResults.aspx"
 # loud (ERROR) — never the old silent drop that let the stall hide.
 MAX_DETAIL_REPRIMES = 3
 
-# No-progress stall watchdog. The 2026-07 stall spun at ~2 responses/min for ~50h
-# while items stayed frozen and nothing above DEBUG was logged, so it never
-# surfaced until noticed by hand. This watchdog periodically checks whether real
-# forward progress — a newly parsed results page OR a scraped item — happened
-# while responses kept flowing; if responses advanced but progress did not, it
-# logs loudly (ERROR). Combining pages+items is deliberate: during the long,
-# healthy pagination phase items stay ~flat by design (details are deprioritized),
-# so keying only off items would cry wolf for hours — but a new page IS progress,
-# so the watchdog stays quiet then and fires only on a true wedge. Log-only: it
-# never closes the spider, so it can't truncate a run that is merely slow.
+# Adaptive shard splitting. A (county, facility-type) search that still declares
+# more than this many providers paginates too deep — deep ASP.NET "skip to page
+# N" postbacks get tarpitted past 180s and truncate/deadlock. When a top-level
+# type shard's first page declares over the threshold, we re-issue it split by
+# license status (one sub-search per status) instead of paginating it, keeping
+# every chain shallow. 700 providers is ~50 pages at 14 rows/page; the biggest
+# type shard (family homes in the largest counties) is ~1,240 and splits into
+# sub-shards that top out near this bound. Sub-shards are not split further.
+SHARD_SPLIT_THRESHOLD = 700
+
+# No-progress stall watchdog. Maryland runs have wedged two different ways with
+# nothing above DEBUG logged: a *spin* (responses keep arriving at ~2/min but
+# items/pages stay frozen, the 2026-07 50h stall) and a *deadlock* (every request
+# times out, so responses flatline to zero — e.g. the proxy pool where each big
+# county's deep-page pagination postback, pinned to one proxy at high priority,
+# times out at 180s and monopolizes that proxy's slot while the site/proxies are
+# unresponsive). This watchdog catches BOTH: forward progress is "a newly parsed
+# results page OR a scraped item," and if none happens across a window — whether
+# or not responses are still flowing — that window counts as stalled.
 #
-# It alerts only after STALL_ALERT_WINDOWS *consecutive* no-progress windows, so
-# a transient slow patch (e.g. the search-submission ramp-up, where county home
-# pages return but no results page has parsed yet, or a burst of tarpitted
-# searches that later resolve) doesn't cry wolf. A genuine wedge persists and
-# still trips within ~STALL_ALERT_WINDOWS * STALL_CHECK_INTERVAL seconds.
+# Progress = pages + items on purpose: during the healthy pagination phase items
+# stay ~flat by design (details are deprioritized), but new pages are progress, so
+# the watchdog stays quiet then. It ALERTS (ERROR) only after STALL_ALERT_WINDOWS
+# consecutive stalled windows, so a transient slow patch (search ramp-up, a burst
+# of tarpitted searches that later resolve) doesn't cry wolf. If the stall
+# persists to STALL_CLOSE_WINDOWS it FORCE-CLOSES the spider (unless disabled with
+# ``-a stall_close=off``) so a dead run ends — flushing the items collected so far
+# and firing the completeness guardrails — instead of burning hours doing nothing.
 STALL_CHECK_INTERVAL = 600
-STALL_MIN_RESPONSES = 4
 STALL_ALERT_WINDOWS = 3
+STALL_CLOSE_WINDOWS = 6
 
 # Seconds between consecutive requests to the checkccmd.org host. The site now
 # enforces a hard per-IP request-rate limit (IIS Dynamic IP Restrictions): a
@@ -255,27 +267,36 @@ class MarylandSpider(scrapy.Spider):
         # Apply the (tunable) single-flight spacing to the checkccmd host. Set
         # here rather than in custom_settings so ``-a delay=<seconds>`` works.
         crawler.settings.set("DOWNLOAD_DELAY", spider.delay, priority="spider")
-        if spider.proxy_pool:
-            spider.logger.info(
-                "MarylandSpider: proxy pool ENABLED — %d egress IPs (%s); each "
-                "held to single-flight DOWNLOAD_DELAY=%ss on its own slot; "
-                "EXCELS direct.",
-                len(spider.proxy_pool),
-                ", ".join(spider.proxy_pool.ids),
-                spider.delay,
-            )
-        else:
-            spider.logger.info(
-                "MarylandSpider: single-IP mode, checkccmd single-flight "
-                "DOWNLOAD_DELAY=%ss (per-IP rate limit); EXCELS on its own fast "
-                "slot.",
-                spider.delay,
-            )
-        # Start/stop the no-progress stall watchdog with the crawl.
+        # NOTE: from_crawler runs *before* Scrapy attaches the LOG_FILE handler
+        # (Crawler.crawl calls _create_spider ahead of _update_root_log_handler),
+        # so anything logged here never reaches the log file. Defer the run-mode
+        # banner and start the stall watchdog on spider_opened, which fires once
+        # logging is fully configured.
+        crawler.signals.connect(spider._log_run_mode, signal=signals.spider_opened)
         crawler.signals.connect(
             spider._start_stall_watch, signal=signals.spider_opened
         )
         return spider
+
+    def _log_run_mode(self, *args, **kwargs):
+        """Log single-IP vs proxy-pool mode. Connected to spider_opened (not done
+        in from_crawler) so the line actually lands in the log file."""
+        if self.proxy_pool:
+            self.logger.info(
+                "MarylandSpider: proxy pool ENABLED — %d egress IPs (%s); each "
+                "held to single-flight DOWNLOAD_DELAY=%ss on its own slot; "
+                "EXCELS direct.",
+                len(self.proxy_pool),
+                ", ".join(self.proxy_pool.ids),
+                self.delay,
+            )
+        else:
+            self.logger.info(
+                "MarylandSpider: single-IP mode, checkccmd single-flight "
+                "DOWNLOAD_DELAY=%ss (per-IP rate limit); EXCELS on its own fast "
+                "slot.",
+                self.delay,
+            )
 
     # Only checkccmd.org egresses through the proxy pool; the EXCELS API is a
     # separate, non-throttling host and stays direct on its own fast slot.
@@ -288,12 +309,19 @@ class MarylandSpider(scrapy.Spider):
         delay=DEFAULT_DELAY,
         proxies=None,
         proxy_env=None,
+        stall_close=True,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         # Seconds between consecutive checkccmd.org requests, per egress IP.
         self.delay = float(delay)
+        # If the no-progress stall watchdog sees a persistent wedge, force-close
+        # the spider rather than let it hang for hours. On by default; disable
+        # (leave a dead run hanging, e.g. for debugging) with -a stall_close=off.
+        self.stall_close = str(stall_close).lower() not in (
+            "false", "0", "no", "off"
+        )
         # Optional multi-IP proxy pool (opt-in). Off by default: with no
         # webshare.env and no ``-a proxies=``, the crawl egresses from the single
         # host IP exactly as before. Disable explicitly with ``-a proxies=off``
@@ -356,6 +384,17 @@ class MarylandSpider(scrapy.Spider):
         self._license_statuses = response.css(
             "#MainContent_ddlLicenseStatus option::attr(value)"
         ).getall()
+        # (value, label) per status, for splitting an oversized shard by status.
+        # The value is a comma-joined status list; the label ("Open", "Closed",
+        # …) makes a readable sub-shard key.
+        self._license_status_options = [
+            (
+                o.attrib.get("value", ""),
+                (o.css("::text").get() or "").strip(),
+            )
+            for o in response.css("#MainContent_ddlLicenseStatus option")
+            if o.attrib.get("value")
+        ]
         counties = response.css(
             "#MainContent_ddlCountyList option::attr(value)"
         ).getall()
@@ -377,48 +416,117 @@ class MarylandSpider(scrapy.Spider):
             f"Form options: {len(self._fac_types)} types, "
             f"{len(self._license_statuses)} statuses, "
             f"{len(counties)} counties, {len(self._cities)} cities "
-            f"— launching one search per county"
+            f"— launching one search per (county, facility type) shard"
         )
 
-        # Each county gets its own cookie jar (session) so concurrent searches
-        # don't overwrite each other's server-side state. We load the search
-        # page fresh for each county to get a clean ViewState + session.
-        for county in counties:
-            self.parsed_pages_by_county[county] = set()
-            self.nav_attempts_by_county[county] = {}
-            self.chain_restarts_by_county[county] = 0
-            yield scrapy.Request(
-                "https://www.checkccmd.org/",
-                callback=self.parse_county_search,
-                cb_kwargs={"county_key": county},
-                # Pin this county's whole session/ViewState chain to one proxy
-                # (no-op in single-IP mode) so its cookies and IP stay consistent.
-                meta={"cookiejar": county, "proxy_affinity": county},
-                dont_filter=True,
-                priority=RESULTS_PRIORITY,
-            )
+        # Shard each county's search by facility type. A single county search
+        # (all types) for a big county paginates 60-140 deep, and deep ASP.NET
+        # "skip to page N" postbacks get tarpitted past 180s and truncate/deadlock
+        # (see the 2026-07 stalls). Per-type shards keep each chain shallow, and —
+        # crucially under the proxy pool — the deepest 'Homes' shards spread across
+        # proxies instead of one big county monopolizing a single IP.
+        #
+        # Loop ORDER matters: facility type OUTER, county INNER. The proxy pool
+        # assigns sticky affinity round-robin in request order, so with types
+        # outer each type's shards fan across all proxies (the four deepest 'Homes'
+        # shards land on four different proxies). Types inner would map every
+        # 'Homes' shard to the same proxy (type index mod proxy count) and rebuild
+        # the monopoly. Each shard gets its own cookie jar + fresh ViewState.
+        for fac_type in self._fac_types:
+            for county in counties:
+                shard = self._shard_key(county, fac_type)
+                self.parsed_pages_by_county[shard] = set()
+                self.nav_attempts_by_county[shard] = {}
+                self.chain_restarts_by_county[shard] = 0
+                yield scrapy.Request(
+                    "https://www.checkccmd.org/",
+                    callback=self.parse_county_search,
+                    cb_kwargs={
+                        "county_key": shard,
+                        "county": county,
+                        "fac_type": fac_type,
+                    },
+                    meta={"cookiejar": shard, "proxy_affinity": shard},
+                    dont_filter=True,
+                    priority=RESULTS_PRIORITY,
+                )
 
-    def parse_county_search(self, response, county_key):
-        """Submit the search form for a single county."""
+    @staticmethod
+    def _shard_key(county, fac_type):
+        """Pagination-tracking key for one (county, facility-type) search shard."""
+        return f"{county} [{fac_type}]"
+
+    def parse_county_search(self, response, county_key, county, fac_type, status=None):
+        """Submit the search for one shard.
+
+        A top-level shard (``status is None``) selects one facility type across
+        all license statuses and is eligible to be split by status if it comes
+        back too large. A status sub-shard selects that single status and is not
+        split further.
+        """
         self.logger.info(f"[{county_key}] Submitting search...")
+        statuses = [status] if status is not None else self._license_statuses
         yield scrapy.FormRequest.from_response(
             response,
             formdata={
-                "ctl00$MainContent$ddlFacType": self._fac_types,
-                "ctl00$MainContent$ddlLicenseStatus": self._license_statuses,
-                "ctl00$MainContent$ddlCountyList": [county_key],
+                # One facility type per shard (vs all types) keeps the result set
+                # small so pagination stays shallow.
+                "ctl00$MainContent$ddlFacType": [fac_type],
+                "ctl00$MainContent$ddlLicenseStatus": statuses,
+                "ctl00$MainContent$ddlCountyList": [county],
                 "ctl00$MainContent$ddlCityList": self._cities,
                 "ctl00$MainContent$SearchButton": "SEARCH",
             },
             callback=self.parse_results,
-            cb_kwargs={"county_key": county_key, "expected_page": 1},
+            cb_kwargs={
+                "county_key": county_key,
+                "expected_page": 1,
+                # Only a top-level type shard may split by status.
+                "allow_split": status is None,
+                "county": county,
+                "fac_type": fac_type,
+            },
             meta={"cookiejar": county_key, "proxy_affinity": county_key},
             dont_click=True,
             dont_filter=True,
             priority=RESULTS_PRIORITY,
         )
 
-    def parse_results(self, response, county_key=None, expected_page=1):
+    def _split_shard_by_status(self, county, fac_type):
+        """Re-issue an oversized type shard as one sub-search per license status.
+
+        Each sub-shard gets its own session/jar and proxy affinity (so they fan
+        across the pool), and is not split further. The oversized parent is not
+        paginated — the sub-shards cover the same providers, shallower.
+        """
+        for status_value, status_label in self._license_status_options:
+            sub = self._shard_key(county, f"{fac_type}/{status_label}")
+            self.parsed_pages_by_county[sub] = set()
+            self.nav_attempts_by_county[sub] = {}
+            self.chain_restarts_by_county[sub] = 0
+            yield scrapy.Request(
+                "https://www.checkccmd.org/",
+                callback=self.parse_county_search,
+                cb_kwargs={
+                    "county_key": sub,
+                    "county": county,
+                    "fac_type": fac_type,
+                    "status": status_value,
+                },
+                meta={"cookiejar": sub, "proxy_affinity": sub},
+                dont_filter=True,
+                priority=RESULTS_PRIORITY,
+            )
+
+    def parse_results(
+        self,
+        response,
+        county_key=None,
+        expected_page=1,
+        allow_split=False,
+        county=None,
+        fac_type=None,
+    ):
         """Parse the search results page, with self-healing pagination.
 
         Pagination is a sequential chain: each results page enqueues the next.
@@ -430,6 +538,10 @@ class MarylandSpider(scrapy.Spider):
         ``MAX_NAV_ATTEMPTS``. Previously such a stale postback silently
         truncated the county's chain (the old dedup guard refused to re-request
         the page), which dropped ~60% of providers in a full run.
+
+        ``allow_split`` (set only for a top-level type shard's first page) lets an
+        oversized shard re-issue itself split by license status instead of
+        paginating too deep — see ``_split_shard_by_status``.
         """
         pager_row = response.css("tr.dataPager")
         current_page = 1
@@ -453,12 +565,31 @@ class MarylandSpider(scrapy.Spider):
         total_text = response.css("#MainContent_lblTotalRows::text").get()
         self.logger.info(f"[{county_key}] page {current_page} — Total: {total_text}")
 
-        # Record the declared provider count for this county (same on every
-        # page) for the spider-close completeness check.
-        if county_key not in self.declared_total_by_county and total_text:
-            total_match = re.search(r"(\d+)", total_text)
-            if total_match:
-                self.declared_total_by_county[county_key] = int(total_match.group(1))
+        total_match = re.search(r"(\d+)", total_text) if total_text else None
+        declared = int(total_match.group(1)) if total_match else None
+
+        # Adaptive split: if a top-level type shard is still too big, re-issue it
+        # split by license status (shallower chains) instead of paginating deep.
+        # Done on the first page only, before recording/paginating, so the parent
+        # isn't double-counted — the sub-shards cover the same providers.
+        if (
+            allow_split
+            and current_page == 1
+            and county is not None
+            and declared is not None
+            and declared > SHARD_SPLIT_THRESHOLD
+        ):
+            self.logger.info(
+                f"[{county_key}] declares {declared} providers "
+                f"(> {SHARD_SPLIT_THRESHOLD}) — splitting by license status."
+            )
+            yield from self._split_shard_by_status(county, fac_type)
+            return
+
+        # Record the declared provider count for this shard (same on every page)
+        # for the spider-close completeness check.
+        if county_key not in self.declared_total_by_county and declared is not None:
+            self.declared_total_by_county[county_key] = declared
 
         # Skip a page that's already been parsed (e.g. a duplicate/late retry
         # delivery): don't re-extract its rows or re-drive pagination from it.
@@ -653,13 +784,16 @@ class MarylandSpider(scrapy.Spider):
         self._stall_task.start(STALL_CHECK_INTERVAL, now=False)
 
     def _check_stall(self):
-        """Log loudly if responses kept flowing but nothing progressed.
+        """Alert (and eventually force-close) on a persistent no-progress stall.
 
         Progress = new pages parsed + items scraped, so the healthy pagination
-        phase (pages advancing, items flat) is not mistaken for a wedge. Only a
-        run of ``STALL_ALERT_WINDOWS`` consecutive no-progress windows alerts, so
-        a transient slow patch (search ramp-up, tarpitted searches that later
-        resolve) is tolerated while a persistent wedge is not.
+        phase (pages advancing, items flat) is not mistaken for a wedge. A window
+        with no progress counts as stalled whether or not responses are still
+        arriving, so both a spin (responses flow, nothing progresses) and a
+        deadlock (every request times out, responses flatline) are caught. Only a
+        run of ``STALL_ALERT_WINDOWS`` consecutive stalled windows alerts (so a
+        transient slow patch is tolerated); a stall reaching ``STALL_CLOSE_WINDOWS``
+        force-closes the spider unless disabled.
         """
         stats = getattr(getattr(self, "crawler", None), "stats", None)
         if stats is None:
@@ -671,27 +805,38 @@ class MarylandSpider(scrapy.Spider):
         d_prog = progress - self._stall_last_progress
         self._stall_last_responses = responses
         self._stall_last_progress = progress
-        if d_resp >= STALL_MIN_RESPONSES and d_prog == 0:
+        if d_prog == 0:
             self._stall_windows += 1
         else:
             self._stall_windows = 0
-        if self._stall_windows >= STALL_ALERT_WINDOWS:
-            stalled_s = self._stall_windows * STALL_CHECK_INTERVAL
-            self.logger.error(
-                f"STALL: no new pages or items for ~{stalled_s}s across "
-                f"{self._stall_windows} checks while responses kept arriving "
-                f"(pages_parsed={self._pages_parsed}, items={items}) — the crawl "
-                f"appears wedged, not merely slow."
-            )
+            return
+        if self._stall_windows < STALL_ALERT_WINDOWS:
+            return
+        stalled_s = self._stall_windows * STALL_CHECK_INTERVAL
+        kind = "frozen (no responses)" if d_resp == 0 else f"spinning ({d_resp} responses)"
+        self.logger.error(
+            f"STALL: no new pages or items for ~{stalled_s}s — {kind} "
+            f"(pages_parsed={self._pages_parsed}, items={items})."
+        )
+        if self.stall_close and self._stall_windows >= STALL_CLOSE_WINDOWS:
+            engine = getattr(getattr(self, "crawler", None), "engine", None)
+            if engine is not None and not getattr(self, "_stall_closing", False):
+                self._stall_closing = True
+                self.logger.error(
+                    f"Stalled ~{stalled_s}s with no progress — closing the spider "
+                    f"(reason=stalled) so it doesn't hang; disable with "
+                    f"-a stall_close=off."
+                )
+                engine.close_spider(self, "stalled")
 
     def closed(self, reason):
-        """Report per-county completeness when the spider closes.
+        """Report per-shard completeness when the spider closes.
 
         Auto-connected to the ``spider_closed`` signal by Scrapy. The crawl can
         report ``finish_reason: finished`` while still having dropped most of a
-        county (a truncated pagination chain), so compare the provider rows we
-        actually paginated through against the count each county's results page
-        declared and make any shortfall loud (ERROR) instead of silent.
+        (county, facility-type) shard (a truncated pagination chain), so compare
+        the provider rows we actually paginated through against the count each
+        shard's results page declared and make any shortfall loud (ERROR).
         """
         stall_task = getattr(self, "_stall_task", None)
         if stall_task is not None and stall_task.running:
@@ -700,31 +845,30 @@ class MarylandSpider(scrapy.Spider):
         incomplete = []
         total_declared = 0
         total_found = 0
-        for county in sorted(self.declared_total_by_county):
-            declared = self.declared_total_by_county[county]
-            found = self.found_count_by_county.get(county, 0)
+        for shard in sorted(self.declared_total_by_county):
+            declared = self.declared_total_by_county[shard]
+            found = self.found_count_by_county.get(shard, 0)
             total_declared += declared
             total_found += found
             if found < declared:
-                incomplete.append((county, found, declared))
+                incomplete.append((shard, found, declared))
 
+        n_shards = len(self.declared_total_by_county)
         if incomplete:
             self.logger.error(
                 f"Crawl INCOMPLETE ({reason}): paginated {total_found} of "
-                f"{total_declared} declared providers across "
-                f"{len(self.declared_total_by_county)} counties; "
+                f"{total_declared} declared providers across {n_shards} shards; "
                 f"{len(incomplete)} short:"
             )
-            for county, found, declared in incomplete:
+            for shard, found, declared in incomplete:
                 self.logger.error(
-                    f"  [{county}] {found}/{declared} "
+                    f"  [{shard}] {found}/{declared} "
                     f"({declared - found} missing)"
                 )
         else:
             self.logger.info(
                 f"Crawl complete ({reason}): paginated all {total_found} "
-                f"declared providers across "
-                f"{len(self.declared_total_by_county)} counties."
+                f"declared providers across {n_shards} shards."
             )
 
         # Item-level completeness. The paginated-row check above only proves we
