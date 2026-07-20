@@ -1232,8 +1232,10 @@ def test_parse_excels_miss_falls_back_to_pdf(spider):
     assert isinstance(pdf_request, scrapy.Request)
     assert "PrintTask.aspx?t=1&d=2" in pdf_request.url
     assert pdf_request.callback == spider.parse_inspection_pdf
-    # The PDF is on the same checkccmd host and must share the single-flight
-    # host slot (per-IP rate limit) — NOT a separate download slot.
+    # The ~1MB PDF bypasses the proxy pool (public, no session needed) and
+    # egresses from the host IP, so it doesn't burn metered proxy bandwidth.
+    assert pdf_request.meta.get("proxy_bypass") is True
+    # It rides the default host slot, not a per-proxy download slot.
     assert "download_slot" not in pdf_request.meta
 
 

@@ -79,3 +79,16 @@ def test_only_configured_domains_are_proxied():
     other = Request("https://example.com/x")
     mw.process_request(other, _spider(_pool()))
     assert "proxy" not in other.meta
+
+
+def test_proxy_bypass_egresses_direct_from_host():
+    mw = ProxyPoolMiddleware()
+    # A pooled-domain request flagged proxy_bypass (e.g. a ~1MB inspection PDF)
+    # is left direct so it doesn't consume metered proxy bandwidth.
+    pdf = Request(
+        "https://www.checkccmd.org/PublicReports/PrintTask.aspx?t=1&d=2",
+        meta={"proxy_bypass": True},
+    )
+    mw.process_request(pdf, _spider(_pool()))
+    assert "proxy" not in pdf.meta
+    assert "download_slot" not in pdf.meta

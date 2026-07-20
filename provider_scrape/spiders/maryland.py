@@ -1120,17 +1120,21 @@ class MarylandSpider(scrapy.Spider):
     def _address_fallback(self, item, first_report_url):
         """Yield the item, using PDF/OCR for a precise address when enabled.
 
-        The PDF report lives on the same checkccmd.org host, so it goes through
-        the default (single-flight, delayed) host slot — NOT a separate slot.
-        Splitting it out would put a second concurrent stream on the same IP and
-        trip the per-IP rate limit; the throttle now caps total host throughput,
-        so every checkccmd request must share one budget.
+        The ~1 MB inspection PDF is fetched with ``proxy_bypass`` so it egresses
+        from the host IP (the default checkccmd slot), NOT the proxy pool —
+        verified live that the PDF is public and needs no session cookie or
+        referer. This keeps the pool's metered bandwidth for the small
+        detail/pagination requests (a PDF is ~30x a detail page). Direct is safe:
+        in pool mode the host IP carries only these PDFs, single-flight at the 33s
+        host delay, well under the per-IP ceiling; in single-IP mode the flag is a
+        no-op and the PDF shares the one host slot as before.
         """
         if self.ocr_fallback and first_report_url:
             yield scrapy.Request(
                 first_report_url,
                 callback=self.parse_inspection_pdf,
                 cb_kwargs={"item": item},
+                meta={"proxy_bypass": True},
                 dont_filter=True,
             )
         else:

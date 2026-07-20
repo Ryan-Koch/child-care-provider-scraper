@@ -142,7 +142,10 @@ class ProxyPoolMiddleware:
         return (urlparse(request.url).hostname or "").lower()
 
     def _should_proxy(self, request, spider, pool):
-        if not pool or request.meta.get("proxy"):
+        # proxy_bypass lets a request egress direct from the host IP even on a
+        # pooled domain — e.g. Maryland's ~1MB inspection PDFs, which are public
+        # (no session needed) and would otherwise burn metered proxy bandwidth.
+        if not pool or request.meta.get("proxy") or request.meta.get("proxy_bypass"):
             return False
         domains = getattr(spider, "proxy_pool_domains", None)
         if not domains:
