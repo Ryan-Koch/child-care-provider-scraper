@@ -3,6 +3,7 @@
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
+import logging
 from urllib.parse import urlparse
 
 from scrapy import signals
@@ -126,16 +127,46 @@ class ProxyPoolMiddleware:
 
     Must run **before** ``HttpProxyMiddleware`` (default order 750) so the proxy
     it sets is honored; register it at a lower order (see settings).
+
+    While a pool is active it also emits a periodic per-IP activity report at
+    INFO (every ``PROXY_POOL_STATS_INTERVAL`` s) — each proxy's ok/blocked/err
+    for the window plus totals — so a production run shows whether detail pulls
+    are still fanning out across every IP, and flags (WARNING) any proxy that was
+    sent work but completed nothing (the free-proxy throttle signature). Run
+    totals also land in the final Scrapy stats dump under ``proxy_pool/<id>/*``.
     """
 
-    def __init__(self):
-        import logging
-
+    def __init__(self, crawler=None):
         self.logger = logging.getLogger(__name__)
+        self.crawler = crawler
+        self.stats = crawler.stats if crawler is not None else None
+        self.interval = (
+            crawler.settings.getfloat("PROXY_POOL_STATS_INTERVAL", 300.0)
+            if crawler is not None
+            else 300.0
+        )
+        # Per-proxy activity, keyed by proxy_id. Seeded at spider_opened from the
+        # live pool so a proxy that goes silent (0 completions under throttle)
+        # still shows in the report instead of vanishing. Buckets: req (sent),
+        # ok (2xx), blk (403 rate-limit), oth (other status), err (exception).
+        self._counts = {}
+        self._last = {}
+        # Download-exception class -> count (pool-wide). The err bucket only says
+        # *how many* failed; the class name says *why* (TimeoutError vs
+        # ConnectionRefused vs TunnelError) — the split that distinguishes a
+        # proxy-transport throttle from a target-side block, and which is
+        # otherwise only visible at DEBUG.
+        self._err_types = {}
+        self._err_types_last = {}
+        self._pool_ids = []
+        self._report_task = None
 
     @classmethod
     def from_crawler(cls, crawler):
-        return cls()
+        mw = cls(crawler)
+        crawler.signals.connect(mw._spider_opened, signal=signals.spider_opened)
+        crawler.signals.connect(mw._spider_closed, signal=signals.spider_closed)
+        return mw
 
     @staticmethod
     def _host(request):
@@ -166,6 +197,7 @@ class ProxyPoolMiddleware:
         # Give each proxy its own download slot so the per-IP delay/concurrency
         # is enforced independently — this is what buys the parallel throughput.
         request.meta["download_slot"] = proxy_id
+        self._count(proxy_id, "req")
         self.logger.debug(
             "Proxy %s -> %s%s",
             proxy_id,
@@ -173,6 +205,130 @@ class ProxyPoolMiddleware:
             f" (affinity={affinity})" if affinity is not None else "",
         )
         return None
+
+    def process_response(self, request, response, spider):
+        pid = request.meta.get("download_slot")
+        if pid in self._counts:
+            if 200 <= response.status < 300:
+                self._count(pid, "ok")
+            elif response.status == 403:
+                self._count(pid, "blk")
+            else:
+                self._count(pid, "oth")
+        return response
+
+    def process_exception(self, request, exception, spider):
+        pid = request.meta.get("download_slot")
+        if pid in self._counts:
+            self._count(pid, "err")
+            etype = type(exception).__name__
+            self._err_types[etype] = self._err_types.get(etype, 0) + 1
+            if self.stats is not None:
+                self.stats.inc_value(f"proxy_pool/exception/{etype}")
+        return None
+
+    def _bucket(self, proxy_id):
+        return self._counts.setdefault(
+            proxy_id, {"req": 0, "ok": 0, "blk": 0, "oth": 0, "err": 0}
+        )
+
+    def _count(self, proxy_id, key):
+        """Bump an in-memory per-proxy counter and mirror it into crawler stats.
+
+        The in-memory counts drive the periodic per-window report; the stats
+        mirror lands the run totals in Scrapy's final stats dump for free.
+        """
+        self._bucket(proxy_id)[key] += 1
+        if self.stats is not None:
+            self.stats.inc_value(f"proxy_pool/{proxy_id}/{key}")
+
+    def _spider_opened(self, spider):
+        """Start the per-proxy activity report — only when a pool is active.
+
+        Single-IP runs (no ``proxy_pool``) get no extra logging, and the report
+        iterates the pool's stable id order so a quiet proxy is conspicuous by
+        its zero rather than simply absent.
+        """
+        pool = getattr(spider, "proxy_pool", None)
+        if not pool:
+            return
+        self._pool_ids = list(pool.ids)
+        for pid in self._pool_ids:
+            self._bucket(pid)
+        if self.interval and self.interval > 0:
+            from twisted.internet import task
+
+            self._report_task = task.LoopingCall(self._report)
+            # now=False: first report one window in, once traffic is flowing.
+            self._report_task.start(self.interval, now=False)
+
+    def _report(self):
+        """Log one line of per-proxy deltas so fan-out is visible at INFO.
+
+        The line answers "are all IPs still pulling?" at a glance: each proxy's
+        ok/blocked/err for the window, plus totals. A proxy that was sent work
+        but completed nothing (the free-proxy throttle signature) also gets a
+        WARNING so it stands out from the steady-state line.
+        """
+        if not self._pool_ids:
+            return
+        parts = []
+        totals = {"req": 0, "ok": 0, "blk": 0, "err": 0}
+        quiet = []
+        for pid in self._pool_ids:
+            cur = self._counts.get(pid, {})
+            prev = self._last.get(pid, {})
+            delta = {k: cur.get(k, 0) - prev.get(k, 0) for k in self._bucket(pid)}
+            self._last[pid] = dict(self._bucket(pid))
+            for k in totals:
+                totals[k] += delta.get(k, 0)
+            parts.append(f"{pid} {delta['ok']}/{delta['blk']}/{delta['err']}")
+            if delta["ok"] == 0 and (delta["req"] >= 2 or delta["err"] or delta["blk"]):
+                quiet.append((pid, delta["req"], delta["err"], delta["blk"]))
+        # Break the window's err count down by exception class so the log says
+        # *why* things failed (e.g. "TimeoutError x18") — the transport-throttle
+        # vs target-block tell — instead of just how many.
+        err_types = []
+        for etype in sorted(self._err_types):
+            d = self._err_types[etype] - self._err_types_last.get(etype, 0)
+            if d:
+                err_types.append(f"{etype} x{d}")
+        self._err_types_last = dict(self._err_types)
+        err_detail = f" [{', '.join(err_types)}]" if err_types else ""
+        self.logger.info(
+            "[proxy-pool] last %ds per IP (ok/blocked/err): %s | totals: "
+            "%d ok of %d sent, %d blocked, %d err%s",
+            int(self.interval),
+            ", ".join(parts),
+            totals["ok"],
+            totals["req"],
+            totals["blk"],
+            totals["err"],
+            err_detail,
+        )
+        for pid, sent, err, blk in quiet:
+            self.logger.warning(
+                "[proxy-pool] %s completed 0 responses this window "
+                "(sent %d, %d err, %d blocked) — likely throttled or unreachable.",
+                pid,
+                sent,
+                err,
+                blk,
+            )
+
+    def _spider_closed(self, spider):
+        task = self._report_task
+        if task is not None and task.running:
+            task.stop()
+        if not self._pool_ids:
+            return
+        parts = []
+        for pid in self._pool_ids:
+            b = self._bucket(pid)
+            parts.append(
+                f"{pid} {b['ok']} ok/{b['blk']} blocked/{b['oth']} other/{b['err']} err"
+            )
+        self.logger.info("[proxy-pool] final per-IP totals: %s", " | ".join(parts))
 
 
 class RateLimitBackoffMiddleware:

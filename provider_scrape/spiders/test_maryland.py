@@ -588,6 +588,67 @@ def test_check_stall_quiet_when_items_advance(spider, caplog):
     assert "STALL" not in "\n".join(r.message for r in caplog.records)
 
 
+def test_check_stall_warns_on_sustained_degraded_throughput(spider, caplog):
+    """A sub-floor but nonzero trickle WARNs (degraded) — no STALL error, no close."""
+    spider._pages_parsed = 50
+    spider._stall_last_responses = 8000
+    spider._stall_last_progress = 50 + 400
+    spider._slow_windows = STALL_ALERT_WINDOWS - 1  # this call reaches the threshold
+    spider._stall_windows = 0
+    engine = Mock()
+    # +2 items this window — alive, but below the degraded floor (5).
+    spider.crawler = SimpleNamespace(
+        stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 402}),
+        engine=engine,
+    )
+
+    with caplog.at_level("WARNING"):
+        spider._check_stall()
+
+    msg = "\n".join(r.message for r in caplog.records)
+    assert "DEGRADED" in msg
+    assert "STALL" not in msg
+    engine.close_spider.assert_not_called()
+
+
+def test_check_stall_trickle_never_force_closes(spider):
+    """The incident case: a nonzero trickle resets the zero-streak, so a barely-
+    alive (recovering) run is never force-closed even at the close threshold."""
+    spider._pages_parsed = 50
+    spider._stall_last_responses = 8000
+    spider._stall_last_progress = 50 + 400
+    spider._stall_windows = STALL_CLOSE_WINDOWS - 1  # right at the close edge
+    spider._slow_windows = STALL_CLOSE_WINDOWS - 1
+    engine = Mock()
+    spider.crawler = SimpleNamespace(
+        stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 401}),
+        engine=engine,
+    )
+
+    spider._check_stall()  # +1 item of progress
+
+    assert spider._stall_windows == 0
+    engine.close_spider.assert_not_called()
+
+
+def test_check_stall_single_degraded_window_does_not_warn(spider, caplog):
+    """One sub-floor window (e.g. a brief slow patch) must not cry wolf."""
+    spider._pages_parsed = 50
+    spider._stall_last_responses = 8000
+    spider._stall_last_progress = 50 + 400
+    spider._slow_windows = 0
+    spider._stall_windows = 0
+    spider.crawler = SimpleNamespace(
+        stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 402})
+    )
+
+    with caplog.at_level("WARNING"):
+        spider._check_stall()
+
+    assert spider._slow_windows == 1
+    assert "DEGRADED" not in "\n".join(r.message for r in caplog.records)
+
+
 def test_single_ip_mode_by_default_when_proxies_off():
     """`-a proxies=off` (and no env) means no pool — single-IP behavior."""
     s = MarylandSpider(proxies="off")

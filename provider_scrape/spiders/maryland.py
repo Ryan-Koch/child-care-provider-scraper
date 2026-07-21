@@ -134,6 +134,18 @@ STALL_CHECK_INTERVAL = 600
 STALL_ALERT_WINDOWS = 3
 STALL_CLOSE_WINDOWS = 6
 
+# Degraded-throughput floor: min forward progress (new results pages + items) per
+# check window below which the run is "crawling but barely." A healthy detail
+# drain is ~13 items/window and healthy pagination ~18 pages/window, while the
+# proxy-throttle stalls that hide from the zero-progress watchdog trickle along at
+# ~1-4/window (a 2026-07 pool run spent ~80min at ~1/window — every request timing
+# out on all proxies at once — yet the zero-progress counter kept resetting on the
+# trickle, so NOTHING was logged). A sustained run of sub-floor-but-nonzero windows
+# now WARNs (pointing at the [proxy-pool] err lines) but never force-closes: a
+# trickle means the run may still recover (that one did), so only a true, sustained
+# ZERO still escalates to the STALL error + force-close.
+STALL_DEGRADED_MIN_PROGRESS = 5
+
 # Seconds between consecutive requests to the checkccmd.org host. The site now
 # enforces a hard per-IP request-rate limit (IIS Dynamic IP Restrictions): a
 # **trailing ~60s window that allows only 2 requests**, returning a stock IIS
@@ -362,6 +374,9 @@ class MarylandSpider(scrapy.Spider):
         # Consecutive no-progress windows seen by the stall watchdog (reset by
         # _start_stall_watch at open; here so a direct _check_stall is safe).
         self._stall_windows = 0
+        # Consecutive sub-floor (degraded-but-alive) windows; drives the DEGRADED
+        # WARN. Same rationale for defaulting here as _stall_windows above.
+        self._slow_windows = 0
         # When EXCELS has no address for a provider, fall back to the slow
         # inspection-report PDF + OCR. Disable (``-a ocr_fallback=false``) for a
         # pure-fast run that downloads zero PDFs.
@@ -779,21 +794,29 @@ class MarylandSpider(scrapy.Spider):
         self._stall_last_responses = 0
         self._stall_last_progress = 0
         self._stall_windows = 0
+        self._slow_windows = 0
         self._stall_task = task.LoopingCall(self._check_stall)
         # now=False: first check one interval in, once the crawl is underway.
         self._stall_task.start(STALL_CHECK_INTERVAL, now=False)
 
     def _check_stall(self):
-        """Alert (and eventually force-close) on a persistent no-progress stall.
+        """Alert on a persistent stall, and separately WARN on degraded throughput.
 
         Progress = new pages parsed + items scraped, so the healthy pagination
-        phase (pages advancing, items flat) is not mistaken for a wedge. A window
-        with no progress counts as stalled whether or not responses are still
-        arriving, so both a spin (responses flow, nothing progresses) and a
-        deadlock (every request times out, responses flatline) are caught. Only a
-        run of ``STALL_ALERT_WINDOWS`` consecutive stalled windows alerts (so a
-        transient slow patch is tolerated); a stall reaching ``STALL_CLOSE_WINDOWS``
-        force-closes the spider unless disabled.
+        phase (pages advancing, items flat) is not mistaken for a wedge. The same
+        signal drives two thresholds:
+
+        * **Degraded (WARN only):** a run of ``STALL_ALERT_WINDOWS`` windows below
+          ``STALL_DEGRADED_MIN_PROGRESS`` — i.e. crawling but barely. This catches
+          the proxy-throttle stalls that trickle along at ~1/window and slip past
+          the zero-progress check below (a nonzero blip kept resetting it). It
+          points at the ``[proxy-pool]`` err lines and NEVER closes: a trickle can
+          still recover, so a slow run is surfaced, not killed.
+        * **Stalled (ERROR + optional force-close):** a run of consecutive windows
+          with *no* progress at all — a spin (responses flow, nothing progresses)
+          or a deadlock (every request times out, responses flatline). Unchanged:
+          alerts after ``STALL_ALERT_WINDOWS`` and force-closes at
+          ``STALL_CLOSE_WINDOWS`` unless disabled.
         """
         stats = getattr(getattr(self, "crawler", None), "stats", None)
         if stats is None:
@@ -805,11 +828,29 @@ class MarylandSpider(scrapy.Spider):
         d_prog = progress - self._stall_last_progress
         self._stall_last_responses = responses
         self._stall_last_progress = progress
-        if d_prog == 0:
-            self._stall_windows += 1
-        else:
+
+        # At/above the floor is healthy — reset both streaks and we're done.
+        if d_prog >= STALL_DEGRADED_MIN_PROGRESS:
+            self._slow_windows = 0
             self._stall_windows = 0
             return
+        # Below the floor: always a slow window; a true zero is also a stall
+        # window (the only thing that ERRORs / force-closes). A nonzero trickle
+        # resets the zero-streak so it can never force-close a recovering run.
+        self._slow_windows += 1
+        self._stall_windows = self._stall_windows + 1 if d_prog == 0 else 0
+
+        # Sustained trickle (alive but sub-floor): WARN, never close. A true-zero
+        # window falls to the STALL branch below, so we don't double-log it.
+        if d_prog > 0 and self._slow_windows >= STALL_ALERT_WINDOWS:
+            slow_s = self._slow_windows * STALL_CHECK_INTERVAL
+            self.logger.warning(
+                f"DEGRADED: only {d_prog} new pages+items in the last "
+                f"~{STALL_CHECK_INTERVAL}s (below {STALL_DEGRADED_MIN_PROGRESS}/window "
+                f"for ~{slow_s}s) — proxies likely throttling; see the [proxy-pool] "
+                f"err lines (pages_parsed={self._pages_parsed}, items={items})."
+            )
+
         if self._stall_windows < STALL_ALERT_WINDOWS:
             return
         stalled_s = self._stall_windows * STALL_CHECK_INTERVAL

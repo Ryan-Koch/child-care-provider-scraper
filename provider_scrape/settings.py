@@ -62,6 +62,13 @@ DOWNLOADER_MIDDLEWARES = {
     "provider_scrape.middlewares.ProxyPoolMiddleware": 610,
 }
 
+# Seconds between ProxyPoolMiddleware's per-IP activity reports (INFO). Only
+# emitted when a proxy pool is active; makes detail-phase fan-out visible at a
+# glance (which IPs are still completing responses vs went quiet under throttle).
+# Set to 0 to disable the periodic report (per-proxy run totals still land in
+# the final stats dump).
+PROXY_POOL_STATS_INTERVAL = 300.0
+
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
 #EXTENSIONS = {

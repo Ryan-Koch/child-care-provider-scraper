@@ -1,6 +1,8 @@
+import logging
 from types import SimpleNamespace
 
 from scrapy import Request
+from scrapy.http import Response
 
 from provider_scrape.middlewares import ProxyPoolMiddleware
 from provider_scrape.proxy_pool import build_pool
@@ -92,3 +94,90 @@ def test_proxy_bypass_egresses_direct_from_host():
     mw.process_request(pdf, _spider(_pool()))
     assert "proxy" not in pdf.meta
     assert "download_slot" not in pdf.meta
+
+
+def test_counts_per_proxy_req_ok_blocked_err():
+    mw = ProxyPoolMiddleware()
+    spider = _spider(_pool())
+    r0 = Request(DETAIL)
+    r1 = Request(DETAIL)
+    mw.process_request(r0, spider)  # -> ws-0
+    mw.process_request(r1, spider)  # -> ws-1
+    assert mw._counts["ws-0"]["req"] == 1
+    assert mw._counts["ws-1"]["req"] == 1
+
+    mw.process_response(r0, Response(DETAIL, status=200, request=r0), spider)
+    mw.process_response(r1, Response(DETAIL, status=403, request=r1), spider)
+    mw.process_exception(r0, Exception("timeout"), spider)
+
+    assert mw._counts["ws-0"]["ok"] == 1
+    assert mw._counts["ws-0"]["err"] == 1
+    assert mw._counts["ws-1"]["blk"] == 1
+
+
+def test_non_pool_response_is_not_counted():
+    mw = ProxyPoolMiddleware()
+    spider = _spider(_pool())
+    # The EXCELS host is never proxied, so its responses carry no pool slot and
+    # must not pollute the per-proxy accounting.
+    ex = Request(EXCELS)
+    mw.process_request(ex, spider)
+    mw.process_response(ex, Response(EXCELS, status=200, request=ex), spider)
+    assert mw._counts == {}
+
+
+def test_report_flags_a_quiet_proxy(caplog):
+    mw = ProxyPoolMiddleware()
+    mw._pool_ids = ["ws-0", "ws-1"]
+    for pid in mw._pool_ids:
+        mw._bucket(pid)
+    # ws-0 healthy (3 sent, 3 ok); ws-1 throttled (3 sent, 0 ok, 3 err).
+    for _ in range(3):
+        mw._count("ws-0", "req")
+        mw._count("ws-0", "ok")
+        mw._count("ws-1", "req")
+        mw._count("ws-1", "err")
+
+    with caplog.at_level(logging.INFO):
+        mw._report()
+
+    assert "ws-0 3/0/0" in caplog.text
+    assert "ws-1 0/0/3" in caplog.text
+    # The stalled IP is called out separately at WARNING.
+    assert "ws-1 completed 0 responses this window" in caplog.text
+    assert any(r.levelno == logging.WARNING for r in caplog.records)
+
+
+def test_report_breaks_down_err_by_exception_class(caplog):
+    from twisted.internet.error import TimeoutError as TxTimeoutError
+
+    mw = ProxyPoolMiddleware()
+    spider = _spider(_pool())
+    mw._pool_ids = ["ws-0", "ws-1"]
+    for pid in mw._pool_ids:
+        mw._bucket(pid)
+    r0 = Request(DETAIL)
+    r1 = Request(DETAIL)
+    mw.process_request(r0, spider)  # ws-0
+    mw.process_request(r1, spider)  # ws-1
+    mw.process_exception(r0, TxTimeoutError(), spider)
+    mw.process_exception(r1, TxTimeoutError(), spider)
+
+    with caplog.at_level(logging.INFO):
+        mw._report()
+    # The window line names the exception class and its count, not just "2 err".
+    assert "TimeoutError x2" in caplog.text
+
+
+def test_report_deltas_reset_between_windows(caplog):
+    mw = ProxyPoolMiddleware()
+    mw._pool_ids = ["ws-0"]
+    mw._bucket("ws-0")
+    mw._count("ws-0", "req")
+    mw._count("ws-0", "ok")
+    mw._report()  # first window consumes the initial ok
+    caplog.clear()
+    # No new activity -> the next window reports zero, not the cumulative total.
+    with caplog.at_level(logging.INFO):
+        mw._report()
+    assert "ws-0 0/0/0" in caplog.text
