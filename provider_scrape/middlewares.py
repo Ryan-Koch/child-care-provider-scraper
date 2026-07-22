@@ -354,6 +354,11 @@ class RateLimitBackoffMiddleware:
     — pausing *all* traffic to that host so the window can drain — then
     re-schedules the request. Bounded by ``RATELIMIT_BACKOFF_MAX_RETRIES``.
 
+    It also handles a download *timeout* (via ``process_exception``) the same
+    way, but only for requests that opt in with ``meta['timeout_backoff']`` — a
+    saturated origin is shed load (slot paused) instead of hammered with
+    immediate RETRY_TIMES-deep retries. See ``process_exception``.
+
     Disabled by default; a spider opts in via settings, so spiders that don't
     set ``RATELIMIT_BACKOFF_ENABLED`` are unaffected (the middleware is a
     pass-through). Settings:
@@ -363,6 +368,11 @@ class RateLimitBackoffMiddleware:
     * ``RATELIMIT_BACKOFF_DOMAINS`` (list of host substrings; empty = all hosts)
     * ``RATELIMIT_BACKOFF_COOLDOWN`` (seconds, default 60)
     * ``RATELIMIT_BACKOFF_MAX_RETRIES`` (int, default 8)
+    * ``RATELIMIT_BACKOFF_TIMEOUT_COOLDOWN`` (seconds, default 45) — timeout path
+    * ``RATELIMIT_BACKOFF_TIMEOUT_MAX_RETRIES`` (int, default 4) — timeout path
+    * ``RATELIMIT_BACKOFF_TIMEOUT_EXCEPTIONS`` (list of exception class names,
+      default ``["TimeoutError", "TCPTimedOutError"]``); the timeout path fires
+      only for requests carrying ``meta['timeout_backoff']``.
     """
 
     def __init__(self, crawler):
@@ -377,6 +387,29 @@ class RateLimitBackoffMiddleware:
         )
         self.cooldown = s.getfloat("RATELIMIT_BACKOFF_COOLDOWN", 60.0)
         self.max_retries = s.getint("RATELIMIT_BACKOFF_MAX_RETRIES", 8)
+        # Timeout backoff: the same cooldown-and-retry, but triggered by a
+        # download *timeout* (no response) rather than a 403 — and only for
+        # requests explicitly opted in with ``meta['timeout_backoff']``. Where a
+        # 403 means "this IP is over its rate limit", a timeout on a fast-normally
+        # endpoint means "the origin is saturated"; re-firing immediately (and
+        # RETRY_TIMES-deep) just piles more concurrency onto an overloaded server
+        # (congestion collapse). Pausing the slot instead sheds load so the origin
+        # can drain, and the pool's other slots do the same as they trip — an
+        # adaptive, per-slot concurrency cut. Bounded separately from the 403 path.
+        self.timeout_cooldown = s.getfloat(
+            "RATELIMIT_BACKOFF_TIMEOUT_COOLDOWN", 45.0
+        )
+        self.timeout_max_retries = s.getint(
+            "RATELIMIT_BACKOFF_TIMEOUT_MAX_RETRIES", 4
+        )
+        # Matched by class name so we don't depend on which twisted timeout type
+        # the handler happens to raise (TimeoutError, TCPTimedOutError, …).
+        self.timeout_exceptions = frozenset(
+            s.getlist(
+                "RATELIMIT_BACKOFF_TIMEOUT_EXCEPTIONS",
+                ["TimeoutError", "TCPTimedOutError"],
+            )
+        )
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -406,7 +439,7 @@ class RateLimitBackoffMiddleware:
             )
             return response
 
-        slot_key = self._pause_slot(request)
+        slot_key = self._pause_slot(request, self.cooldown)
         spider.logger.warning(
             "Rate-limit %s on %s — pausing slot %r for %.0fs, then retry %d/%d.",
             response.status,
@@ -421,7 +454,55 @@ class RateLimitBackoffMiddleware:
             dont_filter=True,
         )
 
-    def _pause_slot(self, request):
+    def process_exception(self, request, exception, spider):
+        """Cooldown-and-retry a download timeout on an opted-in request.
+
+        Only fires for requests carrying ``meta['timeout_backoff']`` (so a
+        spider chooses which request classes treat a timeout as "origin
+        saturated" vs. keep the patient default retry — e.g. Maryland opts in its
+        detail GETs but leaves chain-critical pagination on the standard path).
+        Runs before the built-in ``RetryMiddleware`` (lower order), so under the
+        cap it owns the retry (pausing the slot first); once the cap is hit it
+        sets ``dont_retry`` and defers, ending the retry storm rather than handing
+        the origin RETRY_TIMES more immediate hits. Non-timeout exceptions are
+        left untouched for RetryMiddleware to handle as usual.
+        """
+        if (
+            not self.enabled
+            or not request.meta.get("timeout_backoff")
+            or type(exception).__name__ not in self.timeout_exceptions
+            or not self._domain_matches(request)
+        ):
+            return None
+
+        retries = request.meta.get("timeout_retries", 0)
+        if retries >= self.timeout_max_retries:
+            spider.logger.warning(
+                "Timeout on %s: gave up after %d cooldown retries (origin "
+                "saturated).",
+                request.url,
+                retries,
+            )
+            # Stop the retry here rather than letting RetryMiddleware add more.
+            request.meta["dont_retry"] = True
+            return None
+
+        slot_key = self._pause_slot(request, self.timeout_cooldown)
+        spider.logger.info(
+            "Timeout on %s — origin likely saturated; pausing slot %r for %.0fs, "
+            "then retry %d/%d.",
+            request.url,
+            slot_key,
+            self.timeout_cooldown,
+            retries + 1,
+            self.timeout_max_retries,
+        )
+        return request.replace(
+            meta={**request.meta, "timeout_retries": retries + 1},
+            dont_filter=True,
+        )
+
+    def _pause_slot(self, request, cooldown):
         """Raise the request's download-slot delay for the cooldown window.
 
         Bumping ``slot.delay`` gates the *next* dispatch from that slot, so the
@@ -429,7 +510,9 @@ class RateLimitBackoffMiddleware:
         out the cooldown. Real silence is what actually clears the rate-limit
         window (a fast retry just re-trips it). The original delay/jitter are
         restored afterwards; an overlapping trip re-arms (extends) the window
-        rather than restoring early.
+        rather than restoring early. The pause is floored at the slot's original
+        delay so a cooldown shorter than the configured spacing can never *speed
+        up* dispatch below the rate-limit floor.
         """
         from twisted.internet import reactor
 
@@ -446,14 +529,15 @@ class RateLimitBackoffMiddleware:
         # trips extend the pause but must not overwrite the saved values.
         if not hasattr(slot, "_ratelimit_saved"):
             slot._ratelimit_saved = (slot.delay, slot.randomize_delay)
-        slot.delay = self.cooldown
+        base_delay = slot._ratelimit_saved[0]
+        slot.delay = max(cooldown, base_delay)
         slot.randomize_delay = False
 
         pending = getattr(slot, "_ratelimit_restore", None)
         if pending is not None and pending.active():
             pending.cancel()
         slot._ratelimit_restore = reactor.callLater(
-            self.cooldown, self._restore_slot, slot
+            slot.delay, self._restore_slot, slot
         )
         return slot_key
 

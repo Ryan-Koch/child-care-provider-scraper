@@ -312,9 +312,12 @@ def test_parse_results_page(spider):
     assert kwargs1["program_type"] == "CTR"
 
     # Detail requests are idempotent and not chain-critical, so they fail fast on
-    # a shorter per-request timeout (not the patient 180s default) and retry.
+    # a shorter per-request timeout (not the patient 180s default) and retry. They
+    # also opt into timeout_backoff so a timeout is treated as origin saturation
+    # (slot paused, bounded retries) rather than a RETRY_TIMES-deep storm.
     for dr in detail_requests:
         assert dr.meta["download_timeout"] == DETAIL_DOWNLOAD_TIMEOUT
+        assert dr.meta["timeout_backoff"] is True
 
     # One pagination request to page 2, carrying its expected page and a high
     # priority so it isn't starved behind the detail-request backlog.
@@ -654,6 +657,23 @@ def test_single_ip_mode_by_default_when_proxies_off():
     s = MarylandSpider(proxies="off")
     assert s.proxy_pool is None
     assert s.proxy_pool_domains == ["checkccmd.org"]
+
+
+def test_detail_timeout_arg_flows_to_detail_requests():
+    """`-a detail_timeout=` overrides the per-request detail download timeout."""
+    s = MarylandSpider(proxies="off", detail_timeout="90")
+    assert s.detail_timeout == 90.0
+    request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
+    response = HtmlResponse(
+        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
+    )
+    details = [
+        r
+        for r in s.parse_results(response, county_key="TestCounty")
+        if not isinstance(r, scrapy.FormRequest)
+    ]
+    assert details
+    assert all(d.meta["download_timeout"] == 90.0 for d in details)
 
 
 def test_pool_built_from_inline_endpoints():

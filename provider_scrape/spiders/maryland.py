@@ -63,18 +63,36 @@ MAX_NAV_ATTEMPTS = 5
 MAX_CHAIN_RESTARTS = 3
 
 # Per-request download timeouts for the idempotent, non-chain-critical fetches.
-# These deliberately override the patient 180s default (kept only for the
-# chain-critical pagination postbacks — see custom_settings / _navigate_to).
-# A detail page or EXCELS lookup that has not responded by these thresholds is
-# almost certainly tarpitted by the per-IP throttle and would time out at 180s
-# anyway; cutting early frees the slot for a retry that may land in a calmer
-# moment, so failing fast is net faster and — because these requests are
-# idempotent and don't carry chain-critical ViewState — carries no truncation
-# risk. Measured full run: 2,165 requests timed out at the 180s default,
-# ~108 slot-hours. Detail pages render in ~16s nominal; EXCELS is a sub-5s JSON
-# API, so these leave generous headroom over the happy path.
-DETAIL_DOWNLOAD_TIMEOUT = 60
+# Per-request timeouts for detail GETs and EXCELS lookups (the patient 180s
+# default is kept only for the chain-critical pagination postbacks — see
+# custom_settings / _navigate_to). These requests are idempotent and carry no
+# chain-critical ViewState, so a timeout only costs a retry, never truncation.
+#
+# checkccmd's FacilityDetail page is genuinely SLOW, not merely throttled:
+# measured 2026-07-22 at low concurrency it renders in ~17-34s (only rarely ~1s
+# in a lull), and latency climbs further under concurrency (see
+# DEFAULT_CONCURRENCY). So the detail timeout must clear that slow baseline with
+# margin — too tight and valid-but-slow pages time out and *churn* (timeout →
+# slot pause → retry) instead of just completing a few seconds later. 120s is
+# ~3.5x the observed baseline; tune with ``-a detail_timeout=<seconds>`` (raise
+# if the log shows timeout pauses on pages that would have finished; lower if
+# genuinely-hung requests tie up slots too long). EXCELS is a separate sub-5s
+# JSON API, so 30s stays ample.
+DETAIL_DOWNLOAD_TIMEOUT = 120
 EXCELS_DOWNLOAD_TIMEOUT = 30
+
+# Global in-flight request cap (Scrapy CONCURRENT_REQUESTS). This is now a
+# PRIMARY throughput lever, alongside the detail timeout, not the per-IP delay.
+# checkccmd's FacilityDetail endpoint is both slow (~17-34s at low concurrency,
+# see DETAIL_DOWNLOAD_TIMEOUT) AND *server-side concurrency-limited*: firing a
+# batch at once makes them queue/serialize and blow well past any timeout
+# (measured 2026-07-21 — 8 parallel GETs all >100s), GLOBAL across egress IPs,
+# with 0 rate-limit 403s throughout. Driving 20 proxy slots at 16-way concurrency
+# drove the origin into congestion collapse: ~83% of details timed out. The pool
+# still spreads the per-IP 403 rate, but total concurrency must be held near the
+# origin's knee. Default deliberately low and good-citizen; tune with
+# ``-a concurrency=<n>`` (off-peak the origin tolerates more). See MARYLAND.md.
+DEFAULT_CONCURRENCY = 4
 
 # All provider-detail GETs share one long-lived cookie jar instead of pinning to
 # their county's pagination session. A detail page needs only *any* warm
@@ -240,12 +258,14 @@ class MarylandSpider(scrapy.Spider):
         # single-flight in parallel.
         "CONCURRENT_REQUESTS_PER_DOMAIN": 1,
         "RANDOMIZE_DOWNLOAD_DELAY": False,
-        # EXCELS is a separate, non-throttling JSON API — give its host its own
-        # fast slot so address/coord enrichment never bottlenecks behind the
-        # delayed licensing crawl. Global concurrency is high enough that EXCELS
-        # runs alongside the checkccmd hits AND, under a proxy pool, every proxy
-        # slot can be in flight at once (N proxies + the EXCELS slot + PDFs).
-        "CONCURRENT_REQUESTS": 16,
+        # Global in-flight cap. Overridden from the ``concurrency`` arg in
+        # from_crawler (default DEFAULT_CONCURRENCY). This is deliberately LOW:
+        # checkccmd's detail endpoint is server-side concurrency-limited, so a
+        # high cap drives it into congestion collapse (see DEFAULT_CONCURRENCY).
+        # EXCELS (a separate fast host) shares this budget but resolves in ~1s, so
+        # it rarely holds a slot; the cap effectively bounds concurrent checkccmd
+        # detail GETs, which is the point.
+        "CONCURRENT_REQUESTS": DEFAULT_CONCURRENCY,
         "DOWNLOAD_SLOTS": {
             "findaprogram.marylandexcels.org": {"concurrency": 4, "delay": 0.0},
         },
@@ -271,6 +291,13 @@ class MarylandSpider(scrapy.Spider):
         "RATELIMIT_BACKOFF_HTTP_CODES": [403],
         "RATELIMIT_BACKOFF_COOLDOWN": 60,
         "RATELIMIT_BACKOFF_MAX_RETRIES": 8,
+        # Timeout backoff for detail GETs (they carry meta['timeout_backoff']).
+        # A detail timeout means the origin is saturated, not that this IP is
+        # rate-limited — so shed load by pausing the slot instead of re-firing
+        # RETRY_TIMES-deep (which is congestion collapse). Bounded low; pagination
+        # is NOT opted in and keeps the patient 180s + full retry budget.
+        "RATELIMIT_BACKOFF_TIMEOUT_COOLDOWN": 45,
+        "RATELIMIT_BACKOFF_TIMEOUT_MAX_RETRIES": 4,
     }
 
     @classmethod
@@ -279,6 +306,12 @@ class MarylandSpider(scrapy.Spider):
         # Apply the (tunable) single-flight spacing to the checkccmd host. Set
         # here rather than in custom_settings so ``-a delay=<seconds>`` works.
         crawler.settings.set("DOWNLOAD_DELAY", spider.delay, priority="spider")
+        # Apply the (tunable) global in-flight cap. Set here (not custom_settings)
+        # so ``-a concurrency=<n>`` works; this is the primary throughput lever
+        # now that the origin's detail endpoint is the concurrency bottleneck.
+        crawler.settings.set(
+            "CONCURRENT_REQUESTS", spider.concurrency, priority="spider"
+        )
         # NOTE: from_crawler runs *before* Scrapy attaches the LOG_FILE handler
         # (Crawler.crawl calls _create_spider ahead of _update_root_log_handler),
         # so anything logged here never reaches the log file. Defer the run-mode
@@ -322,12 +355,21 @@ class MarylandSpider(scrapy.Spider):
         proxies=None,
         proxy_env=None,
         stall_close=True,
+        concurrency=DEFAULT_CONCURRENCY,
+        detail_timeout=DETAIL_DOWNLOAD_TIMEOUT,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         # Seconds between consecutive checkccmd.org requests, per egress IP.
         self.delay = float(delay)
+        # Global in-flight cap; the origin's detail endpoint is concurrency-
+        # limited (see DEFAULT_CONCURRENCY). Applied as CONCURRENT_REQUESTS in
+        # from_crawler so ``-a concurrency=<n>`` works.
+        self.concurrency = int(concurrency)
+        # Per-request timeout for detail GETs. The origin is slow (~17-34s
+        # baseline, see DETAIL_DOWNLOAD_TIMEOUT); tune with ``-a detail_timeout=``.
+        self.detail_timeout = float(detail_timeout)
         # If the no-progress stall watchdog sees a persistent wedge, force-close
         # the spider rather than let it hang for hours. On by default; disable
         # (leave a dead run hanging, e.g. for debugging) with -a stall_close=off.
@@ -671,12 +713,15 @@ class MarylandSpider(scrapy.Spider):
                         "school_name": school_name or None,
                         "program_type": program_type or None,
                     },
-                    # Idempotent, non-chain-critical: fail fast (not 180s) and let
-                    # RETRY_TIMES re-fetch a tarpitted page rather than tie up a
-                    # per-IP slot for three minutes.
+                    # Idempotent, non-chain-critical: fail fast (not 180s). On a
+                    # timeout, treat it as origin saturation (timeout_backoff) —
+                    # pause the slot and retry a bounded few times rather than
+                    # hammer the concurrency-limited detail endpoint (see
+                    # RateLimitBackoffMiddleware / DEFAULT_CONCURRENCY).
                     meta={
                         "cookiejar": DETAIL_COOKIEJAR,
-                        "download_timeout": DETAIL_DOWNLOAD_TIMEOUT,
+                        "download_timeout": self.detail_timeout,
+                        "timeout_backoff": True,
                     },
                 )
 
@@ -1085,7 +1130,8 @@ class MarylandSpider(scrapy.Spider):
             headers={"Referer": SEARCH_RESULTS_REFERER},
             meta={
                 "cookiejar": DETAIL_COOKIEJAR,
-                "download_timeout": DETAIL_DOWNLOAD_TIMEOUT,
+                "download_timeout": self.detail_timeout,
+                "timeout_backoff": True,
                 "detail_reprimes": reprimes + 1,
             },
             dont_filter=True,

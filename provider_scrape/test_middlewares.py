@@ -3,8 +3,10 @@ from types import SimpleNamespace
 
 from scrapy import Request
 from scrapy.http import Response
+from scrapy.settings import Settings
+from twisted.internet.error import TimeoutError as TxTimeoutError
 
-from provider_scrape.middlewares import ProxyPoolMiddleware
+from provider_scrape.middlewares import ProxyPoolMiddleware, RateLimitBackoffMiddleware
 from provider_scrape.proxy_pool import build_pool
 
 
@@ -18,6 +20,25 @@ def _pool():
 
 DETAIL = "https://www.checkccmd.org/FacilityDetail.aspx?fi=1"
 EXCELS = "https://findaprogram.marylandexcels.org/api/fap/search?license=1"
+
+
+def _backoff_mw(engine=None, **overrides):
+    """A RateLimitBackoffMiddleware with the Maryland-style settings."""
+    s = Settings()
+    s.setdict(
+        {
+            "RATELIMIT_BACKOFF_ENABLED": True,
+            "RATELIMIT_BACKOFF_DOMAINS": ["checkccmd.org"],
+            "RATELIMIT_BACKOFF_TIMEOUT_COOLDOWN": 45,
+            "RATELIMIT_BACKOFF_TIMEOUT_MAX_RETRIES": 4,
+            **overrides,
+        }
+    )
+    return RateLimitBackoffMiddleware(SimpleNamespace(settings=s, engine=engine))
+
+
+def _backoff_spider():
+    return SimpleNamespace(logger=logging.getLogger("test.backoff"))
 
 
 def test_noop_without_pool():
@@ -149,8 +170,6 @@ def test_report_flags_a_quiet_proxy(caplog):
 
 
 def test_report_breaks_down_err_by_exception_class(caplog):
-    from twisted.internet.error import TimeoutError as TxTimeoutError
-
     mw = ProxyPoolMiddleware()
     spider = _spider(_pool())
     mw._pool_ids = ["ws-0", "ws-1"]
@@ -181,3 +200,64 @@ def test_report_deltas_reset_between_windows(caplog):
     with caplog.at_level(logging.INFO):
         mw._report()
     assert "ws-0 0/0/0" in caplog.text
+
+
+# --- RateLimitBackoffMiddleware timeout backoff ---
+
+
+def test_timeout_backoff_retries_marked_request():
+    mw = _backoff_mw()
+    req = Request(DETAIL, meta={"timeout_backoff": True})
+    out = mw.process_exception(req, TxTimeoutError(), _backoff_spider())
+    # A retry Request (not None), with the timeout-retry counter advanced.
+    assert out is not None and out.meta["timeout_retries"] == 1
+
+
+def test_timeout_backoff_ignores_unmarked_request():
+    mw = _backoff_mw()
+    # No timeout_backoff marker (e.g. a pagination postback) -> left for
+    # RetryMiddleware's patient path.
+    req = Request(DETAIL)
+    assert mw.process_exception(req, TxTimeoutError(), _backoff_spider()) is None
+
+
+def test_timeout_backoff_ignores_non_timeout_exception():
+    mw = _backoff_mw()
+    req = Request(DETAIL, meta={"timeout_backoff": True})
+    assert mw.process_exception(req, ValueError("boom"), _backoff_spider()) is None
+
+
+def test_timeout_backoff_only_on_configured_domain():
+    mw = _backoff_mw()
+    req = Request(EXCELS, meta={"timeout_backoff": True})  # not checkccmd
+    assert mw.process_exception(req, TxTimeoutError(), _backoff_spider()) is None
+
+
+def test_timeout_backoff_gives_up_and_stops_further_retries():
+    mw = _backoff_mw()
+    # Already at the cap: no more cooldown retries, and dont_retry is set so
+    # RetryMiddleware doesn't then hammer the origin RETRY_TIMES more.
+    req = Request(DETAIL, meta={"timeout_backoff": True, "timeout_retries": 4})
+    out = mw.process_exception(req, TxTimeoutError(), _backoff_spider())
+    assert out is None
+    assert req.meta["dont_retry"] is True
+
+
+def test_pause_slot_never_dips_below_base_delay():
+    slot = SimpleNamespace(delay=33.0, randomize_delay=False)
+    downloader = SimpleNamespace(
+        get_slot_key=lambda r: "webshare-0", slots={"webshare-0": slot}
+    )
+    mw = _backoff_mw(engine=SimpleNamespace(downloader=downloader))
+    req = Request(DETAIL, meta={"download_slot": "webshare-0"})
+    try:
+        # Cooldown (20s) below the base spacing (33s) must not speed dispatch up.
+        mw._pause_slot(req, cooldown=20.0)
+        assert slot.delay == 33.0
+        # A cooldown above the base does extend the pause.
+        mw._pause_slot(req, cooldown=60.0)
+        assert slot.delay == 60.0
+    finally:
+        pending = getattr(slot, "_ratelimit_restore", None)
+        if pending is not None and pending.active():
+            pending.cancel()
