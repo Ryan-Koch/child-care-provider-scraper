@@ -92,7 +92,7 @@ EXCELS_DOWNLOAD_TIMEOUT = 30
 # still spreads the per-IP 403 rate, but total concurrency must be held near the
 # origin's knee. Default deliberately low and good-citizen; tune with
 # ``-a concurrency=<n>`` (off-peak the origin tolerates more). See MARYLAND.md.
-DEFAULT_CONCURRENCY = 4
+DEFAULT_CONCURRENCY = 5
 
 # All provider-detail GETs share one long-lived cookie jar instead of pinning to
 # their county's pagination session. A detail page needs only *any* warm
