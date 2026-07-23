@@ -74,9 +74,12 @@ separate, non-throttling host and keeps its own fast slot.
 
 **Run time:** at 33s/request a full ~12k-request run is **~4–5 days** from one IP
 (up from ~53h before the site tightened the limit). The per-IP wall, not
-concurrency, is the limiter, so a real speed-up requires **IP rotation / a proxy
-pool** — the block is per-IP and clears in ~60s, so N exit IPs each just under
-2/min gives ~N× throughput.
+concurrency, is the limiter *from one IP*, so a real speed-up requires **IP
+rotation / a proxy pool** — the block is per-IP and clears in ~60s, so N exit IPs
+each just under 2/min gives ~N× throughput. **Caveat:** past enough IPs a second,
+server-side limit takes over — see *Detail-endpoint concurrency limit* below —
+so N× does **not** hold indefinitely; total concurrency must be tuned to the
+origin, not just maximized.
 
 ### Optional proxy pool (multi-IP, opt-in)
 
@@ -117,6 +120,53 @@ Under Docker, mount the file (see the commented line in `docker-compose.yml`).
 Datacenter IPs are fine here — the site only rate-limits; there is no reputation
 block or captcha. Traffic transits the proxy operator, but this is public
 government data, so that's not a confidentiality concern.
+
+### Detail-endpoint concurrency limit (the *other* bottleneck)
+
+Beating the per-IP 403 wall with a big proxy pool exposes a second, independent
+limit: **checkccmd's `FacilityDetail` endpoint is concurrency-limited on the
+*server* side.** A single detail GET returns in **~1 second**, but a handful
+fired at once queue/serialize on the origin and blow past the 60s timeout.
+Measured live (2026-07-21, 20-IP run): **8 parallel detail GETs all took >100s
+while a solo GET was ~1s**; endpoint latency swings 1s ↔ 45s ↔ timeout purely
+with how many requests are in flight, and it's **global across egress IPs** (a
+direct request from the host queues too when the pool is hammering). Throughout,
+**zero 403s** — this is *not* the rate limit, and no number of extra IPs fixes
+it. Driving 20 proxy slots at 16-way concurrency drove the origin into
+**congestion collapse**: ~83% of details timed out, and each timeout retrying
+`RETRY_TIMES`-deep poured more load on (a self-sustaining storm).
+
+The endpoint is also **just slow**: measured 2026-07-22 at low concurrency a
+detail page renders in **~17–34s** (only rarely ~1s in a lull), on top of the
+concurrency scaling. So it's slow *and* concurrency-sensitive — both must be
+accommodated. Once you have enough IPs to clear the 403 wall, **total in-flight
+concurrency and the detail timeout are the primary levers — not the per-IP
+delay.** Three controls:
+
+- **`-a concurrency=<n>`** sets `CONCURRENT_REQUESTS` (default **4**). Hold it near
+  the origin's knee. Counterintuitively, *fewer* concurrent detail requests yield
+  *more* completed details — past the knee you get a timeout storm, not speed.
+  Start low and raise it while watching the `[proxy-pool]` per-IP `err` rate in
+  the log; the origin tolerates more **off-peak** (evenings/overnight US Eastern).
+- **`-a detail_timeout=<seconds>`** sets the per-request detail timeout (default
+  **120**, ~3.5× the observed slow baseline). Because the page is genuinely slow,
+  a *tight* timeout makes valid-but-slow pages time out and churn (timeout → 45s
+  slot pause → retry) instead of just finishing a few seconds later. Raise it if
+  the log shows timeout pauses on pages that would have completed; lower it only
+  if genuinely-hung requests tie up slots too long.
+- **Detail-timeout backoff:** a detail GET carries `meta['timeout_backoff']`, so a
+  timeout (now only for pages exceeding the generous `detail_timeout`) is treated
+  as *origin saturation* — `RateLimitBackoffMiddleware` pauses that slot
+  (`RATELIMIT_BACKOFF_TIMEOUT_COOLDOWN`, default 45s) and retries a bounded few
+  times (`..._MAX_RETRIES`, default 4) instead of re-firing immediately. As slots
+  trip and pause, in-flight concurrency drops adaptively, letting the origin
+  drain. Chain-critical **pagination is not opted in** and keeps its patient 180s
+  + full retry budget.
+
+Diagnosing it: the per-IP report line (`[proxy-pool] last …s per IP
+(ok/blocked/err) … [TimeoutError xN]`) is the tell — **`err` dominated by
+`TimeoutError` with `blocked`/403s at zero means the origin is saturated, so
+*lower* `-a concurrency`, don't add IPs.**
 
 ## Running Tests
 

@@ -10,6 +10,7 @@ from provider_scrape.spiders.maryland import (
     MAX_CHAIN_RESTARTS,
     MAX_DETAIL_REPRIMES,
     STALL_ALERT_WINDOWS,
+    STALL_CLOSE_WINDOWS,
     RESULTS_PRIORITY,
     DETAIL_DOWNLOAD_TIMEOUT,
     EXCELS_DOWNLOAD_TIMEOUT,
@@ -19,7 +20,7 @@ from provider_scrape.spiders.maryland import (
 from types import SimpleNamespace
 from twisted.python.failure import Failure
 from provider_scrape.items import ProviderItem
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 
 @pytest.fixture
@@ -311,9 +312,12 @@ def test_parse_results_page(spider):
     assert kwargs1["program_type"] == "CTR"
 
     # Detail requests are idempotent and not chain-critical, so they fail fast on
-    # a shorter per-request timeout (not the patient 180s default) and retry.
+    # a shorter per-request timeout (not the patient 180s default) and retry. They
+    # also opt into timeout_backoff so a timeout is treated as origin saturation
+    # (slot paused, bounded retries) rather than a RETRY_TIMES-deep storm.
     for dr in detail_requests:
         assert dr.meta["download_timeout"] == DETAIL_DOWNLOAD_TIMEOUT
+        assert dr.meta["timeout_backoff"] is True
 
     # One pagination request to page 2, carrying its expected page and a high
     # priority so it isn't starved behind the detail-request backlog.
@@ -476,6 +480,66 @@ def test_check_stall_fires_after_consecutive_no_progress_windows(spider, caplog)
     assert "STALL" in "\n".join(r.message for r in caplog.records)
 
 
+def test_check_stall_fires_when_frozen_with_no_responses(spider, caplog):
+    """A deadlock (responses flatlined to zero, nothing progressing) is caught too."""
+    spider._pages_parsed = 100
+    spider._stall_last_responses = 1613
+    spider._stall_last_progress = 100 + 423
+    spider._stall_windows = STALL_ALERT_WINDOWS - 1
+    # Responses did NOT advance (d_resp == 0) — the earlier watchdog missed this.
+    spider.crawler = SimpleNamespace(
+        stats=_stats_from({"response_received_count": 1613, "item_scraped_count": 423})
+    )
+
+    with caplog.at_level("ERROR"):
+        spider._check_stall()
+
+    msg = "\n".join(r.message for r in caplog.records)
+    assert "STALL" in msg
+    assert "frozen (no responses)" in msg
+
+
+def test_check_stall_force_closes_after_persistent_stall():
+    """A stall reaching the close threshold force-closes the spider."""
+    s = MarylandSpider(proxies="off")  # stall_close defaults on
+    s._pages_parsed = 100
+    s._stall_last_responses = 1613
+    s._stall_last_progress = 100 + 423
+    s._stall_windows = STALL_CLOSE_WINDOWS - 1
+    engine = Mock()
+    s.crawler = SimpleNamespace(
+        stats=_stats_from({"response_received_count": 1613, "item_scraped_count": 423}),
+        engine=engine,
+    )
+
+    s._check_stall()
+
+    engine.close_spider.assert_called_once()
+    called_spider, reason = engine.close_spider.call_args.args
+    assert called_spider is s
+    assert reason == "stalled"
+    assert s._stall_closing is True
+
+
+def test_stall_close_off_leaves_a_dead_run_hanging():
+    """`-a stall_close=off` keeps the alert but never force-closes."""
+    s = MarylandSpider(proxies="off", stall_close="off")
+    assert s.stall_close is False
+    s._pages_parsed = 100
+    s._stall_last_responses = 1613
+    s._stall_last_progress = 100 + 423
+    s._stall_windows = STALL_CLOSE_WINDOWS - 1
+    engine = Mock()
+    s.crawler = SimpleNamespace(
+        stats=_stats_from({"response_received_count": 1613, "item_scraped_count": 423}),
+        engine=engine,
+    )
+
+    s._check_stall()
+
+    engine.close_spider.assert_not_called()
+
+
 def test_check_stall_single_window_does_not_fire(spider, caplog):
     """A single no-progress window (e.g. the search ramp-up) must not cry wolf."""
     spider._pages_parsed = 0
@@ -527,11 +591,89 @@ def test_check_stall_quiet_when_items_advance(spider, caplog):
     assert "STALL" not in "\n".join(r.message for r in caplog.records)
 
 
+def test_check_stall_warns_on_sustained_degraded_throughput(spider, caplog):
+    """A sub-floor but nonzero trickle WARNs (degraded) — no STALL error, no close."""
+    spider._pages_parsed = 50
+    spider._stall_last_responses = 8000
+    spider._stall_last_progress = 50 + 400
+    spider._slow_windows = STALL_ALERT_WINDOWS - 1  # this call reaches the threshold
+    spider._stall_windows = 0
+    engine = Mock()
+    # +2 items this window — alive, but below the degraded floor (5).
+    spider.crawler = SimpleNamespace(
+        stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 402}),
+        engine=engine,
+    )
+
+    with caplog.at_level("WARNING"):
+        spider._check_stall()
+
+    msg = "\n".join(r.message for r in caplog.records)
+    assert "DEGRADED" in msg
+    assert "STALL" not in msg
+    engine.close_spider.assert_not_called()
+
+
+def test_check_stall_trickle_never_force_closes(spider):
+    """The incident case: a nonzero trickle resets the zero-streak, so a barely-
+    alive (recovering) run is never force-closed even at the close threshold."""
+    spider._pages_parsed = 50
+    spider._stall_last_responses = 8000
+    spider._stall_last_progress = 50 + 400
+    spider._stall_windows = STALL_CLOSE_WINDOWS - 1  # right at the close edge
+    spider._slow_windows = STALL_CLOSE_WINDOWS - 1
+    engine = Mock()
+    spider.crawler = SimpleNamespace(
+        stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 401}),
+        engine=engine,
+    )
+
+    spider._check_stall()  # +1 item of progress
+
+    assert spider._stall_windows == 0
+    engine.close_spider.assert_not_called()
+
+
+def test_check_stall_single_degraded_window_does_not_warn(spider, caplog):
+    """One sub-floor window (e.g. a brief slow patch) must not cry wolf."""
+    spider._pages_parsed = 50
+    spider._stall_last_responses = 8000
+    spider._stall_last_progress = 50 + 400
+    spider._slow_windows = 0
+    spider._stall_windows = 0
+    spider.crawler = SimpleNamespace(
+        stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 402})
+    )
+
+    with caplog.at_level("WARNING"):
+        spider._check_stall()
+
+    assert spider._slow_windows == 1
+    assert "DEGRADED" not in "\n".join(r.message for r in caplog.records)
+
+
 def test_single_ip_mode_by_default_when_proxies_off():
     """`-a proxies=off` (and no env) means no pool — single-IP behavior."""
     s = MarylandSpider(proxies="off")
     assert s.proxy_pool is None
     assert s.proxy_pool_domains == ["checkccmd.org"]
+
+
+def test_detail_timeout_arg_flows_to_detail_requests():
+    """`-a detail_timeout=` overrides the per-request detail download timeout."""
+    s = MarylandSpider(proxies="off", detail_timeout="90")
+    assert s.detail_timeout == 90.0
+    request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
+    response = HtmlResponse(
+        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
+    )
+    details = [
+        r
+        for r in s.parse_results(response, county_key="TestCounty")
+        if not isinstance(r, scrapy.FormRequest)
+    ]
+    assert details
+    assert all(d.meta["download_timeout"] == 90.0 for d in details)
 
 
 def test_pool_built_from_inline_endpoints():
@@ -541,6 +683,199 @@ def test_pool_built_from_inline_endpoints():
     )
     assert s.proxy_pool is not None
     assert len(s.proxy_pool) == 2
+
+
+def test_log_run_mode_reports_pool(caplog):
+    """The spider_opened banner names the pool when one is configured."""
+    s = MarylandSpider(proxies="1.1.1.1:80,2.2.2.2:81", proxy_env="/nonexistent.env")
+    with caplog.at_level("INFO"):
+        s._log_run_mode()
+    assert "proxy pool ENABLED — 2 egress IPs" in "\n".join(
+        r.message for r in caplog.records
+    )
+
+
+def test_log_run_mode_reports_single_ip(caplog):
+    """The banner reports single-IP mode when no pool is configured."""
+    s = MarylandSpider(proxies="off")
+    with caplog.at_level("INFO"):
+        s._log_run_mode()
+    assert "single-IP mode" in "\n".join(r.message for r in caplog.records)
+
+
+SEARCH_PAGE_HTML = """
+<html><body>
+<select id="MainContent_ddlFacType"><option value="Center">Centers</option>
+<option value="Homes">Homes</option></select>
+<select id="MainContent_ddlLicenseStatus"><option value="Open">Open</option></select>
+<select id="MainContent_ddlCountyList"><option value="Alpha County">Alpha County</option>
+<option value="Beta County">Beta County</option></select>
+<select id="MainContent_ddlCityList"><option value="CityA">CityA</option></select>
+</body></html>
+"""
+
+SEARCH_FORM_HTML = """
+<html><body>
+<form id="form1" method="post" action="/SearchResults.aspx">
+  <input type="hidden" name="__VIEWSTATE" value="x"/>
+  <select name="ctl00$MainContent$ddlFacType" id="MainContent_ddlFacType" multiple>
+    <option value="Center">Centers</option><option value="Homes">Homes</option>
+  </select>
+  <select name="ctl00$MainContent$ddlCountyList" id="MainContent_ddlCountyList">
+    <option value="Alpha County">Alpha County</option>
+  </select>
+  <input type="submit" name="ctl00$MainContent$SearchButton" value="SEARCH"/>
+</form>
+</body></html>
+"""
+
+
+def test_parse_shards_by_facility_type(spider):
+    """parse() launches one search per (county, facility type), types-outer.
+
+    Types-outer keeps each type's shards consecutive so the pool's round-robin
+    affinity fans them (esp. the deep 'Homes' shards) across proxies rather than
+    piling every 'Homes' onto one IP.
+    """
+    request = Request(url="https://www.checkccmd.org/")
+    response = HtmlResponse(
+        url=request.url, body=SEARCH_PAGE_HTML, encoding="utf-8", request=request
+    )
+
+    reqs = list(spider.parse(response))
+
+    # 2 counties x 2 types = 4 shard searches, ordered types-outer.
+    shards = [r.cb_kwargs["county_key"] for r in reqs]
+    assert shards == [
+        "Alpha County [Center]",
+        "Beta County [Center]",
+        "Alpha County [Homes]",
+        "Beta County [Homes]",
+    ]
+    # Each shard is its own session and pins to one proxy (cookiejar == affinity).
+    for r in reqs:
+        key = r.cb_kwargs["county_key"]
+        assert r.meta["cookiejar"] == key
+        assert r.meta["proxy_affinity"] == key
+        assert spider.parsed_pages_by_county[key] == set()
+    assert reqs[0].cb_kwargs["county"] == "Alpha County"
+    assert reqs[0].cb_kwargs["fac_type"] == "Center"
+
+
+def test_parse_county_search_submits_single_facility_type(spider):
+    """A shard's search selects exactly one facility type, not all of them."""
+    spider._license_statuses = ["Open"]
+    spider._cities = ["CityA"]
+    request = Request(url="https://www.checkccmd.org/")
+    response = HtmlResponse(
+        url=request.url, body=SEARCH_FORM_HTML, encoding="utf-8", request=request
+    )
+
+    reqs = list(
+        spider.parse_county_search(
+            response,
+            county_key="Alpha County [Homes]",
+            county="Alpha County",
+            fac_type="Homes",
+        )
+    )
+
+    assert len(reqs) == 1
+    from urllib.parse import unquote_plus
+
+    body = unquote_plus(reqs[0].body.decode())
+    assert "ddlFacType=Homes" in body
+    assert "ddlFacType=Center" not in body  # the other type is not submitted
+    assert "ddlCountyList=Alpha County" in body
+    assert reqs[0].meta["proxy_affinity"] == "Alpha County [Homes]"
+
+
+def test_parse_results_splits_oversized_shard_by_status(spider):
+    """A type shard declaring over the threshold re-issues split by status."""
+    spider._license_status_options = [
+        ("Open", "Open"),
+        ("Closed", "Closed"),
+        ("Revoked", "Revoked"),
+    ]
+    request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
+    response = HtmlResponse(  # RESULTS_HTML declares 8476 (> SHARD_SPLIT_THRESHOLD)
+        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
+    )
+
+    reqs = list(
+        spider.parse_results(
+            response,
+            county_key="Big County [Homes]",
+            expected_page=1,
+            allow_split=True,
+            county="Big County",
+            fac_type="Homes",
+        )
+    )
+
+    # One fresh search per status, keyed and pinned per sub-shard.
+    assert [r.cb_kwargs["county_key"] for r in reqs] == [
+        "Big County [Homes/Open]",
+        "Big County [Homes/Closed]",
+        "Big County [Homes/Revoked]",
+    ]
+    assert [r.cb_kwargs["status"] for r in reqs] == ["Open", "Closed", "Revoked"]
+    assert all(r.url == "https://www.checkccmd.org/" for r in reqs)
+    assert all(r.callback == spider.parse_county_search for r in reqs)
+    for r in reqs:
+        assert r.meta["proxy_affinity"] == r.cb_kwargs["county_key"]
+    # The oversized parent is neither recorded (no double-count) nor paginated.
+    assert "Big County [Homes]" not in spider.declared_total_by_county
+    assert spider._pages_parsed == 0
+
+
+def test_parse_results_status_subshard_not_split(spider):
+    """A status sub-shard (allow_split=False) paginates normally, never re-splits."""
+    request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
+    response = HtmlResponse(
+        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
+    )
+
+    reqs = list(
+        spider.parse_results(
+            response,
+            county_key="Big County [Homes/Open]",
+            expected_page=1,
+            allow_split=False,
+            county="Big County",
+            fac_type="Homes",
+        )
+    )
+
+    assert spider.declared_total_by_county["Big County [Homes/Open]"] == 8476
+    assert any(isinstance(r, scrapy.FormRequest) for r in reqs)  # it paginates
+    # No re-split: a split would enqueue fresh searches (callback parse_county_search).
+    assert not any(r.callback == spider.parse_county_search for r in reqs)
+
+
+def test_parse_results_small_shard_not_split(spider):
+    """A top-level shard under the threshold paginates normally (no split)."""
+    spider._license_status_options = [("Open", "Open")]
+    small_html = RESULTS_HTML.replace("8476", "42")
+    request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
+    response = HtmlResponse(
+        url=request.url, body=small_html, encoding="utf-8", request=request
+    )
+
+    reqs = list(
+        spider.parse_results(
+            response,
+            county_key="Small County [Homes]",
+            expected_page=1,
+            allow_split=True,
+            county="Small County",
+            fac_type="Homes",
+        )
+    )
+
+    assert spider.declared_total_by_county["Small County [Homes]"] == 42
+    # Below threshold: no split (no fresh parse_county_search searches enqueued).
+    assert not any(r.callback == spider.parse_county_search for r in reqs)
 
 
 def test_detail_requests_carry_no_proxy_affinity(spider):
@@ -978,8 +1313,10 @@ def test_parse_excels_miss_falls_back_to_pdf(spider):
     assert isinstance(pdf_request, scrapy.Request)
     assert "PrintTask.aspx?t=1&d=2" in pdf_request.url
     assert pdf_request.callback == spider.parse_inspection_pdf
-    # The PDF is on the same checkccmd host and must share the single-flight
-    # host slot (per-IP rate limit) — NOT a separate download slot.
+    # The ~1MB PDF bypasses the proxy pool (public, no session needed) and
+    # egresses from the host IP, so it doesn't burn metered proxy bandwidth.
+    assert pdf_request.meta.get("proxy_bypass") is True
+    # It rides the default host slot, not a per-proxy download slot.
     assert "download_slot" not in pdf_request.meta
 
 
