@@ -523,5 +523,19 @@ class ProviderItem(scrapy.Item):
     ak_license_type = scrapy.Field()             # "Biennial"|"Provisional"|...
     ak_licensing_specialist = scrapy.Field()     # assigned state specialist
 
+    # Washington DC specific fields (mychildcare.dc.gov). No license dates,
+    # status, or inspections are published by this source; the internal facility
+    # id is emitted as the common `license_number` (the closest registration id).
+    # Capital Quality designation -- DC's QRIS rating; stays state-specific.
+    dc_capital_quality_designation = scrapy.Field()
+    dc_capital_quality_participant = scrapy.Field()  # bool
+    dc_pay_equity_fund = scrapy.Field()  # bool (Pay Equity Fund participant)
+    dc_prek_enhancement = scrapy.Field()  # bool (Pre-K Enhancement program)
+    dc_nontraditional_hours = scrapy.Field()  # bool (nontraditional hours)
+    # Per-age-group enrollment/openings/tuition table (DC-unique detail):
+    # list of {age_group, openings, current_enrollment, desired_enrollment,
+    # monthly_tuition}.
+    dc_enrollment = scrapy.Field()
+
     # This will hold the list of inspections.
     inspections = scrapy.Field()

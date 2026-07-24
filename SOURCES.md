@@ -36,4 +36,5 @@ To regenerate: `.venv/bin/python scripts/generate_sources.py`.
 | Utah | https://jobs.utah.gov/ |
 | Virginia | https://dss.virginia.gov/<br>https://earlychildhoodquality.doe.virginia.gov/ |
 | Washington | https://findchildcarewa.org/ |
+| Washington Dc | https://mychildcare.dc.gov/ |
 | West Virginia | https://wvdhhr.org/ |
