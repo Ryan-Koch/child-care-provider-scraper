@@ -359,6 +359,8 @@ FACILITY_CATEGORY_BUCKETS = {
         # school-based institutional care -> center.
         "HHS-Licensed Child Care Center", "HHS-Licensed Group Child Care Facility",
         "HHS-Licensed Preschool", "HHS Four-Year Old Program", "Head Start Site",
+        # Washington DC (mychildcare.dc.gov): CDC = center.
+        "CDC (Child Development Center)",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME", "Family Child Care Home", "Family Home", "FDC",
@@ -378,12 +380,16 @@ FACILITY_CATEGORY_BUCKETS = {
         "HHS-Licensed Family Child Care",
         # Alaska (AKCCIS): single-license home care.
         "Licensed Home",
+        # Washington DC (mychildcare.dc.gov): CDH = a home-based program.
+        "CDH (Child Development Home)",
     ],
     "group_home": [
         "GFDC", "Group Home", "Group Home Child Care", "Group",
         "Group Child Care Home",
         # North Dakota: group child care operated in a home.
         "HHS-Licensed Group Child Care Home",
+        # Washington DC: CDX = an "expanded" home (larger home-based care).
+        "CDX (Child Development Home Expanded)",
         # Alaska (AKCCIS): matches the north_dakota precedent -- a licensed
         # group operation in a residence -> group_home (not family_home).
         "Licensed Group Home",
