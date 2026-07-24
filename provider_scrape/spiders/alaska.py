@@ -1,72 +1,183 @@
+"""Alaska child care providers, read directly from the AKCCIS JSON API.
+
+Alaska decommissioned findccprovider.health.alaska.gov (now 502ing) and
+migrated to AKCCIS (akccis.com), an Angular SPA whose map view is backed by
+three public JSON endpoints:
+
+  * ``POST /server/api/Facility/Search``               -> full state roster
+  * ``GET  /server/api/Facility/GetSearchFacilityById?facilityGenId={id}``
+                                                       -> same-shape single record
+  * ``GET  /server/api/Inspection/GetFacilityInspectionTasksPublicView``
+         ``?facilityGenId={id}``                       -> visit-level inspections
+
+The Search endpoint returns every provider (~700) in ~1.4MB in one call, so
+no pagination or geographic enumeration is needed (contrast ``north_dakota``).
+We fan out one inspection GET per provider. Deeper deficiency detail is not
+publicly exposed by AKCCIS -- the visit-level ``compliance: "C"/"NC"`` is the
+finding-level signal we ship. See ``docs/alaska_field_mapping.md`` for the
+full field-mapping decision log.
+"""
 import json
-import re
 from datetime import datetime
 
 import scrapy
 
-from provider_scrape.items import ProviderItem, InspectionItem
+from provider_scrape.items import InspectionItem, ProviderItem
 
 
-# Age-range unit abbreviations used by the API (e.g. "0W - 12 Y") expanded to
-# the readable form the previous detail-page scrape produced ("0 Weeks - 12 Years").
-_AGE_UNITS = {"D": "Days", "W": "Weeks", "M": "Months", "Y": "Years"}
+# --------------------------------------------------------------------------- #
+# Helpers
+# --------------------------------------------------------------------------- #
+
+# The .NET default DateTime -- AKCCIS emits this as a "no date" sentinel on
+# nested objects that have no real value (agesServed.effectiveDate is the
+# common case). Recognized and returned as None.
+_NET_DEFAULT_DATE = "0001-01-01"
+
+# Visit-level compliance codes AKCCIS ships on GetFacilityInspectionTasksPublicView.
+_COMPLIANCE = {"C": "In Compliance", "NC": "Non-Compliance"}
 
 
 def _clean(value):
-    """Trim to a non-empty string, or None. Ints (license #, etc.) are stringified."""
+    """Trim to a non-empty string, or ``None``. Numeric values are stringified."""
     if value is None:
         return None
     text = str(value).strip()
     return text or None
 
 
-def _format_date(value):
-    """Convert the API's ``YYYYMMDD`` dates to ISO ``YYYY-MM-DD``.
+def _yesno(flag):
+    """Convert an AKCCIS ``true`` / ``false`` -> ``"Yes"`` / ``"No"``.
 
-    The API dates are all-digit ``YYYYMMDD``. It uses several placeholders/corrupt
-    values that are *not* real dates — ``"0"``, ``"99999999"`` (its "no date"
-    sentinel), or malformed lengths (``"70506"``) — all of which become None so
-    they never reach the output or the pipeline's date parser. A genuine calendar
-    date is required (``"20250230"`` is rejected). Any non-digit value is passed
-    through untouched for the pipeline to handle (defensive; not seen in practice).
+    Matches the shape the previous spider emitted for ``acceptsCCAP``.
+    ``None`` in -> ``None`` out; strings pass through cleaned.
+    """
+    if flag is True:
+        return "Yes"
+    if flag is False:
+        return "No"
+    return _clean(flag)
+
+
+def _stringify_coordinate(value):
+    """Coordinates are strings on ``ProviderItem`` (``normalization`` requires
+    it). Preserve full precision -- never cast to ``float``.
+    """
+    if value is None or value == "":
+        return None
+    return str(value)
+
+
+def _iso_date(value):
+    """Accept AKCCIS's two date shapes and return ``YYYY-MM-DD`` (or ``None``).
+
+    Shapes observed:
+      * .NET-encoded ISO ``2025-06-01T08:00:00Z`` (roster + license objects).
+      * US ``6/23/2026 1:00 PM`` (inspection endpoint's ``visitDate``).
+
+    ``0001-01-01T00:00:00Z`` (the .NET default) becomes ``None``.
+    Unparseable / empty values become ``None``.
     """
     text = _clean(value)
     if not text:
         return None
-    if text.isdigit():
-        if len(text) == 8:
-            try:
-                return datetime.strptime(text, "%Y%m%d").strftime("%Y-%m-%d")
-            except ValueError:
-                return None  # sentinel (99999999) or invalid calendar date
-        return None  # wrong-length placeholder/corrupt value (0, 70506, ...)
-    return text
+    if "T" in text:
+        date_part = text.split("T", 1)[0]
+        if date_part.startswith(_NET_DEFAULT_DATE):
+            return None
+        try:
+            return datetime.strptime(date_part, "%Y-%m-%d").strftime("%Y-%m-%d")
+        except ValueError:
+            return None
+    # US shape from the inspection endpoint -- strip the time portion first.
+    date_part = text.split(" ", 1)[0]
+    try:
+        return datetime.strptime(date_part, "%m/%d/%Y").strftime("%Y-%m-%d")
+    except ValueError:
+        return None
 
 
-def _parse_capacity(value):
-    """Extract the integer from ``"60 Children"`` -> ``60`` (raw kept if no digits)."""
-    text = _clean(value)
+def _format_months(months):
+    """Format an integer month count as ``"12 Years, 11 Months"`` etc.
+
+    Drops the months clause when zero (36 -> ``"3 Years"``); uses singular
+    for a value of exactly one (1 -> ``"1 Year"``).
+    """
+    total = int(round(months))
+    if total < 12:
+        return f"{total} {'Month' if total == 1 else 'Months'}"
+    years, remainder = divmod(total, 12)
+    year_word = "Year" if years == 1 else "Years"
+    if remainder == 0:
+        return f"{years} {year_word}"
+    month_word = "Month" if remainder == 1 else "Months"
+    return f"{years} {year_word}, {remainder} {month_word}"
+
+
+def _months_to_age(start, end):
+    """Format ``(0.0, 155.0)`` -> ``'0 Months - 12 Years, 11 Months'``.
+
+    Missing start or end -> ``None``. Inverted ranges (``start > end``)
+    also -> ``None`` (defensive; not observed in practice).
+    """
+    if start is None or end is None:
+        return None
+    if start > end:
+        return None
+    return f"{_format_months(start)} - {_format_months(end)}"
+
+
+def _overlaps(range_start, range_end, other_start, other_end):
+    """True if inclusive ranges ``[range_start, range_end]`` and
+    ``[other_start, other_end]`` overlap.
+    """
+    return range_start <= other_end and other_start <= range_end
+
+
+def _age_flags(start, end):
+    """Return ``{"infant", "toddler", "preschool", "school"}`` booleans for
+    the given month range.
+
+    Thresholds (inclusive months):
+      * infant     0-11
+      * toddler   12-35
+      * preschool 36-59
+      * school    60+  (no upper bound)
+
+    Missing values or inverted ranges -> ``{}`` (caller sets nothing).
+    """
+    if start is None or end is None or start > end:
+        return {}
+    return {
+        "infant":    _overlaps(start, end, 0, 11),
+        "toddler":   _overlaps(start, end, 12, 35),
+        "preschool": _overlaps(start, end, 36, 59),
+        "school":    end >= 60,
+    }
+
+
+def _expand_compliance(code):
+    """AKCCIS visit ``compliance`` code -> human label.
+
+    ``"C"`` -> ``"In Compliance"``, ``"NC"`` -> ``"Non-Compliance"``; any
+    other non-empty value passes through unchanged.
+    """
+    text = _clean(code)
     if not text:
         return None
-    match = re.match(r"\d+", text)
-    return int(match.group()) if match else text
+    return _COMPLIANCE.get(text, text)
 
 
-def _expand_age_range(value):
-    """Expand ``"0W - 12 Y"`` -> ``"0 Weeks - 12 Years"`` (unknown units kept)."""
-    text = _clean(value)
-    if not text:
-        return None
-    return re.sub(
-        r"(\d+)\s*([A-Za-z])",
-        lambda m: f"{m.group(1)} {_AGE_UNITS.get(m.group(2).upper(), m.group(2))}",
-        text,
-    )
+def _build_address(street, street2, city, state, zip_code):
+    """Assemble ``"STREET STREET2 CITY, ST ZIP"`` tolerating empty pieces.
 
-
-def _build_address(street, city, state, zip_code):
-    """Assemble the state's ``"STREET CITY, ST ZIP"`` shape, tolerating gaps."""
-    left = _clean(street) or ""
+    Empty-string ``address2`` is common in AKCCIS -- concatenation must skip
+    it or the result gets a double space (``"35095 Huntington Drive  Soldotna,
+    AK 99669"``).
+    """
+    street = _clean(street) or ""
+    street2 = _clean(street2) or ""
+    left = " ".join(part for part in (street, street2) if part).strip()
     city = _clean(city) or ""
     state = _clean(state) or ""
     if city and state:
@@ -78,115 +189,188 @@ def _build_address(street, city, state, zip_code):
     return combined or None
 
 
+# --------------------------------------------------------------------------- #
+# Spider
+# --------------------------------------------------------------------------- #
+
 class AlaskaSpider(scrapy.Spider):
-    """Alaska child care providers, read directly from the site's JSON API.
-
-    The public site (findccprovider.health.alaska.gov) is a Blazor WebAssembly
-    SPA. Its results grid intermittently fails to render even though the
-    underlying ``GET /api/Provider`` call returns 200 with the full dataset — a
-    client-side binding race we cannot control from the outside. Driving that UI
-    with Playwright therefore produced sporadic 0-item runs. We bypass the UI and
-    read the same API the app consumes:
-
-      * ``GET /api/Provider``            -> roster of every provider (no history)
-      * ``GET /api/Provider/{facilityId}`` -> that provider **with** complianceEvents
-
-    This is deterministic, needs no browser, and finishes in seconds.
-    """
+    """Alaska child care providers via the AKCCIS public API."""
 
     name = "alaska"
-    allowed_domains = ["findccprovider.health.alaska.gov"]
+    allowed_domains = ["akccis.com"]
 
-    SITE = "https://findccprovider.health.alaska.gov"
-    API_BASE = "https://findccprovider.health.alaska.gov/api/Provider"
+    SITE = "https://akccis.com"
+    SEARCH_URL = f"{SITE}/server/api/Facility/Search"
+    INSPECTION_URL = (
+        f"{SITE}/server/api/Inspection/GetFacilityInspectionTasksPublicView"
+    )
+    # Deep link into the AKCCIS map view for a single facility.
+    PROFILE_URL = f"{SITE}/client/map?facilityGenId={{}}"
+
+    HEADERS = {
+        "User-Agent": (
+            "Mozilla/5.0 (X11; Linux x86_64; rv:152.0) "
+            "Gecko/20100101 Firefox/152.0"
+        ),
+        "Accept": "application/json, text/plain, */*",
+        # The AKCCIS API server has returned 403 without a Referer in some
+        # environments during testing -- always include it.
+        "Referer": f"{SITE}/client/map",
+    }
 
     custom_settings = {
-        # Plain JSON over HTTP — no browser. Override the project-wide Playwright
-        # download handler with the standard one so no chromium is launched.
+        # Plain JSON over HTTP -- override the project-wide scrapy-playwright
+        # download handler so no chromium is launched.
         "DOWNLOAD_HANDLERS": {
             "http": "scrapy.core.downloader.handlers.http.HTTPDownloadHandler",
             "https": "scrapy.core.downloader.handlers.http.HTTPDownloadHandler",
         },
-        # Be polite across the ~400 per-provider detail calls.
+        # Polite across the ~700 per-provider inspection calls.
         "CONCURRENT_REQUESTS": 8,
+        "CONCURRENT_REQUESTS_PER_DOMAIN": 8,
         "DOWNLOAD_DELAY": 0.25,
         "RETRY_TIMES": 3,
     }
 
+    # Sanity floor: warn loudly at close if the emit count drops far below
+    # what the API has been returning (700 today). Not a hard failure -- the
+    # WARNING is easier to spot in the log than a small item count.
+    _MIN_EXPECTED_ITEMS = 500
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._items_emitted = 0
+        self._with_inspections = 0
+        self._processed_inspections = 0
+
+    # --- request flow --------------------------------------------------- #
+
     def start_requests(self):
+        # Empty JSON array = no filters = full state roster in one response.
+        # The POST body must be a JSON *array*; the API rejects an object.
         yield scrapy.Request(
-            self.API_BASE,
-            callback=self.parse_list,
-            headers={"Accept": "application/json"},
+            self.SEARCH_URL,
+            method="POST",
+            body=b"[]",
+            headers={
+                **self.HEADERS,
+                "Content-Type": "application/json",
+                "Origin": self.SITE,
+            },
+            callback=self.parse_search,
+            dont_filter=True,
         )
 
-    def parse_list(self, response):
-        providers = json.loads(response.text)
-        self.logger.info(f"Provider roster returned {len(providers)} records.")
-        for roster in providers:
-            facility_id = roster.get("facilityId")
-            if facility_id is None:
+    def parse_search(self, response):
+        roster = json.loads(response.text)
+        self.logger.info("Alaska: roster returned %d records", len(roster))
+        for record in roster:
+            facility_id = record.get("facilityGenId")
+            if not facility_id:
+                self.logger.warning(
+                    "Alaska: roster row missing facilityGenId, skipping "
+                    "(facilityName=%r)", record.get("facilityName"))
                 continue
-            # The roster omits complianceEvents; the per-facility endpoint
-            # returns the same record with them populated. Carry the roster row
-            # through so an errback can still emit the provider if the detail
-            # call fails after retries.
             yield scrapy.Request(
-                f"{self.API_BASE}/{facility_id}",
-                callback=self.parse_detail,
-                errback=self.errback_detail,
-                headers={"Accept": "application/json"},
-                cb_kwargs={"roster": roster},
+                f"{self.INSPECTION_URL}?facilityGenId={facility_id}",
+                callback=self.parse_inspection,
+                errback=self.errback_inspection,
+                headers=self.HEADERS,
+                cb_kwargs={"roster": record},
             )
 
-    def parse_detail(self, response, roster):
-        data = json.loads(response.text)
-        yield self.build_item(data)
+    def parse_inspection(self, response, roster):
+        events = json.loads(response.text) or []
+        self._processed_inspections += 1
+        if events:
+            self._with_inspections += 1
+        if self._processed_inspections % 100 == 0:
+            self.logger.info(
+                "Alaska: processed %d inspection responses (%d had visits)",
+                self._processed_inspections, self._with_inspections)
+        item = self.build_item(roster, events)
+        self._items_emitted += 1
+        yield item
 
-    def errback_detail(self, failure):
-        # Detail call failed after retries: fall back to the roster row so the
-        # provider is still emitted (just without compliance history).
+    def errback_inspection(self, failure):
+        """Inspection fetch failed after retries -- emit the provider with
+        an empty inspection list rather than dropping it entirely."""
         roster = failure.request.cb_kwargs.get("roster", {})
         self.logger.warning(
-            f"Detail fetch failed for facilityId={roster.get('facilityId')}: "
-            f"{failure.value!r}. Emitting roster record without inspections."
-        )
-        return [self.build_item(roster)]
+            "Alaska: inspection fetch failed for facilityGenId=%s: %r. "
+            "Emitting provider without inspections.",
+            roster.get("facilityGenId"), failure.value)
+        self._processed_inspections += 1
+        item = self.build_item(roster, [])
+        self._items_emitted += 1
+        yield item
 
-    def build_item(self, data):
+    def closed(self, reason):
+        if self._items_emitted < self._MIN_EXPECTED_ITEMS:
+            self.logger.warning(
+                "Alaska: only %d items emitted (expected >= %d) -- API may "
+                "be degraded or the search response was truncated",
+                self._items_emitted, self._MIN_EXPECTED_ITEMS)
+        else:
+            self.logger.info(
+                "Alaska: emitted %d items (%d with inspections)",
+                self._items_emitted, self._with_inspections)
+
+    # --- item assembly -------------------------------------------------- #
+
+    def build_item(self, roster, inspection_events):
         item = ProviderItem()
         item["source_state"] = "Alaska"
 
-        facility_id = data.get("facilityId")
-        if facility_id is not None:
-            item["provider_url"] = f"{self.SITE}/ProviderInfo/{facility_id}"
+        facility_id = _clean(roster.get("facilityGenId"))
+        if facility_id:
+            item["ak_facility_gen_id"] = facility_id
+            item["provider_url"] = self.PROFILE_URL.format(facility_id)
 
-        item["provider_name"] = _clean(data.get("facilityName"))
-        item["license_number"] = _clean(data.get("licenseNumber"))
-        item["phone"] = _clean(data.get("phoneNumber"))
-        item["capacity"] = _parse_capacity(data.get("capacity"))
-        item["ages_served"] = _expand_age_range(data.get("ageRange"))
+        item["provider_name"] = _clean(roster.get("facilityName"))
+        item["license_number"] = _clean(roster.get("licenseNumber"))
+        item["phone"] = _clean(roster.get("phoneNumber"))
 
-        first = _clean(data.get("firstName"))
-        last = _clean(data.get("lastName"))
-        item["administrator"] = " ".join(p for p in (first, last) if p) or None
+        # licensedCapacity is already an int on the wire -- no parsing needed
+        # (contrast the old spider, which stripped digits from "60 Children").
+        item["capacity"] = roster.get("licensedCapacity")
 
-        # CCAP = Child Care Assistance Program (state subsidy) -> scholarships.
-        item["scholarships_accepted"] = _clean(data.get("acceptsCCAP"))
+        item["administrator"] = _clean(roster.get("facilityAdmin"))
 
-        effective = _format_date(data.get("effectiveDate"))
-        item["status_date"] = effective
-        item["license_begin_date"] = effective
-        item["license_expiration"] = _format_date(data.get("expirationDate"))
+        # doingBusinessAs is used inconsistently by AKCCIS: on ~510/572
+        # populated records it holds the licensee / owner name (not a true
+        # DBA). Route it to license_holder rather than inventing a `dba`
+        # common field (see docs/alaska_field_mapping.md). Skip the ~62
+        # identity cases where it just duplicates facilityName.
+        dba = _clean(roster.get("doingBusinessAs"))
+        name = _clean(roster.get("facilityName"))
+        if dba and dba != name:
+            item["license_holder"] = dba
 
-        city = _clean(data.get("city"))
-        state = _clean(data.get("state"))
-        zip_code = _clean(data.get("zip"))
+        item["provider_type"] = _clean(roster.get("facilityType"))
+        item["status"] = _clean(roster.get("providerStatus"))
+        item["status_date"] = _iso_date(
+            roster.get("providerStatusEffectiveDate"))
+
+        # Current license period. futureLicense / expiredLicense are ignored
+        # (no ProviderItem field exposes license history -- a project-wide
+        # decision, not AK-specific).
+        license_obj = roster.get("license") or {}
+        item["license_begin_date"] = _iso_date(license_obj.get("effectiveDate"))
+        item["license_expiration"] = _iso_date(license_obj.get("endDate"))
+
+        item["scholarships_accepted"] = _yesno(roster.get("isCCAP"))
+
+        # Address components. Setting all three of city/state/zip explicitly
+        # makes the normalization pipeline skip its best-effort address parse.
+        city = _clean(roster.get("city"))
+        # stateDescAbbr is always "AK" for this spider but read it from the
+        # source rather than hard-coding.
+        state = _clean(roster.get("stateDescAbbr"))
+        zip_code = _clean(roster.get("zipCode"))
         item["address"] = _build_address(
-            data.get("address"), city, state, zip_code
-        )
-        # Structured components straight from the API (the pipeline skips its
-        # best-effort address parse when all three are already present).
+            roster.get("address"), roster.get("address2"),
+            city, state, zip_code)
         if city:
             item["city"] = city
         if state:
@@ -194,42 +378,66 @@ class AlaskaSpider(scrapy.Spider):
         if zip_code:
             item["zip"] = zip_code
 
-        item["inspections"] = self.build_inspections(data.get("complianceEvents"))
+        item["county"] = _clean(roster.get("county"))
+        item["latitude"] = _stringify_coordinate(roster.get("latitude"))
+        item["longitude"] = _stringify_coordinate(roster.get("longitude"))
+
+        # Ages: use agesAcceptedMonths* (the state-authorized range) rather
+        # than license.startAge/endAge (occasionally diverges on ~5 records).
+        ages_start = roster.get("agesAcceptedMonthsStart")
+        ages_end = roster.get("agesAcceptedMonthsEnd")
+        item["ages_served"] = _months_to_age(ages_start, ages_end)
+        for group, flag in _age_flags(ages_start, ages_end).items():
+            item[group] = flag
+
+        # AK-specific enrichment (see docs/alaska_field_mapping.md).
+        facility_number = roster.get("facilityNumber")
+        if facility_number is not None:
+            item["ak_facility_number"] = str(facility_number)
+        item["ak_legacy_license_number"] = _clean(
+            roster.get("legacyLicenseNumber"))
+        item["ak_vendor_id"] = _clean(roster.get("vendorId"))
+        item["ak_facility_subtype"] = _clean(
+            roster.get("facilityTypeSubTypeDescription"))
+        item["ak_license_type"] = _clean(roster.get("licenseType"))
+        item["ak_licensing_specialist"] = _clean(
+            roster.get("facilityLicSpecialist"))
+
+        item["inspections"] = self.build_inspections(inspection_events)
         return item
 
     @staticmethod
     def build_inspections(events):
-        # The API returns one row per violated regulation, so a single
-        # inspection often appears as many rows that are identical once reduced
-        # to these generic fields (the per-violation detail — section, statute,
-        # comments — is not captured). Deduplicate on the reduced fingerprint,
-        # mirroring the previous detail-page scrape.
+        """Map AKCCIS visit rows -> ``InspectionItem`` list, deduped.
+
+        AKCCIS does not currently emit duplicate visit rows in the observed
+        data, but the fingerprint (date/purpose/compliance/visit-type/
+        specialist) is cheap insurance and matches the old spider's shape.
+        Future-dated visits (scheduled inspections) are emitted as-is;
+        filtering to completed-only is a downstream decision.
+        """
         inspections = []
         seen = set()
         for event in events or []:
-            # The inspection/investigation date is the primary event date; fall
-            # back through the other timestamps if it is a "0" placeholder.
-            date = (
-                _format_date(event.get("insInvDate"))
-                or _format_date(event.get("violationDate"))
-                or _format_date(event.get("intakeDate"))
-                or _format_date(event.get("complianceDate"))
-            )
-            type_ = _clean(event.get("complianceType"))
-            findings = _clean(event.get("findings"))
-            action = _clean(event.get("actionTaken"))
-            status_updated = _format_date(event.get("complianceDate"))
+            date = _iso_date(event.get("visitDate"))
+            purpose = _clean(event.get("purposeOfVisit"))
+            original_status = _expand_compliance(event.get("compliance"))
+            visit_type = _clean(event.get("visitType"))
+            specialist = _clean(event.get("licensingSpecialist"))
 
-            fingerprint = (date, type_, findings, action, status_updated)
+            fingerprint = (date, purpose, original_status, visit_type,
+                           specialist)
             if fingerprint in seen:
                 continue
             seen.add(fingerprint)
 
             insp = InspectionItem()
             insp["date"] = date
-            insp["type"] = type_
-            insp["original_status"] = findings
-            insp["corrective_status"] = action
-            insp["status_updated"] = status_updated
+            insp["type"] = purpose
+            insp["original_status"] = original_status
+            if visit_type:
+                insp["ak_visit_type"] = visit_type
+            if specialist:
+                insp["ak_licensing_specialist"] = specialist
             inspections.append(insp)
         return inspections
