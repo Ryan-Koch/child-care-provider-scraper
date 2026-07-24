@@ -56,6 +56,11 @@ class InspectionItem(scrapy.Item):
     # detail is embedded in the inspections page (latest visit only).
     hi_requirements_not_met = scrapy.Field()
 
+    # Alaska specific inspection fields (AKCCIS
+    # GetFacilityInspectionTasksPublicView -- see docs/alaska_field_mapping.md).
+    ak_visit_type = scrapy.Field()          # "Announced" | "Unannounced"
+    ak_licensing_specialist = scrapy.Field()
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
@@ -508,6 +513,15 @@ class ProviderItem(scrapy.Item):
     nd_program_id = scrapy.Field()  # registry program id (also in provider_url)
     nd_org_id = scrapy.Field()  # orgId
     nd_philosophy = scrapy.Field()  # philosophyStatement
+
+    # Alaska specific fields (AKCCIS -- see docs/alaska_field_mapping.md).
+    ak_facility_gen_id = scrapy.Field()          # AKCCIS internal facility id
+    ak_facility_number = scrapy.Field()          # 7-digit facility number
+    ak_legacy_license_number = scrapy.Field()    # pre-migration license id
+    ak_vendor_id = scrapy.Field()                # CCAP subsidy-billing vendor code
+    ak_facility_subtype = scrapy.Field()         # facilityTypeSubTypeDescription
+    ak_license_type = scrapy.Field()             # "Biennial"|"Provisional"|...
+    ak_licensing_specialist = scrapy.Field()     # assigned state specialist
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()

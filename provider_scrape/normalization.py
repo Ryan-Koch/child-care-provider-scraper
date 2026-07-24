@@ -264,6 +264,12 @@ STATUS_BUCKETS = {
         "CONTINUOUS LICENSE", "License issued (IL)", "Certified", "CERTIFIED",
         "Open - Certified", "Open - Payment Only", "Compliance Certificate",
         "Original", "Amended permit (AP)", "Continuing - Full",
+        # Alaska (AKCCIS): providerStatus values from Facility/Search. "Exempt"
+        # here is a *status* meaning "operating under an exemption" (i.e.
+        # actively open); the exempt facility_category is derived separately
+        # from provider_type. The project's status vocab has no `exempt`
+        # bucket, so `active` is the operationally-correct home.
+        "Active/Open", "Exempt",
     ],
     "provisional": [
         "PROVISIONAL LICENSE", "Initial Permit", "Provisional 1",
@@ -282,11 +288,19 @@ STATUS_BUCKETS = {
         # NB: en-dash (–), exactly as emitted by the source.
         "Open – Pending Legal Action Outcome", "RevocationPending",
         "Refuse to Renew (RR)", "Revoke License (RL)",
+        # Alaska (AKCCIS): Denied and App Withdrawn are regulatory blocks
+        # (not neutral closures), so they live with enforcement rather than
+        # closed.
+        "Denied", "App Withdrawn",
     ],
     "closed": [
         "CLOSED", "Closed", "INACTIVE", "NOT LICENSED", "Revoked",
         "Surrendered under Investigation (SI)", "Surrendered with Cause (SC)",
         "Temporary Closure",
+        # Alaska (AKCCIS): Closed / Temporary Closure / Suspended are already
+        # covered by the generic entries above; Revoked/Not Renewed is the
+        # state-specific label.
+        "Revoked/Not Renewed",
     ],
 }
 
@@ -362,12 +376,17 @@ FACILITY_CATEGORY_BUCKETS = {
         "Licensed Type B Family Child Care Home",
         # North Dakota: family child care in a residence.
         "HHS-Licensed Family Child Care",
+        # Alaska (AKCCIS): single-license home care.
+        "Licensed Home",
     ],
     "group_home": [
         "GFDC", "Group Home", "Group Home Child Care", "Group",
         "Group Child Care Home",
         # North Dakota: group child care operated in a home.
         "HHS-Licensed Group Child Care Home",
+        # Alaska (AKCCIS): matches the north_dakota precedent -- a licensed
+        # group operation in a residence -> group_home (not family_home).
+        "Licensed Group Home",
     ],
     "school_age": [
         "SACC", "SCHOOL AGE DAY CARE CENTER", "School-age Program",
@@ -385,6 +404,10 @@ FACILITY_CATEGORY_BUCKETS = {
         "Voluntary Registration",
         # North Dakota: license-exempt self-declared programs.
         "Self-Declared Provider",
+        # Alaska (AKCCIS): every subtype of exempt care rolls up to the
+        # coarse facilityType "License Exempt"; CCAP-accredited providers
+        # participate in the subsidy program without being state-licensed.
+        "License Exempt", "CCAP Certified/Accredited",
     ],
     "other": [
         "Other", "Resident Camp", "Summer Day Camp",
@@ -396,6 +419,9 @@ FACILITY_CATEGORY_BUCKETS = {
         # North Dakota: a provider holding multiple license types (ambiguous
         # category) and tribal subsidy recipients (informal/subsidy).
         "HHS-Licensed Multiple License", "Tribal Subsidy Recipient",
+        # Alaska (AKCCIS): state-flagged operations without a license --
+        # not legitimate exempt care, kept separate from `exempt`.
+        "Illegally Unlicensed",
     ],
 }
 
@@ -440,7 +466,7 @@ FIELD_COLLAPSE_MAP = {
         "va_license_type", "mt_license_type", "ut_license_type",
         "co_license_type", "az_license_type", "nc_license_type",
         "nj_license_type", "wv_license_type", "wa_license_type",
-        "hi_license_type",
+        "hi_license_type", "ak_license_type",
     ],
     "school_district": [
         "co_school_district", "ny_school_district_name", "pa_school_district",

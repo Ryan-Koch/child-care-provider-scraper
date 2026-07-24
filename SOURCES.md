@@ -9,7 +9,7 @@ To regenerate: `.venv/bin/python scripts/generate_sources.py`.
 | State | Source(s) |
 |---|---|
 | Alabama | https://apps.dhr.alabama.gov/ |
-| Alaska | https://findccprovider.health.alaska.gov/ |
+| Alaska | https://akccis.com/ |
 | Arizona | https://azchildcaresearch.azdes.gov/<br>https://azchildcareprovidersearch.azdes.gov/ |
 | Arkansas | https://ardhslicensing.my.site.com/ |
 | California | https://www.ccld.dss.ca.gov/ |
