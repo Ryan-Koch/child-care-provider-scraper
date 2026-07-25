@@ -29,6 +29,22 @@ class MontanaSpider(PlaywrightErrbackMixin, scrapy.Spider):
                 errback=self.errback_close_page,
             )
 
+    @staticmethod
+    def extract_card_fields(card):
+        """Pull (pid, lat, lon) out of a single provider-card selector.
+
+        The site's card markup has changed shape over time: the identifiers
+        once lived on a single <lightning-button data-pid data-lat data-lon>,
+        but now sit on two plain <button> elements -- a "View Details" button
+        carrying data-pid and a separate "Get Directions" button carrying
+        data-lat/data-lon. Match on the data-* attribute itself rather than the
+        element name so we survive that tag swapping either direction.
+        """
+        pid = card.css('[data-pid]::attr(data-pid)').get()
+        lat = card.css('[data-lat]::attr(data-lat)').get()
+        lon = card.css('[data-lon]::attr(data-lon)').get()
+        return pid, lat, lon
+
     async def parse_search_page(self, response):
         page = response.meta["playwright_page"]
 
@@ -91,12 +107,10 @@ class MontanaSpider(PlaywrightErrbackMixin, scrapy.Spider):
             
             cards = sel.css('article.provider-card')
             self.logger.info(f"Total providers found: {len(cards)}")
-            
+
             for card in cards:
-                pid = card.css('lightning-button[data-pid]::attr(data-pid)').get()
-                lat = card.css('lightning-button[data-lat]::attr(data-lat)').get()
-                lon = card.css('lightning-button[data-lon]::attr(data-lon)').get()
-                
+                pid, lat, lon = self.extract_card_fields(card)
+
                 if pid:
                     detail_url = f"https://mtdphhs.my.site.com/MAQCSChildCareLicensing/s/provider-detail?language=en_US&pid={pid}"
                     yield scrapy.Request(
