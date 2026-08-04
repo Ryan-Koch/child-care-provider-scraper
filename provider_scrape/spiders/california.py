@@ -37,6 +37,18 @@ class CaclSpider(scrapy.Spider):
         """
         Parses the CSV response and yields a dictionary for each row.
         """
+        self.logger.info(f"Parsing file from {response.url}")
+
+        # DownloadStateData answers 200 with an empty body when the state's export
+        # is down, so an empty response looks like a clean run unless we flag it.
+        if not response.text.strip():
+            self.logger.error(
+                f"Empty CSV body from {response.url} (HTTP {response.status}). "
+                "The CA DownloadStateData endpoint is returning Content-Length: 0 - "
+                "check https://www.ccld.dss.ca.gov/carefacilitysearch/ for an outage notice."
+            )
+            return
+
         # The response body is a string, so we use StringIO to treat it like a file
         csv_file = StringIO(response.text)
 
