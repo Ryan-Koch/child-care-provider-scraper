@@ -361,6 +361,10 @@ FACILITY_CATEGORY_BUCKETS = {
         "HHS-Licensed Preschool", "HHS Four-Year Old Program", "Head Start Site",
         # Washington DC (mychildcare.dc.gov): CDC = center.
         "CDC (Child Development Center)",
+        # Wisconsin (childcarefinder.wisconsin.gov) Regulation Type: a licensed
+        # group child care center (9+ children, non-residential) -> center. The
+        # finder's own toggle labels these "Group Centers".
+        "Licensed Group",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME", "Family Child Care Home", "Family Home", "FDC",
@@ -382,6 +386,11 @@ FACILITY_CATEGORY_BUCKETS = {
         "Licensed Home",
         # Washington DC (mychildcare.dc.gov): CDH = a home-based program.
         "CDH (Child Development Home)",
+        # Wisconsin (childcarefinder.wisconsin.gov) Regulation Types: licensed
+        # family child care (4-8 children in the provider's home) and county
+        # "regularly certified" small home care (the results list labels the
+        # latter "Certified Family").
+        "Licensed Family", "Regular Certified",
     ],
     "group_home": [
         "GFDC", "Group Home", "Group Home Child Care", "Group",

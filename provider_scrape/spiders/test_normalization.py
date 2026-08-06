@@ -328,6 +328,13 @@ def test_facility_category_ohio_program_types():
     assert fc("Certified In Home Aide") == "other"
 
 
+def test_facility_category_wisconsin_regulation_types():
+    fc = normalization.facility_category_from_type
+    assert fc("Licensed Group") == "center"
+    assert fc("Licensed Family") == "family_home"
+    assert fc("Regular Certified") == "family_home"
+
+
 def test_facility_category_unmapped_is_other_and_logged(caplog):
     with caplog.at_level("WARNING"):
         assert normalization.facility_category_from_type("Spaceship Care") \

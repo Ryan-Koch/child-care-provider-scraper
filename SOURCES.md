@@ -38,3 +38,4 @@ To regenerate: `.venv/bin/python scripts/generate_sources.py`.
 | Washington | https://findchildcarewa.org/ |
 | Washington Dc | https://mychildcare.dc.gov/ |
 | West Virginia | https://wvdhhr.org/ |
+| Wisconsin | https://childcarefinder.wisconsin.gov/ |
