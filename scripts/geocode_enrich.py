@@ -150,7 +150,21 @@ def _post_batch(rows, benchmark, timeout, max_retries):
                 raise requests.HTTPError(
                     "Census returned %s" % response.status_code)
             response.raise_for_status()
-            return list(csv.reader(io.StringIO(response.text)))
+            text = response.text
+            # Census sits behind a WAF that can answer HTTP 200 with an HTML
+            # "Request Rejected" page (e.g. when the client IP is blocked or
+            # rate-limited -- notably when the geocode step accidentally runs
+            # through the scraping VPN). That body is not CSV: parsing it
+            # silently yields zero matches, marking every address no_match AND
+            # caching those false negatives. Treat a non-CSV/HTML body as a
+            # retriable failure so the run fails loudly instead of poisoning
+            # the results and the cache.
+            head = text.lstrip()[:200].lower()
+            if head.startswith("<") or "request rejected" in head:
+                raise requests.HTTPError(
+                    "Census returned a non-CSV response (WAF block / rejection "
+                    "page) -- is the geocode step running through a blocked IP?")
+            return list(csv.reader(io.StringIO(text)))
         except (requests.RequestException, ) as error:
             last_error = error
             if attempt < max_retries:
