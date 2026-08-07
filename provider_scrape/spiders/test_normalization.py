@@ -328,6 +328,19 @@ def test_facility_category_ohio_program_types():
     assert fc("Certified In Home Aide") == "other"
 
 
+def test_facility_category_wisconsin_regulation_types():
+    fc = normalization.facility_category_from_type
+    assert fc("Licensed Group") == "center"
+    assert fc("Licensed Family") == "family_home"
+    assert fc("Regular Certified") == "family_home"
+    assert fc("Provisional Certified") == "family_home"
+    assert fc("Licensed Camp") == "other"
+    # The "(Probational)" licence-status suffix is stripped before lookup.
+    assert fc("Licensed Group (Probational)") == "center"
+    assert fc("Licensed Family (Probational)") == "family_home"
+    assert fc("Licensed Camp (Probational)") == "other"
+
+
 def test_facility_category_unmapped_is_other_and_logged(caplog):
     with caplog.at_level("WARNING"):
         assert normalization.facility_category_from_type("Spaceship Care") \

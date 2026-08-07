@@ -61,6 +61,18 @@ class InspectionItem(scrapy.Item):
     ak_visit_type = scrapy.Field()          # "Announced" | "Unannounced"
     ak_licensing_specialist = scrapy.Field()
 
+    # Wisconsin specific inspection fields (childcarefinder.wisconsin.gov).
+    # The detail page publishes three tables; each row becomes one
+    # InspectionItem discriminated by `type` ("Monitoring" | "Enforcement" |
+    # "Violation").
+    wi_rule_number = scrapy.Field()          # admin-code cite, e.g. "251.055(1)(a)"
+    wi_rule_summary = scrapy.Field()         # e.g. "Supervision Of Children"
+    wi_description = scrapy.Field()          # violation / enforcement narrative
+    wi_enforcement_type = scrapy.Field()     # "Orders Letter" | "Warning Letter" | ...
+    wi_appeal = scrapy.Field()               # "Yes" | "No"
+    wi_decision = scrapy.Field()             # enforcement appeal decision
+    wi_correction_plan_url = scrapy.Field()  # monitoring "View Correction Plan" doc
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
@@ -536,6 +548,23 @@ class ProviderItem(scrapy.Item):
     # list of {age_group, openings, current_enrollment, desired_enrollment,
     # monthly_tuition}.
     dc_enrollment = scrapy.Field()
+
+    # Wisconsin specific fields (childcarefinder.wisconsin.gov). The common
+    # `license_number` carries the Provider # (e.g. "0000555710"); a provider
+    # number spans multiple locations, so the per-facility identity is
+    # `license_number` + `wi_location_number` (or the standalone
+    # `wi_facility_number`). YoungStar rating stays state-specific per the
+    # field-mapping playbook.
+    wi_youngstar_rating = scrapy.Field()     # e.g. "5 Stars" | "Not Yet Rated"
+    wi_location_number = scrapy.Field()      # e.g. "016"
+    wi_facility_number = scrapy.Field()      # licensed facility #, e.g. "120162"
+    wi_night_capacity = scrapy.Field()       # night capacity (day cap -> `capacity`)
+    wi_months_open = scrapy.Field()          # e.g. "Jan - Dec"
+    wi_unique_services = scrapy.Field()      # YoungStar "Unique Program Services" list
+    wi_special_care_types = scrapy.Field()   # provider-reported special care list
+    wi_program_philosophy = scrapy.Field()   # provider-reported philosophy text
+    wi_vacancies = scrapy.Field()            # provider-reported vacancies text
+    wi_waitlist = scrapy.Field()             # provider-reported waitlist text
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()

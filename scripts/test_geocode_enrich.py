@@ -10,6 +10,9 @@ Run with the project virtualenv: ``.venv/bin/pytest scripts/test_geocode_enrich.
 import csv
 import json
 
+import pytest
+import requests
+
 import geocode_enrich
 
 
@@ -136,3 +139,48 @@ def test_enrich_file_csv_to_json_conversion(tmp_path, monkeypatch):
 
     written = json.loads(dst.read_text(encoding="utf-8"))
     assert written[0]["geocode_source"] == "state"
+
+
+# --------------------------------------------------------------------------- #
+# WAF / non-CSV response handling
+# --------------------------------------------------------------------------- #
+class _FakeResponse:
+    def __init__(self, text, status_code=200):
+        self.text = text
+        self.status_code = status_code
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise requests.HTTPError("status %s" % self.status_code)
+
+
+_WAF_HTML = (
+    "<html><head><title>Request Rejected</title></head><body>"
+    "The requested URL was rejected. Please consult with your administrator."
+    "<br><br>Your support ID is: 123</body></html>"
+)
+
+
+def test_post_batch_raises_on_waf_html(monkeypatch):
+    """A 200 response whose body is a WAF 'Request Rejected' HTML page must
+    raise (so it's retried/reported), not be parsed as CSV -- otherwise every
+    address is silently marked no_match and cached as a false negative."""
+    monkeypatch.setattr(
+        geocode_enrich.requests, "post",
+        lambda *a, **k: _FakeResponse(_WAF_HTML))
+    with pytest.raises(requests.RequestException):
+        geocode_enrich._post_batch(
+            [["0", "1 Main St", "Madison", "WI", "53719"]],
+            "Public_AR_Current", timeout=5, max_retries=1)
+
+
+def test_post_batch_parses_valid_csv(monkeypatch):
+    """A normal CSV body is parsed into rows."""
+    body = '"0","1 Main St, Madison, WI, 53719","Match","Exact","..."\n'
+    monkeypatch.setattr(
+        geocode_enrich.requests, "post",
+        lambda *a, **k: _FakeResponse(body))
+    rows = geocode_enrich._post_batch(
+        [["0", "1 Main St", "Madison", "WI", "53719"]],
+        "Public_AR_Current", timeout=5, max_retries=1)
+    assert rows and rows[0][0] == "0" and rows[0][2] == "Match"
