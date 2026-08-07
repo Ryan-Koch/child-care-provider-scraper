@@ -277,6 +277,12 @@ class StealthContextMiddleware:
             return
 
         original = handler._create_browser_context
+        # Capture the spider from spider_opened for logging: the handler calls
+        # _create_browser_context during engine start with spider=None (see
+        # scrapy_playwright.handler._launch), so the `spider` argument below
+        # can't be relied on to be set — using it directly raises
+        # AttributeError: 'NoneType' object has no attribute 'logger'.
+        log_spider = spider
 
         async def patched_create_context(name, context_kwargs=None, spider=None):
             wrapper = await original(
@@ -285,7 +291,7 @@ class StealthContextMiddleware:
             await wrapper.context.add_init_script(_STEALTH_SCRIPT)
             await wrapper.context.add_init_script(_CANVAS_PATCH)
             await wrapper.context.add_init_script(_HW_PATCH)
-            spider.logger.info(
+            log_spider.logger.info(
                 "StealthContextMiddleware: stealth patches applied to "
                 "context '%s' (browser %s)",
                 name,
