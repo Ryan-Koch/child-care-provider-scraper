@@ -388,9 +388,11 @@ FACILITY_CATEGORY_BUCKETS = {
         "CDH (Child Development Home)",
         # Wisconsin (childcarefinder.wisconsin.gov) Regulation Types: licensed
         # family child care (4-8 children in the provider's home) and county
-        # "regularly certified" small home care (the results list labels the
-        # latter "Certified Family").
-        "Licensed Family", "Regular Certified",
+        # "regularly"/"provisionally" certified small home care (the results
+        # list labels certified providers "Certified Family"). The
+        # "(Probational)" status variants are handled by the suffix strip in
+        # facility_category_from_type.
+        "Licensed Family", "Regular Certified", "Provisional Certified",
     ],
     "group_home": [
         "GFDC", "Group Home", "Group Home Child Care", "Group",
@@ -437,6 +439,9 @@ FACILITY_CATEGORY_BUCKETS = {
         # Alaska (AKCCIS): state-flagged operations without a license --
         # not legitimate exempt care, kept separate from `exempt`.
         "Illegally Unlicensed",
+        # Wisconsin: a licensed day camp -> other (matches the day-camp
+        # precedent above). "(Probational)" variant handled by the suffix strip.
+        "Licensed Camp",
     ],
 }
 
@@ -454,10 +459,18 @@ def facility_category_from_type(provider_type):
     Case-insensitive, whitespace-tolerant lookup. Unmapped values become
     ``"other"`` and are **logged** so the table can be extended. Does not
     modify ``provider_type``.
+
+    Wisconsin appends a licence-status modifier -- e.g. "Licensed Group
+    (Probational)" -- to its Regulation Type. That status doesn't change the
+    facility category, so it is stripped before lookup rather than enumerating
+    every base x status combination.
     """
     if not isinstance(provider_type, str):
         return None
-    category = FACILITY_CATEGORY_MAP.get(provider_type.strip().lower())
+    key = re.sub(
+        r"\s*\(probation(?:al|ary)?\)$", "", provider_type.strip().lower()
+    )
+    category = FACILITY_CATEGORY_MAP.get(key)
     if category is None:
         logger.warning(
             "facility_category_from_type: unmapped provider_type %r -> 'other'",

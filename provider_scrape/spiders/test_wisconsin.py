@@ -254,6 +254,40 @@ def test_detail_certified_facility_number_na_is_none(spider):
     assert item["provider_type"] == "Regular Certified"
 
 
+NO_LICENSE_DETAIL = """
+<div id="providerDetailsCollapsible"><div class="accordion-body"><div class="row">
+  <div class="col-12 col-md-3 mb-3">
+    <div class="row"><div class="col-12 Bold">Closed Provider</div></div>
+    <div class="row"><div class="col-12">1 Main St</div></div>
+    <div class="row"><div class="col-12 mb-3">Madison WI 53703</div></div>
+  </div>
+  <div class="col-12 col-md-4 mb-3">
+    <div class="row"><div class="col-7 Bold">Provider #</div>
+        <div class="col-5">1000000001</div></div>
+    <div class="row"><div class="col-7 Bold">Regulation Type</div>
+        <div class="col-5">No active license or certificate found for this provider!</div></div>
+  </div>
+</div></div></div>
+"""
+
+
+def test_detail_no_active_license_goes_to_status(spider):
+    # The "no active license" notice must not be treated as a provider_type
+    # (it would pollute facility_category); it lands in status, and
+    # provider_type falls back to the results-list type.
+    resp = HtmlResponse(
+        url=DETAIL_URL,
+        body=NO_LICENSE_DETAIL.encode("utf-8"),
+        request=Request(
+            DETAIL_URL,
+            meta={"stub": {"county": "Dane County", "provider_type": "Licensed Group"}},
+        ),
+    )
+    item = next(spider.parse_detail(resp))
+    assert item["status"] == "No active license or certificate found for this provider!"
+    assert item["provider_type"] == "Licensed Group"  # from stub fallback
+
+
 def test_detail_falls_back_to_stub_rating(spider):
     # A detail page with no YoungStar block should fall back to the stub value
     # captured from the results list.

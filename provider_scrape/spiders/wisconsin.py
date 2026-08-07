@@ -43,6 +43,7 @@ from urllib.parse import urljoin
 
 import scrapy
 import scrapy.signals
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from playwright_stealth import Stealth
 from scrapy_playwright.page import PageMethod
 
@@ -350,6 +351,7 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
         counties=None,
         max_providers=None,
         settle_ms=6000,
+        results_timeout=30000,
         *args,
         **kwargs,
     ):
@@ -363,6 +365,11 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
             self._counties = list(COUNTIES)
         self.max_providers = int(max_providers) if max_providers else None
         self.settle_ms = int(settle_ms)
+        # How long to wait for provider rows before concluding a county is
+        # empty. Non-empty results render in a few seconds; empty counties/tribes
+        # (many tribal entries) render an empty page with no rows and no "no
+        # results" text, so we must bound this rather than wait indefinitely.
+        self.results_timeout_ms = int(results_timeout)
         self._provider_count = 0
 
     def start_requests(self):
@@ -458,9 +465,26 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
         await page.click("#btnSearch")
         # The reCAPTCHA v3 execute + Blazor submit navigates to SearchResults.
         await page.wait_for_url("**/SearchResults*", timeout=90000)
-        await page.wait_for_selector(
-            "a[href*='ProviderDetails'], .no-results, table", timeout=90000
-        )
+        try:
+            await page.wait_for_selector(
+                "a[href*='ProviderDetails']", timeout=self.results_timeout_ms
+            )
+        except PlaywrightTimeoutError:
+            # Empty counties/tribes render a SearchResults page with no rows and
+            # no "no results" text -- there is nothing row-shaped to wait for.
+            # Don't burn the full timeout (or wedge the browser): confirm the
+            # results component rendered (its Back-to-Search / Save buttons are
+            # present on both empty and populated pages) so we can tell a
+            # genuinely empty county from a stalled render, then let parse_county
+            # read zero rows and finish this county cleanly.
+            rendered = bool(
+                await page.locator("button.childcaresearch-button").count()
+            )
+            self.logger.warning(
+                "[%s] no provider rows within %ds (results rendered=%s) — "
+                "treating as 0 providers",
+                county_name, self.results_timeout_ms // 1000, rendered,
+            )
 
     async def _go_to_next_page(self, page, county_name, page_num):
         """Advance to the next results page in-browser. Returns False at the end.
@@ -562,9 +586,15 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
         if facility_number and facility_number.strip().upper() == "N/A":
             facility_number = None
         item["wi_facility_number"] = facility_number
-        item["provider_type"] = (
-            _labeled(pd, "Regulation Type") or stub.get("provider_type")
-        )
+        # Some providers have no current regulation; the Regulation Type field
+        # then holds a notice sentence rather than a type. Capture it as status
+        # and fall back to the results-list type so provider_type stays a real
+        # category value (and doesn't pollute facility_category).
+        regulation = _labeled(pd, "Regulation Type")
+        if regulation and regulation.lower().startswith("no active license"):
+            item["status"] = regulation
+            regulation = None
+        item["provider_type"] = regulation or stub.get("provider_type")
         item["license_holder"] = _labeled(pd, "Applicant/Licensee")
 
         item["ages_served"] = _next_row_value(pd, "Ages Served")
