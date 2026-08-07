@@ -310,8 +310,8 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
     allowed_domains = ["childcarefinder.wisconsin.gov"]
 
     custom_settings = {
-        "CONCURRENT_REQUESTS": 1,
-        "CONCURRENT_REQUESTS_PER_DOMAIN": 1,
+        "CONCURRENT_REQUESTS": 4,
+        "CONCURRENT_REQUESTS_PER_DOMAIN": 4,
         "RETRY_TIMES": 3,
         "PLAYWRIGHT_DEFAULT_NAVIGATION_TIMEOUT": 90 * 1000,
         "DOWNLOADER_MIDDLEWARES": {
