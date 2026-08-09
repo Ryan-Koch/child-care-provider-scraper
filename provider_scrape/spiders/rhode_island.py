@@ -636,7 +636,7 @@ class RhodeIslandSpider(scrapy.Spider):
         manual_captcha=False,
         manual_timeout=300,
         audit=False,
-        search_retries=2,
+        search_retries=5,
         *args,
         **kwargs,
     ):

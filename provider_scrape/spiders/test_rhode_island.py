@@ -934,3 +934,10 @@ async def test_parse_search_page_max_providers_truncates(spider):
 
     assert len(items) == 1
     assert spider._fetch_detail.await_count == 1
+
+
+
+def test_spider_search_retries_default_bumped():
+    # Default retry budget was raised (2 -> 5) so the marginal v3 score clears
+    # within the loop more reliably.
+    assert RhodeIslandSpider().search_retries == 5
