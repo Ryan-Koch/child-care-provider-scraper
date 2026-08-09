@@ -566,5 +566,33 @@ class ProviderItem(scrapy.Item):
     wi_vacancies = scrapy.Field()            # provider-reported vacancies text
     wi_waitlist = scrapy.Field()             # provider-reported waitlist text
 
+    # Vermont specific fields (brightfutures.dcf.state.vt.us). VT publishes no
+    # explicit license number, so the internal Provider ID is emitted as the
+    # common `license_number` (DC precedent) and duplicated here as an explicit
+    # join key. The STARS quality rating stays state-specific per the
+    # field-mapping playbook. The `infant`/`toddler`/`preschool`/`school` common
+    # fields carry the per-age *capacities*; the per-age *vacancies* (the
+    # registry's frequently-updated, VT-unique content) live in the vt_* fields.
+    vt_provider_id = scrapy.Field()          # PARTY_ID, e.g. "3053"
+    vt_star_level = scrapy.Field()           # STARS rating, e.g. "4 Star"
+    vt_type_of_care = scrapy.Field()         # e.g. "Full-Time, Part-Time, Daytime"
+    vt_days_of_operation = scrapy.Field()    # e.g. "Monday, Tuesday, ..."
+    vt_special_schedule = scrapy.Field()
+    vt_building_type = scrapy.Field()        # Building Type/Setting, e.g. "House"
+    vt_area_description = scrapy.Field()      # e.g. "Fenced Yard"
+    vt_religious_activity = scrapy.Field()   # "Yes" | "No"
+    vt_sibling_discount = scrapy.Field()     # "Yes" | "No"
+    vt_special_services = scrapy.Field()
+    vt_program_participation = scrapy.Field()
+    vt_guidance = scrapy.Field()             # provider-reported guidance philosophy
+    vt_program_description = scrapy.Field()   # provider-reported daily program text
+    vt_pets = scrapy.Field()
+    vt_vacancy_as_of = scrapy.Field()        # "Current as of" date for vacancies
+    vt_current_vacancy = scrapy.Field()      # total current vacancy count
+    vt_infant_vacancies = scrapy.Field()
+    vt_toddler_vacancies = scrapy.Field()
+    vt_preschool_vacancies = scrapy.Field()
+    vt_school_age_vacancies = scrapy.Field()
+
     # This will hold the list of inspections.
     inspections = scrapy.Field()

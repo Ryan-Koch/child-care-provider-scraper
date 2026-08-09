@@ -365,6 +365,12 @@ FACILITY_CATEGORY_BUCKETS = {
         # group child care center (9+ children, non-residential) -> center. The
         # finder's own toggle labels these "Group Centers".
         "Licensed Group",
+        # Vermont (brightfutures.dcf.state.vt.us) detail "License Type": a
+        # licensed, facility-based center-and-preschool program -> center. The
+        # "- Non-Recurring" variant is a short-term/seasonal center (cf. the
+        # "Short Term Child Day Center" precedent above).
+        "Center Based Child Care and Preschool Program",
+        "Center Based Child Care and Preschool Program - Non-Recurring",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME", "Family Child Care Home", "Family Home", "FDC",
@@ -393,6 +399,9 @@ FACILITY_CATEGORY_BUCKETS = {
         # "(Probational)" status variants are handled by the suffix strip in
         # facility_category_from_type.
         "Licensed Family", "Regular Certified", "Provisional Certified",
+        # Vermont (brightfutures.dcf.state.vt.us) detail "License Type": the
+        # registered and licensed home-based options.
+        "Registered Family Child Care Home", "Licensed Family Child Care Home",
     ],
     "group_home": [
         "GFDC", "Group Home", "Group Home Child Care", "Group",
@@ -413,6 +422,8 @@ FACILITY_CATEGORY_BUCKETS = {
         "Licensed School-Age Child Care",
         # North Dakota.
         "HHS-Licensed School Age Child Care",
+        # Vermont (brightfutures.dcf.state.vt.us) detail "License Type".
+        "Afterschool Child Care Program",
     ],
     "exempt": [
         "Exempt Only", "Religious Exempt Child Day Center",

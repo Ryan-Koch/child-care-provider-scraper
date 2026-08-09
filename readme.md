@@ -146,7 +146,7 @@ The project uses pytest, so one can simply run `pytest` to go through the whole 
 | Tennessee                | [ ]     | 
 | Texas                    | [x]     | 
 | Utah                     | [x]     | 
-| Vermont                  | [ ]     | 
+| Vermont                  | [x]     | 
 | Virginia                 | [x]     | 
 | Washington               | [x]     | 
 | Washington DC            | [x]     | 
