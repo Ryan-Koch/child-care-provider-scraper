@@ -3,7 +3,7 @@
 Source: the ND Early Childhood registry at https://search.ec.hhs.nd.gov, a
 JSON API (no cookie/token/CAPTCHA required).
 
-The roster endpoint (``publicSearch``) is hard-capped at 100 results with no
+The roster endpoint (``programsPublicSearch``) is hard-capped at 100 results with no
 pagination. The only way past the cap is its distance search: supplying a
 ``location`` returns every provider within ~10 miles (capped at 100). We
 therefore enumerate the whole state with an adaptive geographic grid:
@@ -23,7 +23,9 @@ import scrapy
 
 from provider_scrape.items import ProviderItem
 
-SEARCH_URL = "https://search.ec.hhs.nd.gov/api/programs/search/publicSearch"
+# The public search endpoint was renamed publicSearch -> programsPublicSearch
+# (~2026-08); the old name now 401s. No cookie/session is required.
+SEARCH_URL = "https://search.ec.hhs.nd.gov/api/programs/search/programsPublicSearch"
 DETAIL_URL = "https://search.ec.hhs.nd.gov/api/programs/{}"
 PROFILE_URL = "https://search.ec.hhs.nd.gov/search/(slide-full:{}/profile)"
 

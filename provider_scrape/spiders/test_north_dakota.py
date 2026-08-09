@@ -58,8 +58,8 @@ def make_results(n, distance, start=0):
 
 def split_requests(outputs):
     """Partition parse_search output into (detail_requests, search_requests)."""
-    details = [r for r in outputs if "search/publicSearch" not in r.url]
-    searches = [r for r in outputs if "search/publicSearch" in r.url]
+    details = [r for r in outputs if r.url != SEARCH_URL]
+    searches = [r for r in outputs if r.url == SEARCH_URL]
     return details, searches
 
 

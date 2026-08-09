@@ -34,6 +34,7 @@ To regenerate: `.venv/bin/python scripts/generate_sources.py`.
 | South Carolina | https://scchildcare.org/ |
 | Texas | https://childcare.hhs.texas.gov/ |
 | Utah | https://jobs.utah.gov/ |
+| Vermont | https://brightfutures.dcf.state.vt.us/ |
 | Virginia | https://dss.virginia.gov/<br>https://earlychildhoodquality.doe.virginia.gov/ |
 | Washington | https://findchildcarewa.org/ |
 | Washington Dc | https://mychildcare.dc.gov/ |

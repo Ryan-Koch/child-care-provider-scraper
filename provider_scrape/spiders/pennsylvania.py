@@ -49,8 +49,12 @@ class PennsylvaniaSpider(scrapy.Spider):
 
             # Click "By County" tab
             await page.click("#county-tab-select")
-            # Wait for any re-rendering
-            await page.wait_for_timeout(1000)
+            # Wait for any re-rendering. Use asyncio.sleep, NOT
+            # page.wait_for_timeout: the latter runs a setTimeout inside the
+            # page's JS loop and is exempt from set_default_timeout, so a wedged
+            # SPA renderer makes it hang forever -- the exact deadlock we hit
+            # after a failed detail click. asyncio.sleep is renderer-independent.
+            await asyncio.sleep(1)
 
             # Open County Dropdown
             dropdown_toggle = (
@@ -140,7 +144,7 @@ class PennsylvaniaSpider(scrapy.Spider):
                     self.logger.warning(
                         f"No results found on page {page_num}. Waiting and retrying..."
                     )
-                    await page.wait_for_timeout(5000)
+                    await asyncio.sleep(5)  # renderer-independent (see above)
                     results_count = await page.locator(".result-box").count()
                     if results_count == 0:
                         self.logger.error(
@@ -206,9 +210,10 @@ class PennsylvaniaSpider(scrapy.Spider):
                                     )
                                     if attempt == 2:
                                         raise click_e  # Re-raise on last attempt
-                                    await page.wait_for_timeout(
-                                        2000
-                                    )  # Wait before retry
+                                    # renderer-independent backoff: a wedged SPA
+                                    # (the reason the click just failed) would
+                                    # make page.wait_for_timeout hang forever.
+                                    await asyncio.sleep(2)  # Wait before retry
 
                             # Parse Details. page.content() takes no timeout and
                             # ignores the default action timeout, so it can hang
@@ -253,7 +258,7 @@ class PennsylvaniaSpider(scrapy.Spider):
                                                 timeout=60000,
                                             )
                                             # Wait a bit for list to re-render
-                                            await page.wait_for_timeout(500)
+                                            await asyncio.sleep(0.5)  # see above
                                         else:
                                             # If the button says "Find a Provider", we might be on results page but .result-box isn't detected yet?
                                             # Or we are in a weird state. Try generic go_back or just wait.
@@ -323,7 +328,7 @@ class PennsylvaniaSpider(scrapy.Spider):
                                 "Timed out waiting for pagination text update, assuming page changed or last page."
                             )
                     else:
-                        await page.wait_for_timeout(3000)  # Fallback wait
+                        await asyncio.sleep(3)  # Fallback wait (renderer-independent)
 
                 else:
                     break
