@@ -1,446 +1,376 @@
-import asyncio
-import re
+"""Pennsylvania child care provider spider.
+
+Source: the PA COMPASS provider search at
+https://www.compass.dhs.pa.gov/providersearch (an Angular SPA) -- but this
+spider talks directly to the SPA's public JSON API instead of driving the
+browser.
+
+API flow, per county, for the Child Care Provider (CCP) program:
+
+  1. POST ``childcaresummary/getchildcaresummary`` with the full advanced-search
+     criteria (county + program + every care level + every star rating). This
+     registers the search server-side against a ``browser-session-id`` header
+     (a per-county UUID -- NOT a cookie). Returns ``{"isSuccessful": true}``.
+  2. GET ``childcareresults/getchildcareresults`` and POLL: the search runs
+     asynchronously, returning ``searchStatusServedByCallBack: false`` until it
+     is ready, then a ``provider`` list.
+  3. PAGINATE: each provider row carries a server-assigned ``searchIdentifier``.
+     Re-POST the criteria with that id and an incrementing ``groupIdentifier``
+     (2, 3, 4, ...); the results GET returns a *cumulative* set. Stop when no new
+     (providerIdentifier, providerLocationIdentifier) rows appear.
+  4. For each unique provider location, POST
+     ``childcareinformation/getchildcareinfo`` for the fully-structured detail
+     record and build the item from it (no HTML).
+
+The three "No results" counties (27/57/66) simply return an empty served list and
+finish; nothing hangs.
+"""
+import json
+import uuid
 
 import scrapy
-from scrapy_playwright.page import PageMethod
 
 from provider_scrape.items import ProviderItem
+
+API_BASE = "https://www.compass.dhs.pa.gov/api/providersearch/v1"
+SUMMARY_URL = f"{API_BASE}/childcaresummary/getchildcaresummary"
+RESULTS_URL = f"{API_BASE}/childcareresults/getchildcareresults"
+INFO_URL = f"{API_BASE}/childcareinformation/getchildcareinfo"
+
+# Child Care Provider only -- yields the Center/Family/Group license types that
+# make up the existing web-app dataset. The site also exposes Head Start (HDS),
+# Pre-K Counts (PKC), etc.; those are intentionally excluded.
+PROGRAMS = ["CCP"]
+
+# The advanced-search form's full care-level and star-rating vocabularies. We
+# select them all so the search is unfiltered on those facets (every provider).
+ALL_CARE_LEVELS = [
+    "UTO", "TOT", "ONE", "TWO", "THREE", "FOU", "FIV", "SIX", "SEV", "EIG",
+    "NIN", "TEN", "ELE", "TWE", "THI", "FRT", "FTN",
+]
+ALL_STAR_RATINGS = ["0", "1", "2", "3", "4"]
+
+# careLevelOpeningStatus code -> label (reference table R00132 / getEnrollingStatus).
+OPENINGS_MAP = {
+    "C": "Call for Availability",
+    "E": "Enrolling",
+    "N": "Not Enrolling",
+    "X": "Not Operating due to a State of Emergency",
+}
+
+# PA has 67 counties, keyed "01".."67" in the search form.
+COUNTIES = [f"{i:02d}" for i in range(1, 68)]
+
+MAX_POLLS = 15       # results GET polls before giving up on a search
+MAX_GROUPS = 100     # pagination safety cap (Philadelphia needs ~12)
+
+
+def format_phone(value):
+    """Format a 10-digit phone as ``(XXX) XXX-XXXX``; pass anything else through."""
+    if value is None:
+        return None
+    digits = "".join(ch for ch in str(value) if ch.isdigit())
+    if len(digits) == 10:
+        return f"({digits[0:3]}) {digits[3:6]}-{digits[6:10]}"
+    return str(value).strip() or None
+
+
+def join_labels(value):
+    """Join a list of label strings with ``, ``; return "" for an empty/None list.
+
+    Empty string (not None) matches the previous spider, which joined UI list
+    items and produced "" when a section was absent.
+    """
+    if isinstance(value, list):
+        return ", ".join(str(v).strip() for v in value if v is not None and str(v).strip())
+    return ""
 
 
 class PennsylvaniaSpider(scrapy.Spider):
     name = "pennsylvania"
     allowed_domains = ["compass.dhs.pa.gov"]
-    start_url = "https://www.compass.dhs.pa.gov/providersearch/#/advancedsearch"
+
+    custom_settings = {
+        # Plain JSON requests -- no Playwright meta, so scrapy-playwright's
+        # download handler transparently delegates to the default handler.
+        "DOWNLOAD_DELAY": 0.1,
+        "CONCURRENT_REQUESTS": 8,
+        "CONCURRENT_REQUESTS_PER_DOMAIN": 8,
+        "RETRY_TIMES": 5,
+        "DOWNLOAD_TIMEOUT": 60,
+        "ROBOTSTXT_OBEY": False,
+        "USER_AGENT": (
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+        ),
+    }
+
+    def __init__(self, *args, counties=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Global dedupe of provider locations scheduled for detail fetch, keyed
+        # by (providerIdentifier, providerLocationIdentifier).
+        self.seen = set()
+        # Optional ``-a counties=01,60`` to restrict the run (targeted re-runs
+        # and smoke tests); defaults to all 67 counties.
+        if counties:
+            self.counties = [c.strip().zfill(2) for c in counties.split(",") if c.strip()]
+        else:
+            self.counties = COUNTIES
+
+    # --- request builders ------------------------------------------------- #
+
+    def _headers(self, session_id, origin_page):
+        return {
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/plain, */*",
+            "browser-session-id": session_id,
+            "api-origin-page": origin_page,
+            "Referer": "https://www.compass.dhs.pa.gov/providersearch/",
+        }
+
+    def _summary_body(self, county, group_id, search_id):
+        # sortOrder is "" for the first page and "ASC" when paginating (mirrors
+        # the SPA); the server ties pages together via searchIdentifier.
+        sort_order = "ASC" if group_id > 1 else ""
+        return {
+            "starRating": ALL_STAR_RATINGS,
+            "street": "", "city": "", "zipCode": [],
+            "careLevel": ALL_CARE_LEVELS,
+            "program": PROGRAMS,
+            "county": [county],
+            "municipality": [], "schoolDistrictSearch": [], "serviceSchedule": [],
+            "mealOptions": [], "providerType": [], "environment": [],
+            "additionalActivities": [], "unitsOfCare": [], "language": [],
+            "languageUsage": [], "searchDistance": 0, "additionalCharges": [],
+            "accreditation": [], "days": [], "publicTransportation": [],
+            "providerName": "", "publicSchool": [], "openTime": "", "closeTime": "",
+            "schooldistrictchildcare": "", "transportationDistrict": "",
+            "transportationCounty": "", "FinancialProgramParticipation": [],
+            "absoluteAddress": "", "fromHours": "", "fromMinutes": "",
+            "toHours": "", "toMinutes": "", "callerApplication": "",
+            "callerLanguage": "English", "callerSearchIdentifier": "",
+            "otherEarlyLearningPrograms": [], "emergencyOperationStatus": [],
+            "groupIdentifier": group_id, "paymentOption": [],
+            "searchIdentifier": search_id, "searchType": "AdvancedSearch",
+            "specialAccommodations": [], "homeVisitingPrograms": [],
+            "geographicCriteriaType": "CountySearch", "sortBy": "",
+            "sortOrder": sort_order, "searchResultsDeleteType": 0,
+            "enrollmentStatus": [],
+        }
+
+    def _summary_request(self, meta):
+        """POST the search criteria for ``meta['county']`` / ``meta['group']``."""
+        body = self._summary_body(meta["county"], meta["group"], meta["search_id"])
+        origin = (
+            "providersearch/advancedsearch"
+            if meta["group"] == 1
+            else "providersearch/searchresults"
+        )
+        return scrapy.Request(
+            SUMMARY_URL,
+            method="POST",
+            body=json.dumps(body),
+            headers=self._headers(meta["sid"], origin),
+            callback=self.after_summary,
+            errback=self.on_error,
+            dont_filter=True,
+            meta=meta,
+        )
+
+    def _results_request(self, meta):
+        """GET (poll) the results for the search registered under this session."""
+        return scrapy.Request(
+            RESULTS_URL,
+            method="GET",
+            headers=self._headers(meta["sid"], "providersearch/searchresults"),
+            callback=self.parse_results,
+            errback=self.on_error,
+            dont_filter=True,
+            meta=meta,
+        )
+
+    def _info_request(self, provider):
+        body = {
+            "callerApplication": "",
+            "program": provider.get("program") or "CCP",
+            "providerIdentifier": provider.get("providerIdentifier"),
+            "providerLocationIdentifier": provider.get("providerLocationIdentifier"),
+            "schoolDistrictServed": "",
+            "callerLanguage": "English",
+        }
+        # The detail endpoint is stateless (keyed by provider id, not session),
+        # so a throwaway session id is fine and lets these fan out concurrently.
+        return scrapy.Request(
+            INFO_URL,
+            method="POST",
+            body=json.dumps(body),
+            headers=self._headers(str(uuid.uuid4()), "providersearch/childcaresummary"),
+            callback=self.parse_detail,
+            errback=self.on_error,
+            dont_filter=True,
+            meta={"provider": provider},
+        )
+
+    # --- crawl flow ------------------------------------------------------- #
 
     def start_requests(self):
-        # County IDs range from 01 to 67
-        counties = [f"{i:02d}" for i in range(1, 68)]
+        for county in self.counties:
+            meta = {
+                "county": county,
+                "sid": str(uuid.uuid4()),
+                "group": 1,
+                "search_id": 0,
+                "accum": {},       # (providerId, locationId) -> provider row
+                "prev_count": -1,  # deduped size before this batch
+                "poll": 0,
+            }
+            yield self._summary_request(meta)
 
-        # Chunk counties into size 1 to isolate failures
-        chunk_size = 1
-        for i in range(0, len(counties), chunk_size):
-            county_chunk = counties[i : i + chunk_size]
-            yield scrapy.Request(
-                url=self.start_url,
-                meta={
-                    "playwright": True,
-                    "playwright_include_page": True,
-                    "counties": county_chunk,
-                    "download_timeout": 3600,  # 1 hour timeout for large counties
-                },
-                dont_filter=True,  # Allow multiple requests to the same URL for different counties
-                callback=self.search_counties,
-                errback=self.errback_close_page,
-            )
+    def after_summary(self, response):
+        # getchildcaresummary just registers the search; kick off result polling.
+        meta = dict(response.meta)
+        meta["poll"] = 0
+        yield self._results_request(meta)
 
-    async def search_counties(self, response):
-        page = response.meta["playwright_page"]
-        counties = response.meta["counties"]
-        self.logger.info(f"Starting search for counties: {counties}")
-
-        # Bound every Playwright action so a wedged SPA raises instead of
-        # stalling this (otherwise-unbounded) callback forever.
-        page.set_default_timeout(30000)
-        page.set_default_navigation_timeout(30000)
-
+    def parse_results(self, response):
+        meta = response.meta
         try:
-            # Wait for initial load
-            await page.wait_for_load_state("networkidle")
+            data = json.loads(response.text)
+        except ValueError:
+            data = {}
 
-            # Click "By County" tab
-            await page.click("#county-tab-select")
-            # Wait for any re-rendering
-            await page.wait_for_timeout(1000)
-
-            # Open County Dropdown
-            dropdown_toggle = (
-                'label[id="lbl-county-county-form"] + div button.dropdown-toggle'
-            )
-            await page.wait_for_selector(dropdown_toggle, state="visible")
-            await page.click(dropdown_toggle)
-
-            # Wait for the dropdown menu to appear
-            await page.wait_for_selector("#county-county-form", state="visible")
-
-            # Select specific counties
-            for county_id in counties:
-                self.logger.info(f"Selecting county {county_id} and beginning search.")
-                input_id = f"county-county-form{county_id}"
-                label_selector = f'label[for="{input_id}"]'
-                try:
-                    await page.wait_for_selector(
-                        label_selector, state="visible", timeout=2000
-                    )
-                    await page.click(label_selector)
-                except:
-                    self.logger.warning(f"Could not click label for county {county_id}")
-
-            # Close County Dropdown
-            await page.click(dropdown_toggle)
-            await page.wait_for_selector("#county-county-form", state="hidden")
-
-            # Select "Child Care" program
-            cc_label = 'label[for="CCP_program"]'
-            await page.locator(cc_label).scroll_into_view_if_needed()
-            await page.click(cc_label)
-
-            # Open "Children's Ages" Dropdown
-            age_dropdown_toggle = (
-                'label[id="lbl-county-carelevel"] + div button.dropdown-toggle'
-            )
-            await page.click(age_dropdown_toggle)
-            await page.wait_for_selector("#county-carelevel", state="visible")
-
-            # Select all age groups
-            age_inputs = await page.query_selector_all(
-                '#county-carelevel input[type="checkbox"]'
-            )
-            for inp in age_inputs:
-                id_attr = await inp.get_attribute("id")
-                if id_attr:
-                    await page.click(f'label[for="{id_attr}"]')
-
-            # Close Age Dropdown
-            await page.click(age_dropdown_toggle)
-            await page.wait_for_selector("#county-carelevel", state="hidden")
-
-            # Click "Find a Provider"
-            find_btn_selector = "#search-btn"
-            await page.wait_for_selector(find_btn_selector, state="visible")
-            await page.click(find_btn_selector)
-
-            # Wait for results
-            try:
-                # Wait for loader to disappear first
-                await page.wait_for_selector(
-                    "compass-ui-cw-loader", state="hidden", timeout=60000
+        if not data.get("searchStatusServedByCallBack"):
+            if meta["poll"] < MAX_POLLS:
+                nxt = dict(meta)
+                nxt["poll"] = meta["poll"] + 1
+                yield self._results_request(nxt)
+            else:
+                self.logger.warning(
+                    "County %s group %s: results not served after %d polls; "
+                    "finishing with %d collected",
+                    meta["county"], meta["group"], MAX_POLLS, len(meta["accum"]),
                 )
-                await page.wait_for_selector(".result-box", timeout=60000)
-            except:
-                self.logger.info(f"No results found for counties {counties}")
-                return
+                yield from self._finish_or_paginate(meta, grew=False)
+            return
 
-            # Pagination Loop
-            page_num = 1
-            while True:
-                self.logger.info(f"Processing page {page_num} for counties {counties}")
+        providers = data.get("provider") or []
+        accum = meta["accum"]
+        for p in providers:
+            # The results payload can include a null-id sentinel row (program
+            # None, providerIdentifier None); it has no detail record (its
+            # getchildcareinfo 400s), so skip anything without a real id.
+            if not p.get("providerIdentifier"):
+                continue
+            key = (p.get("providerIdentifier"), p.get("providerLocationIdentifier"))
+            accum[key] = p
 
-                # Identify current items range to verify pagination later
-                try:
-                    await page.wait_for_selector(
-                        ".result-box", state="visible", timeout=10000
-                    )
-                except:
-                    pass  # Continue to check count
-
-                results_count = await page.locator(".result-box").count()
-                self.logger.info(f"Found {results_count} results on page {page_num}")
-
-                if results_count == 0:
-                    self.logger.warning(
-                        f"No results found on page {page_num}. Waiting and retrying..."
-                    )
-                    await page.wait_for_timeout(5000)
-                    results_count = await page.locator(".result-box").count()
-                    if results_count == 0:
-                        self.logger.error(
-                            "Still no results found. Ending pagination for this county to avoid infinite loop."
-                        )
-                        break
-
-                for i in range(results_count):
-                    # Re-query results to avoid stale references
-                    results = await page.query_selector_all(".result-box")
-                    if i >= len(results):
-                        break
-
-                    result = results[i]
-
-                    # Find the "More Details" link
-                    link = await result.query_selector("a.hyperlink.h4")
-
-                    if link:
-                        try:
-                            # Retry mechanism for clicking details
-                            for attempt in range(3):
-                                try:
-                                    # Ensure loader is gone before clicking
-                                    try:
-                                        await page.wait_for_selector(
-                                            "compass-ui-cw-loader",
-                                            state="hidden",
-                                            timeout=5000,
-                                        )
-                                    except:
-                                        pass
-
-                                    # Re-query the link on each attempt. The prior
-                                    # attempt (or a background re-render) can detach
-                                    # the row, and clicking a stale handle just times
-                                    # out identically every retry — which is exactly
-                                    # the Attempt 2/Attempt 3 timeouts we saw.
-                                    fresh_results = await page.query_selector_all(
-                                        ".result-box"
-                                    )
-                                    if i >= len(fresh_results):
-                                        raise Exception("Result row detached before click")
-                                    link = await fresh_results[i].query_selector(
-                                        "a.hyperlink.h4"
-                                    )
-                                    if not link:
-                                        raise Exception("Details link not found on retry")
-
-                                    # Click and wait for details page (SPA navigation)
-                                    await link.click(force=True)
-
-                                    # Wait for details page to load (look for specific details element)
-                                    await page.wait_for_selector(
-                                        ".prov-detail", state="visible", timeout=20000
-                                    )
-
-                                    # If we reached here, success
-                                    break
-                                except Exception as click_e:
-                                    self.logger.warning(
-                                        f"Attempt {attempt + 1} to click details failed: {click_e}"
-                                    )
-                                    if attempt == 2:
-                                        raise click_e  # Re-raise on last attempt
-                                    await page.wait_for_timeout(
-                                        2000
-                                    )  # Wait before retry
-
-                            # Parse Details. page.content() takes no timeout and
-                            # ignores the default action timeout, so it can hang
-                            # forever while the SPA is mid-transition — the one
-                            # await that can silently wedge the whole crawl. Bound
-                            # it explicitly so a stuck page raises and recovers.
-                            details_content = await asyncio.wait_for(
-                                page.content(), timeout=30
-                            )
-                            item = self.parse_provider_details(details_content)
-                            item["source_state"] = "Pennsylvania"
-                            yield item
-
-                        except Exception as e:
-                            self.logger.error(
-                                f"Error extracting provider details (County: {counties}, Page: {page_num}, Item: {i}): {e}"
-                            )
-                        finally:
-                            # Go Back
-                            try:
-                                # Check if we are already on the results page (list is visible)
-                                if await page.is_visible(".result-box"):
-                                    # We are already on the list page, no need to navigate back
-                                    pass
-                                else:
-                                    # Check for return button
-                                    return_btn = page.locator("#return-btn")
-                                    if await return_btn.is_visible():
-                                        # Verify this isn't the "Find a Provider" button on the main results page
-                                        btn_text = await return_btn.inner_text()
-                                        if "Find a Provider" not in btn_text:
-                                            await return_btn.click()
-                                            # Wait for loader after going back
-                                            await page.wait_for_selector(
-                                                "compass-ui-cw-loader",
-                                                state="hidden",
-                                                timeout=20000,
-                                            )
-                                            await page.wait_for_selector(
-                                                ".result-box",
-                                                state="visible",
-                                                timeout=60000,
-                                            )
-                                            # Wait a bit for list to re-render
-                                            await page.wait_for_timeout(500)
-                                        else:
-                                            # If the button says "Find a Provider", we might be on results page but .result-box isn't detected yet?
-                                            # Or we are in a weird state. Try generic go_back or just wait.
-                                            self.logger.warning(
-                                                "Found 'Find a Provider' button but .result-box not visible. Waiting..."
-                                            )
-                                            await page.wait_for_selector(
-                                                ".result-box",
-                                                state="visible",
-                                                timeout=60000,
-                                            )
-                                    else:
-                                        self.logger.warning(
-                                            "Return button not found, attempting to recover state via go_back."
-                                        )
-                                        await page.go_back()
-                                        await page.wait_for_selector(
-                                            "compass-ui-cw-loader",
-                                            state="hidden",
-                                            timeout=20000,
-                                        )
-                                        await page.wait_for_selector(
-                                            ".result-box",
-                                            state="visible",
-                                            timeout=60000,
-                                        )
-                            except Exception as nav_e:
-                                self.logger.error(f"Error navigating back: {nav_e}")
-
-                # Pagination
-                next_btn = await page.query_selector(
-                    ".pagination .next.page-item:not(.disabled) a"
-                )
-
-                if next_btn:
-                    # Get current mapping text to verify change
-                    try:
-                        mapping_text_element = page.locator("text=/Mapping.*of.*/")
-                        current_mapping_text = (
-                            await mapping_text_element.text_content()
-                            if await mapping_text_element.count() > 0
-                            else ""
-                        )
-                    except:
-                        current_mapping_text = ""
-
-                    self.logger.info(
-                        f"Changing pages within county {counties} search list. Moving to page {page_num + 1}."
-                    )  # Log 2: Change page
-                    await next_btn.click()
-                    page_num += 1
-
-                    # Wait for loader
-                    await page.wait_for_selector(
-                        "compass-ui-cw-loader", state="hidden", timeout=10000
-                    )
-
-                    # Wait for the mapping text to change
-                    if current_mapping_text:
-                        try:
-                            await page.wait_for_function(
-                                f"document.body.innerText.includes('Mapping') && !document.body.innerText.includes('{current_mapping_text.strip()}')",
-                                timeout=10000,
-                            )
-                        except:
-                            self.logger.warning(
-                                "Timed out waiting for pagination text update, assuming page changed or last page."
-                            )
-                    else:
-                        await page.wait_for_timeout(3000)  # Fallback wait
-
-                else:
+        search_id = meta["search_id"]
+        if not search_id:
+            for p in providers:
+                if p.get("searchIdentifier"):
+                    search_id = p["searchIdentifier"]
                     break
 
-            # End of county processing
-            self.logger.info(
-                f"Finished processing county {counties}. Spider will close page and start next request if available."
-            )  # Log 3: Context for next county
+        new_count = len(accum)
+        # Grew only if this batch added rows. max(prev, 0) makes a genuinely
+        # empty county (new_count == 0) finish immediately instead of fetching
+        # one pointless extra page.
+        grew = new_count > max(meta["prev_count"], 0)
+        nxt = dict(meta)
+        nxt["search_id"] = search_id
+        nxt["prev_count"] = new_count
+        yield from self._finish_or_paginate(nxt, grew=grew)
 
-        except Exception as e:
-            self.logger.error(f"Error processing counties {counties}: {e}")
-        finally:
-            await page.close()
+    def _finish_or_paginate(self, meta, grew):
+        if grew and meta["group"] < MAX_GROUPS:
+            # More rows are still coming: fetch the next cumulative page.
+            nxt = dict(meta)
+            nxt["group"] = meta["group"] + 1
+            nxt["poll"] = 0
+            yield self._summary_request(nxt)
+            return
 
-    def parse_provider_details(self, content):
-        sel = scrapy.Selector(text=content)
-        item = ProviderItem()
-
-        item["provider_name"] = sel.css("h1::text").get()
-
-        # Address extraction
-        # The address is in a link to google maps
-        address_parts = sel.css(
-            '.prov-detail a[href^="https://maps.google.com"] span::text'
-        ).getall()
-        item["address"] = ", ".join([p.strip() for p in address_parts if p.strip()])
-
-        # Phone
-        phone = sel.css('.prov-info a[href^="tel:"]::text').get()
-        item["phone"] = phone.strip() if phone else None
-
-        # Stars Rating
-        # Count filled stars? The HTML shows:
-        # <i class="fa-solid fa-star"></i> for filled?
-        # Sample: 4 stars has 4 `fa-solid fa-star`.
-        stars = len(sel.css(".stars-rating .fa-solid.fa-star"))
-        item["pa_stars_rating"] = str(stars)
-
-        # Capacity
-        # Found under "Maximum Capacity" section.
-        # <h3 ...> Maximum Capacity </h3> ... <p class="prov-data"> 132 </p>
-        # We can look for the h3 with text "Maximum Capacity" and get the following p.prov-data
-        capacity = sel.xpath(
-            '//h3[contains(text(), "Maximum Capacity")]/following-sibling::div/p[@class="prov-data"]/text()'
-        ).get()
-        item["capacity"] = capacity.strip() if capacity else None
-
-        # Program Type / Provider Type
-        provider_type = sel.xpath(
-            '//h3[contains(text(), "Provider Type")]/following-sibling::p[@class="prov-data"]/text()'
-        ).get()
-        item["provider_type"] = provider_type.strip() if provider_type else None
-
-        # Certification Status
-        certificate_status = sel.xpath(
-            '//h3[contains(text(), "Certification")]/following-sibling::div/p[@class="prov-data"]/text()'
-        ).get()
-        item["pa_certificate_status"] = (
-            certificate_status.strip() if certificate_status else None
+        # Pagination complete for this county -> fan out detail requests.
+        accum = meta["accum"]
+        self.logger.info(
+            "County %s: %d provider location(s) collected across %d group(s)",
+            meta["county"], len(accum), meta["group"],
         )
-
-        # School District
-        school_district = sel.xpath(
-            '//h3[contains(text(), "School District(s) Served")]/parent::div/following-sibling::div/p[@class="prov-data"]/text()'
-        ).get()
-        item["pa_school_district"] = (
-            school_district.strip() if school_district else None
-        )
-
-        # Meal Options
-        # List items under "Meal Options" section
-        meal_options = sel.xpath(
-            '//h3[contains(text(), "Meal Options")]/parent::div/following-sibling::div//li/text()'
-        ).getall()
-        item["pa_meal_options"] = ", ".join([m.strip() for m in meal_options])
-
-        # Schedule
-        schedule_items = sel.xpath(
-            '//h3[contains(text(), "Schedule")]/following-sibling::ul//li/text()'
-        ).getall()
-        item["pa_schedule"] = ", ".join([s.strip() for s in schedule_items])
-
-        # Cost Table (Ages Served / Full Time / Part Time / Openings)
-        cost_rows = sel.xpath(
-            '//h3[contains(text(), "Cost")]/following-sibling::div//div[contains(@class, "data-row")]'
-        )
-        costs = []
-        for row in cost_rows:
-            # 4 columns: Age, Full Time, Part Time, Openings
-            # Cols are divs.
-            cols = row.css('div[class*="col-"]::text').getall()
-            # Clean up
-            cols = [c.strip() for c in cols if c.strip()]
-
-            age_group = (
-                row.css(".col-md-5 .d-none::text").get()
-                or row.css(".col-md-5 .head::text").get()
+        for provider in accum.values():
+            key = (
+                provider.get("providerIdentifier"),
+                provider.get("providerLocationIdentifier"),
             )
-            # The prices are in col-md-2 and openings in col-md-3
-            prices = row.css(".col-md-2::text").getall()
-            openings = row.css(".col-md-3::text").get()
+            if key in self.seen:
+                continue
+            self.seen.add(key)
+            yield self._info_request(provider)
 
-            if age_group:
-                entry = {
-                    "age_group": age_group.strip(),
-                    "full_time_rate": prices[0].strip() if len(prices) > 0 else None,
-                    "part_time_rate": prices[1].strip() if len(prices) > 1 else None,
-                    "openings": openings.strip() if openings else None,
-                }
-                costs.append(entry)
+    def parse_detail(self, response):
+        try:
+            provider = (json.loads(response.text) or {}).get("provider") or {}
+        except ValueError:
+            provider = {}
+        if not provider:
+            self.logger.warning(
+                "Empty detail for %s", response.meta.get("provider", {})
+                .get("providerName")
+            )
+            return
+        yield self.build_item(provider)
 
-        item["pa_cost_table"] = costs
+    # --- item construction ------------------------------------------------ #
+
+    @staticmethod
+    def build_item(provider):
+        """Map a ``getchildcareinfo`` provider record to a ``ProviderItem``."""
+        item = ProviderItem()
+        item["source_state"] = "Pennsylvania"
+        item["provider_name"] = provider.get("providerName")
+
+        # Address: "STREET, CITY, ST ZIP" (the format the normalization pipeline
+        # parses into city/state/zip).
+        street = ", ".join(
+            str(provider.get(f)).strip()
+            for f in ("addressLine1", "addressLine2", "addressLine3")
+            if provider.get(f) and str(provider.get(f)).strip()
+        )
+        city = (provider.get("city") or "").strip()
+        state = (provider.get("state") or "").strip()
+        zip_code = str(provider.get("zipCode") or "").strip()
+        st_zip = " ".join(x for x in (state, zip_code) if x)
+        item["address"] = ", ".join(x for x in (street, city, st_zip) if x)
+
+        item["phone"] = format_phone(provider.get("phoneNumber"))
+        item["provider_type"] = provider.get("providerType")
+        item["capacity"] = provider.get("providerMaxCapacity")
+
+        stars = provider.get("keystoneStars")
+        item["pa_stars_rating"] = str(stars) if stars not in (None, "") else None
+
+        referral = provider.get("referralStatus")
+        if referral == "ACT":
+            item["pa_certificate_status"] = "Active"
+        elif referral:
+            item["pa_certificate_status"] = "Inactive"
+        else:
+            item["pa_certificate_status"] = None
+
+        item["pa_school_district"] = join_labels(provider.get("schoolDistrict")) or None
+        item["pa_meal_options"] = join_labels(provider.get("mealOptions"))
+        item["pa_schedule"] = join_labels(provider.get("generalSchedule"))
+
+        cost_table = []
+        for cl in provider.get("careLevel") or []:
+            cost_table.append({
+                "age_group": (cl.get("careLevel") or "").strip() or None,
+                "full_time_rate": cl.get("ftRate"),
+                "part_time_rate": cl.get("ptRate"),
+                "openings": OPENINGS_MAP.get(cl.get("careLevelOpeningStatus"), "-"),
+            })
+        item["pa_cost_table"] = cost_table
 
         return item
 
-    async def errback_close_page(self, failure):
-        page = failure.request.meta.get("playwright_page")
-        if page:
-            await page.close()
-        self.logger.error(repr(failure))
+    def on_error(self, failure):
+        self.logger.error("Request failed: %s", repr(failure))

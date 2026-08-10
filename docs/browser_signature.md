@@ -190,9 +190,11 @@ click:
   age-group checkboxes, so the Search click isn't suspiciously adjacent to the
   form changes.
 - **Retry loop (`_submit_search`)**: v3 scores are non-deterministic, so we retry
-  up to `search_retries + 1` times (default 3), **fully reloading the page** and
-  re-running warm-up between attempts. Reload is required because after a v3
-  failure the component swaps in the visible v2 widget; clicking again would
+  up to `search_retries + 1` times (default 6 — raised from 3 on 2026-08-09 when
+  the score drifted to hover at the threshold and passed only ~1-in-2 attempts),
+  **fully reloading the page** and re-running warm-up between attempts. Reload is
+  required because after a v3 failure the component swaps in the visible v2
+  widget; clicking again would
   invoke v2, not a fresh v3 token.
 - **Manual fallback (`-a manual_captcha=1`)**: on final failure, wait for a human
   to solve the visible v2 challenge. Only useful with a real display / someone
