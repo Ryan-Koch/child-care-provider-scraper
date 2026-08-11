@@ -14,6 +14,7 @@ from provider_scrape.spiders.tennessee import (
     find_dict_with,
     flatten_hours,
     to_int,
+    visit_report_url,
 )
 
 FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures")
@@ -84,6 +85,17 @@ def test_find_dict_with():
     assert find_dict_with(tree, "zzz") is None
 
 
+def test_visit_report_url_trims_cruft():
+    raw = ("?id=cp_visit_details_maps&sysId1=abc123&name1=null&parent=X"
+           "&provList=?id=cp_provider_search_results&visitsListURL=?id=y")
+    assert visit_report_url(raw) == \
+        "https://onedhs.tn.gov/csp?id=cp_visit_details_maps&sysId1=abc123"
+    assert visit_report_url(None) is None
+    # No sysId1 -> fall back to absolutizing the relative source URL.
+    assert visit_report_url("?id=cp_monitoring_visits").startswith(
+        "https://onedhs.tn.gov/csp?id=cp_monitoring_visits")
+
+
 # --- parse_county -------------------------------------------------------- #
 
 def test_parse_county_schedules_details(spider):
@@ -126,6 +138,8 @@ def test_parse_detail_rated(spider):
     assert "AM" in item["hours"]
     assert len(item["inspections"]) >= 1
     assert isinstance(item["inspections"][0], InspectionItem)
+    assert item["inspections"][0]["report_url"].startswith(
+        "https://onedhs.tn.gov/csp?id=cp_visit_details_maps&sysId1=")
     assert item["provider_url"].endswith(
         "sysid=a1e297b5dbc10110c21143d913961921")
 

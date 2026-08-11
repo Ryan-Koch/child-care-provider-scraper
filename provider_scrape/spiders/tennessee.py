@@ -19,7 +19,7 @@ See tasks/tennessee_epic/tennessee_development_plan.md for the full write-up.
 """
 import json
 import re
-from urllib.parse import urlencode
+from urllib.parse import parse_qs, urlencode
 
 import scrapy
 
@@ -179,6 +179,22 @@ def build_scorecard(d):
     return card
 
 
+def visit_report_url(visit_url):
+    """Canonical visit-detail link from the source's bloated ``visitUrl``.
+
+    The source value is a relative query that embeds UI-navigation cruft
+    (``provList``/``visitsListURL``/null fields, ~350+ chars); we keep only the
+    visit's ``sysId1`` identifier. Returns None when there's no usable value.
+    """
+    if not visit_url:
+        return None
+    sys_id1 = parse_qs(visit_url.lstrip("?")).get("sysId1", [None])[0]
+    if sys_id1:
+        return f"{BASE}/csp?id=cp_visit_details_maps&sysId1={sys_id1}"
+    # Fallback: absolutize the (relative) source URL rather than lose it.
+    return f"{BASE}/csp{visit_url}" if visit_url.startswith("?") else visit_url
+
+
 def build_inspections(arr_cd):
     """Map ``arrCd`` visits to InspectionItem objects."""
     inspections = []
@@ -187,9 +203,9 @@ def build_inspections(arr_cd):
         insp["date"] = clean(v.get("visitDate"))
         insp["type"] = clean(v.get("VisitType"))
         insp["corrective_status"] = clean(v.get("CorrectiveActionTaken"))
-        url = clean(v.get("visitUrl"))
-        if url:
-            insp["report_url"] = f"{BASE}/csp{url}" if url.startswith("?") else url
+        report_url = visit_report_url(clean(v.get("visitUrl")))
+        if report_url:
+            insp["report_url"] = report_url
         inspections.append(insp)
     return inspections
 
