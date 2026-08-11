@@ -32,6 +32,7 @@ To regenerate: `.venv/bin/python scripts/generate_sources.py`.
 | Pennsylvania | https://compass.dhs.pa.gov/ |
 | Rhode Island | https://earlylearningprograms.dhs.ri.gov/ |
 | South Carolina | https://scchildcare.org/ |
+| Tennessee | https://onedhs.tn.gov/ |
 | Texas | https://childcare.hhs.texas.gov/ |
 | Utah | https://jobs.utah.gov/ |
 | Vermont | https://brightfutures.dcf.state.vt.us/ |

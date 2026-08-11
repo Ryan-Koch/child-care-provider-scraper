@@ -371,6 +371,8 @@ FACILITY_CATEGORY_BUCKETS = {
         # "Short Term Child Day Center" precedent above).
         "Center Based Child Care and Preschool Program",
         "Center Based Child Care and Preschool Program - Non-Recurring",
+        # Tennessee (onedhs.tn.gov): coarse provider_type.
+        "Child Care", "DOE",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME", "Family Child Care Home", "Family Home", "FDC",
@@ -436,6 +438,7 @@ FACILITY_CATEGORY_BUCKETS = {
         # coarse facilityType "License Exempt"; CCAP-accredited providers
         # participate in the subsidy program without being state-licensed.
         "License Exempt", "CCAP Certified/Accredited",
+        "Exempt",
     ],
     "other": [
         "Other", "Resident Camp", "Summer Day Camp",
