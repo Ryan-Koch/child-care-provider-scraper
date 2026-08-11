@@ -165,6 +165,13 @@ def test_normalize_date_iso_with_time_drops_time():
         == "2025-10-01"
 
 
+def test_normalize_date_drops_trailing_clock_time():
+    # Space-separated timestamps (e.g. Tennessee visit dates) drop the time.
+    assert normalization.normalize_date("05/07/2026 08:42 AM") == "2026-05-07"
+    assert normalization.normalize_date("04/08/2026 09:45 PM") == "2026-04-08"
+    assert normalization.normalize_date("2025-10-01 14:30:00") == "2025-10-01"
+
+
 def test_normalize_date_full_month_name():
     assert normalization.normalize_date("January 5, 2024") == "2024-01-05"
 

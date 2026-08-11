@@ -156,8 +156,9 @@ def normalize_date(value):
     """Convert a date string to ISO 8601 ``YYYY-MM-DD`` (date only).
 
     Handles ``M/D/YYYY``, ``MM/DD/YYYY``, ``YYYY-MM-DD``, ISO-with-time
-    (the time component is dropped), and full/abbreviated month names
-    (``"Sept. 23, 2025"``). Non-strings and empties are returned unchanged.
+    (the time component is dropped), a trailing clock time (e.g.
+    ``"05/07/2026 08:42 AM"`` -> the date part), and full/abbreviated month
+    names (``"Sept. 23, 2025"``). Non-strings and empties are returned unchanged.
 
     On an unparseable value the **original value is returned unchanged and a
     warning is logged** — we never silently drop or corrupt date data.
@@ -170,6 +171,12 @@ def normalize_date(value):
     # ISO with a time component (e.g. "2025-10-01T06:00:00.000Z") -> date part.
     if "T" in candidate:
         candidate = candidate.split("T", 1)[0]
+    # Drop a trailing clock time (e.g. "05/07/2026 08:42 AM" or "... 14:30:00")
+    # so a date+time timestamp normalizes to its date. Month-name dates
+    # ("Sept. 23, 2025") have no trailing clock time and are left untouched.
+    candidate = re.sub(
+        r"\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?$", "", candidate
+    ).strip()
     for pattern in _NUMERIC_DATE_PATTERNS:
         try:
             return datetime.strptime(candidate, pattern).strftime("%Y-%m-%d")

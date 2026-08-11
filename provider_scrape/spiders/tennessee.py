@@ -39,8 +39,9 @@ USER_AGENT = (
 )
 
 # Warn in closed() if we finish well below this. Calibrate after the first full
-# run (set to ~80% of the observed statewide total).
-EXPECTED_MIN_PROVIDERS = 4000
+# run (~80% of the observed statewide total). Calibrated to a 2026-08 full run
+# that returned 4057 providers across all 95 counties.
+EXPECTED_MIN_PROVIDERS = 3200
 
 # The 95 Tennessee counties, spelled exactly as the API expects (verified live:
 # "DeKalb" has no space; "Van Buren" has a space).
