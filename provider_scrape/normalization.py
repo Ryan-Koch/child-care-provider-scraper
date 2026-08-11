@@ -156,8 +156,9 @@ def normalize_date(value):
     """Convert a date string to ISO 8601 ``YYYY-MM-DD`` (date only).
 
     Handles ``M/D/YYYY``, ``MM/DD/YYYY``, ``YYYY-MM-DD``, ISO-with-time
-    (the time component is dropped), and full/abbreviated month names
-    (``"Sept. 23, 2025"``). Non-strings and empties are returned unchanged.
+    (the time component is dropped), a trailing clock time (e.g.
+    ``"05/07/2026 08:42 AM"`` -> the date part), and full/abbreviated month
+    names (``"Sept. 23, 2025"``). Non-strings and empties are returned unchanged.
 
     On an unparseable value the **original value is returned unchanged and a
     warning is logged** — we never silently drop or corrupt date data.
@@ -170,6 +171,12 @@ def normalize_date(value):
     # ISO with a time component (e.g. "2025-10-01T06:00:00.000Z") -> date part.
     if "T" in candidate:
         candidate = candidate.split("T", 1)[0]
+    # Drop a trailing clock time (e.g. "05/07/2026 08:42 AM" or "... 14:30:00")
+    # so a date+time timestamp normalizes to its date. Month-name dates
+    # ("Sept. 23, 2025") have no trailing clock time and are left untouched.
+    candidate = re.sub(
+        r"\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?$", "", candidate
+    ).strip()
     for pattern in _NUMERIC_DATE_PATTERNS:
         try:
             return datetime.strptime(candidate, pattern).strftime("%Y-%m-%d")
@@ -371,6 +378,8 @@ FACILITY_CATEGORY_BUCKETS = {
         # "Short Term Child Day Center" precedent above).
         "Center Based Child Care and Preschool Program",
         "Center Based Child Care and Preschool Program - Non-Recurring",
+        # Tennessee (onedhs.tn.gov): coarse provider_type.
+        "Child Care", "DOE",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME", "Family Child Care Home", "Family Home", "FDC",
@@ -402,6 +411,9 @@ FACILITY_CATEGORY_BUCKETS = {
         # Vermont (brightfutures.dcf.state.vt.us) detail "License Type": the
         # registered and licensed home-based options.
         "Registered Family Child Care Home", "Licensed Family Child Care Home",
+        # South Dakota (olapublic.sd.gov) Program Category: registered care
+        # provided in the provider's own residence.
+        "Family Day Care",
     ],
     "group_home": [
         "GFDC", "Group Home", "Group Home Child Care", "Group",
@@ -436,6 +448,7 @@ FACILITY_CATEGORY_BUCKETS = {
         # coarse facilityType "License Exempt"; CCAP-accredited providers
         # participate in the subsidy program without being state-licensed.
         "License Exempt", "CCAP Certified/Accredited",
+        "Exempt",
     ],
     "other": [
         "Other", "Resident Camp", "Summer Day Camp",
@@ -453,6 +466,10 @@ FACILITY_CATEGORY_BUCKETS = {
         # Wisconsin: a licensed day camp -> other (matches the day-camp
         # precedent above). "(Probational)" variant handled by the suffix strip.
         "Licensed Camp",
+        # South Dakota (olapublic.sd.gov) Program Category: informal FFN-style
+        # care and single-family in-home care -- both are informal care per
+        # the field-mapping playbook, not a licensed home/center category.
+        "Informal", "In-Home",
     ],
 }
 

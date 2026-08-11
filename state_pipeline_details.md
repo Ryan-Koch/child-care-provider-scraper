@@ -99,11 +99,11 @@ Raw `provider_type` values mapped to each canonical category (additive; unmapped
 
 | Canonical | Raw provider_type values |
 |---|---|
-| `center` | `CDC (Child Development Center)`, `CTR`, `Center`, `Center Based Child Care and Preschool Program`, `Center Based Child Care and Preschool Program - Non-Recurring`, `Certified Pre-School`, `Child Care Center`, `Child Care Commercial Preschool`, `Child Care Facility`, `Child Care Hourly Center`, `Child Care Learning Center`, `Child Care Registered Center Based Program`, `Child Day Center`, `DAY CARE CENTER`, `DAY CARE CENTER - ILL CENTER`, `DCC`, `Department of Defense`, `GA Early Head Start`, `GA Head Start`, `HHS Four-Year Old Program`, `HHS-Licensed Child Care Center`, `HHS-Licensed Group Child Care Facility`, `HHS-Licensed Preschool`, `Head Start Site`, `INFANT CENTER`, `Infant and Toddler Center`, `LOC`, `Licensed Center`, `Licensed Child Care Center`, `Licensed Group`, `Licensed School-Based Preschool`, `Local School System`, `Outdoor Nature Based Program`, `Preschool Center`, `Preschool Program`, `Public School`, `SDCC`, `SINGLE LICENSED CHILD CARE CENTER`, `Short Term Child Day Center`, `Small Employer Based Child Care`, `University` |
-| `exempt` | `CCAP Certified/Accredited`, `Child Care Exempt Program`, `DWS Approved, Exempt Center`, `DWS Approved, Exempt School Age Program`, `Exempt Child Care Center`, `Exempt Only`, `License Exempt`, `Religious Exempt Child Day Center`, `Self-Declared Provider`, `Voluntary Registration` |
-| `family_home` | `CDH (Child Development Home)`, `Child Care Licensed Family`, `Child Care Residential Certificate`, `FAMILY DAY CARE HOME`, `FCCH`, `FDC`, `Family`, `Family Child Care`, `Family Child Care Home`, `Family Child Care Learning Home`, `Family Day Care Home`, `Family Day Home`, `Family Home`, `Family Home Child Care`, `HHS-Licensed Family Child Care`, `LFCCH`, `Large Family Child Care Home`, `Licensed Child-Care Home`, `Licensed Family`, `Licensed Family Child Care Home`, `Licensed Family Home`, `Licensed Home`, `Licensed Type A Family Child Care Home`, `Licensed Type B Family Child Care Home`, `Listed Family Home`, `Provisional Certified`, `Registered Child-Care Home`, `Registered Family Child Care Home`, `Registered Home`, `Regular Certified`, `System Approved FDH`, `Unlicensed/Unregistered FDH` |
+| `center` | `CDC (Child Development Center)`, `CTR`, `Center`, `Center Based Child Care and Preschool Program`, `Center Based Child Care and Preschool Program - Non-Recurring`, `Certified Pre-School`, `Child Care`, `Child Care Center`, `Child Care Commercial Preschool`, `Child Care Facility`, `Child Care Hourly Center`, `Child Care Learning Center`, `Child Care Registered Center Based Program`, `Child Day Center`, `DAY CARE CENTER`, `DAY CARE CENTER - ILL CENTER`, `DCC`, `DOE`, `Department of Defense`, `GA Early Head Start`, `GA Head Start`, `HHS Four-Year Old Program`, `HHS-Licensed Child Care Center`, `HHS-Licensed Group Child Care Facility`, `HHS-Licensed Preschool`, `Head Start Site`, `INFANT CENTER`, `Infant and Toddler Center`, `LOC`, `Licensed Center`, `Licensed Child Care Center`, `Licensed Group`, `Licensed School-Based Preschool`, `Local School System`, `Outdoor Nature Based Program`, `Preschool Center`, `Preschool Program`, `Public School`, `SDCC`, `SINGLE LICENSED CHILD CARE CENTER`, `Short Term Child Day Center`, `Small Employer Based Child Care`, `University` |
+| `exempt` | `CCAP Certified/Accredited`, `Child Care Exempt Program`, `DWS Approved, Exempt Center`, `DWS Approved, Exempt School Age Program`, `Exempt`, `Exempt Child Care Center`, `Exempt Only`, `License Exempt`, `Religious Exempt Child Day Center`, `Self-Declared Provider`, `Voluntary Registration` |
+| `family_home` | `CDH (Child Development Home)`, `Child Care Licensed Family`, `Child Care Residential Certificate`, `FAMILY DAY CARE HOME`, `FCCH`, `FDC`, `Family`, `Family Child Care`, `Family Child Care Home`, `Family Child Care Learning Home`, `Family Day Care`, `Family Day Care Home`, `Family Day Home`, `Family Home`, `Family Home Child Care`, `HHS-Licensed Family Child Care`, `LFCCH`, `Large Family Child Care Home`, `Licensed Child-Care Home`, `Licensed Family`, `Licensed Family Child Care Home`, `Licensed Family Home`, `Licensed Home`, `Licensed Type A Family Child Care Home`, `Licensed Type B Family Child Care Home`, `Listed Family Home`, `Provisional Certified`, `Registered Child-Care Home`, `Registered Family Child Care Home`, `Registered Home`, `Regular Certified`, `System Approved FDH`, `Unlicensed/Unregistered FDH` |
 | `group_home` | `CDX (Child Development Home Expanded)`, `GFDC`, `Group`, `Group Child Care Home`, `Group Home`, `Group Home Child Care`, `HHS-Licensed Group Child Care Home`, `Licensed Group Home` |
-| `other` | `(FCC)Nanny Individual`, `Certified In Home Aide`, `Family, Friends & Neighbor (FFN) Providers`, `HHS-Licensed Multiple License`, `Illegally Unlicensed`, `Licensed Camp`, `Neighborhood Youth Organization`, `Other`, `Registered Day Camp or Approved Day Camp`, `Resident Camp`, `Substitute Placement Agency`, `Summer Day Camp`, `Tribal Subsidy Recipient` |
+| `other` | `(FCC)Nanny Individual`, `Certified In Home Aide`, `Family, Friends & Neighbor (FFN) Providers`, `HHS-Licensed Multiple License`, `Illegally Unlicensed`, `In-Home`, `Informal`, `Licensed Camp`, `Neighborhood Youth Organization`, `Other`, `Registered Day Camp or Approved Day Camp`, `Resident Camp`, `Substitute Placement Agency`, `Summer Day Camp`, `Tribal Subsidy Recipient` |
 | `school_age` | `Afterschool Child Care Program`, `Child Care Out of School Time Program`, `HHS-Licensed School Age Child Care`, `Licensed School-Age Child Care`, `SACC`, `SCHOOL AGE DAY CARE CENTER`, `School Age Program`, `School-age Center`, `School-age Program` |
 
 ## Per-state fields
@@ -508,6 +508,25 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `sc_licensing_specialist_phone` -> pass-through
 - `sc_program_participation` -> pass-through
 - `sc_provider_id` -> pass-through
+
+### South Dakota (SD)
+
+- `sd_months_of_operation` -> pass-through
+- `sd_services_offered` -> pass-through
+
+### Tennessee (TN)
+
+- `tn_age_group_rates` -> pass-through
+- `tn_participates_certificate` -> pass-through
+- `tn_provider_id` -> pass-through
+- `tn_quality_rating` -> pass-through
+- `tn_rating_effective_date` -> pass-through
+- `tn_rating_expiration` -> pass-through
+- `tn_rating_scorecard` -> pass-through
+- `tn_regulatory_agency` -> pass-through
+- `tn_regulatory_individual` -> pass-through
+- `tn_vacancy` -> pass-through
+- `tn_wheelchair_accessible` -> pass-through
 
 ### Texas (TX)
 

@@ -594,5 +594,28 @@ class ProviderItem(scrapy.Item):
     vt_preschool_vacancies = scrapy.Field()
     vt_school_age_vacancies = scrapy.Field()
 
+    # Tennessee specific fields (onedhs.tn.gov ServiceNow provider maps). The
+    # public feed is coarse (provider_type is only Child Care / DOE / Exempt,
+    # and there are no license dates or ZIP). QRIS quality data stays
+    # state-specific per docs/field_mapping_playbook.md.
+    tn_provider_id = scrapy.Field()            # registry "Provider ID", e.g. "84171"
+    tn_regulatory_agency = scrapy.Field()      # "DHS Child Care" | "Department of Education"
+    tn_regulatory_individual = scrapy.Field()  # assigned state licensing rep
+    tn_vacancy = scrapy.Field()                # raw vacancy string
+    tn_participates_certificate = scrapy.Field()  # bool (Certificate program)
+    tn_wheelchair_accessible = scrapy.Field()  # "Yes" | "No"
+    tn_age_group_rates = scrapy.Field()        # list of {age_group, weekly_rate, unit_of_care, vacancy}
+    tn_quality_rating = scrapy.Field()         # overall QRIS score, e.g. "91/100"
+    tn_rating_effective_date = scrapy.Field()  # rating effective date (MM/DD/YYYY)
+    tn_rating_expiration = scrapy.Field()      # rating expiration date (MM/DD/YYYY)
+    tn_rating_scorecard = scrapy.Field()       # dict of per-domain score + percent
+
+    # South Dakota specific fields (olapublic.sd.gov). The detail page's
+    # Services Offered and Months of Operation multi-selects have no common
+    # field; each is a small SD-specific vocabulary. (Ages of Children Served
+    # maps to the common `ages_served`; Nationally Accredited -> `accreditation`.)
+    sd_services_offered = scrapy.Field()      # list, e.g. ["After School"]
+    sd_months_of_operation = scrapy.Field()   # list, e.g. ["12 Months"]
+
     # This will hold the list of inspections.
     inspections = scrapy.Field()

@@ -1,0 +1,831 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="description" content="South Dakota's Office of Licensing and Accreditation (OLA) Consitituent Portal provides oversight to: inquire about becoming a licensed or accredited program, search for an existing program, or submit a complaint about a program.">
+    <meta name="keywords" content="South Dakota, DSS, Social Services, OLA, Office of Licensing and Accreditation, Consitituent, Portal, Provider">
+    
+    <meta property="og:type" content="website">
+    
+        <meta property="og:url" content="https://olapublic.sd.gov" />
+    
+    <meta property="og:image" content="/media/3bbf5lx2/dsslogo.png" />
+
+    <link rel="stylesheet" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous" src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="stylesheet" href="/lib/bootstrap-5.1.3/bootstrap.min.css" />
+    <script src="/lib/bootstrap-5.1.3/bootstrap.bundle.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" crossorigin href="https://fonts.gstatic.com">
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.3/css/dataTables.dataTables.min.css">   
+    <link rel="stylesheet" href="/css/site.css" />
+    
+    <title>Child Care Provider Search | Licensing and Accreditation Constituent Portal</title>
+    <link rel="icon" type="image/x-icon" href="/media/blrl2hqk/dss-favicon.ico">
+    
+    
+    
+        <link href="/sb/portal-styles.css.v639218547044485165" rel="stylesheet">
+        <link href="/sb/site-styles.css.v639218547044485165" rel="stylesheet">
+        
+    
+
+    
+    <script type="text/javascript" src="https://cdn.datatables.net/2.1.3/js/dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/3.1.1/js/dataTables.buttons.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/3.1.1/js/buttons.dataTables.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/3.1.1/js/buttons.html5.min.js"></script>
+    <script type="text/javascript" src="/scripts/site.js"></script>
+<script type="text/javascript">!function(T,l,y){var S=T.location,k="script",D="instrumentationKey",C="ingestionendpoint",I="disableExceptionTracking",E="ai.device.",b="toLowerCase",w="crossOrigin",N="POST",e="appInsightsSDK",t=y.name||"appInsights";(y.name||T[e])&&(T[e]=t);var n=T[t]||function(d){var g=!1,f=!1,m={initialize:!0,queue:[],sv:"5",version:2,config:d};function v(e,t){var n={},a="Browser";return n[E+"id"]=a[b](),n[E+"type"]=a,n["ai.operation.name"]=S&&S.pathname||"_unknown_",n["ai.internal.sdkVersion"]="javascript:snippet_"+(m.sv||m.version),{time:function(){var e=new Date;function t(e){var t=""+e;return 1===t.length&&(t="0"+t),t}return e.getUTCFullYear()+"-"+t(1+e.getUTCMonth())+"-"+t(e.getUTCDate())+"T"+t(e.getUTCHours())+":"+t(e.getUTCMinutes())+":"+t(e.getUTCSeconds())+"."+((e.getUTCMilliseconds()/1e3).toFixed(3)+"").slice(2,5)+"Z"}(),iKey:e,name:"Microsoft.ApplicationInsights."+e.replace(/-/g,"")+"."+t,sampleRate:100,tags:n,data:{baseData:{ver:2}}}}var h=d.url||y.src;if(h){function a(e){var t,n,a,i,r,o,s,c,u,p,l;g=!0,m.queue=[],f||(f=!0,t=h,s=function(){var e={},t=d.connectionString;if(t)for(var n=t.split(";"),a=0;a<n.length;a++){var i=n[a].split("=");2===i.length&&(e[i[0][b]()]=i[1])}if(!e[C]){var r=e.endpointsuffix,o=r?e.location:null;e[C]="https://"+(o?o+".":"")+"dc."+(r||"services.visualstudio.com")}return e}(),c=s[D]||d[D]||"",u=s[C],p=u?u+"/v2/track":d.endpointUrl,(l=[]).push((n="SDK LOAD Failure: Failed to load Application Insights SDK script (See stack for details)",a=t,i=p,(o=(r=v(c,"Exception")).data).baseType="ExceptionData",o.baseData.exceptions=[{typeName:"SDKLoadFailed",message:n.replace(/\./g,"-"),hasFullStack:!1,stack:n+"\nSnippet failed to load ["+a+"] -- Telemetry is disabled\nHelp Link: https://go.microsoft.com/fwlink/?linkid=2128109\nHost: "+(S&&S.pathname||"_unknown_")+"\nEndpoint: "+i,parsedStack:[]}],r)),l.push(function(e,t,n,a){var i=v(c,"Message"),r=i.data;r.baseType="MessageData";var o=r.baseData;return o.message='AI (Internal): 99 message:"'+("SDK LOAD Failure: Failed to load Application Insights SDK script (See stack for details) ("+n+")").replace(/\"/g,"")+'"',o.properties={endpoint:a},i}(0,0,t,p)),function(e,t){if(JSON){var n=T.fetch;if(n&&!y.useXhr)n(t,{method:N,body:JSON.stringify(e),mode:"cors"});else if(XMLHttpRequest){var a=new XMLHttpRequest;a.open(N,t),a.setRequestHeader("Content-type","application/json"),a.send(JSON.stringify(e))}}}(l,p))}function i(e,t){f||setTimeout(function(){!t&&m.core||a()},500)}var e=function(){var n=l.createElement(k);n.src=h;var e=y[w];return!e&&""!==e||"undefined"==n[w]||(n[w]=e),n.onload=i,n.onerror=a,n.onreadystatechange=function(e,t){"loaded"!==n.readyState&&"complete"!==n.readyState||i(0,t)},n}();y.ld<0?l.getElementsByTagName("head")[0].appendChild(e):setTimeout(function(){l.getElementsByTagName(k)[0].parentNode.appendChild(e)},y.ld||0)}try{m.cookie=l.cookie}catch(p){}function t(e){for(;e.length;)!function(t){m[t]=function(){var e=arguments;g||m.queue.push(function(){m[t].apply(m,e)})}}(e.pop())}var n="track",r="TrackPage",o="TrackEvent";t([n+"Event",n+"PageView",n+"Exception",n+"Trace",n+"DependencyData",n+"Metric",n+"PageViewPerformance","start"+r,"stop"+r,"start"+o,"stop"+o,"addTelemetryInitializer","setAuthenticatedUserContext","clearAuthenticatedUserContext","flush"]),m.SeverityLevel={Verbose:0,Information:1,Warning:2,Error:3,Critical:4};var s=(d.extensionConfig||{}).ApplicationInsightsAnalytics||{};if(!0!==d[I]&&!0!==s[I]){var c="onerror";t(["_"+c]);var u=T[c];T[c]=function(e,t,n,a,i){var r=u&&u(e,t,n,a,i);return!0!==r&&m["_"+c]({message:e,url:t,lineNumber:n,columnNumber:a,error:i}),r},d.autoExceptionInstrumented=!0}return m}(y.cfg);function a(){y.onInit&&y.onInit(n)}(T[t]=n).queue&&0===n.queue.length?(n.queue.push(a),n.trackPageView({})):a()}(window,document,{
+src: "https://js.monitor.azure.com/scripts/b/ai.2.min.js", // The SDK URL Source
+crossOrigin: "anonymous", 
+cfg: { // Application Insights Configuration
+    connectionString: 'InstrumentationKey=b17a45c5-aed4-f5e7-b5bd-806dbe1369dc;EndpointSuffix=applicationinsights.us;IngestionEndpoint=https://usgovarizona-0.in.applicationinsights.azure.us/;AADAudience=https://monitor.azure.us/;ApplicationId=e0ed9f83-e500-467b-8745-839458e36fa5'
+}});</script></head>
+<body>
+    <header>
+        
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-1"></div>
+        <div class="col-10" id="header-logo">
+            <a href="/">
+                <img height="100" src="/media/3bbf5lx2/dsslogo.png" alt="DSS Logo">
+            </a>
+        </div>
+        <div class="col-1"></div>
+    </div>
+    <div class="dss-color">
+        <div class="row">
+            <div class="col-1"></div>
+            <div class="col-10 px-0">
+                <nav class="navbar navbar-expand-lg navbar-dark py-0">
+                    <div class="container-fluid px-0 py-2">
+                        <a class="navbar-brand fs-3" href="#">Provider Search</a>
+                        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Menu">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+                            <div class="offcanvas-header">
+                                <h5 class="offcanvas-title fs-3 text-dss-blue" id="offcanvasNavbarLabel">Provider Search</h5>
+                                <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                            </div>
+                            <div class="offcanvas-body">
+                                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 fs-5" id="header-nav">
+                                    <li class="nav-item px-1">
+                                        <a class="nav-link" aria-current="page" href="/"> Home </a>
+                                    </li>
+                                    <li class="nav-item dropdown px-1">
+                                        <a class="nav-link dropdown-toggle " href="#" id="bh-dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Behavioral Health</a>
+                                        <ul class="dropdown-menu shadow" aria-labelledby="bh-dropdown">
+                                            <li><a class="dropdown-item" href="/behavioral-health/">Behavioral Health</a></li>
+                                            <li><a class="dropdown-item" href="/behavioral-health-complaint/">Submit a Complaint</a></li>
+                                            <li><a class="dropdown-item" href="/behavioral-health-inquiry/">Become a Provider</a></li>
+                                            <li><a class="dropdown-item" href="/behavioral-health-provider-search/">Search for a Provider</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="nav-item dropdown px-1">
+                                        <a class="nav-link dropdown-toggle" href="#" id="cc-dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Child Care</a>
+                                        <ul class="dropdown-menu shadow" aria-labelledby="cc-dropdown">
+                                            <li><a class="dropdown-item" href="/child-care/">Child Care</a></li>
+                                            <li><a class="dropdown-item" href="/child-care-complaint/">Submit a Complaint</a></li>
+                                            <li><a class="dropdown-item" href="/child-care-inquiry/">Become a Provider</a></li>
+                                            <li><a class="dropdown-item" href="/child-care-provider-search/">Search for a Provider</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="nav-item dropdown px-1">
+                                        <a class="nav-link" href="/foster-care/" role="button">Foster Care</a>
+                                    </li>
+                                    <li class="nav-item dropdown px-1">
+                                        <a class="nav-link dropdown-toggle" href="#" id="yc-dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Youth Care</a>
+                                        <ul class="dropdown-menu shadow" aria-labelledby="yc-dropdown">
+                                            <li><a class="dropdown-item" href="/youth-care/">Youth Care</a></li>
+                                            <li><a class="dropdown-item" href="/youth-care-complaint/">Submit a Complaint</a></li>
+                                            <li><a class="dropdown-item" href="/youth-care-inquiry/">Become a Provider</a></li>
+                                            <li><a class="dropdown-item" href="/youth-care-provider-search/">Search for a Provider</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="nav-item dropdown px-1 text-truncate" onclick="location.href='/general-complaint';">
+                                        <a class="nav-link" href="/general-complaint/">Submit a Complaint</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+            <div class="col-1"></div>
+        </div>
+    </div>
+</div>
+
+    </header>
+    <main class="bg-light">
+        <div class="container-fluid px-4">
+            <div class="row justify-content-center p-3">
+                
+
+<div class="col-1"></div>
+<div class="col-sm-12 bg-white rounded shadow p-3">
+    <div class="p-3">
+        <p class="fs-4 fw-bold text-center dss-text-blue">Child Care Provider Search</p>
+        <p>Use the search options below to search for State registered Family Day Care programs; State licensed child or school age care programs; or Informal or In-Home (those who care for one family) providers in South Dakota communities.</p>
+        <ul>
+            <li>After making your selections using search criteria, a provider list will generate.</li>
+            <li>Select an individual provider to view the provider’s profile, inspections, compliance plans, corrective action plans, or a stipulation consent agreement.</li>
+        </ul>
+        <p>Note: If your child care provider is an informal provider or in-home provider (cares only for your children), you can view their inspection and compliance information by entering their provider ID number below. Please contact the local Child Care Licensing staff. Local phone numbers are found on the following website: <a href="https://dss.sd.gov/childcare/licensing/districts.aspx" target="_blank" style="word-wrap: break-word;">https://dss.sd.gov/childcare/licensing/districts.aspx</a>.</p>
+    </div>
+    <div class="row">
+        <div class="col-md-3">
+            <form id="form">
+                <div class="d-flex justify-content-between">
+                    <button onclick="search()" type="button" class="btn btn-success fw-bold mb-3 p-2 w-100 me-1">Search</button>
+                    <button onclick="resetFilters()" type="button" class="btn text-success border border-success fw-bold mb-3 p-2 w-100 ms-1">Reset filters</button>
+                </div>
+                <div class="bg-light border rounded p-2 mb-3">
+                    <div class="form-group required">
+                        <label for="program-type" class="form-label req-label fw-bold dss-text-blue">Provider Type</label>
+                        <input class="form-control" type="text" id="program-type" value="Child Care" disabled required>
+                    </div>
+                </div>
+                <div class="bg-light border rounded p-2 mb-3">
+                    <label class="form-label fw-bold dss-text-blue">Program Category</label>
+                    <div class="ps-1">
+                        <div class="form-check d-flex justify-content-start">
+                            <input class="form-check-input cc-ps-input-check" name="category" type="checkbox" value="Informal" id="informal">
+                            <label class="ps-2" for="informal">Informal</label>
+                        </div>
+                        <div class="form-check d-flex justify-content-start">
+                            <input class="form-check-input cc-ps-input-check" name="category" type="checkbox" value="In-Home Care" id="in-home">
+                            <label class="ps-2" for="in-home">In-Home</label>
+                        </div>
+                        <div class="form-check d-flex justify-content-start">
+                            <input class="form-check-input cc-ps-input-check" name="category" type="checkbox" value="Family Day Care" id="family-day-care">
+                            <label class="ps-2" for="family-day-care">Family Day Care</label>
+                        </div>
+                        <div class="form-check d-flex justify-content-start">
+                            <input class="form-check-input cc-ps-input-check" name="category" type="checkbox" value="Licensed Child Care Program" id="licensed-child-care">
+                            <label class="ps-2" for="licensed-child-care">Licensed Child Care Program</label>
+                        </div>
+                        <div class="form-check d-flex justify-content-start">
+                            <input class="form-check-input cc-ps-input-check" name="category" type="checkbox" value="School Age Program" id="school-age-program">
+                            <label class="ps-2" for="school-age-program">School Age Program</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-light border rounded p-2 mb-3">
+                    <div class="form-check ps-0">
+                        <label class="form-label fw-bold dss-text-blue" for="provider-name">Provider Name</label>
+                        <input type="text" class="form-control cc-ps-input" id="provider-name" value="">
+                    </div>
+                </div>
+                <div class="bg-light border rounded p-2 mb-3">
+                    <div class="form-check ps-0">
+                        <label class="form-label fw-bold dss-text-blue" for="program-id">Program ID</label>
+                        <input type="text" class="form-control cc-ps-input cc-ps-input" id="program-id" value="">
+                    </div>
+                </div>
+                <div class="bg-light border rounded p-2 mb-3">
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-7">
+                                <label for="child-care-provider-city" class="form-label fw-bold dss-text-blue">City</label>
+                                <input type="text" class="form-control cc-ps-input" id="child-care-provider-city" value="">
+                            </div>
+                            <div class="col-5">
+                                <label for="child-care-provider-zip" class="form-label fw-bold dss-text-blue">Zip</label>
+                                <input type="text" class="form-control cc-ps-input" id="child-care-provider-zip" value="">
+                            </div>
+                        </div>
+                        <div class="col mt-2 pe-2">
+                            <label for="child-care-provider-county" class="form-label fw-bold dss-text-blue">County</label>
+                            <input type="text" class="form-control cc-ps-input" id="child-care-provider-county" value="">
+                        </div>
+                    </div>
+                </div>
+                <div onclick="clickFilter()" class="d-flex justify-content-between dss-bg-blue dss-blue-hover fw-bold text-center text-white rounded mb-3 mx-auto px-3 py-2">
+                    <span id="show-more-filters">Show More Filters</span>                        
+                    <i class="fa fa-angle-down" id="arrow-down" style="transform: translateY(4px);"></i>
+                    <span id="hide-filters" style="display: none;">Hide Filters</span>
+                    <i class="fas fa-angle-up" id="arrow-up" style="display: none; transform: translateY(4px);"></i>
+                </div>
+                <div id="more-filters" style="display: none;">
+                    <div class="bg-light border rounded p-2 mb-3">
+                        <div class="form-check ps-0">
+                            <label class="form-label fw-bold dss-text-blue">Available Openings</label>
+                            <div>
+                                <input class="cc-ps-input-check" type="radio" name="available-openings" id="available-openings-yes">
+                                <label for="available-openings-yes">Yes</label>
+                                <br>
+                                <input class="cc-ps-input-check" type="radio" name="available-openings" id="available-openings-no">
+                                <label for="available-openings-no">No</label>                               
+                            </div>
+                        </div>                            
+                    </div>
+                    <div class="bg-light border rounded p-2 mb-3">
+                        <label class="form-label fw-bold dss-text-blue">Type of Accreditation</label>
+                        <div class="form-check">
+                            <input class="form-check-input cc-ps-input-check" type="checkbox" value="National" id="accreditation-type-national">
+                            <label class="form-check-label" for="accreditation-type-national">National</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input cc-ps-input-check" type="checkbox" value="State" id="accreditation-type-state">
+                            <label class="form-check-label" for="accreditation-type-state">State</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input cc-ps-input-check" type="checkbox" value="Other" id="accreditation-type-other">
+                            <label class="form-check-label" for="accreditation-type-other">Other</label>
+                        </div>
+                    </div>
+                    <div class="form-check bg-light border rounded p-2 mb-3">
+                        <label class="form-label fw-bold dss-text-blue">Months of Operation</label>
+                        <div class="form-check">
+                            <input class="form-check-input cc-ps-input-check" type="checkbox" value="School Year Only" id="school-year-only">
+                            <label class="form-check-label" for="school-year-only">School Year Only</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input cc-ps-input-check" type="checkbox" value="12 Months" id="12-months">
+                            <label class="form-check-label" for="12-months">12 Months</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input cc-ps-input-check" type="checkbox" value="Other" id="summer-only">
+                            <label class="form-check-label" for="summer-only">Summer Only</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input cc-ps-input-check" type="checkbox" value="Other" id="months-other">
+                            <label class="form-check-label" for="months-other">Other</label>
+                        </div>
+                    </div>
+                    <div class="form-check bg-light border rounded p-2 mb-3">
+                        <label class="form-label fw-bold dss-text-blue">Age of Children Served</label>
+                        <div class="form-check">
+                            <input class="form-check-input cc-ps-input-check" type="checkbox" value="Infants (Birth-one year of age)" id="infants">
+                            <label class="form-check-label" for="infants">Infants (Birth-one year of age)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input cc-ps-input-check" type="checkbox" value="Toddlers (1-3 years of age)" id="toddlers">
+                            <label class="form-check-label" for="toddlers">Toddlers (1-3 years of age)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input cc-ps-input-check" type="checkbox" value="Preschool age (3-4 years of age)" id="preschool">
+                            <label class="form-check-label" for="preschool">Preschool age (3-4 years of age)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input cc-ps-input-check" type="checkbox" value="School age (5+ years of age)" id="school-age">
+                            <label class="form-check-label" for="school-age">School age (5+ years of age)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input cc-ps-input-check" type="checkbox" value="School age only (school age programs)" id="school-age-only">
+                            <label class="form-check-label" for="school-age-only">School age only (school age programs)</label>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-9">
+            <div class="p-2 bg-light border rounded">
+                <p class="fw-bold dss-text-blue">Search Results</p>
+                <div class="px-2 table-responsive">
+                    <table id="results" class="table table-striped mb-2 bg-white border border-2 border-dark align-middle">
+                        <thead>
+                            <tr>
+                                <th class="align-middle">#</th>
+                                <th class="align-middle text-truncate" scope="col">Provider Name</th>
+                                <th class="align-middle text-truncate" scope="col">Address</th>
+                                <th class="align-middle text-truncate" scope="col">Business Phone Number</th>
+                                <th class="align-middle text-truncate" scope="col">Program Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">1</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/96699">Janet&#x27;s Kids Daycare</a></td>
+                                        <td class="align-middle text-truncate">103 W 3rd St, Yankton, SD 57078, USA</td>
+                                        <td class="align-middle text-truncate">
+                                            
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">2</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/133753">Kernel Program--L.B. Williams</a></td>
+                                        <td class="align-middle text-truncate">1420 W University Ave, Mitchell, SD 57301, USA</td>
+                                        <td class="align-middle text-truncate">
+                                            
+                                        </td>
+                                        <td class="align-middle text-truncate">School Age Program</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">3</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/133760">Kernel Program--Gertie Belle Rogers</a></td>
+                                        <td class="align-middle text-truncate">1301 N Kimball St, Mitchell, SD 57301, USA</td>
+                                        <td class="align-middle text-truncate">
+                                            
+                                        </td>
+                                        <td class="align-middle text-truncate">School Age Program</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">4</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/163437">Mission Family Church Daycare</a></td>
+                                        <td class="align-middle text-truncate">282 Main St, Mission, SD 57555, USA</td>
+                                        <td class="align-middle text-truncate">
+                                            
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">5</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/171144?phone=6057474441">New Comprehensive Child Care Complex Bldg 3</a></td>
+                                        <td class="align-middle text-truncate">815 Wacipi Dr, Rosebud, SD 57570, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 747-4441
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">6</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/176463?phone=6052159804">Gan Early Learning Center</a></td>
+                                        <td class="align-middle text-truncate">1221 W 85th St, Sioux Falls, SD 57108, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 215-9804
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">7</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/179269?phone=6054508460">Spink County Daycare Center</a></td>
+                                        <td class="align-middle text-truncate">25 W 6th Ave, Redfield, SD 57469, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 450-8460
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">8</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/180065">Sensory</a></td>
+                                        <td class="align-middle text-truncate">Watertown, SD</td>
+                                        <td class="align-middle text-truncate">
+                                            
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">9</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/184679?phone=6058774436">WaKayezi Program</a></td>
+                                        <td class="align-middle text-truncate">612 Crazy Horse St, Rapid City, SD 57701, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 877-4436
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">10</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/192807">Ascher Valley Kid Care</a></td>
+                                        <td class="align-middle text-truncate">4406 Titan Dr, Rapid City, SD 57701, USA</td>
+                                        <td class="align-middle text-truncate">
+                                            
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">11</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/229906?phone=6053629438">EmBe Harrisburg Heritage</a></td>
+                                        <td class="align-middle text-truncate">200 E Willow St, Harrisburg, SD 57032, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 362-9438
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">12</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/236016?phone=6052776346">Kiera Weisser</a></td>
+                                        <td class="align-middle text-truncate">3100 9th Ave SE, Watertown, SD 57201, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 277-6346
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">13</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/245003?phone=6056732222">YMCA Early Learning Program (Hermosa)</a></td>
+                                        <td class="align-middle text-truncate">11 4th St, Hermosa, SD 57744, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 673-2222
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">14</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/253687?phone=6055535016">Uniquely Yours Specialized Care @ Creators Kids</a></td>
+                                        <td class="align-middle text-truncate">S Lyons Ave, Sioux Falls, SD 57106, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 553-5016
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">15</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/254177?phone=6055936174">Lacey Clason</a></td>
+                                        <td class="align-middle text-truncate">1954 Fox Rd apt 106, Rapid City, SD 57702, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 593-6174
+                                        </td>
+                                        <td class="align-middle text-truncate">Family Day Care</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">16</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/254964?phone=6058810213">Abigail LaFromboise</a></td>
+                                        <td class="align-middle text-truncate">9451 W Dolores Dr, Sioux Falls, SD 57106, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 881-0213
+                                        </td>
+                                        <td class="align-middle text-truncate">Family Day Care</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">17</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/256892">Morgan Mills</a></td>
+                                        <td class="align-middle text-truncate">24636 Crooked Canyon Rd, Hermosa, SD 57744, USA</td>
+                                        <td class="align-middle text-truncate">
+                                            
+                                        </td>
+                                        <td class="align-middle text-truncate">Family Day Care</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">18</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/258301?phone=6058482255">Carrie Getz</a></td>
+                                        <td class="align-middle text-truncate">1121 1st Ave W, Mobridge, SD 57601, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 848-2255
+                                        </td>
+                                        <td class="align-middle text-truncate">Family Day Care</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">19</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/260512?phone=6054644383">Bumblebee Academy</a></td>
+                                        <td class="align-middle text-truncate">320 Third St, Scotland, SD 57059, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 464-4383
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">20</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/261281?phone=6052284253">Redfield After School Program</a></td>
+                                        <td class="align-middle text-truncate">111 E 6th Ave, Redfield, SD 57469, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 228-4253
+                                        </td>
+                                        <td class="align-middle text-truncate">School Age Program</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">21</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/261729?phone=6055535019">Uniquely Yours- Harrisburg Methodist Church</a></td>
+                                        <td class="align-middle text-truncate">204 Grand Ave, Harrisburg, SD 57032, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 553-5019
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">22</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/261735?phone=6055535019">Uniquely Yours Specialized Care</a></td>
+                                        <td class="align-middle text-truncate">703 E Willow St, Harrisburg, SD 57032, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 553-5019
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">23</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/262443">Tyndall Community</a></td>
+                                        <td class="align-middle text-truncate">1812 E 17th Ave, Tyndall, SD 57066, USA</td>
+                                        <td class="align-middle text-truncate">
+                                            
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">24</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/263070">Teri Tracy</a></td>
+                                        <td class="align-middle text-truncate">834 Truman St, Winner, SD 57580, USA</td>
+                                        <td class="align-middle text-truncate">
+                                            
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">25</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/263444">St. John&#x27;s Lutheran Church</a></td>
+                                        <td class="align-middle text-truncate">1009 Jackson St, Yankton, SD 57078, USA</td>
+                                        <td class="align-middle text-truncate">
+                                            
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">26</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/266979">Sycamore Daycare</a></td>
+                                        <td class="align-middle text-truncate">720 S Sycamore Ave, Sioux Falls, SD 57110, USA</td>
+                                        <td class="align-middle text-truncate">
+                                            
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">27</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/267117">Viborg-Hurley School After School Program</a></td>
+                                        <td class="align-middle text-truncate">203 W Park Ave, Viborg, SD 57070, USA</td>
+                                        <td class="align-middle text-truncate">
+                                            
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">28</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/268127">Rachel Wudel (Tiny Treasures Daycare)</a></td>
+                                        <td class="align-middle text-truncate">421 E 15th Ave, Mitchell, SD 57301, USA</td>
+                                        <td class="align-middle text-truncate">
+                                            
+                                        </td>
+                                        <td class="align-middle text-truncate">Family Day Care</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">29</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/269704">Jessica Hagen</a></td>
+                                        <td class="align-middle text-truncate">410 N Western Ave, Hartford, SD 57033, USA</td>
+                                        <td class="align-middle text-truncate">
+                                            
+                                        </td>
+                                        <td class="align-middle text-truncate">Family Day Care</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">30</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/269733?phone=6059499803">Abigail Jankord</a></td>
+                                        <td class="align-middle text-truncate">903 S Viola St, Milbank, SD 57252, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 949-9803
+                                        </td>
+                                        <td class="align-middle text-truncate">Family Day Care</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">31</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/269764?phone=6058573280">Redeeming Roots Montessori</a></td>
+                                        <td class="align-middle text-truncate">1330 E Main St, Vermillion, SD 57069, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 857-3280
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">32</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/272958?phone=6052740404">Truks-N-Trykes</a></td>
+                                        <td class="align-middle text-truncate">315 S Whitewood Cir, Sioux Falls, SD 57107, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 274-0404
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">33</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/274522?phone=0000000000">Alondra Martinez</a></td>
+                                        <td class="align-middle text-truncate">606 Falcon Ave, Harrisburg, SD 57032, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             () -
+                                        </td>
+                                        <td class="align-middle text-truncate">Informal</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">34</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/275857?phone=6056617077">Kiara Thompson</a></td>
+                                        <td class="align-middle text-truncate">411 N 6th St, Beresford, SD 57004, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 661-7077
+                                        </td>
+                                        <td class="align-middle text-truncate">Family Day Care</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">35</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/277362">Jean Hochstatter</a></td>
+                                        <td class="align-middle text-truncate">807 N Wayland Ave, Sioux Falls, SD 57103, USA</td>
+                                        <td class="align-middle text-truncate">
+                                            
+                                        </td>
+                                        <td class="align-middle text-truncate">Informal</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">36</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/280188?phone=6059413679">LIL O&#x27;s Childcare Center</a></td>
+                                        <td class="align-middle text-truncate">1100 S Main St, Lennox, SD 57039, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 941-3679
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">37</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/280893">Kylie Holom</a></td>
+                                        <td class="align-middle text-truncate">1313 S Coates Rd, Sioux Falls, SD 57105, USA</td>
+                                        <td class="align-middle text-truncate">
+                                            
+                                        </td>
+                                        <td class="align-middle text-truncate">Family Day Care</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">38</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/280930">Elizabeth Deng</a></td>
+                                        <td class="align-middle text-truncate">3237 N Americus Cir, Sioux Falls, SD 57104, USA</td>
+                                        <td class="align-middle text-truncate">
+                                            
+                                        </td>
+                                        <td class="align-middle text-truncate">Family Day Care</td>
+                                    </tr>
+                                    <tr class="provider-search-row">
+                                        <th scope="row">39</th>
+                                        <td class="align-middle text-truncate"><a href="/child-care-program-profile/282794?phone=6052167311">Little Beans Preschool</a></td>
+                                        <td class="align-middle text-truncate">14 S Main St, Aberdeen, SD 57402, USA</td>
+                                        <td class="align-middle text-truncate">
+                                             (605) 216-7311
+                                        </td>
+                                        <td class="align-middle text-truncate">Licensed Center</td>
+                                    </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="col-1"></div>
+
+<script>
+    let showingMoreFilters = false;
+    let moreFilters = $("#more-filters");
+    let arrowUp = $("#arrow-up");
+    let arrowDown = $("#arrow-down");
+    let showMoreFilters = $("#show-more-filters");
+    let hideFilters = $("#hide-filters");
+
+    function resetFilters() {
+        $('#form')[0].reset();
+
+        $('.cc-ps-input').each(function () {
+            $(this).val('');
+        });
+
+        $('.cc-ps-input-check').each(function () {
+            $(this).removeAttr('checked');
+        });
+
+		var nextURL = window.location.pathname;
+        window.history.replaceState(null, $(document).find("title").text(), nextURL);
+    }
+
+    function clickFilter() {
+        if (showingMoreFilters) {
+            $("#more-filters input:not(#accreditation-type)").val("");
+            arrowUp.hide();
+            hideFilters.hide();
+            arrowDown.show();
+            showMoreFilters.show();
+			moreFilters.hide("slow");
+        } else {
+            arrowUp.show();
+            hideFilters.show();
+            arrowDown.hide();
+            showMoreFilters.hide();
+			moreFilters.show("slow");
+        }
+
+        showingMoreFilters = !showingMoreFilters;
+    }
+
+    function search()
+    {
+		let baseURL = window.location.origin;
+		let searchURL = new URL(window.location.pathname, baseURL);
+		searchURL.searchParams.append("search", "true");
+		searchURL.searchParams.append("providerType", "Child Care");
+		searchURL.searchParams.append("status", "Operational");
+
+		let providerName = document.getElementById("provider-name").value;
+		if (providerName) searchURL.searchParams.append("providerName", providerName);
+
+        let programCategoryList = [];
+        if (document.getElementById('informal').checked)
+            programCategoryList.push("Informal");
+        if (document.getElementById('in-home').checked)
+            programCategoryList.push("In-Home");
+        if (document.getElementById('family-day-care').checked)
+            programCategoryList.push("Family Day Care");
+        if (document.getElementById('licensed-child-care').checked)
+            programCategoryList.push("Licensed Center");
+        if (document.getElementById('school-age-program').checked)
+            programCategoryList.push("School Age Program");
+		let programCategory = programCategoryList.join('~*~');
+		if (programCategory) searchURL.searchParams.append("childCareCategory", programCategory);
+
+		let programID = document.getElementById("program-id").value;
+		if (programID) searchURL.searchParams.append("programID", programID);
+
+		let zip = document.getElementById("child-care-provider-zip").value;
+		if (zip) searchURL.searchParams.append("zip", zip);
+
+		let county = document.getElementById("child-care-provider-county").value;
+		if (county) searchURL.searchParams.append("county", county);
+
+        let city = document.getElementById("child-care-provider-city").value;
+		if (city) searchURL.searchParams.append("city", city);
+
+        let availableOpenings = "";
+        if (document.getElementById('available-openings-yes').checked)
+            availableOpenings = "Yes";
+        if (document.getElementById('available-openings-no').checked)
+            availableOpenings = "No";
+		if (availableOpenings) searchURL.searchParams.append("availableOpenings", availableOpenings);
+
+        let typeOfAccreditation = "";
+        if (document.getElementById('accreditation-type-national').checked)
+            typeOfAccreditation += "National,";
+        if (document.getElementById('accreditation-type-state').checked)
+            typeOfAccreditation += "State,";
+        if (document.getElementById('accreditation-type-other').checked)
+            typeOfAccreditation += "Other,";
+		if (typeOfAccreditation) searchURL.searchParams.append("typeOfAccreditation", typeOfAccreditation);
+
+        let monthsOfOperation = "";
+        if (document.getElementById('school-year-only').checked)
+            monthsOfOperation += "School Year Only,";
+        if (document.getElementById('12-months').checked)
+            monthsOfOperation += "12 Months,";
+        if (document.getElementById('summer-only').checked)
+            monthsOfOperation += "Summer Only,";
+        if (document.getElementById('months-other').checked)
+            monthsOfOperation += "Other,";
+		if (monthsOfOperation) searchURL.searchParams.append("monthsOfOperation", monthsOfOperation);
+
+        let ageChildrenServed = "";
+        if (document.getElementById('infants').checked)
+            ageChildrenServed += "Infants (Birth-one year of age),";
+        if (document.getElementById('toddlers').checked)
+            ageChildrenServed += "Toddlers (1-3 years of age),";
+        if (document.getElementById('preschool').checked)
+            ageChildrenServed += "Preschool age (3-4 years of age),";
+        if (document.getElementById('school-age').checked)
+            ageChildrenServed += "School age (5+ years of age),";
+        if (document.getElementById('school-age-only').checked)
+            ageChildrenServed += "School age only (school age programs),";
+		if (ageChildrenServed) searchURL.searchParams.append("ageOfChildrenServed", ageChildrenServed);
+
+		// loop through all parameters and replace trailing apostrophes
+		for (const [key, value] of searchURL.searchParams.entries()) {
+            let valueEnd = value.trimEnd();
+			if (valueEnd.endsWith("'")) {
+				let newValue = value.replace("'","'%");
+				searchURL.searchParams.set(key, newValue);
+			}
+			else if (valueEnd.endsWith("\"")) {
+				let newValue = value.replace("\"", "\"%");
+				searchURL.searchParams.set(key, newValue);
+			}
+		}
+
+		window.location.href = searchURL.href;
+    }
+</script>
+            </div>
+        </div>
+        <footer class="text-center p-3">
+            <div id="fill-space"></div>
+            <p>
+                <a href="/">Home</a> | <a href="https://sd.gov/">SD.gov</a> | <a href="https://sd.gov/disclaim.aspx">Disclaimer</a> | <a href="https://dss.sd.gov/keyresources/discrimination.aspx">Nondiscrimination</a> | <a href="https://sd.gov/accpolicy.aspx">Accessibility</a> | <a href="https://sd.gov/privacy.aspx">Privacy</a> | <a href="https://dss.sd.gov/contactus/default.aspx">Contact Us</a><br>
+                700 Governors Drive | Pierre, SD 57501<br>
+                605.773.3165
+            </p>
+            <div class="container-fluid d-flex justify-content-center d-print-none">
+                <p>Please contact customer service at  <a href="tel:(605) 773-3165" aria-label="Customer Service Number">605.773.3165</a>  if you are having trouble with this site.</p>
+            </div>
+        </footer>
+    </main>
+
+    
+
+    
+    
+        <script src="/sb/portal-scripts.js.v639218547044485165"></script>
+        <script src="/sb/site-scripts.js.v639218547044485165"></script>
+        
+    
+    
+    <script>
+        function toggleDescription(event) {
+            let isHidden = (window.getComputedStyle(event).getPropertyValue('display') === 'none');
+            isHidden ? event.style.display = 'block' : event.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
