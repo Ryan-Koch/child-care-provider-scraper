@@ -404,6 +404,9 @@ FACILITY_CATEGORY_BUCKETS = {
         # Vermont (brightfutures.dcf.state.vt.us) detail "License Type": the
         # registered and licensed home-based options.
         "Registered Family Child Care Home", "Licensed Family Child Care Home",
+        # South Dakota (olapublic.sd.gov) Program Category: registered care
+        # provided in the provider's own residence.
+        "Family Day Care",
     ],
     "group_home": [
         "GFDC", "Group Home", "Group Home Child Care", "Group",
@@ -456,6 +459,10 @@ FACILITY_CATEGORY_BUCKETS = {
         # Wisconsin: a licensed day camp -> other (matches the day-camp
         # precedent above). "(Probational)" variant handled by the suffix strip.
         "Licensed Camp",
+        # South Dakota (olapublic.sd.gov) Program Category: informal FFN-style
+        # care and single-family in-home care -- both are informal care per
+        # the field-mapping playbook, not a licensed home/center category.
+        "Informal", "In-Home",
     ],
 }
 
