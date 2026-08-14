@@ -37,6 +37,10 @@ PROXY_SCRIPT="$(dirname "$0")/scripts/update_webshare_proxies.py"
 WEBSHARE_ENV="$(dirname "$0")/webshare.env"
 # Space-separated list of spiders that require a virtual display
 XVFB_SPIDERS="new_jersey rhode_island arizona wisconsin"
+# Maryland has a multi-day single-IP run time, so it's usually crawled on its
+# own. -m drops it from the run so the quicker states can be tossed together.
+SKIP_MARYLAND=false
+MARYLAND_SPIDER="maryland"
 
 usage() {
   echo "Usage: $0 [-c concurrency] [spider ...]" >&2
@@ -44,17 +48,19 @@ usage() {
   echo "  -d   directory to use for spider logging and output files (default: $DEFAULT_OUTPUT_DIR)" >&2
   echo "  -f   output format(s): json, csv, or both as a comma/space list, e.g. -f json,csv (default: $DEFAULT_FORMAT)" >&2
   echo "  -g   after each spider, geocode records missing coordinates (enriches each -f format)" >&2
+  echo "  -m   run every state except Maryland (it's slow, so it's usually run on its own)" >&2
   echo "  -p   before crawling, refresh the Webshare proxy pool in webshare.env (no-op if absent)" >&2
   echo "  -u   after all spiders finish, upload the output files to a Hugging Face dataset" >&2
   echo "  spider names default to the output of 'scrapy list'" >&2
 }
 
-while getopts ":c:d:f:gpuh" opt; do
+while getopts ":c:d:f:gmpuh" opt; do
   case $opt in
   c) CONCURRENCY=$OPTARG ;;
   d) OUTPUT_DIR=$OPTARG ;;
   f) FORMAT=$OPTARG ;;
   g) GEOCODE=true ;;
+  m) SKIP_MARYLAND=true ;;
   p) REFRESH_PROXIES=true ;;
   u) UPLOAD=true ;;
   h)
@@ -76,6 +82,19 @@ else
   echo "No spiders specified, discovering via scrapy list..."
   SPIDERS_TO_RUN=($(scrapy list))
 fi
+
+# -m drops Maryland from whatever list we ended up with (discovered or
+# explicit) so the faster states can be run as one batch.
+if [ "$SKIP_MARYLAND" = true ]; then
+  filtered=()
+  for spider in "${SPIDERS_TO_RUN[@]}"; do
+    [ "$spider" = "$MARYLAND_SPIDER" ] && continue
+    filtered+=("$spider")
+  done
+  SPIDERS_TO_RUN=("${filtered[@]}")
+  echo "Skipping $MARYLAND_SPIDER (-m); it's usually run on its own."
+fi
+
 echo "Found ${#SPIDERS_TO_RUN[@]} spiders to run: ${SPIDERS_TO_RUN[*]}"
 echo "Running with concurrency: $CONCURRENCY"
 
