@@ -30,6 +30,11 @@ services:
       # Persist the geocode cache inside the same mounted volume, so re-runs
       # only geocode new records. Only used when you pass -g.
       GEOCODE_CACHE: state_output/geocode_cache.sqlite
+      # Refresh the Webshare proxy pool at container startup (run_spiders.sh
+      # picks this up). It rewrites the writable, bind-mounted webshare.env
+      # below with the account's current ip:port list. No-op if that file
+      # isn't mounted (single-IP mode). Set to "false" to skip.
+      REFRESH_PROXIES: "true"
     volumes:
       # Scraped output, logs, and the geocode cache (visible on the host).
       # Must be writable by the runtime UID (see the `user:` key above). The `:z`
@@ -39,7 +44,10 @@ services:
       # Hugging Face token/repo, read-only, only used with -u. Kept out of the
       # image; mounted at runtime. The file must exist (see huggingface.env.example).
       - ./huggingface.env:/app/huggingface.env:ro,z
-      # Optional Maryland proxy-pool credentials (see webshare.env.example).
-      # Uncomment to run Maryland through a multi-IP pool under Docker; the file
-      # must exist for the bind mount. Absent ⇒ single-IP mode.
-      # - ./webshare.env:/app/webshare.env:ro,z
+      # Maryland proxy-pool credentials (see webshare.env.example). Mounted
+      # WRITABLE (no `ro`) so the REFRESH_PROXIES startup step can rewrite it in
+      # place with the account's current ip:port list; the refreshed file lands
+      # back on the host. The file must exist for the bind mount — comment this
+      # line out (and REFRESH_PROXIES above) for single-IP mode. `:z` relabels
+      # for SELinux hosts and is ignored elsewhere.
+      - ./webshare.env:/app/webshare.env:z

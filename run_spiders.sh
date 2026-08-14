@@ -26,6 +26,15 @@ UPLOAD=false
 UPLOAD_SCRIPT="$(dirname "$0")/scripts/upload_to_huggingface.py"
 # Generates the per-state source-provenance doc shipped with the upload (-u).
 SOURCES_SCRIPT="$(dirname "$0")/scripts/generate_sources.py"
+# Optional pre-run refresh of the Webshare proxy pool: pulls the account's
+# current ip:port list into webshare.env before crawling (Webshare rotates IPs
+# as they lose reputation or go down). No-ops if webshare.env is absent.
+# Triggered by the -p flag OR a truthy REFRESH_PROXIES in the environment — the
+# Docker image sets the latter (see docker-compose.yml) so a container run
+# refreshes the writable, bind-mounted webshare.env automatically at startup.
+REFRESH_PROXIES="${REFRESH_PROXIES:-false}"
+PROXY_SCRIPT="$(dirname "$0")/scripts/update_webshare_proxies.py"
+WEBSHARE_ENV="$(dirname "$0")/webshare.env"
 # Space-separated list of spiders that require a virtual display
 XVFB_SPIDERS="new_jersey rhode_island arizona wisconsin"
 
@@ -35,16 +44,18 @@ usage() {
   echo "  -d   directory to use for spider logging and output files (default: $DEFAULT_OUTPUT_DIR)" >&2
   echo "  -f   output format(s): json, csv, or both as a comma/space list, e.g. -f json,csv (default: $DEFAULT_FORMAT)" >&2
   echo "  -g   after each spider, geocode records missing coordinates (enriches each -f format)" >&2
+  echo "  -p   before crawling, refresh the Webshare proxy pool in webshare.env (no-op if absent)" >&2
   echo "  -u   after all spiders finish, upload the output files to a Hugging Face dataset" >&2
   echo "  spider names default to the output of 'scrapy list'" >&2
 }
 
-while getopts ":c:d:f:guh" opt; do
+while getopts ":c:d:f:gpuh" opt; do
   case $opt in
   c) CONCURRENCY=$OPTARG ;;
   d) OUTPUT_DIR=$OPTARG ;;
   f) FORMAT=$OPTARG ;;
   g) GEOCODE=true ;;
+  p) REFRESH_PROXIES=true ;;
   u) UPLOAD=true ;;
   h)
     usage
@@ -170,6 +181,26 @@ export LOG_LEVEL
 export MAX_RETRIES
 export OUTPUT_DIR FORMAT XVFB_SPIDERS
 export GEOCODE GEOCODE_SCRIPT GEOCODE_CACHE
+
+# Optional pre-run proxy refresh (-p flag or a truthy REFRESH_PROXIES env var).
+# Best-effort and only when webshare.env exists — a stale/empty fetch leaves the
+# existing list untouched (the script exits non-zero but we don't abort the run
+# over it). Bannered so it's clearly visible in `docker compose run` output.
+case "${REFRESH_PROXIES,,}" in 1 | true | yes | on) REFRESH_PROXIES=true ;; esac
+if [ "$REFRESH_PROXIES" = true ]; then
+  echo "======================="
+  if [ -f "$WEBSHARE_ENV" ]; then
+    echo "Refreshing Webshare proxy pool from $WEBSHARE_ENV ..."
+    if python "$PROXY_SCRIPT" --env-file "$WEBSHARE_ENV"; then
+      echo "Proxy pool refresh finished."
+    else
+      echo "Proxy refresh failed; continuing with the existing endpoints."
+    fi
+  else
+    echo "REFRESH_PROXIES requested but $WEBSHARE_ENV is absent; skipping (single-IP mode)."
+  fi
+  echo "======================="
+fi
 
 # Main
 echo "Starting spiders run..."

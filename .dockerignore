@@ -16,6 +16,7 @@ venv/
 
 # Secret — bind-mounted read-only at runtime, must never land in an image layer
 huggingface.env
+webshare.env
 
 # Large local cache + scraped outputs — supplied via the state_output volume
 geocode_cache.sqlite*
