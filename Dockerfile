@@ -49,36 +49,42 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
 # resolved browser build needs on top of what the base image provides.
 RUN playwright install --with-deps chromium chrome
 
-# !!! TEMPORARY PIN (2026-07-17). Remove once a newer Chrome passes v3. !!!
+# CHROME VERSION PIN — bumped 2026-08-14 from 150.0.7871.114 to current stable
+# 151.0.7922.137. This is an explicit *version* pin, no longer a *downgrade*.
 #
-# Chrome 150.0.7871.128 drops rhode_island's reCAPTCHA v3 score below the
-# threshold: the Aura search returns isCaptchaInvalid/isV3Failed on every
-# attempt. 150.0.7871.114 passes. Established by A/B inside this image — same
-# code, same egress IP, channel="chrome" both times, only the Chrome version
-# varying: .114 scraped providers on 3/3 runs, .128 failed 3/3 attempts.
-# The line above resolves to *current* stable, which is what makes the break
-# recur on every rebuild; this layer pins the version back down.
+# Why keep a pin at all instead of floating on current stable — TWO footguns,
+# both found while retesting on 2026-08-14:
+#  1. Build-cache staleness. The `playwright install` line above resolves to
+#     *current stable at layer-build time* and then Docker CACHES that layer.
+#     A routine rebuild reuses the cache, so "unpinned" does NOT mean "current"
+#     — as of 2026-08-14 the cached layer still baked in 150.0.7871.128, the
+#     EXACT version that breaks RI's v3. Only `--no-cache` refetches. A floating
+#     Chrome is therefore silently whatever happened to be cached.
+#  2. A Chrome PATCH bump is a real v3 variable and `-a audit=1` is BLIND to it
+#     (Chrome's reduced UA reports "NNN.0.0.0", hiding the patch). 150.0.7871.128
+#     failed v3 on every attempt where .114 passed. A future stable bump could
+#     silently do the same and zero out RI, with no signal. See
+#     docs/browser_signature.md.
+# The explicit fetch below is deterministic (always this exact .deb) and
+# cache-immune for correctness, and it installs Chrome via apt so its full
+# dependency+recommends closure is pulled (libxft2, libxcb-shape0, x11-utils,
+# x11-xserver-utils — these ALSO affect the v3 score and are invisible to the
+# audit; NEVER add --no-install-recommends here). Keep the `playwright install`
+# line above too. This pinned build is live-verified: 151.0.7922.137 passed RI
+# v3 7/7, dead-even with .114 (6/6), on a fresh NYC egress before self-inflicted
+# IP-reputation degradation set in.
 #
-# The `-a audit=1` fingerprint is IDENTICAL on both versions (Chrome's reduced
-# UA reports "150.0.0.0", hiding the patch), so a clean audit does NOT clear
-# Chrome and cannot diagnose this. See docs/browser_signature.md.
-#
-# Why downgrade-in-place instead of just installing the pinned .deb directly:
-# doing that with --no-install-recommends yields an image that still FAILS v3
-# despite carrying an identical .114 binary and an identical JS fingerprint —
-# it silently drops packages Chrome's own dep closure pulls in (libxft2,
-# libxcb-shape0, x11-utils, x11-xserver-utils). Whatever v3 reads there, it is
-# invisible to the audit. So: let upstream install Chrome and its full
-# dependency+recommends closure, then swap only the binary's version and hold
-# the package so a later apt layer can't bump it.
-#
-# Retest a newer Chrome (do this periodically — a pin is an unpatched browser):
+# Retest a newer Chrome before bumping the pin (do this periodically — a pin is
+# an unpatched browser). Vary ONLY CHROME_VERSION so the install path is held
+# constant, and interleave a known-good control at the same moment to separate a
+# version regression from IP-reputation flakiness (RI's v3 is ~50%/attempt on a
+# marginal IP, and heavy testing from one datacenter IP degrades it fast):
 #   docker build --build-arg CHROME_VERSION=<version>-1 -t cc-test .
 #   docker run --rm --init --shm-size=2gb --user 1000:1000 -e HOME=/tmp \
 #     --entrypoint bash cc-test -c 'xvfb-run -a -s "-screen 0 1920x1080x24" \
 #     scrapy crawl rhode_island -a max_providers=3 -s LOG_LEVEL=INFO'
-# No isV3Failed in the log => that version is good; delete this whole layer.
-ARG CHROME_VERSION=150.0.7871.114-1
+# No isV3Failed in the log => that version is good; bump CHROME_VERSION to it.
+ARG CHROME_VERSION=151.0.7922.137-1
 RUN curl -fsSL -o /tmp/chrome.deb \
         "https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb" \
     && apt-get update \
