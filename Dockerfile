@@ -91,6 +91,12 @@ RUN curl -fsSL -o /tmp/chrome.deb \
 # Application code.
 COPY . .
 
+# NB: the Webshare proxy-pool refresh does NOT run here. webshare.env is
+# docker-ignored and bind-mounted read-write at runtime, so a build step can
+# neither see it nor persist changes back to the host file. It runs instead at
+# container startup in run_spiders.sh (triggered by REFRESH_PROXIES, set in
+# docker-compose.yml). See scripts/update_webshare_proxies.py.
+
 # Run as the non-root user shipped by the Playwright image (UID 1000). Chrome
 # refuses to run as root without --no-sandbox (which the spiders don't pass), so
 # pwuser sidesteps that and is more secure. It must own the app dir and the
