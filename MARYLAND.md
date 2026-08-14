@@ -95,6 +95,16 @@ webshare_proxy_password=<pass>
 webshare_proxy_endpoints=host1:port1,host2:port2,host3:port3,host4:port4
 ```
 
+**Keeping the list fresh.** Webshare rotates IPs (one loses reputation or goes
+down and is replaced), so `webshare_proxy_endpoints` drifts stale. Add your
+account's `webshare_download_url` (the "Download proxy list" link — see
+`webshare.env.example`) and `scripts/update_webshare_proxies.py` refetches the
+current set and rewrites the endpoints line in place. Under Docker it runs
+automatically at container startup — `docker-compose.yml` sets `REFRESH_PROXIES`
+and bind-mounts `webshare.env` **writable** so the refreshed list persists back
+to the host file. For a bare-metal run pass `-p` to `run_spiders.sh` (no-op if
+`webshare.env` is absent) or run the script directly.
+
 Then run normally — `scrapy crawl maryland -o maryland.json` picks the pool up
 and logs `proxy pool ENABLED — N egress IPs`. How it works:
 
@@ -116,8 +126,8 @@ Toggles:
   still come from `webshare.env`, or embed full `http://user:pass@host:port`).
 - `-a proxy_env=/path/to/file` — use a different env file.
 
-Under Docker, mount the file (see the commented line in `docker-compose.yml`).
-Datacenter IPs are fine here — the site only rate-limits; there is no reputation
+Under Docker, the file is bind-mounted writable and refreshed at startup (see
+`docker-compose.yml`). Datacenter IPs are fine here — the site only rate-limits; there is no reputation
 block or captcha. Traffic transits the proxy operator, but this is public
 government data, so that's not a confidentiality concern.
 

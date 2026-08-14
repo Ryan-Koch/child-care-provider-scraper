@@ -95,10 +95,32 @@ UA consistency.
 > exits while the real cause was a Chrome auto-update; three "bad" Eastern exits
 > were all fine, and the same exit passed once Chrome was pinned.
 >
-> Chrome is currently **pinned to `150.0.7871.114` in the `Dockerfile`** (see
-> `CHROME_VERSION`); that pin is why RI works in Docker and not on the host.
-> **RI cannot currently pass v3 on a host with an auto-updated Chrome** — run it
-> via `docker compose run --rm scraper rhode_island`.
+> Chrome was **pinned to `150.0.7871.114` in the `Dockerfile`** from 2026-07-17
+> because of the `.128` regression above. **Pin BUMPED (not removed) 2026-08-14
+> to current stable `151.0.7922.137`:** `151` passed v3 7/7, dead-even with
+> `.114` (6/6) on the same NYC egress (interleaved A/B, 0 `isV3Failed`), so the
+> version is fine — but the pin *mechanism* stays, because a bare unpin proved
+> unsafe for two reasons found the same day:
+>
+> 1. **Build-cache staleness.** `playwright install ... chrome` resolves to
+>    current stable *at layer-build time* and Docker caches the layer, so a
+>    routine rebuild of an "unpinned" Dockerfile silently reused a cached layer
+>    still carrying the v3-breaking `150.0.7871.128`. Only `--no-cache` refetches
+>    (which then gave `151.0.7922.137`).
+> 2. **Install-path / dep-closure (suspected, unconfirmed).** An image with
+>    `151.0.7922.137` installed via *playwright's closure only* (no explicit
+>    `apt install` of the Chrome `.deb`) failed v3 `3/3`, while the explicit-deb
+>    build of the same version passed. This mirrors the 2026-07-17 closure
+>    tripwire — but the confirmation was confounded: heavy testing (~25 searches
+>    in ~25 min) had degraded the datacenter exit's reputation, and the
+>    known-good control started failing at the same moment. So treat it as a
+>    live suspicion, not proof; the explicit-deb pin sidesteps it either way.
+>
+> The `Dockerfile` now pins `CHROME_VERSION=151.0.7922.137-1` via an explicit
+> `.deb` fetch (deterministic, cache-immune, full apt recommends closure).
+> Because `151` passes, RI can pass v3 on a current Chrome again (subject to IP
+> reputation), on the host or in Docker — the pin just makes the container's
+> Chrome deterministic and guards against a future silent v3-breaking bump.
 >
 > **Beware of confounded A/B tests here.** Swapping the binary with Playwright's
 > `executable_path` drops `channel: "chrome"`, and Playwright's different
