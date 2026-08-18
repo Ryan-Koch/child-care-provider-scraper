@@ -48,7 +48,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `toddler` | Whitespace cleanup | Toddler care indicator/count, as emitted (whitespace-cleaned). |
 | `transportation` | Whitespace cleanup; Field collapse from state-specific source | Transportation offered, collapsed from a single populated state source. |
 
-> Inspections are normalized too: every string value gets whitespace cleanup, and the date fields (`date`, `status_updated`, `az_date_resolved`) are converted to ISO 8601. The `status` vocabulary does not apply to inspections.
+> Inspections are normalized too: every string value gets whitespace cleanup, and the date fields (`date`, `status_updated`, `az_date_resolved`, `in_correction_date`) are converted to ISO 8601. The `status` vocabulary does not apply to inspections.
 
 > Tracking fields (`inspections`, `provider_url`, `source_state`) are passed through unchanged.
 
@@ -89,7 +89,7 @@ Raw status values mapped to each canonical bucket (replaced in place; unmapped -
 |---|---|
 | `active` | `Active`, `Active/Open`, `Amended permit (AP)`, `CERTIFIED`, `CONTINUOUS LICENSE`, `Certified`, `Compliance Certificate`, `Continuing - Full`, `Exempt`, `Full Permit`, `LICENSED`, `License`, `License issued (IL)`, `Licensed`, `Listed`, `Open`, `Open - Certified`, `Open - Payment Only`, `Operational`, `Original`, `Registered`, `Registration`, `Regular` |
 | `closed` | `CLOSED`, `Closed`, `INACTIVE`, `NOT LICENSED`, `Revoked`, `Revoked/Not Renewed`, `Surrendered under Investigation (SI)`, `Surrendered with Cause (SC)`, `Temporary Closure` |
-| `enforcement` | `App Withdrawn`, `Denied`, `ENFORCEMENT`, `ON PROBATION`, `Open – Pending Legal Action Outcome`, `Pending Revocation`, `Pending Revocation and Denial`, `Pending revocation (PR)`, `Refuse to Renew (RR)`, `RevocationPending`, `Revoke License (RL)`, `Suspended`, `Suspended - Emergency` |
+| `enforcement` | `App Withdrawn`, `Denied`, `ENFORCEMENT`, `ON PROBATION`, `Open - Enforcement Pending`, `Open – Pending Legal Action Outcome`, `Pending Revocation`, `Pending Revocation and Denial`, `Pending revocation (PR)`, `Refuse to Renew (RR)`, `RevocationPending`, `Revoke License (RL)`, `Suspended`, `Suspended - Emergency` |
 | `pending` | `PENDING`, `Pending`, `Pending - Certified`, `Pending address change application (AD)`, `Pending renewal application (RN)`, `Pending/Re-license` |
 | `provisional` | `Initial - Full`, `Initial Permit`, `PROVISIONAL LICENSE`, `Permit issued (IP)`, `Provisional`, `Provisional 1`, `Provisional 2`, `Provisional 3`, `Renewed Initial` |
 
@@ -100,7 +100,7 @@ Raw `provider_type` values mapped to each canonical category (additive; unmapped
 | Canonical | Raw provider_type values |
 |---|---|
 | `center` | `CDC (Child Development Center)`, `CTR`, `Center`, `Center Based Child Care and Preschool Program`, `Center Based Child Care and Preschool Program - Non-Recurring`, `Certified Pre-School`, `Child Care`, `Child Care Center`, `Child Care Commercial Preschool`, `Child Care Facility`, `Child Care Hourly Center`, `Child Care Learning Center`, `Child Care Registered Center Based Program`, `Child Day Center`, `DAY CARE CENTER`, `DAY CARE CENTER - ILL CENTER`, `DCC`, `DOE`, `Department of Defense`, `GA Early Head Start`, `GA Head Start`, `HHS Four-Year Old Program`, `HHS-Licensed Child Care Center`, `HHS-Licensed Group Child Care Facility`, `HHS-Licensed Preschool`, `Head Start Site`, `INFANT CENTER`, `Infant and Toddler Center`, `LOC`, `Licensed Center`, `Licensed Child Care Center`, `Licensed Group`, `Licensed School-Based Preschool`, `Local School System`, `Outdoor Nature Based Program`, `Preschool Center`, `Preschool Program`, `Public School`, `SDCC`, `SINGLE LICENSED CHILD CARE CENTER`, `Short Term Child Day Center`, `Small Employer Based Child Care`, `University` |
-| `exempt` | `CCAP Certified/Accredited`, `Child Care Exempt Program`, `DWS Approved, Exempt Center`, `DWS Approved, Exempt School Age Program`, `Exempt`, `Exempt Child Care Center`, `Exempt Only`, `License Exempt`, `Religious Exempt Child Day Center`, `Self-Declared Provider`, `Voluntary Registration` |
+| `exempt` | `CCAP Certified/Accredited`, `Child Care Exempt Program`, `DWS Approved, Exempt Center`, `DWS Approved, Exempt School Age Program`, `Exempt`, `Exempt Child Care Center`, `Exempt Only`, `License Exempt`, `Religious Exempt Child Day Center`, `Self-Declared Provider`, `Unlicensed CCDF Certified Center/School`, `Unlicensed CCDF Certified Home`, `Unlicensed Registered Ministry`, `Voluntary Registration` |
 | `family_home` | `CDH (Child Development Home)`, `Child Care Licensed Family`, `Child Care Residential Certificate`, `FAMILY DAY CARE HOME`, `FCCH`, `FDC`, `Family`, `Family Child Care`, `Family Child Care Home`, `Family Child Care Learning Home`, `Family Day Care`, `Family Day Care Home`, `Family Day Home`, `Family Home`, `Family Home Child Care`, `HHS-Licensed Family Child Care`, `LFCCH`, `Large Family Child Care Home`, `Licensed Child-Care Home`, `Licensed Family`, `Licensed Family Child Care Home`, `Licensed Family Home`, `Licensed Home`, `Licensed Type A Family Child Care Home`, `Licensed Type B Family Child Care Home`, `Listed Family Home`, `Provisional Certified`, `Registered Child-Care Home`, `Registered Family Child Care Home`, `Registered Home`, `Regular Certified`, `System Approved FDH`, `Unlicensed/Unregistered FDH` |
 | `group_home` | `CDX (Child Development Home Expanded)`, `GFDC`, `Group`, `Group Child Care Home`, `Group Home`, `Group Home Child Care`, `HHS-Licensed Group Child Care Home`, `Licensed Group Home` |
 | `other` | `(FCC)Nanny Individual`, `Certified In Home Aide`, `Family, Friends & Neighbor (FFN) Providers`, `HHS-Licensed Multiple License`, `Illegally Unlicensed`, `In-Home`, `Informal`, `Licensed Camp`, `Neighborhood Youth Organization`, `Other`, `Registered Day Camp or Approved Day Camp`, `Resident Camp`, `Substitute Placement Agency`, `Summer Day Camp`, `Tribal Subsidy Recipient` |
@@ -307,6 +307,25 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `il_night_age_range` -> pass-through
 - `il_night_capacity` -> pass-through
 - `il_provider_id` -> pass-through
+
+### Indiana (IN)
+
+- `in_complaints` -> pass-through
+- `in_correction_date` -> pass-through
+- `in_health_violation_count` -> pass-through
+- `in_is_ccdf` -> pass-through
+- `in_is_health_violation` -> pass-through
+- `in_is_temporarily_closed` -> pass-through
+- `in_licensed_ages` -> pass-through
+- `in_location_id` -> pass-through
+- `in_noncompliance` -> pass-through
+- `in_programs` -> pass-through
+- `in_provider_id` -> pass-through
+- `in_ptq_level` -> pass-through
+- `in_rule_code` -> pass-through
+- `in_rule_description` -> pass-through
+- `in_schedule` -> pass-through
+- `in_temporarily_closed_message` -> pass-through
 
 ### Maryland (MD)
 

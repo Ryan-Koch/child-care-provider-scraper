@@ -110,8 +110,10 @@ def title_case_name(value):
 DATE_FIELDS = ("status_date", "license_begin_date", "license_expiration")
 
 # Inspection-level date fields. ``status_updated`` and ``az_date_resolved`` are
-# the other confirmed dates inside an inspection entry.
-INSPECTION_DATE_FIELDS = ("date", "status_updated", "az_date_resolved")
+# the other confirmed dates inside an inspection entry; ``in_correction_date`` is
+# Indiana's non-compliance correction date.
+INSPECTION_DATE_FIELDS = ("date", "status_updated", "az_date_resolved",
+                          "in_correction_date")
 
 # strptime patterns tried in order for purely numeric dates.
 _NUMERIC_DATE_PATTERNS = ("%Y-%m-%d", "%m/%d/%Y", "%m-%d-%Y", "%Y/%m/%d")
@@ -295,6 +297,9 @@ STATUS_BUCKETS = {
         # NB: en-dash (–), exactly as emitted by the source.
         "Open – Pending Legal Action Outcome", "RevocationPending",
         "Refuse to Renew (RR)", "Revoke License (RL)",
+        # Indiana (secure.in.gov): open but with a pending enforcement action
+        # (hyphen, exactly as emitted).
+        "Open - Enforcement Pending",
         # Alaska (AKCCIS): Denied and App Withdrawn are regulatory blocks
         # (not neutral closures), so they live with enforcement rather than
         # closed.
@@ -444,6 +449,16 @@ FACILITY_CATEGORY_BUCKETS = {
         "Voluntary Registration",
         # North Dakota: license-exempt self-declared programs.
         "Self-Declared Provider",
+        # Indiana (secure.in.gov providersearch): the three "Unlicensed" types.
+        # A registered ministry operates under Indiana's religious exemption
+        # (cf. "Religious Exempt Child Day Center" / "Voluntary Registration"
+        # above); the CCDF-certified center/home types are subsidy-certified but
+        # NOT state-licensed (mirrors Alaska's "CCAP Certified/Accredited" ->
+        # exempt). The raw provider_type is preserved, so the center/home
+        # structure stays recoverable.
+        "Unlicensed CCDF Certified Center/School",
+        "Unlicensed Registered Ministry",
+        "Unlicensed CCDF Certified Home",
         # Alaska (AKCCIS): every subtype of exempt care rolls up to the
         # coarse facilityType "License Exempt"; CCAP-accredited providers
         # participate in the subsidy program without being state-licensed.

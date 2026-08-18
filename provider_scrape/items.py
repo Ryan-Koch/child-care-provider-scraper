@@ -73,6 +73,17 @@ class InspectionItem(scrapy.Item):
     wi_decision = scrapy.Field()             # enforcement appeal decision
     wi_correction_plan_url = scrapy.Field()  # monitoring "View Correction Plan" doc
 
+    # Indiana specific inspection fields (secure.in.gov providersearch JSON API).
+    # Each inspection is a regulatory visit; a rule citation
+    # (centerRule.code/description) and a non-compliance narrative are present
+    # only on visits that recorded a violation -- clean visits carry just the
+    # survey date, department, and the health-violation flag.
+    in_rule_code = scrapy.Field()            # e.g. "470 IAC 3-4.7-100(e)"
+    in_rule_description = scrapy.Field()      # centerRule.description
+    in_noncompliance = scrapy.Field()         # noncomplianceStatement narrative
+    in_is_health_violation = scrapy.Field()   # bool
+    in_correction_date = scrapy.Field()       # date the non-compliance was corrected
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
@@ -616,6 +627,25 @@ class ProviderItem(scrapy.Item):
     # maps to the common `ages_served`; Nationally Accredited -> `accreditation`.)
     sd_services_offered = scrapy.Field()      # list, e.g. ["After School"]
     sd_months_of_operation = scrapy.Field()   # list, e.g. ["12 Months"]
+
+    # Indiana specific fields (secure.in.gov/apps/fssa/providersearch JSON API).
+    # Indiana publishes no license number, so the internal providerId is emitted
+    # as the common `license_number` (DC/VT precedent) and duplicated here as an
+    # explicit join key; `in_location_id` is the second half of the detail key.
+    # The Paths to QUALITY (PTQ) rating stays state-specific per the field-mapping
+    # playbook. Capacity is published only as a per-age breakdown, so the common
+    # `capacity` carries the sum and the exact breakdown is preserved here.
+    in_provider_id = scrapy.Field()               # providerId (== license_number)
+    in_location_id = scrapy.Field()               # locationId (2nd half of detail key)
+    in_ptq_level = scrapy.Field()                 # "0"-"4"; 0 = not rated
+    in_health_violation_count = scrapy.Field()    # int
+    in_is_ccdf = scrapy.Field()                   # bool (also -> scholarships_accepted)
+    in_is_temporarily_closed = scrapy.Field()     # bool
+    in_temporarily_closed_message = scrapy.Field()
+    in_programs = scrapy.Field()                  # e.g. ["CCDF Provider", "On My Way Pre-K"]
+    in_licensed_ages = scrapy.Field()             # [{start_age, end_age, quantity}]
+    in_schedule = scrapy.Field()                  # [{day, open, close}]
+    in_complaints = scrapy.Field()                # [{complaint_date, issue, closed_date}]
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()

@@ -1,0 +1,158 @@
+{
+ "provider": {
+  "id": "165836",
+  "name": "Abacus Childcare Center",
+  "location": {
+   "accreditations": [
+    {
+     "id": 14,
+     "name": "National Early Childhood Program Accreditation (NECPA)"
+    }
+   ],
+   "applicants": [
+    {
+     "id": 14669,
+     "name": "Erica Ryan"
+    }
+   ],
+   "complaints": [
+    {
+     "id": "196",
+     "complaintDate": "8/22/2024",
+     "issue": "Provider did not maintain compliance with supervision and ratio as child left unattended on playground.",
+     "closedDate": "9/25/2024"
+    },
+    {
+     "id": "720",
+     "complaintDate": "6/26/2023",
+     "issue": "Provider did not maintain compliance with safe sleep practice.",
+     "closedDate": "11/13/2023"
+    }
+   ],
+   "healthViolationCount": 0,
+   "inspections": [
+    {
+     "id": "11807",
+     "departmentDescription": "Licensing",
+     "surveyDate": "10/28/2024",
+     "centerRule": {
+      "id": "2521",
+      "code": "470 IAC 3-4.7-94(j)",
+      "description": "Caregivers shall use the diapering surface exclusively for diaper changing",
+      "isHealthViolation": false,
+      "summary": "Caregivers shall use the diapering surface exclusively for diaper changing"
+     },
+     "isHealthViolation": false,
+     "noncomplianceStatement": "In the monkeys room the diaper table had toilet paper roll sitting on it. In the Whales room the diaper table had a folder and a spray bottle on top of the table.",
+     "correctionDate": "10/28/2024"
+    },
+    {
+     "id": "1194",
+     "departmentDescription": "Licensing",
+     "surveyDate": "10/1/2025",
+     "centerRule": {
+      "id": "2584",
+      "code": "470 IAC 3-4.7-100(e)",
+      "description": "The center must store cleaning equipment, cleaning agents, aerosol cans, and any other item that states keep out of the reach of children in a place that is inaccessible to children",
+      "isHealthViolation": false,
+      "summary": "The center must store cleaning equipment, cleaning agents, aerosol cans, and any other item that sta"
+     },
+     "isHealthViolation": false,
+     "noncomplianceStatement": "In the lion room in a cubbie, the second one from the left end top row was stored two cans of lysol spray that state \"keep out of reach of children\".  The children in that room could reach those items and they need moved to be inaccessible to children."
+    },
+    {
+     "id": "19918",
+     "departmentDescription": "Licensing",
+     "surveyDate": "3/13/2025",
+     "isHealthViolation": false
+    }
+   ],
+   "isCcdf": true,
+   "isTemporarilyClosed": false,
+   "license": {
+    "typeDescription": "Regular",
+    "effectiveDate": "1/1/2026",
+    "terminationDate": "12/31/2028"
+   },
+   "licensedAges": [
+    {
+     "startAgeId": "1",
+     "startAge": "Infant",
+     "quantity": 24
+    },
+    {
+     "startAgeId": "2",
+     "startAge": "Toddler",
+     "quantity": 35
+    },
+    {
+     "startAgeId": "3",
+     "startAge": "Two",
+     "endAgeId": "13",
+     "endAge": "Twelve",
+     "quantity": 238
+    }
+   ],
+   "programs": [
+    {
+     "programDescription": "CCDF Provider"
+    },
+    {
+     "programDescription": "On My Way Pre-K"
+    }
+   ],
+   "providerType": "Licensed Center",
+   "providerTypeKey": "CcpTypeLicensedCenter",
+   "ptqLevel": "4",
+   "hasMultipleFacilitySchedules": false,
+   "schedule": [
+    {
+     "dayOfWeek": "Monday",
+     "openTime": "6:00 AM",
+     "closeTime": "6:00 PM"
+    },
+    {
+     "dayOfWeek": "Tuesday",
+     "openTime": "6:00 AM",
+     "closeTime": "6:00 PM"
+    },
+    {
+     "dayOfWeek": "Wednesday",
+     "openTime": "6:00 AM",
+     "closeTime": "6:00 PM"
+    },
+    {
+     "dayOfWeek": "Thursday",
+     "openTime": "6:00 AM",
+     "closeTime": "6:00 PM"
+    },
+    {
+     "dayOfWeek": "Friday",
+     "openTime": "6:00 AM",
+     "closeTime": "6:00 PM"
+    }
+   ],
+   "status": "Open",
+   "id": "22917",
+   "line1": "8420 Township Line Road",
+   "city": "Indianapolis",
+   "state": "IN",
+   "zipCode": "46260",
+   "phoneNumber": "317-876-3081",
+   "counties": [
+    {
+     "id": 49,
+     "name": "MARION"
+    }
+   ],
+   "categoryId": "4",
+   "coordinates": {
+    "lat": 39.907851,
+    "lng": -86.203963
+   },
+   "isLowConfidence": false,
+   "distance": 0,
+   "isHomeProvider": false
+  }
+ }
+}

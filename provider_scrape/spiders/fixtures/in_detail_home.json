@@ -1,0 +1,99 @@
+{
+ "provider": {
+  "id": "1120996",
+  "name": "Simply Like At Home Daycare, LLC",
+  "location": {
+   "applicants": [
+    {
+     "id": 14871,
+     "name": "Veronica Rodriguez Martinez"
+    }
+   ],
+   "healthViolationCount": 0,
+   "inspections": [
+    {
+     "id": "25737",
+     "departmentDescription": "Licensing",
+     "surveyDate": "6/17/2026",
+     "isHealthViolation": false
+    },
+    {
+     "id": "36878",
+     "departmentDescription": "Licensing",
+     "surveyDate": "3/26/2026",
+     "isHealthViolation": false
+    }
+   ],
+   "isCcdf": true,
+   "isTemporarilyClosed": false,
+   "license": {
+    "typeDescription": "Provisional",
+    "effectiveDate": "3/30/2026",
+    "terminationDate": "9/30/2026"
+   },
+   "licensedAges": [
+    {
+     "startAgeId": "1",
+     "startAge": "Infant",
+     "endAgeId": "7",
+     "endAge": "Six",
+     "quantity": 12
+    }
+   ],
+   "programs": [
+    {
+     "programDescription": "CCDF Provider"
+    }
+   ],
+   "providerType": "Licensed Home",
+   "providerTypeKey": "CcpTypeLicensedHome",
+   "ptqLevel": "0",
+   "hasMultipleFacilitySchedules": false,
+   "schedule": [
+    {
+     "dayOfWeek": "Monday",
+     "openTime": "6:00 AM",
+     "closeTime": "6:00 PM"
+    },
+    {
+     "dayOfWeek": "Tuesday",
+     "openTime": "6:00 AM",
+     "closeTime": "6:00 PM"
+    },
+    {
+     "dayOfWeek": "Wednesday",
+     "openTime": "6:00 AM",
+     "closeTime": "6:00 PM"
+    },
+    {
+     "dayOfWeek": "Thursday",
+     "openTime": "6:00 AM",
+     "closeTime": "6:00 PM"
+    },
+    {
+     "dayOfWeek": "Friday",
+     "openTime": "6:00 AM",
+     "closeTime": "6:00 PM"
+    }
+   ],
+   "status": "Open",
+   "id": "101342",
+   "zipCode": "46268",
+   "phoneNumber": "317-652-3866",
+   "counties": [
+    {
+     "id": 49,
+     "name": "MARION"
+    }
+   ],
+   "categoryId": "4",
+   "coordinates": {
+    "lat": 39.9,
+    "lng": -86.21
+   },
+   "isLowConfidence": false,
+   "distance": 0,
+   "isHomeProvider": true
+  }
+ }
+}

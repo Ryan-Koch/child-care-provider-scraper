@@ -1,0 +1,108 @@
+{
+ "provider": {
+  "id": "169500",
+  "name": "Little Friends of God International Child Care Ministry ( Little Friends)",
+  "location": {
+   "applicants": [
+    {
+     "id": 3808,
+     "name": "Anglican Cathedral Church of the Resurrection"
+    }
+   ],
+   "healthViolationCount": 1,
+   "inspections": [
+    {
+     "id": "8946",
+     "departmentDescription": "CCDF Inspection",
+     "surveyDate": "6/3/2026",
+     "isHealthViolation": false
+    },
+    {
+     "id": "11242",
+     "departmentDescription": "Registration",
+     "surveyDate": "6/3/2026",
+     "isHealthViolation": false
+    },
+    {
+     "id": "13117",
+     "departmentDescription": "Registration",
+     "surveyDate": "5/12/2026",
+     "centerRule": {
+      "id": "1693",
+      "code": "IC 12-17.2-6-11(a)(2)",
+      "description": "The parent or guardian of a child shall, when the child is enrolled in a child care ministry, provide the child care ministry with proof that the child has received the required immunizations against the following: Whooping cough",
+      "isHealthViolation": false,
+      "summary": "The parent or guardian of a child shall, when the child is enrolled in a child care ministry, provid"
+     },
+     "isHealthViolation": false,
+     "noncomplianceStatement": "4 children's files missing documentation of current immunizations.\nSend documentation to consultant.",
+     "correctionDate": "6/1/2026"
+    }
+   ],
+   "isCcdf": true,
+   "isTemporarilyClosed": false,
+   "license": {
+    "typeDescription": "Registration",
+    "effectiveDate": "7/1/2026",
+    "terminationDate": "6/30/2028"
+   },
+   "programs": [
+    {
+     "programDescription": "CCDF Provider"
+    }
+   ],
+   "providerType": "Unlicensed Registered Ministry",
+   "providerTypeKey": "CcpTypeUnlicensedRegisteredMinistry",
+   "ptqLevel": "3",
+   "hasMultipleFacilitySchedules": false,
+   "schedule": [
+    {
+     "dayOfWeek": "Monday",
+     "openTime": "6:00 AM",
+     "closeTime": "6:00 PM"
+    },
+    {
+     "dayOfWeek": "Tuesday",
+     "openTime": "6:00 AM",
+     "closeTime": "6:00 PM"
+    },
+    {
+     "dayOfWeek": "Wednesday",
+     "openTime": "6:00 AM",
+     "closeTime": "6:00 PM"
+    },
+    {
+     "dayOfWeek": "Thursday",
+     "openTime": "6:00 AM",
+     "closeTime": "6:00 PM"
+    },
+    {
+     "dayOfWeek": "Friday",
+     "openTime": "6:00 AM",
+     "closeTime": "6:00 PM"
+    }
+   ],
+   "status": "Open",
+   "id": "19892",
+   "line1": "8350 Ditch Road",
+   "city": "Indianapolis",
+   "state": "IN",
+   "zipCode": "46260",
+   "phoneNumber": "317-523-3478",
+   "counties": [
+    {
+     "id": 49,
+     "name": "MARION"
+    }
+   ],
+   "categoryId": "4",
+   "coordinates": {
+    "lat": 39.907809,
+    "lng": -86.184952
+   },
+   "isLowConfidence": false,
+   "distance": 0,
+   "isHomeProvider": false
+  }
+ }
+}

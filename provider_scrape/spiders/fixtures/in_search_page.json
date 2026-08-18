@@ -1,0 +1,102 @@
+{
+ "providers": [
+  {
+   "id": "165836",
+   "name": "Abacus Childcare Center",
+   "location": {
+    "healthViolationCount": 0,
+    "isCcdf": false,
+    "isTemporarilyClosed": false,
+    "temporarilyClosedMessage": "COVID-19 has caused us to close our facility for the safety of everyone around us.",
+    "providerType": "Licensed Center",
+    "providerTypeKey": "CcpTypeLicensedCenter",
+    "ptqLevel": "4",
+    "hasMultipleFacilitySchedules": false,
+    "id": "22917",
+    "line1": "8420 Township Line Road",
+    "city": "Indianapolis",
+    "state": "IN",
+    "zipCode": "46260",
+    "phoneNumber": "317-876-3081",
+    "categoryId": "4",
+    "coordinates": {
+     "lat": 39.907851,
+     "lng": -86.203963
+    },
+    "isLowConfidence": false,
+    "distance": 0.6,
+    "isHomeProvider": false
+   }
+  },
+  {
+   "id": "1120996",
+   "name": "Simply Like At Home Daycare, LLC",
+   "location": {
+    "healthViolationCount": 0,
+    "isCcdf": false,
+    "isTemporarilyClosed": false,
+    "temporarilyClosedMessage": "COVID-19 has caused us to close our facility for the safety of everyone around us.",
+    "providerType": "Licensed Home",
+    "providerTypeKey": "CcpTypeLicensedHome",
+    "ptqLevel": "0",
+    "hasMultipleFacilitySchedules": false,
+    "id": "101342",
+    "zipCode": "46268",
+    "phoneNumber": "317-652-3866",
+    "categoryId": "4",
+    "coordinates": {
+     "lat": 39.9,
+     "lng": -86.21
+    },
+    "isLowConfidence": false,
+    "distance": 1,
+    "isHomeProvider": true
+   },
+   "groupId": "1"
+  },
+  {
+   "id": "514710",
+   "name": "AYS @ Willow Lake",
+   "location": {
+    "healthViolationCount": 0,
+    "isCcdf": false,
+    "isTemporarilyClosed": false,
+    "temporarilyClosedMessage": "COVID-19 has caused us to close our facility for the safety of everyone around us.",
+    "providerType": "Unlicensed CCDF Certified Center/School",
+    "providerTypeKey": "CcpTypeUnlicensedCCDFCertifiedCenter",
+    "ptqLevel": "0",
+    "hasMultipleFacilitySchedules": false,
+    "id": "66410",
+    "line1": "7535 Harcourt Rd.",
+    "city": "Indianapolis",
+    "state": "IN",
+    "zipCode": "46260",
+    "phoneNumber": "317-283-3817",
+    "categoryId": "4",
+    "coordinates": {
+     "lat": 39.891041,
+     "lng": -86.191766
+    },
+    "isLowConfidence": false,
+    "distance": 0.8,
+    "isHomeProvider": false
+   }
+  }
+ ],
+ "providerGroups": [
+  {
+   "id": "1",
+   "coordinates": {
+    "lat": 39.9,
+    "lng": -86.21
+   },
+   "count": "3",
+   "countText": "There are <span class=\"bold-text\">3 providers</span> at this location.<br />Please click to view the list of providers.",
+   "categoryIds": [
+    "4"
+   ],
+   "containsHomeProvider": true
+  }
+ ],
+ "totalResults": 3978
+}
