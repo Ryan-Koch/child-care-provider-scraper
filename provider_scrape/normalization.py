@@ -279,6 +279,10 @@ STATUS_BUCKETS = {
         # from provider_type. The project's status vocab has no `exempt`
         # bucket, so `active` is the operationally-correct home.
         "Active/Open", "Exempt",
+        # Iowa (Titan StatusCode): "A" is the only value observed (170/170,
+        # then 3,370/3,370 on a full harvest -- the public search appears to
+        # expose only active providers).
+        "A",
     ],
     "provisional": [
         "PROVISIONAL LICENSE", "Initial Permit", "Provisional 1",
@@ -385,6 +389,9 @@ FACILITY_CATEGORY_BUCKETS = {
         "Center Based Child Care and Preschool Program - Non-Recurring",
         # Tennessee (onedhs.tn.gov): coarse provider_type.
         "Child Care", "DOE",
+        # Iowa (Titan TypeOfCareDesc) "Licensed Center" reuses the exact
+        # "Licensed Center" string already listed above for Indiana -- no
+        # new entry needed.
     ],
     "family_home": [
         "FAMILY DAY CARE HOME", "Family Child Care Home", "Family Home", "FDC",
@@ -419,6 +426,20 @@ FACILITY_CATEGORY_BUCKETS = {
         # South Dakota (olapublic.sd.gov) Program Category: registered care
         # provided in the provider's own residence.
         "Family Day Care",
+        # Iowa (Titan TypeOfCareDesc): all four Registered Child Development
+        # Home tiers (A/B/C/C1) are one registration scheme scaling
+        # capacity/staffing within the provider's own residence -- the
+        # category letter is a size/staffing tier, not a distinct facility
+        # type, so all four -> family_home (a deliberate departure from the
+        # ND "HHS-Licensed Group Child Care Home" / AK "Licensed Group Home"
+        # precedent below -- Iowa does not name a separate group license).
+        # provider_type preserves the exact tier. Non-Registered Child Care
+        # Home matches the existing "Unlicensed/Unregistered FDH" entry.
+        "Registered Child Development Home A",
+        "Registered Child Development Home B",
+        "Registered Child Development Home C",
+        "Registered Child Development Home C1",
+        "Non-Registered Child Care Home",
     ],
     "group_home": [
         "GFDC", "Group Home", "Group Home Child Care", "Group",
@@ -464,6 +485,8 @@ FACILITY_CATEGORY_BUCKETS = {
         # participate in the subsidy program without being state-licensed.
         "License Exempt", "CCAP Certified/Accredited",
         "Exempt",
+        # Iowa (Titan TypeOfCareDesc).
+        "Exempt from Licensing",
     ],
     "other": [
         "Other", "Resident Camp", "Summer Day Camp",
@@ -484,6 +507,8 @@ FACILITY_CATEGORY_BUCKETS = {
         # South Dakota (olapublic.sd.gov) Program Category: informal FFN-style
         # care and single-family in-home care -- both are informal care per
         # the field-mapping playbook, not a licensed home/center category.
+        # Iowa's Titan "In-Home" type is the same concept (care in the
+        # child's own home) and maps here too.
         "Informal", "In-Home",
     ],
 }

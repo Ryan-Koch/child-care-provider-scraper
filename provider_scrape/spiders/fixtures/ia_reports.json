@@ -1,0 +1,103 @@
+{
+  "FormTypeList": [],
+  "TypeOfCareList": [],
+  "UploadedFileID": 0,
+  "UploadedCryptFileID": "",
+  "ValidationErrors": {},
+  "ComplianceList": [
+    {
+      "ProviderID": 45047,
+      "ProviderName": "Heavenly Creations Childcare & Learning Center",
+      "City": "Des Moines",
+      "County": "Polk",
+      "TypeOfCareID": 4,
+      "TypeOfCareDesc": "Registered Child Development Home C",
+      "StatusCode": "A",
+      "ComplianceCount": 3,
+      "ComplaintCount": 0,
+      "RegulationCheckListCount": 1
+    }
+  ],
+  "ComplianceListAdmin": [],
+  "ComplianceReportList": [
+    {
+      "AppID": "139",
+      "FileID": 0,
+      "ProviderID": 45047,
+      "FileName": "",
+      "FileTypeID": 0,
+      "FileTypeDescription": "Compliance Report",
+      "FormID": 26,
+      "CrypticID": "NpRb8oszlic%3d",
+      "CrypticFormID": "KFFrMwn64FQ%3d",
+      "IsG360Report": false,
+      "IsLegacy": false,
+      "IsActive": true,
+      "VersionUserID": 9827,
+      "VersionTime": "/Date(1754326914967)/",
+      "CreatedDate": "/Date(1754077778100)/"
+    },
+    {
+      "AppID": "34796",
+      "FileID": 0,
+      "ProviderID": 45047,
+      "FileName": "",
+      "FileTypeID": 0,
+      "FileTypeDescription": "Compliance Report",
+      "FormID": 13,
+      "CrypticID": "qQQ%2bf%2flnbwM%3d",
+      "CrypticFormID": "pTlS6i6%2f1Nc%3d",
+      "IsG360Report": false,
+      "IsLegacy": false,
+      "IsActive": true,
+      "VersionUserID": 9827,
+      "VersionTime": "/Date(1729787377903)/",
+      "CreatedDate": "/Date(1729711789737)/"
+    },
+    {
+      "AppID": "32250",
+      "FileID": 0,
+      "ProviderID": 45047,
+      "FileName": "",
+      "FileTypeID": 0,
+      "FileTypeDescription": "Compliance Report",
+      "FormID": 13,
+      "CrypticID": "4zAd2RIJrNg%3d",
+      "CrypticFormID": "pTlS6i6%2f1Nc%3d",
+      "IsG360Report": false,
+      "IsLegacy": false,
+      "IsActive": true,
+      "VersionUserID": 9827,
+      "VersionTime": "/Date(1694724121353)/",
+      "CreatedDate": "/Date(1694719707303)/"
+    }
+  ],
+  "ComplaintReportList": [],
+  "RegulationCheckListReportList": [
+    {
+      "AppID": 35730,
+      "FileID": 0,
+      "ProviderID": 45047,
+      "FileName": "",
+      "FileTypeID": 0,
+      "FileTypeDescription": "Compliance Report",
+      "FormID": 13,
+      "CrypticID": "zJhZ0DNMZvk%3d",
+      "CrypticFormID": "pTlS6i6%2f1Nc%3d",
+      "IsG360Report": false,
+      "IsActive": true,
+      "VersionUserID": 6571,
+      "VersionTime": "/Date(1754077559967)/",
+      "CreatedDate": "/Date(1754077559967)/"
+    }
+  ],
+  "pageIndex": 0,
+  "pageSize": 50,
+  "absoluteTotal": 1,
+  "totalPage": 1,
+  "sortBy": "ProviderID",
+  "ProviderName": null,
+  "sortDirection": "desc",
+  "ReturnStatus": true,
+  "ReturnMessage": []
+}

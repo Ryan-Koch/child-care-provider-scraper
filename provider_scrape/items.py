@@ -647,5 +647,24 @@ class ProviderItem(scrapy.Item):
     in_schedule = scrapy.Field()                  # [{day, open, close}]
     in_complaints = scrapy.Field()                # [{complaint_date, issue, closed_date}]
 
+    # Iowa specific fields. C3 (search.iachildcareconnect.org) publishes live
+    # vacancy counts, a quality level, and two service-description
+    # vocabularies; Titan (secureapp.dhs.state.ia.us) contributes the
+    # per-provider report counts (see tasks/iowa_epic/iowa_plan.md).
+    ia_iq4k_level = scrapy.Field()                 # "IQ4K Level 1".."5" (82.5% null)
+    ia_region = scrapy.Field()                     # "Region 1".."Region 5"
+    ia_total_openings = scrapy.Field()             # int, live vacancy count (0..131)
+    ia_openings_by_age = scrapy.Field()            # list of {ageGroup, fullTime, partTime}
+    ia_openings_as_of = scrapy.Field()             # date the openings were reported
+    ia_days_of_operation = scrapy.Field()          # "Mon, Tue, ..."
+    ia_care_types = scrapy.Field()                 # hoursOfOperation service vocab
+    ia_serves_special_needs = scrapy.Field()       # "Yes"/"No"
+    ia_business_type = scrapy.Field()              # "house"/"building" pin glyph
+    ia_padded_license_id = scrapy.Field()          # C3 display form, zero-padded
+    ia_referral_listed = scrapy.Field()            # bool: in the referral network
+    ia_compliance_report_count = scrapy.Field()    # Titan ComplianceCount
+    ia_complaint_count = scrapy.Field()            # Titan ComplaintCount
+    ia_regulation_checklist_count = scrapy.Field()  # Titan RegulationCheckListCount
+
     # This will hold the list of inspections.
     inspections = scrapy.Field()
