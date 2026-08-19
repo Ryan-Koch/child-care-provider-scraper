@@ -18,6 +18,7 @@ To regenerate: `.venv/bin/python scripts/generate_sources.py`.
 | Georgia | https://families.decal.ga.gov/<br>https://dcle2-decalapiprd.azurewebsites.net/ |
 | Hawaii | https://childcareprovidersearch.dhs.hawaii.gov/<br>https://usgovtexas.logic.azure.us/ |
 | Illinois | https://sunshine.dcfs.illinois.gov/ |
+| Indiana | https://secure.in.gov/ |
 | Maryland | https://checkccmd.org/<br>https://findaprogram.marylandexcels.org/ |
 | Michigan | https://cclb.michigan.gov/ |
 | Minnesota | https://licensinglookup.dhs.state.mn.us/ |
