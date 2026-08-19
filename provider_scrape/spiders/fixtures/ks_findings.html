@@ -1,0 +1,436 @@
+
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-us">
+<head><meta http-equiv="X-UA-Compatible" content="IE=edge" /><title>
+	Kansas Department of Health and Environment - Child Care Licensing Program Online Facility Compliance Search
+</title><link rel="stylesheet" href="StyleSheet/Styles.css" /><link rel="stylesheet" type="text/css" href="StyleSheet/MasterStyle.css" /><meta name="format-detection" content="telephone=no" />
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.3.1.min.js"></script>
+
+    
+ <!--  RECAPTCHA INFO  -->
+ <script src="https://www.google.com/recaptcha/api.js?render=6Ld34-kUAAAAAAADgUngPcyDRZP4ilXQSa5-JpWN"></script>
+  <script type="text/javascript">
+      grecaptcha.ready(function () {
+          grecaptcha.execute('6Ld34-kUAAAAAAADgUngPcyDRZP4ilXQSa5-JpWN', { action: 'findingsview' }).then(function (token) {
+              document.getElementById('ContentPlaceHolder1_gre_captcha_resp_value').value = token;
+          });
+      });
+  </script>
+    <script type="text/javascript">
+        function closeWindow() {
+            window.close();
+        }     
+    </script>
+
+    <style>
+       .pagewrapper {
+            padding-left: 10px;
+        }
+        #homesidewrapper { float:right; margin:-20px 0 0 0; padding:0; width:218px; border:#1b4707 solid 1px; min-height:842px; }
+        .SideMenu {
+            border: 1px black solid;
+        }
+        .SideMenu h1
+        {
+            padding: 4px 15px;
+            font-size: 12pt;
+            margin: 0;
+            color: #ffffff;
+            font-weight: bold;
+            background: #1b4707; /* For browsers that do not support gradients */
+            background: -webkit-linear-gradient(#1b4707, #58983c ); /* For Safari 5.1 to 6.0 */
+            background: -o-linear-gradient(#1b4707, #58983c); /* For Opera 11.1 to 12.0 */
+            background: -moz-linear-gradient(#1b4707, #58983c); /* For Firefox 3.6 to 15 */
+            background: linear-gradient(#1b4707, #58983c); /* Standard syntax */
+            border-left: 1px black solid;
+            border-top: 1px black solid;
+            border-right: 1px black solid;
+        }
+        .KeapMenuList {
+            margin: 0 5px;
+            padding: 2px 0;
+            border-bottom: #002569 dotted 1px;
+            font-size: 12pt;
+        }
+        .RadMenu_Windows7 .rmRootGroup 
+        {
+            background-color: transparent !important;
+        }
+        .RadDropDownList_Windows7, .RadComboBoxDropDown_Windows7, .RadComboBox, .RadButton
+        {
+            font-size: 12pt !important;
+        }
+        .smSiteMap{
+            margin-left: 15px;
+        }
+        .loader
+        {
+            position:fixed;
+            left:0;top:0;
+            width:100%;
+            height:100%;z-index:9999;
+            background:url(images/loader.gif) 50% 50% no-repeat #000;
+            opacity:0.55;
+        }
+
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+        .header-container {
+            position: relative;
+            text-align: center;
+            color: white;
+        }
+
+        .header-image {
+            width: 100%;
+            height: auto;
+        }
+        .dev-text{                  
+            position: absolute;
+            top: 50%;
+            left: 36%;
+            transform: translate(-10%, -35%);
+            font-size: 74px;
+            font-weight: bold;
+            color: red;
+            white-space: nowrap;
+        }
+        .header-text {
+            position: absolute;
+            top: 76%;
+            left: 78%;
+            transform: translate(-30%, -35%);
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.8); /* Add shadow  Horizontal offsent, vertical offset, and blur radius  the fourth parameter on the rgba is the alpha value for transparency*/
+            white-space: nowrap;
+        }
+
+        /* Media queries for different screen sizes */
+        @media (max-width: 1200px) {
+      .header-text {
+                font-size: 2vw;
+            }
+
+        }
+
+        @media (max-width: 992px) {
+         .header-text {
+                font-size: 1.9vw;
+            }
+
+        }
+
+        @media (max-width: 768px) {
+        .header-text {
+                font-size: 1.9vw;
+            }
+        }
+    </style>
+     <script type="text/javascript">
+        $(window).on(function () {
+            $(".loader").fadeOut("slow");
+        });
+        ! function (a) {
+            jQuery(window).bind("unload", function () { }), a(document).ready(function () {
+                a(".loader").hide(), a('a:not([href^="#"])').on("click", function () {
+                    "" != a(this).attr("href") && a(".loader").show(), a(this).is('[href*="Download"]') && a(".loader").hide()
+                }), a("a:not([href])").click(function () {
+                    a(".loader").hide()
+                }), a('a[href*="javascript:void(0)"]').click(function () {
+                    a(".loader").hide()
+                }), a(".rcRefreshImage").click(function () {
+                    a(".loader").hide()
+                }),
+                 a(".ButtonLoader").click(function () {
+                     a(".loader").hide()
+                 }),
+                a(".LoadLinks").click(function () {
+                    a(".loader").hide()
+                }),
+                a(".blackfooter").click(function () {
+                    a(".loader").hide()
+                }),
+                a(".export").click(function () {
+                    setTimeout(function () {
+                        a(".loader").fadeOut("fast")
+                    }, 1e3)
+                })
+            })
+        }(jQuery);
+    </script>
+
+<link href="/OIDS/WebResource.axd?d=rhRRvYQTYv6mNRHqzCKJ7o7y73RLNZIR2WM2bZmV3NOpZXbkFX_pQo7WITYFy8kWPeNnxvlZ2oA39hRBqjEtbD7Wjc-oRsty3isPayQrWEtSv3lwIe_k0IK9rbkm5f65aO_1xRF0F8xm9m4iPhFPbw2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=VdPoLqp1pEU6N0-IfFplZFPsvpNP2QMvQAfkmBAM_Pdtb0wlWRHcPYQ7myJlzcByPIcB4ZxKBjgfewgj7i8H4SI3RPQUaJwfADJiLOj_xOHTc_Cua43qe66za083H3amoWnLTHTQhgBSwwPUSKLLfA2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=6d0ORl_GDQ8il0vfaye5YWX2_LbBc9WDXzhSAjNq2nPI9YBDKnTtgcaef8H-mfLD0bg9b7mwUzRe3Bz-iSuagQROl2dZrGmFJZsMsQFw0S68S42aqYTkiLLg95hQ4XhCpft9AbmPaC-3IZmcl2CRFg2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=U4fmqBE__aLMLwH7DJyJBBCn7ewQJ-V--4xb3kej-kxqaxIrRSs3e7JmM7vmsRHO48UCSBg7d0417U68PkmruRLc4Mtc2G1WkltxYhn98I-Y0pcR9eQw4WlU-7Rn-bR1iWUQGJqbUQLKkvG7QDMcXA2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=kDkw17-uEIms1kNrL30a2qUGjB4Wnmar3ksEKyzR-nUqtKOTjMk9sYTHUHbngVpPmh9XupM-aG6_wuUgp3skwu5syw3QijJgRYapt_6H1zpFCNplzovRrFfc1lsju_hve2C-djW7iw95ldZSKKFgILDVRukdDWnpuftvFonhTN01&amp;t=639076038940000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=lkmN1N_d-VFp8mPAmEJ_Q0FfBMBU_0Q9xRatYl0tVe6XWalN_Cgy2Kj-9y-R479FVmDz4v5ZAo7MmDXmi_yORyhizc9Ce8vWLN6CJTyhX8lCzERN_C2qzs_0icWGdAXS0&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=q7YOl4-apqfV5ZJtHLhy-AG6fbIzdsn6eZ4uSXDjei_nZMstmhNcwQvuGInJ4YL-R1VObBqzJ1omQsD2evacIQ_pOaUz7EaV9ocKyhooaRMdivVE2KrEdjiqR32mNBCDpkc0YwFRmDOvyjTXtuN-xaDiM7SxILx08Wksw_Srqxs1&amp;t=639076038940000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /></head>
+    
+<body>
+    <form method="post" action="./OIDS_ViewFacilityFindings.aspx?vn=1anlkfdkEy1MEf7uBe0X6L%2fjHO433fdqKl0z0adqcvFL0z2Xb8JeNtyQjEDsPWk0NelE995DGh1PRLpKxryLb79b51eZTvsgeljDpNAWgzmW8iE%2fmM107Q%3d%3d" id="form1">
+<div class="aspNetHidden">
+<input type="hidden" name="RadScriptManager1_TSM" id="RadScriptManager1_TSM" value="" />
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="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" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['form1'];
+if (!theForm) {
+    theForm = document.form1;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/OIDS/WebResource.axd?d=pynGkmcFUV13He1Qd6_TZOL3LTfK9B8ulPAwngVuAXWetE3d7rCUw0O-mGO49G1HkRgTBlAJdVNxpOYWl736_g2&amp;t=639224623058683406" type="text/javascript"></script>
+
+
+<script src="/OIDS/Telerik.Web.UI.WebResource.axd?_TSM_HiddenField_=RadScriptManager1_TSM&amp;compress=1&amp;_TSM_CombinedScripts_=%3b%3bSystem.Web.Extensions%2c+Version%3d4.0.0.0%2c+Culture%3dneutral%2c+PublicKeyToken%3d31bf3856ad364e35%3aen-US%3a9ead301a-2c07-4fc5-be19-f8423a34e117%3aea597d4b%3ab25378d2%3bTelerik.Web.UI%2c+Version%3d2026.1.225.462%2c+Culture%3dneutral%2c+PublicKeyToken%3d121fae78165ba3d4%3aen-US%3acb3af45e-afa6-485c-beef-0037df1863bf%3a16e4e7cd%3af7645509%3a24ee1bba%3ac128760b%3a19620875%3a874f8ea2%3ab2e06756%3af46195d3%3a92fe8ea0%3afa31b949%3a4877f69a%3a33715776%3a490a9d4e%3abd8f85e4" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+if (typeof(Sys) === 'undefined') throw new Error('ASP.NET Ajax client-side framework failed to load.');
+//]]>
+</script>
+
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="1D53CAD6" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="Zcu7emSbK+DFsqOrPcKlt6CMbya8Du606V3RZ3HqQzx4Xp9u0h2qVSM1JnSAI+kssX9h7gNoVeF5a1UwLBhVc3zld0XsbvdSquzZpWxsw6vIq4nGD1sMEli8ImCL7aPV" />
+</div>
+        <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('ctl00$RadScriptManager1', 'form1', [], [], [], 90, 'ctl00');
+//]]>
+</script>
+
+        <div id="rpl" class="t-container t-container-fluid wrap">
+	<div class="t-row">
+		<div id="Header" class="t-col t-col-12">
+			
+                            <div class="t-container t-container-static">
+				<div class="t-row headerwrap">
+					<div class="t-col t-col-12 t-hidden-xs t-hidden-sm t-hidden-md t-hidden-lg HeaderRow">
+						
+                                            <img src="/images/KOECBannerImage.png" alt="Kansas Department of Health &amp; Environment 1280" class="HeaderImage" />
+                                                <div id="headerText" class="header-text">Laura Kelly, Governor<br />Christi Smith, Executive Director</div>
+                                                <div id="devText" class="dev-text"></div>
+
+                                        
+					</div>
+				</div><div class="t-row">
+					<div id="rmLogobar" class="t-col t-col-12 logos">
+						
+                                            <span style="color: white;"> Child Care Licensing Program Online Facility Compliance Search</span>
+                                      
+                                        
+					</div>
+				</div>
+			</div>
+                        
+		</div>
+	</div><div id="layoutWrapper" class="t-row pagewrapper">
+		<div id="mainbody" class="t-col t-col-10">
+			
+                            <div id="hideData">
+                            <div style="width: 100%">
+                                <div style="width: 115%;text-align:center;">
+                                 <span style="color:green; font-weight:bold;font-size:large">Data last updated <script type="text/javascript">
+                                                             var date = new Date()
+                                                             date.setDate(date.getDate() - 1)
+                                                             document.write(date.toLocaleDateString())</script></span>
+                                    </div>
+                                
+           <input type="hidden" name="ctl00$ContentPlaceHolder1$gre_captcha_resp_value" id="ContentPlaceHolder1_gre_captcha_resp_value" />
+    <div id="ctl00_ContentPlaceHolder1_SearchWindow" style="display:none;">
+				<!-- 2026.1.225.462 --><div id="ctl00_ContentPlaceHolder1_SearchWindow_alerttemplate" style="display:none;">
+        <div class="rwDialog rwAlertDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+            </div>
+        </div>
+        </div><div id="ctl00_ContentPlaceHolder1_SearchWindow_prompttemplate" style="display:none;">
+        <div class="rwDialog rwPromptDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+                <div class="rwPromptInputContainer">
+                    <script type="text/javascript">
+                        function RadWindowprompt_detectenter(id, ev, input) {
+                            if (!ev) ev = window.event;
+                            if (ev.keyCode == 13) {
+                                var but = input.parentNode.parentNode.parentNode.getElementsByTagName("button")[0];
+                                if (but) {
+                                    if (but.click) {
+                                        but.click();
+                                    }
+                                    else if (but.onclick) {
+                                        but.focus();
+                                        var click = but.onclick;
+                                        but.onclick = null;
+                                        if (click) click.call(but);
+                                    }
+                                }
+                                return false;
+                            }
+                            else return true;
+                        }
+                    </script>
+                    <input title="Enter Value" aria-label="input" onkeydown="return RadWindowprompt_detectenter('{0}', event, this);" type="text" class="rwPromptInput radPreventDecorate" value="{2}" />
+                </div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(this.parentNode.parentNode.getElementsByTagName('input')[0].value); return false;">##LOC[OK]##</button>
+                <button type="button" class="rwCancelBtn" onclick="$find('{0}').close(null); return false;">##LOC[Cancel]##</button>
+            </div>
+        </div>
+        </div><div id="ctl00_ContentPlaceHolder1_SearchWindow_confirmtemplate" style="display:none;">
+        <div class="rwDialog rwConfirmDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+                <button type="button" class="rwCancelBtn" onclick="$find('{0}').close(false); return false;">##LOC[Cancel]##</button>
+            </div>
+        </div>
+        </div><input id="ctl00_ContentPlaceHolder1_SearchWindow_ClientState" name="ctl00_ContentPlaceHolder1_SearchWindow_ClientState" type="hidden" />
+			</div> 
+  <div style="text-align:center;width:120%;">
+     <span id="ctl00_ContentPlaceHolder1_RadLabel13" class="RadLabel RadLabel_Windows7" style="color:#153777;font-size:XX-Large;font-weight:bold;font-style:italic;">Child Care Licensing Facility Compliance Search</span>
+ </div><hr style="width:119.8%;" />
+      <br />
+   
+
+     <table id="ContentPlaceHolder1_dataTable" style="width:120%;">
+				<tr>
+					<td align="left" valign="middle" style="width:21%;"><span id="ctl00_ContentPlaceHolder1_facNameLabel" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">Facility Name:</span></td><td align="left" valign="middle" style="width:45%;"><span id="ctl00_ContentPlaceHolder1_faciltyNameValue" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">A Place to Grow</span></td><td align="left" valign="middle" style="width:21%;"><span id="ctl00_ContentPlaceHolder1_licLabel" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">License Number:</span></td><td align="left" valign="middle" style="width:33%;"><span id="ctl00_ContentPlaceHolder1_licnseNumberValue" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">0010937</span></td>
+				</tr><tr>
+					<td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_surResLabel" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">Survey Reason:</span></td><td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_surveReasonValue" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">Annual Survey</span></td><td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_surDataLbel" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">Date of Survey:</span></td><td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_surveyDateLabel" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">09/11/2025</span></td>
+				</tr><tr>
+					<td align="left" valign="middle" colspan="4">
+                <br/>
+                <span id="ctl00_ContentPlaceHolder1_DataLabel" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">K.A.R. 28-4-116a Napping and sleeping. (b)  (1) Each applicant with a temporary permit and each licensee shall develop a written plan for safe sleep practices and implement safe sleep practices for children in care who are napping or sleeping.<br/><b> Description : Safe Sleep policy did not include all ages.</b><br/><br/>K.A.R. 28-4-115 Facility. (g)  (1) All household supplies, cleaning supplies, dangerous chemicals, and all bodily care products containing alcohol or bearing warning labels to keep out of reach of children shall be in locked storage or stored out of reach of children under six years of age. Soap used for hand washing may be kept unlocked and placed on the back of the counter by a sink.<br/><b> Description : Bottle of Drain-O was located in an unlocked bathroom cabinet.  Corrected at visit.</b><br/><br/>K.A.R. 28-4-115 Facility. (c)  (16) has at least one bathroom with at least one sink and one flush toilet. All fixtures shall be in working order at all times. An individual towel and washcloth or disposable products shall be provided for each child. The use of common towels shall be prohibited. Hand soap shall be readily accessible in each bathroom.; and<br/><b> Description : Paper towels dispenser in the bathroom was empty.  Corrected at visit.</b><br/><br/></span>
+            <br /><br />
+            </td>
+				</tr>
+			</table>
+
+                            </div>
+                                </div>
+                        
+		</div>
+	</div><div class="t-row noMargin">
+		<div id="MainFooter" class="t-col t-col-12">
+			<div class="t-row">
+				<div class="t-col t-col-12">
+					
+                                            <div>
+                                                <p class="footerLinks"><br/>
+
+                                                    <span class="whitebold"> </span>
+                                                </p>
+                                                 <p style="color: white;" class="footer">
+                                                     Kansas Office of Early Childhood<br/>915 SW Harrison Street<br/>Topeka, KS 66612
+    </p>
+                                            </div>
+                                        
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+        <style type="text/css">
+            div.RadMenu {
+                float: right;
+            }
+        </style>
+            <div class="loader"></div>
+    
+
+<script type="text/javascript">
+//<![CDATA[
+window.__TsmHiddenField = $get('RadScriptManager1_TSM');Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadWindowManager, {"_renderMode":2,"clientStateFieldID":"ctl00_ContentPlaceHolder1_SearchWindow_ClientState","formID":"form1","iconUrl":"","minimizeIconUrl":"","name":"SearchWindow","skin":"Windows7","windowControls":"[]"}, null, null, $get("ctl00_ContentPlaceHolder1_SearchWindow"));
+});
+//]]>
+</script>
+</form>
+
+    <div id="ctl00_rwmNewsReleaseView" style="display:none;">
+	<div id="ctl00_rwmNewsReleaseView_alerttemplate" style="display:none;">
+        <div class="rwDialog rwAlertDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+            </div>
+        </div>
+        </div><div id="ctl00_rwmNewsReleaseView_prompttemplate" style="display:none;">
+        <div class="rwDialog rwPromptDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+                <div class="rwPromptInputContainer">
+                    <script type="text/javascript">
+                        function RadWindowprompt_detectenter(id, ev, input) {
+                            if (!ev) ev = window.event;
+                            if (ev.keyCode == 13) {
+                                var but = input.parentNode.parentNode.parentNode.getElementsByTagName("button")[0];
+                                if (but) {
+                                    if (but.click) {
+                                        but.click();
+                                    }
+                                    else if (but.onclick) {
+                                        but.focus();
+                                        var click = but.onclick;
+                                        but.onclick = null;
+                                        if (click) click.call(but);
+                                    }
+                                }
+                                return false;
+                            }
+                            else return true;
+                        }
+                    </script>
+                    <input title="Enter Value" aria-label="input" onkeydown="return RadWindowprompt_detectenter('{0}', event, this);" type="text" class="rwPromptInput radPreventDecorate" value="{2}" />
+                </div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(this.parentNode.parentNode.getElementsByTagName('input')[0].value); return false;">##LOC[OK]##</button>
+                <button type="button" class="rwCancelBtn" onclick="$find('{0}').close(null); return false;">##LOC[Cancel]##</button>
+            </div>
+        </div>
+        </div><div id="ctl00_rwmNewsReleaseView_confirmtemplate" style="display:none;">
+        <div class="rwDialog rwConfirmDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+                <button type="button" class="rwCancelBtn" onclick="$find('{0}').close(false); return false;">##LOC[Cancel]##</button>
+            </div>
+        </div>
+        </div><input id="ctl00_rwmNewsReleaseView_ClientState" name="ctl00_rwmNewsReleaseView_ClientState" type="hidden" />
+</div>
+</body>
+</html>

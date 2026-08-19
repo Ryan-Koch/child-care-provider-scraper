@@ -84,6 +84,28 @@ class InspectionItem(scrapy.Item):
     in_is_health_violation = scrapy.Field()   # bool
     in_correction_date = scrapy.Field()       # date the non-compliance was corrected
 
+    # Kansas specific inspection fields (khap.kdhe.ks.gov OIDS). Each licensing
+    # or complaint survey row becomes one InspectionItem (`type` = "Licensing
+    # Survey" / "Complaint Survey"); ``ks_nosf_id`` is the row key -- one
+    # Survey ID can produce several NOSF rows with different findings counts
+    # (see kansas_plan.md Sec 2.5). Administrative order rows are a third
+    # discriminated `type` ("Administrative Order") with their own fields.
+    ks_survey_id = scrapy.Field()             # Survey ID -- NOT unique per row
+    ks_nosf_id = scrapy.Field()               # NOSF ID -- the true row key
+    ks_survey_number = scrapy.Field()         # e.g. "25-005368"
+    ks_survey_reason = scrapy.Field()         # "Annual Survey" / "Initial Survey" / ...
+    ks_findings_count = scrapy.Field()        # numerator of "View Findings (3/568)"
+    ks_regulations_reviewed = scrapy.Field()  # denominator of "View Findings (3/568)"
+    ks_survey_template_url = scrapy.Field()   # blank-template link (claris.kdhe.state.ks.us)
+    ks_facility_response = scrapy.Field()     # "No Response" / "Facility Response" / "Not Received"
+    ks_order_number = scrapy.Field()          # administrative order Number
+    ks_order_type = scrapy.Field()            # e.g. "Intent to Assess Civil Fine"
+    ks_order_reason = scrapy.Field()          # order Reason (often blank)
+    ks_order_final_status = scrapy.Field()    # e.g. "Appeal not filed order is final"
+    # Findings-tier detail (opt-in, `-a findings=1`): K.A.R. citation +
+    # "Description :" narrative pairs from OIDS_ViewFacilityFindings.aspx.
+    ks_findings = scrapy.Field()              # [{regulation, description}]
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
@@ -665,6 +687,17 @@ class ProviderItem(scrapy.Item):
     ia_compliance_report_count = scrapy.Field()    # Titan ComplianceCount
     ia_complaint_count = scrapy.Field()            # Titan ComplaintCount
     ia_regulation_checklist_count = scrapy.Field()  # Titan RegulationCheckListCount
+
+    # Kansas specific fields (khap.kdhe.ks.gov/OIDS -- OIDS_Search.aspx /
+    # OIDS_ViewFacility.aspx). The site is POST-only (no per-facility GET url;
+    # `provider_url` is the base search page per DC/Indiana precedent), so
+    # ``ks_facility_token`` -- the stable SearchLink id -- is the real durable
+    # identity (see kansas_plan.md Sec 4.6). ``provider_type`` is taken from
+    # the detail page; when the listing disagrees (rare) the listing value is
+    # kept here rather than discarded (Sec 4.1).
+    ks_facility_token = scrapy.Field()          # stable "SearchLink.<token>" id
+    ks_listing_program_type = scrapy.Field()    # listing Program Type, only if != detail
+    ks_address_suppressed = scrapy.Field()      # bool: owner opted out (~38% of rows)
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()

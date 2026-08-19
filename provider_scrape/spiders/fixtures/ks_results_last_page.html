@@ -1,0 +1,594 @@
+
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-us">
+<head><meta http-equiv="X-UA-Compatible" content="IE=edge" /><title>
+	Kansas Department of Health and Environment - Child Care Licensing Program Online Facility Compliance Search
+</title><link rel="stylesheet" href="StyleSheet/Styles.css" /><link rel="stylesheet" type="text/css" href="StyleSheet/MasterStyle.css" /><meta name="format-detection" content="telephone=no" />
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.3.1.min.js"></script>
+
+    
+    <style type="text/css">
+        /* Style the button that is used to open and close the collapsible content */
+        .collapsible {
+           text-decoration: none;
+
+        }
+
+            /* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+            .active, .collapsible:hover {
+                background-color: #ccc;
+                /* Style the collapsible content. Note: hidden by default */
+            }
+.collapsible:after {
+  content: '\002B';
+  color: -webkit-link;
+  font-weight: bold;
+  padding-left:15px;
+  margin-left: 5px;
+}
+
+.active:after {
+  content: "\2212";
+}
+        .content {
+            padding: 0 18px;
+            display: none;
+            overflow: hidden;
+            background-color: #f1f1f1;
+        }
+    </style>
+    <script type = "text/javascript" >
+     
+     function DisableBackButton() {
+       window.history.forward()
+      }
+     DisableBackButton();
+     window.onload = DisableBackButton;
+     window.onpageshow = function(evt) { if (evt.persisted) DisableBackButton() }
+        window.onunload = function () { void (0) }
+        function pageLoad(sender, eventArgs)
+        {
+            var buttons = document.querySelectorAll('.rcbActionButton');
+            for(var i=0;i<buttons.length; i++)
+            {
+                buttons[i].setAttribute('aria-label', 'ComboBoxAccessible' + i);
+            }
+            var combInputs = document.querySelectorAll('.rcbInput');
+            for (var i = 0; i < combInputs.length; i++) {
+                combInputs[i].setAttribute('aria-label', 'ComboBoxInputAccess' + i);
+            }
+            var buttons = document.querySelectorAll('.p-icon');
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].setAttribute('aria-label', 'GridAccessibleicon' + i);
+            }
+            if (document.getElementById('ctl00_ContentPlaceHolder1_cityText') != null) {
+                document.getElementById('ctl00_ContentPlaceHolder1_cityText').setAttribute('aria-label', 'CityAccessible');
+            }
+            if (document.getElementById('ctl00_ContentPlaceHolder1_zipCodeTextValue') != null) {
+                document.getElementById('ctl00_ContentPlaceHolder1_zipCodeTextValue').setAttribute('aria-label', 'ZipCodeAccessible');
+            }
+        }
+        function closeWindow()
+            {
+                window.close();
+        }  
+    </script>
+      <!-- RECAPTCHA INFO  -->
+   <script src="https://www.google.com/recaptcha/api.js?render=6Ld34-kUAAAAAAADgUngPcyDRZP4ilXQSa5-JpWN"></script>
+    <script type="text/javascript">
+        grecaptcha.ready(function () {
+            grecaptcha.execute('6Ld34-kUAAAAAAADgUngPcyDRZP4ilXQSa5-JpWN', { action: 'findingsview' }).then(function (token) {
+                document.getElementById('ContentPlaceHolder1_gre_captcha_resp_value').value = token;
+            });
+        });
+    </script>
+   
+
+    <style>
+       .pagewrapper {
+            padding-left: 10px;
+        }
+        #homesidewrapper { float:right; margin:-20px 0 0 0; padding:0; width:218px; border:#1b4707 solid 1px; min-height:842px; }
+        .SideMenu {
+            border: 1px black solid;
+        }
+        .SideMenu h1
+        {
+            padding: 4px 15px;
+            font-size: 12pt;
+            margin: 0;
+            color: #ffffff;
+            font-weight: bold;
+            background: #1b4707; /* For browsers that do not support gradients */
+            background: -webkit-linear-gradient(#1b4707, #58983c ); /* For Safari 5.1 to 6.0 */
+            background: -o-linear-gradient(#1b4707, #58983c); /* For Opera 11.1 to 12.0 */
+            background: -moz-linear-gradient(#1b4707, #58983c); /* For Firefox 3.6 to 15 */
+            background: linear-gradient(#1b4707, #58983c); /* Standard syntax */
+            border-left: 1px black solid;
+            border-top: 1px black solid;
+            border-right: 1px black solid;
+        }
+        .KeapMenuList {
+            margin: 0 5px;
+            padding: 2px 0;
+            border-bottom: #002569 dotted 1px;
+            font-size: 12pt;
+        }
+        .RadMenu_Windows7 .rmRootGroup 
+        {
+            background-color: transparent !important;
+        }
+        .RadDropDownList_Windows7, .RadComboBoxDropDown_Windows7, .RadComboBox, .RadButton
+        {
+            font-size: 12pt !important;
+        }
+        .smSiteMap{
+            margin-left: 15px;
+        }
+        .loader
+        {
+            position:fixed;
+            left:0;top:0;
+            width:100%;
+            height:100%;z-index:9999;
+            background:url(images/loader.gif) 50% 50% no-repeat #000;
+            opacity:0.55;
+        }
+
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+        .header-container {
+            position: relative;
+            text-align: center;
+            color: white;
+        }
+
+        .header-image {
+            width: 100%;
+            height: auto;
+        }
+        .dev-text{                  
+            position: absolute;
+            top: 50%;
+            left: 36%;
+            transform: translate(-10%, -35%);
+            font-size: 74px;
+            font-weight: bold;
+            color: red;
+            white-space: nowrap;
+        }
+        .header-text {
+            position: absolute;
+            top: 76%;
+            left: 78%;
+            transform: translate(-30%, -35%);
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.8); /* Add shadow  Horizontal offsent, vertical offset, and blur radius  the fourth parameter on the rgba is the alpha value for transparency*/
+            white-space: nowrap;
+        }
+
+        /* Media queries for different screen sizes */
+        @media (max-width: 1200px) {
+      .header-text {
+                font-size: 2vw;
+            }
+
+        }
+
+        @media (max-width: 992px) {
+         .header-text {
+                font-size: 1.9vw;
+            }
+
+        }
+
+        @media (max-width: 768px) {
+        .header-text {
+                font-size: 1.9vw;
+            }
+        }
+    </style>
+     <script type="text/javascript">
+        $(window).on(function () {
+            $(".loader").fadeOut("slow");
+        });
+        ! function (a) {
+            jQuery(window).bind("unload", function () { }), a(document).ready(function () {
+                a(".loader").hide(), a('a:not([href^="#"])').on("click", function () {
+                    "" != a(this).attr("href") && a(".loader").show(), a(this).is('[href*="Download"]') && a(".loader").hide()
+                }), a("a:not([href])").click(function () {
+                    a(".loader").hide()
+                }), a('a[href*="javascript:void(0)"]').click(function () {
+                    a(".loader").hide()
+                }), a(".rcRefreshImage").click(function () {
+                    a(".loader").hide()
+                }),
+                 a(".ButtonLoader").click(function () {
+                     a(".loader").hide()
+                 }),
+                a(".LoadLinks").click(function () {
+                    a(".loader").hide()
+                }),
+                a(".blackfooter").click(function () {
+                    a(".loader").hide()
+                }),
+                a(".export").click(function () {
+                    setTimeout(function () {
+                        a(".loader").fadeOut("fast")
+                    }, 1e3)
+                })
+            })
+        }(jQuery);
+    </script>
+
+<link href="/OIDS/WebResource.axd?d=rhRRvYQTYv6mNRHqzCKJ7o7y73RLNZIR2WM2bZmV3NOpZXbkFX_pQo7WITYFy8kWPeNnxvlZ2oA39hRBqjEtbD7Wjc-oRsty3isPayQrWEtSv3lwIe_k0IK9rbkm5f65aO_1xRF0F8xm9m4iPhFPbw2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=VdPoLqp1pEU6N0-IfFplZFPsvpNP2QMvQAfkmBAM_Pdtb0wlWRHcPYQ7myJlzcByPIcB4ZxKBjgfewgj7i8H4SI3RPQUaJwfADJiLOj_xOHTc_Cua43qe66za083H3amoWnLTHTQhgBSwwPUSKLLfA2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=6d0ORl_GDQ8il0vfaye5YWX2_LbBc9WDXzhSAjNq2nPI9YBDKnTtgcaef8H-mfLD0bg9b7mwUzRe3Bz-iSuagQROl2dZrGmFJZsMsQFw0S68S42aqYTkiLLg95hQ4XhCpft9AbmPaC-3IZmcl2CRFg2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=U4fmqBE__aLMLwH7DJyJBBCn7ewQJ-V--4xb3kej-kxqaxIrRSs3e7JmM7vmsRHO48UCSBg7d0417U68PkmruRLc4Mtc2G1WkltxYhn98I-Y0pcR9eQw4WlU-7Rn-bR1iWUQGJqbUQLKkvG7QDMcXA2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=kDkw17-uEIms1kNrL30a2qUGjB4Wnmar3ksEKyzR-nUqtKOTjMk9sYTHUHbngVpPmh9XupM-aG6_wuUgp3skwu5syw3QijJgRYapt_6H1zpFCNplzovRrFfc1lsju_hve2C-djW7iw95ldZSKKFgILDVRukdDWnpuftvFonhTN01&amp;t=639076038940000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=lkmN1N_d-VFp8mPAmEJ_Q0FfBMBU_0Q9xRatYl0tVe6XWalN_Cgy2Kj-9y-R479FVmDz4v5ZAo7MmDXmi_yORyhizc9Ce8vWLN6CJTyhX8lCzERN_C2qzs_0icWGdAXS0&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=q7YOl4-apqfV5ZJtHLhy-AG6fbIzdsn6eZ4uSXDjei_nZMstmhNcwQvuGInJ4YL-R1VObBqzJ1omQsD2evacIQ_pOaUz7EaV9ocKyhooaRMdivVE2KrEdjiqR32mNBCDpkc0YwFRmDOvyjTXtuN-xaDiM7SxILx08Wksw_Srqxs1&amp;t=639076038940000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=qpDogBCh8B2zFH7Wt5kgoJQW9leSvvwPZBSJ6MV4Hdfu7fqrSBxZhxdDzE-95dlq_JYLBD2vDPP0Y5g29fzI-rKhvOw2h_VNDiaO5vpxC3oUgO0MGFGe4WN0__dQ49HFR13Maq1goRAyH96D4W-tpw2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=t6lEicJDdwQCDCtDa-HaWJqxZMbiEKnKSRHbyRXwnng2CFgyy_SjOnjX0b51Pqj3LxsBC26ZwmyCH3n0BdCPczAXDTohmh2ghgI_jrxYgXOgPXqrceZ4X4J1QgSqc1pvv48cT7fKNOH_3I8tRBNDLR1HOiEt7PnnSRcmmgPPVIk1&amp;t=639076038940000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /></head>
+    
+<body>
+    <form method="post" action="./OIDS_Search.aspx" id="form1">
+<div class="aspNetHidden">
+<input type="hidden" name="RadScriptManager1_TSM" id="RadScriptManager1_TSM" value="" />
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="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" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['form1'];
+if (!theForm) {
+    theForm = document.form1;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/OIDS/WebResource.axd?d=pynGkmcFUV13He1Qd6_TZOL3LTfK9B8ulPAwngVuAXWetE3d7rCUw0O-mGO49G1HkRgTBlAJdVNxpOYWl736_g2&amp;t=639224623058683406" type="text/javascript"></script>
+
+
+<script src="/OIDS/Telerik.Web.UI.WebResource.axd?_TSM_HiddenField_=RadScriptManager1_TSM&amp;compress=1&amp;_TSM_CombinedScripts_=%3b%3bSystem.Web.Extensions%2c+Version%3d4.0.0.0%2c+Culture%3dneutral%2c+PublicKeyToken%3d31bf3856ad364e35%3aen-US%3a9ead301a-2c07-4fc5-be19-f8423a34e117%3aea597d4b%3ab25378d2%3bTelerik.Web.UI%2c+Version%3d2026.1.225.462%2c+Culture%3dneutral%2c+PublicKeyToken%3d121fae78165ba3d4%3aen-US%3acb3af45e-afa6-485c-beef-0037df1863bf%3a16e4e7cd%3af7645509%3a24ee1bba%3ac128760b%3a19620875%3a874f8ea2%3ab2e06756%3af46195d3%3a92fe8ea0%3afa31b949%3a4877f69a%3a33715776%3a490a9d4e%3abd8f85e4%3a6d43f6d9" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+if (typeof(Sys) === 'undefined') throw new Error('ASP.NET Ajax client-side framework failed to load.');
+//]]>
+</script>
+
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="C5204C39" />
+	<input type="hidden" name="__SCROLLPOSITIONX" id="__SCROLLPOSITIONX" value="0" />
+	<input type="hidden" name="__SCROLLPOSITIONY" id="__SCROLLPOSITIONY" value="0" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="qHuuffQghzTAkSk89kiE39aJRr6ro40itbUg1GowLLDYUUHvKnrMXL+psBeue9eOalOoReGv1T4nn+Qm9JEcLnCI7NwgCBBeMsBPRaqo9s29E6LMR6wdVbA0eBauAh8qmA/DZCV1dvg00JvY52hLPm9yke0WtykHKcOfQSX86lvwihzXKvY6w5x9t34Qr4v9P9qFDDAgHEOM3BDyXsllrc+fxK8Mba1q1VvVRU63lmPFjwXQ/B0Nc6BrwbZpqcxpWC9Onjpa4XP8yyqw7PcC4PWb5AD2QZFsZsOdc+0YtsYShmiUXKE9prAZVHhBeBkDkAxFp/emZL2w5Az7SeOCSWnV6a3rSuzm1/8YPH/1KLfbDwLTdj0TORCGwVNJe5VYHYezO5UrjelVxDON2dCYko4vChbOQdVCtcpeepPzSso=" />
+</div>
+        <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('ctl00$RadScriptManager1', 'form1', [], [], [], 90, 'ctl00');
+//]]>
+</script>
+
+        <div id="rpl" class="t-container t-container-fluid wrap">
+	<div class="t-row">
+		<div id="Header" class="t-col t-col-12">
+			
+                            <div class="t-container t-container-static">
+				<div class="t-row headerwrap">
+					<div class="t-col t-col-12 t-hidden-xs t-hidden-sm t-hidden-md t-hidden-lg HeaderRow">
+						
+                                            <img src="/images/KOECBannerImage.png" alt="Kansas Department of Health &amp; Environment 1280" class="HeaderImage" />
+                                                <div id="headerText" class="header-text">Laura Kelly, Governor<br />Christi Smith, Executive Director</div>
+                                                <div id="devText" class="dev-text"></div>
+
+                                        
+					</div>
+				</div><div class="t-row">
+					<div id="rmLogobar" class="t-col t-col-12 logos">
+						
+                                            <span style="color: white;"> Child Care Licensing Program Online Facility Compliance Search</span>
+                                      
+                                        
+					</div>
+				</div>
+			</div>
+                        
+		</div>
+	</div><div id="layoutWrapper" class="t-row pagewrapper">
+		<div id="mainbody" class="t-col t-col-10">
+			
+                            <div id="hideData">
+                            <div style="width: 100%">
+                                <div style="width: 115%;text-align:center;">
+                                 <span style="color:green; font-weight:bold;font-size:large">Data last updated <script type="text/javascript">
+                                                             var date = new Date()
+                                                             date.setDate(date.getDate() - 1)
+                                                             document.write(date.toLocaleDateString())</script></span>
+                                    </div>
+                                
+
+      
+   <input type="hidden" name="ctl00$ContentPlaceHolder1$gre_captcha_resp_value" id="ContentPlaceHolder1_gre_captcha_resp_value" />
+    <div id="ctl00_ContentPlaceHolder1_SearchWindow" style="display:none;">
+				<!-- 2026.1.225.462 --><div id="ctl00_ContentPlaceHolder1_SearchWindow_alerttemplate" style="display:none;">
+        <div class="rwDialog rwAlertDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+            </div>
+        </div>
+        </div><div id="ctl00_ContentPlaceHolder1_SearchWindow_prompttemplate" style="display:none;">
+        <div class="rwDialog rwPromptDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+                <div class="rwPromptInputContainer">
+                    <script type="text/javascript">
+                        function RadWindowprompt_detectenter(id, ev, input) {
+                            if (!ev) ev = window.event;
+                            if (ev.keyCode == 13) {
+                                var but = input.parentNode.parentNode.parentNode.getElementsByTagName("button")[0];
+                                if (but) {
+                                    if (but.click) {
+                                        but.click();
+                                    }
+                                    else if (but.onclick) {
+                                        but.focus();
+                                        var click = but.onclick;
+                                        but.onclick = null;
+                                        if (click) click.call(but);
+                                    }
+                                }
+                                return false;
+                            }
+                            else return true;
+                        }
+                    </script>
+                    <input title="Enter Value" aria-label="input" onkeydown="return RadWindowprompt_detectenter('{0}', event, this);" type="text" class="rwPromptInput radPreventDecorate" value="{2}" />
+                </div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(this.parentNode.parentNode.getElementsByTagName('input')[0].value); return false;">##LOC[OK]##</button>
+                <button type="button" class="rwCancelBtn" onclick="$find('{0}').close(null); return false;">##LOC[Cancel]##</button>
+            </div>
+        </div>
+        </div><div id="ctl00_ContentPlaceHolder1_SearchWindow_confirmtemplate" style="display:none;">
+        <div class="rwDialog rwConfirmDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+                <button type="button" class="rwCancelBtn" onclick="$find('{0}').close(false); return false;">##LOC[Cancel]##</button>
+            </div>
+        </div>
+        </div><input id="ctl00_ContentPlaceHolder1_SearchWindow_ClientState" name="ctl00_ContentPlaceHolder1_SearchWindow_ClientState" type="hidden" />
+			</div> 
+    <div style="text-align:center;width:120%">
+ 
+        <span id="ctl00_ContentPlaceHolder1_RadLabel9" class="RadLabel RadLabel_Windows7" style="color:#153777;font-size:XX-Large;font-weight:bold;font-style:italic;">Child Care Licensing Facility Compliance Search</span>
+    </div>
+        <hr style="width:119.8%;" />
+    <div id="ContentPlaceHolder1_searchSection">
+        
+        <br />
+        <table id="ContentPlaceHolder1_searchResults" style="width:100%;">
+				<tr>
+					<td colspan="3"><span id="ctl00_ContentPlaceHolder1_searchResLabel" class="RadLabel RadLabel_Windows7" style="font-size:X-Large;font-weight:bold;">Search Results</span>
+        <br /><br />
+            </td>
+				</tr><tr>
+					<td colspan="3"><span id="ctl00_ContentPlaceHolder1_searchResultcont" class="RadLabel RadLabel_Windows7" style="font-size:Large;">The search criteria you entered returned the results below. If you did not find the facility you searched for, please refine your search and try again. If you still do not find the facility you searched for, contact KOEC for assistance.</span>
+    <br /><br />
+            </td>
+				</tr><tr>
+					<td colspan="3">
+        <br />
+        <span id="ctl00_ContentPlaceHolder1_RadLabel11" class="RadLabel RadLabel_Windows7" style="font-size:Large;">Return to </span><a id="ContentPlaceHolder1_LinkButton1" title="Return To Search" href="javascript:__doPostBack(&#39;ctl00$ContentPlaceHolder1$LinkButton1&#39;,&#39;&#39;)" style="font-size:Large;">Search Page</a> 
+        <br /><br /><br />
+         </td>
+				</tr><tr id="ContentPlaceHolder1_facilityReportRow">
+					<td colspan="3"><table style="width:75%;font-size:medium;text-align:left;">
+						<tr>
+							<td style="font-weight:bold;font-size:medium;width:25%;text-align:left;"><span>Facility Name:</span></td><td style="text-align:left;"><a id="ContentPlaceHolder1_SearchLink.xZyMirUhLnA6XveVlV20Lg==" href="javascript:__doPostBack(&#39;ctl00$ContentPlaceHolder1$SearchLink.xZyMirUhLnA6XveVlV20Lg==&#39;,&#39;&#39;)" style="display:inline-block;width:100%;">Tiny Bubbles In Home Daycare</a></td>
+						</tr>
+					</table><table runat="server" style="width:75%;font-size:medium;text-align:left;"><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Owner Name: </label> </td><td><label>Dina Lowman</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>License Number: </label> </td><td style="text-align:left;"><label>0065750</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>City: </label> </td><td style="text-align:left;"><label>Girard</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Zip: </label> </td><td style="text-align:left;"><label>66743</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>County: </label> </td><td style="text-align:left;"><label>Crawford</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Program Type: </label> </td><td style="text-align:left;"><label>Family Child Care Home</label></td></tr><tr><td colspan="2"> <hr style="width:100%;"/> </td></tr></table><table style="width:75%;font-size:medium;text-align:left;">
+						<tr>
+							<td style="font-weight:bold;font-size:medium;width:25%;text-align:left;"><span>Facility Name:</span></td><td style="text-align:left;"><a id="ContentPlaceHolder1_SearchLink.QibUp2Q2xmacccfZf+XECQ==" href="javascript:__doPostBack(&#39;ctl00$ContentPlaceHolder1$SearchLink.QibUp2Q2xmacccfZf+XECQ==&#39;,&#39;&#39;)" style="display:inline-block;width:100%;">Tiny Trojans Daycare Home</a></td>
+						</tr>
+					</table><table runat="server" style="width:75%;font-size:medium;text-align:left;"><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Owner Name: </label> </td><td><label>Melissa Wray</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>License Number: </label> </td><td style="text-align:left;"><label>0062333</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>City: </label> </td><td style="text-align:left;"><label>Girard</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Zip: </label> </td><td style="text-align:left;"><label>66743</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>County: </label> </td><td style="text-align:left;"><label>Crawford</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Program Type: </label> </td><td style="text-align:left;"><label>Family Child Care Home</label></td></tr><tr><td colspan="2"> <hr style="width:100%;"/> </td></tr></table><table style="width:75%;font-size:medium;text-align:left;">
+						<tr>
+							<td style="font-weight:bold;font-size:medium;width:25%;text-align:left;"><span>Facility Name:</span></td><td style="text-align:left;"><a id="ContentPlaceHolder1_SearchLink.ZapvElw/AbV6iDub68iZXw==" href="javascript:__doPostBack(&#39;ctl00$ContentPlaceHolder1$SearchLink.ZapvElw/AbV6iDub68iZXw==&#39;,&#39;&#39;)" style="display:inline-block;width:100%;">Toddler Time Daycare</a></td>
+						</tr>
+					</table><table runat="server" style="width:75%;font-size:medium;text-align:left;"><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Owner Name: </label> </td><td><label>Christina Randall</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>License Number: </label> </td><td style="text-align:left;"><label>0045317</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>City: </label> </td><td style="text-align:left;"><label>Frontenac</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Zip: </label> </td><td style="text-align:left;"><label>66763 - 0000</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>County: </label> </td><td style="text-align:left;"><label>Crawford</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Program Type: </label> </td><td style="text-align:left;"><label>Family Child Care Home</label></td></tr><tr><td colspan="2"> <hr style="width:100%;"/> </td></tr></table><table style="width:75%;font-size:medium;text-align:left;">
+						<tr>
+							<td style="font-weight:bold;font-size:medium;width:25%;text-align:left;"><span>Facility Name:</span></td><td style="text-align:left;"><a id="ContentPlaceHolder1_SearchLink.FeyTeohD9BmRwsqjolORPA==" href="javascript:__doPostBack(&#39;ctl00$ContentPlaceHolder1$SearchLink.FeyTeohD9BmRwsqjolORPA==&#39;,&#39;&#39;)" style="display:inline-block;width:100%;">Toodles</a></td>
+						</tr>
+					</table><table runat="server" style="width:75%;font-size:medium;text-align:left;"><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Owner Name: </label> </td><td><label>Renee Hyman</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>License Number: </label> </td><td style="text-align:left;"><label>0037595</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>City: </label> </td><td style="text-align:left;"><label>Girard</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Zip: </label> </td><td style="text-align:left;"><label>66743</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>County: </label> </td><td style="text-align:left;"><label>Crawford</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Program Type: </label> </td><td style="text-align:left;"><label>Family Child Care Home</label></td></tr><tr><td colspan="2"> <hr style="width:100%;"/> </td></tr></table><table style="width:75%;font-size:medium;text-align:left;">
+						<tr>
+							<td style="font-weight:bold;font-size:medium;width:25%;text-align:left;"><span>Facility Name:</span></td><td style="text-align:left;"><a id="ContentPlaceHolder1_SearchLink.4A2eQfMIQpvl67IJ6w2Gjw==" href="javascript:__doPostBack(&#39;ctl00$ContentPlaceHolder1$SearchLink.4A2eQfMIQpvl67IJ6w2Gjw==&#39;,&#39;&#39;)" style="display:inline-block;width:100%;">Tot Spot Daycare</a></td>
+						</tr>
+					</table><table runat="server" style="width:75%;font-size:medium;text-align:left;"><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Owner Name: </label> </td><td><label>Miika Duncan</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>License Number: </label> </td><td style="text-align:left;"><label>0079687</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>City: </label> </td><td style="text-align:left;"><label>Pittsburg</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Zip: </label> </td><td style="text-align:left;"><label>66762</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>County: </label> </td><td style="text-align:left;"><label>Crawford</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Program Type: </label> </td><td style="text-align:left;"><label>Family Child Care Home</label></td></tr><tr><td colspan="2"> <hr style="width:100%;"/> </td></tr></table><table style="width:75%;font-size:medium;text-align:left;">
+						<tr>
+							<td style="font-weight:bold;font-size:medium;width:25%;text-align:left;"><span>Facility Name:</span></td><td style="text-align:left;"><a id="ContentPlaceHolder1_SearchLink.dqMrU/OsbdyZkQxtRXP01A==" href="javascript:__doPostBack(&#39;ctl00$ContentPlaceHolder1$SearchLink.dqMrU/OsbdyZkQxtRXP01A==&#39;,&#39;&#39;)" style="display:inline-block;width:100%;">TreeHouse DayCare Home</a></td>
+						</tr>
+					</table><table runat="server" style="width:75%;font-size:medium;text-align:left;"><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Owner Name: </label> </td><td><label>Teresa Jones</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>License Number: </label> </td><td style="text-align:left;"><label>0015786</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>City: </label> </td><td style="text-align:left;"><label>Pittsburg</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Zip: </label> </td><td style="text-align:left;"><label>66762 - 0000</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>County: </label> </td><td style="text-align:left;"><label>Crawford</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Program Type: </label> </td><td style="text-align:left;"><label>Family Child Care Home</label></td></tr><tr><td colspan="2"> <hr style="width:100%;"/> </td></tr></table><table style="width:75%;font-size:medium;text-align:left;">
+						<tr>
+							<td style="font-weight:bold;font-size:medium;width:25%;text-align:left;"><span>Facility Name:</span></td><td style="text-align:left;"><a id="ContentPlaceHolder1_SearchLink.f+wOhUYK+xDc33e0cfsc9A==" href="javascript:__doPostBack(&#39;ctl00$ContentPlaceHolder1$SearchLink.f+wOhUYK+xDc33e0cfsc9A==&#39;,&#39;&#39;)" style="display:inline-block;width:100%;">USD 248 Early Education Center</a></td>
+						</tr>
+					</table><table runat="server" style="width:75%;font-size:medium;text-align:left;"><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Owner Name: </label> </td><td><label>USD 248</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>License Number: </label> </td><td style="text-align:left;"><label>0084192</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>City: </label> </td><td style="text-align:left;"><label>Girard</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Zip: </label> </td><td style="text-align:left;"><label>66743</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>County: </label> </td><td style="text-align:left;"><label>Crawford</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Program Type: </label> </td><td style="text-align:left;"><label>Family Child Care Home</label></td></tr><tr><td colspan="2"> <hr style="width:100%;"/> </td></tr></table><table style="width:75%;font-size:medium;text-align:left;">
+						<tr>
+							<td style="font-weight:bold;font-size:medium;width:25%;text-align:left;"><span>Facility Name:</span></td><td style="text-align:left;"><a id="ContentPlaceHolder1_SearchLink./5/hyUmZI3BXxXsUfq8SCg==" href="javascript:__doPostBack(&#39;ctl00$ContentPlaceHolder1$SearchLink./5/hyUmZI3BXxXsUfq8SCg==&#39;,&#39;&#39;)" style="display:inline-block;width:100%;">Westside Afterschool Program</a></td>
+						</tr>
+					</table><table runat="server" style="width:75%;font-size:medium;text-align:left;"><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Owner Name: </label> </td><td><label>Pittsburg Family YMCA</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>License Number: </label> </td><td style="text-align:left;"><label>0058659</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>City: </label> </td><td style="text-align:left;"><label>Pittsburg</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Zip: </label> </td><td style="text-align:left;"><label>66762</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>County: </label> </td><td style="text-align:left;"><label>Crawford</label></td></tr><tr><td style="font-weight:bold; font-size:medium; width:25%;text-align:left;"><label>Program Type: </label> </td><td style="text-align:left;"><label>School Age Program</label></td></tr><tr><td colspan="2"> <hr style="width:100%;"/> </td></tr></table><span id="ctl00_ContentPlaceHolder1_facilitiesReportData" class="RadLabel RadLabel_Windows7" style="font-size:Medium;"></span></td>
+				</tr><tr id="ContentPlaceHolder1_NavigationLinks" align="center" valign="middle">
+					<td colspan="3">
+                <br />
+                <button type="submit" name="ctl00$ContentPlaceHolder1$prevBtn" value="Previous" id="ctl00_ContentPlaceHolder1_prevBtn" class="RadButton RadButton_Windows7 rbButton rbRounded rbIconButton" style="font-size:Medium;"><span class="rbText">Previous</span><input id="ctl00_ContentPlaceHolder1_prevBtn_ClientState" name="ctl00_ContentPlaceHolder1_prevBtn_ClientState" type="hidden" /></button> &nbsp;&nbsp; 
+                                <button type="submit" name="ctl00$ContentPlaceHolder1$nextBtn" value="Next" id="ctl00_ContentPlaceHolder1_nextBtn" class="RadButton rbDisabled RadButton_Windows7 rbButton rbRounded rbIconButton" style="font-size:Medium;"><span class="rbText">Next</span><input id="ctl00_ContentPlaceHolder1_nextBtn_ClientState" name="ctl00_ContentPlaceHolder1_nextBtn_ClientState" type="hidden" /></button></td>
+				</tr><tr>
+					<td colspan="3">
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_retPageLabel" class="RadLabel RadLabel_Windows7" style="font-size:Large;">Return to </span><a id="ContentPlaceHolder1_returnHomeLink" title="Return To Search" href="javascript:__doPostBack(&#39;ctl00$ContentPlaceHolder1$returnHomeLink&#39;,&#39;&#39;)" style="font-size:Large;">Search Page</a> 
+                <br />
+                 </td>
+				</tr>
+			</table>
+         <br />
+         <br />
+         </div>
+    
+     
+             <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+            
+
+           <script type="text/javascript">
+               var coll = document.getElementsByClassName("collapsible");
+               var i;
+
+               for (i = 0; i < coll.length; i++) {
+                   coll[i].addEventListener("click", function () {
+                       this.classList.toggle("active");
+                       var content = this.nextElementSibling;
+                       if (content.style.display === "block") {
+                           content.style.display = "none";
+                       } else {
+                           content.style.display = "block";
+                       }
+                   });
+               }
+     </script>
+ 
+  
+
+                            </div>
+                                </div>
+                        
+		</div>
+	</div><div class="t-row noMargin">
+		<div id="MainFooter" class="t-col t-col-12">
+			<div class="t-row">
+				<div class="t-col t-col-12">
+					
+                                            <div>
+                                                <p class="footerLinks"><br/>
+
+                                                    <span class="whitebold"> </span>
+                                                </p>
+                                                 <p style="color: white;" class="footer">
+                                                     Kansas Office of Early Childhood<br/>915 SW Harrison Street<br/>Topeka, KS 66612
+    </p>
+                                            </div>
+                                        
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+        <style type="text/css">
+            div.RadMenu {
+                float: right;
+            }
+        </style>
+            <div class="loader"></div>
+    
+
+<script type="text/javascript">
+//<![CDATA[
+window.__TsmHiddenField = $get('RadScriptManager1_TSM');
+theForm.oldSubmit = theForm.submit;
+theForm.submit = WebForm_SaveScrollPositionSubmit;
+
+theForm.oldOnSubmit = theForm.onsubmit;
+theForm.onsubmit = WebForm_SaveScrollPositionOnSubmit;
+
+theForm.oldOnLoad = window.onload;
+window.onload = WebForm_RestoreScrollPosition;
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadWindowManager, {"_renderMode":2,"clientStateFieldID":"ctl00_ContentPlaceHolder1_SearchWindow_ClientState","formID":"form1","iconUrl":"","minimizeIconUrl":"","name":"SearchWindow","skin":"Windows7","windowControls":"[]"}, null, null, $get("ctl00_ContentPlaceHolder1_SearchWindow"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadButton, {"_accessKey":"","_hasIcon":false,"_hasImage":false,"_isClientSubmit":false,"_isImageButton":false,"_postBackReference":"","_renderMode":2,"clientStateFieldID":"ctl00_ContentPlaceHolder1_prevBtn_ClientState","commandName":"PreviousRows","confirmSettings":{},"enableAriaSupport":true,"iconData":{},"imageData":{},"text":"Previous","toggleStatesData":[],"uniqueGroupName":"","uniqueID":"ctl00$ContentPlaceHolder1$prevBtn"}, null, null, $get("ctl00_ContentPlaceHolder1_prevBtn"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadButton, {"_accessKey":"","_hasIcon":false,"_hasImage":false,"_isClientSubmit":false,"_isImageButton":false,"_postBackReference":"","_renderMode":2,"clientStateFieldID":"ctl00_ContentPlaceHolder1_nextBtn_ClientState","commandName":"NextRows","confirmSettings":{},"enableAriaSupport":true,"enabled":false,"iconData":{},"imageData":{},"text":"Next","toggleStatesData":[],"uniqueGroupName":"","uniqueID":"ctl00$ContentPlaceHolder1$nextBtn"}, null, null, $get("ctl00_ContentPlaceHolder1_nextBtn"));
+});
+//]]>
+</script>
+</form>
+
+    <div id="ctl00_rwmNewsReleaseView" style="display:none;">
+	<div id="ctl00_rwmNewsReleaseView_alerttemplate" style="display:none;">
+        <div class="rwDialog rwAlertDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+            </div>
+        </div>
+        </div><div id="ctl00_rwmNewsReleaseView_prompttemplate" style="display:none;">
+        <div class="rwDialog rwPromptDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+                <div class="rwPromptInputContainer">
+                    <script type="text/javascript">
+                        function RadWindowprompt_detectenter(id, ev, input) {
+                            if (!ev) ev = window.event;
+                            if (ev.keyCode == 13) {
+                                var but = input.parentNode.parentNode.parentNode.getElementsByTagName("button")[0];
+                                if (but) {
+                                    if (but.click) {
+                                        but.click();
+                                    }
+                                    else if (but.onclick) {
+                                        but.focus();
+                                        var click = but.onclick;
+                                        but.onclick = null;
+                                        if (click) click.call(but);
+                                    }
+                                }
+                                return false;
+                            }
+                            else return true;
+                        }
+                    </script>
+                    <input title="Enter Value" aria-label="input" onkeydown="return RadWindowprompt_detectenter('{0}', event, this);" type="text" class="rwPromptInput radPreventDecorate" value="{2}" />
+                </div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(this.parentNode.parentNode.getElementsByTagName('input')[0].value); return false;">##LOC[OK]##</button>
+                <button type="button" class="rwCancelBtn" onclick="$find('{0}').close(null); return false;">##LOC[Cancel]##</button>
+            </div>
+        </div>
+        </div><div id="ctl00_rwmNewsReleaseView_confirmtemplate" style="display:none;">
+        <div class="rwDialog rwConfirmDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+                <button type="button" class="rwCancelBtn" onclick="$find('{0}').close(false); return false;">##LOC[Cancel]##</button>
+            </div>
+        </div>
+        </div><input id="ctl00_rwmNewsReleaseView_ClientState" name="ctl00_rwmNewsReleaseView_ClientState" type="hidden" />
+</div>
+</body>
+</html>

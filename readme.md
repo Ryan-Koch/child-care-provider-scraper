@@ -117,7 +117,7 @@ The project uses pytest, so one can simply run `pytest` to go through the whole 
 | Illinois                 | [x]     | 
 | Indiana                  | [x]     | 
 | Iowa                     | [x]     | 
-| Kansas                   | [ ]     | 
+| Kansas                   | [x]     | 
 | Kentucky                 | [ ]     | 
 | Louisiana                | [ ]     | 
 | Maine                    | [ ]     | 

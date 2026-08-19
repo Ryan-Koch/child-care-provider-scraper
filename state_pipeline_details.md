@@ -88,8 +88,8 @@ Raw status values mapped to each canonical bucket (replaced in place; unmapped -
 | Canonical | Raw values |
 |---|---|
 | `active` | `A`, `Active`, `Active/Open`, `Amended permit (AP)`, `CERTIFIED`, `CONTINUOUS LICENSE`, `Certified`, `Compliance Certificate`, `Continuing - Full`, `Exempt`, `Full Permit`, `LICENSED`, `License`, `License issued (IL)`, `Licensed`, `Listed`, `Open`, `Open - Certified`, `Open - Payment Only`, `Operational`, `Original`, `Registered`, `Registration`, `Regular` |
-| `closed` | `CLOSED`, `Closed`, `INACTIVE`, `NOT LICENSED`, `Revoked`, `Revoked/Not Renewed`, `Surrendered under Investigation (SI)`, `Surrendered with Cause (SC)`, `Temporary Closure` |
-| `enforcement` | `App Withdrawn`, `Denied`, `ENFORCEMENT`, `ON PROBATION`, `Open - Enforcement Pending`, `Open – Pending Legal Action Outcome`, `Pending Revocation`, `Pending Revocation and Denial`, `Pending revocation (PR)`, `Refuse to Renew (RR)`, `RevocationPending`, `Revoke License (RL)`, `Suspended`, `Suspended - Emergency` |
+| `closed` | `CLOSED`, `Closed`, `INACTIVE`, `License Expired`, `NOT LICENSED`, `Revoked`, `Revoked/Not Renewed`, `Surrendered under Investigation (SI)`, `Surrendered with Cause (SC)`, `Temporary Closure` |
+| `enforcement` | `App Withdrawn`, `Denied`, `ENFORCEMENT`, `License Suspended`, `ON PROBATION`, `Open - Enforcement Pending`, `Open – Pending Legal Action Outcome`, `Pending Revocation`, `Pending Revocation and Denial`, `Pending revocation (PR)`, `Refuse to Renew (RR)`, `RevocationPending`, `Revoke License (RL)`, `Suspended`, `Suspended - Emergency` |
 | `pending` | `PENDING`, `Pending`, `Pending - Certified`, `Pending address change application (AD)`, `Pending renewal application (RN)`, `Pending/Re-license` |
 | `provisional` | `Initial - Full`, `Initial Permit`, `PROVISIONAL LICENSE`, `Permit issued (IP)`, `Provisional`, `Provisional 1`, `Provisional 2`, `Provisional 3`, `Renewed Initial` |
 
@@ -99,12 +99,12 @@ Raw `provider_type` values mapped to each canonical category (additive; unmapped
 
 | Canonical | Raw provider_type values |
 |---|---|
-| `center` | `CDC (Child Development Center)`, `CTR`, `Center`, `Center Based Child Care and Preschool Program`, `Center Based Child Care and Preschool Program - Non-Recurring`, `Certified Pre-School`, `Child Care`, `Child Care Center`, `Child Care Commercial Preschool`, `Child Care Facility`, `Child Care Hourly Center`, `Child Care Learning Center`, `Child Care Registered Center Based Program`, `Child Day Center`, `DAY CARE CENTER`, `DAY CARE CENTER - ILL CENTER`, `DCC`, `DOE`, `Department of Defense`, `GA Early Head Start`, `GA Head Start`, `HHS Four-Year Old Program`, `HHS-Licensed Child Care Center`, `HHS-Licensed Group Child Care Facility`, `HHS-Licensed Preschool`, `Head Start Site`, `INFANT CENTER`, `Infant and Toddler Center`, `LOC`, `Licensed Center`, `Licensed Child Care Center`, `Licensed Group`, `Licensed School-Based Preschool`, `Local School System`, `Outdoor Nature Based Program`, `Preschool Center`, `Preschool Program`, `Public School`, `SDCC`, `SINGLE LICENSED CHILD CARE CENTER`, `Short Term Child Day Center`, `Small Employer Based Child Care`, `University` |
+| `center` | `CDC (Child Development Center)`, `CTR`, `Center`, `Center Based Child Care and Preschool Program`, `Center Based Child Care and Preschool Program - Non-Recurring`, `Certified Pre-School`, `Child Care`, `Child Care Center`, `Child Care Commercial Preschool`, `Child Care Facility`, `Child Care Hourly Center`, `Child Care Learning Center`, `Child Care Registered Center Based Program`, `Child Day Center`, `DAY CARE CENTER`, `DAY CARE CENTER - ILL CENTER`, `DCC`, `DOE`, `Department of Defense`, `GA Early Head Start`, `GA Head Start`, `HHS Four-Year Old Program`, `HHS-Licensed Child Care Center`, `HHS-Licensed Group Child Care Facility`, `HHS-Licensed Preschool`, `Head Start Child Care Center`, `Head Start Site`, `INFANT CENTER`, `Infant and Toddler Center`, `LOC`, `Licensed Center`, `Licensed Child Care Center`, `Licensed Group`, `Licensed School-Based Preschool`, `Local School System`, `Outdoor Nature Based Program`, `Preschool`, `Preschool Center`, `Preschool Program`, `Public School`, `SDCC`, `SINGLE LICENSED CHILD CARE CENTER`, `Short Term Child Day Center`, `Small Employer Based Child Care`, `University` |
 | `exempt` | `CCAP Certified/Accredited`, `Child Care Exempt Program`, `DWS Approved, Exempt Center`, `DWS Approved, Exempt School Age Program`, `Exempt`, `Exempt Child Care Center`, `Exempt Only`, `Exempt from Licensing`, `License Exempt`, `Religious Exempt Child Day Center`, `Self-Declared Provider`, `Unlicensed CCDF Certified Center/School`, `Unlicensed CCDF Certified Home`, `Unlicensed Registered Ministry`, `Voluntary Registration` |
 | `family_home` | `CDH (Child Development Home)`, `Child Care Licensed Family`, `Child Care Residential Certificate`, `FAMILY DAY CARE HOME`, `FCCH`, `FDC`, `Family`, `Family Child Care`, `Family Child Care Home`, `Family Child Care Learning Home`, `Family Day Care`, `Family Day Care Home`, `Family Day Home`, `Family Home`, `Family Home Child Care`, `HHS-Licensed Family Child Care`, `LFCCH`, `Large Family Child Care Home`, `Licensed Child-Care Home`, `Licensed Family`, `Licensed Family Child Care Home`, `Licensed Family Home`, `Licensed Home`, `Licensed Type A Family Child Care Home`, `Licensed Type B Family Child Care Home`, `Listed Family Home`, `Non-Registered Child Care Home`, `Provisional Certified`, `Registered Child Development Home A`, `Registered Child Development Home B`, `Registered Child Development Home C`, `Registered Child Development Home C1`, `Registered Child-Care Home`, `Registered Family Child Care Home`, `Registered Home`, `Regular Certified`, `System Approved FDH`, `Unlicensed/Unregistered FDH` |
 | `group_home` | `CDX (Child Development Home Expanded)`, `GFDC`, `Group`, `Group Child Care Home`, `Group Home`, `Group Home Child Care`, `HHS-Licensed Group Child Care Home`, `Licensed Group Home` |
-| `other` | `(FCC)Nanny Individual`, `Certified In Home Aide`, `Family, Friends & Neighbor (FFN) Providers`, `HHS-Licensed Multiple License`, `Illegally Unlicensed`, `In-Home`, `Informal`, `Licensed Camp`, `Neighborhood Youth Organization`, `Other`, `Registered Day Camp or Approved Day Camp`, `Resident Camp`, `Substitute Placement Agency`, `Summer Day Camp`, `Tribal Subsidy Recipient` |
-| `school_age` | `Afterschool Child Care Program`, `Child Care Out of School Time Program`, `HHS-Licensed School Age Child Care`, `Licensed School-Age Child Care`, `SACC`, `SCHOOL AGE DAY CARE CENTER`, `School Age Program`, `School-age Center`, `School-age Program` |
+| `other` | `(FCC)Nanny Individual`, `Certified In Home Aide`, `Family, Friends & Neighbor (FFN) Providers`, `HHS-Licensed Multiple License`, `Illegally Unlicensed`, `In-Home`, `Informal`, `Licensed Camp`, `Neighborhood Youth Organization`, `Other`, `Outdoor Summer Camp`, `Registered Day Camp or Approved Day Camp`, `Resident Camp`, `Substitute Placement Agency`, `Summer Day Camp`, `Tribal Subsidy Recipient` |
+| `school_age` | `Afterschool Child Care Program`, `Child Care Out of School Time Program`, `HHS-Licensed School Age Child Care`, `Licensed School-Age Child Care`, `SACC`, `SCHOOL AGE DAY CARE CENTER`, `School Age Program`, `School-age Center`, `School-age Program`, `Youth Development Program` |
 
 ## Per-state fields
 
@@ -343,6 +343,25 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `in_rule_description` -> pass-through
 - `in_schedule` -> pass-through
 - `in_temporarily_closed_message` -> pass-through
+
+### Kansas (KS)
+
+- `ks_address_suppressed` -> pass-through
+- `ks_facility_response` -> pass-through
+- `ks_facility_token` -> pass-through
+- `ks_findings` -> pass-through
+- `ks_findings_count` -> pass-through
+- `ks_listing_program_type` -> pass-through
+- `ks_nosf_id` -> pass-through
+- `ks_order_final_status` -> pass-through
+- `ks_order_number` -> pass-through
+- `ks_order_reason` -> pass-through
+- `ks_order_type` -> pass-through
+- `ks_regulations_reviewed` -> pass-through
+- `ks_survey_id` -> pass-through
+- `ks_survey_number` -> pass-through
+- `ks_survey_reason` -> pass-through
+- `ks_survey_template_url` -> pass-through
 
 ### Maryland (MD)
 

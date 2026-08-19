@@ -1,0 +1,770 @@
+
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-us">
+<head><meta http-equiv="X-UA-Compatible" content="IE=edge" /><title>
+	Kansas Department of Health and Environment - Child Care Licensing Program Online Facility Compliance Search
+</title><link rel="stylesheet" href="StyleSheet/Styles.css" /><link rel="stylesheet" type="text/css" href="StyleSheet/MasterStyle.css" /><meta name="format-detection" content="telephone=no" />
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.3.1.min.js"></script>
+
+    
+    <script type="text/javascript">
+        function pageLoad(sender, eventArgs) {
+            var buttons = document.querySelectorAll('.p-icon');
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].setAttribute('aria-label', 'GridAccessibleicon' + i);
+            }
+        }
+        function closeWindow() {
+            window.close();
+        }
+    </script>
+    <!-- RECAPTCHA INFO -->
+    <!-- RECAPTCHA INFO  -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6Ld34-kUAAAAAAADgUngPcyDRZP4ilXQSa5-JpWN"></script>
+    <script type="text/javascript">
+        grecaptcha.ready(function () {
+            grecaptcha.execute('6Ld34-kUAAAAAAADgUngPcyDRZP4ilXQSa5-JpWN', { action: 'findingsview' }).then(function (token) {
+              document.getElementById('ContentPlaceHolder1_gre_captcha_resp_value').value = token;
+          });
+      });
+    </script>
+    <script type="text/javascript">
+        function openWindow() {
+            var wnd = $find("ctl00_ContentPlaceHolder1_ExpireWindow");
+            wnd.show();
+        }
+    </script>
+    <style>
+        .LoadLinks {
+        }
+
+        .RadWindow .rwCommandButton {
+            padding: 2px;
+            position: absolute;
+            border: 1px solid transparent;
+            border-radius: 2px;
+            line-height: 1;
+            display: inline-block;
+            text-decoration: none;
+            vertical-align: top;
+            visibility: hidden;
+        }
+        /* Style the button that is used to open and close the collapsible content */
+        .collapsible {
+            text-decoration: none;
+        }
+
+            /* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+            .active, .collapsible:hover {
+                background-color: #ccc;
+                /* Style the collapsible content. Note: hidden by default */
+            }
+
+            .collapsible:after {
+                content: '\002B';
+                color: -webkit-link;
+                font-weight: bold;
+                padding-left: 15px;
+                margin-left: 5px;
+            }
+
+        .active:after {
+            content: "\2212";
+        }
+
+        .content {
+            padding: 0 18px;
+            display: none;
+            overflow: hidden;
+            background-color: #f1f1f1;
+        }
+    </style>
+
+    <style>
+       .pagewrapper {
+            padding-left: 10px;
+        }
+        #homesidewrapper { float:right; margin:-20px 0 0 0; padding:0; width:218px; border:#1b4707 solid 1px; min-height:842px; }
+        .SideMenu {
+            border: 1px black solid;
+        }
+        .SideMenu h1
+        {
+            padding: 4px 15px;
+            font-size: 12pt;
+            margin: 0;
+            color: #ffffff;
+            font-weight: bold;
+            background: #1b4707; /* For browsers that do not support gradients */
+            background: -webkit-linear-gradient(#1b4707, #58983c ); /* For Safari 5.1 to 6.0 */
+            background: -o-linear-gradient(#1b4707, #58983c); /* For Opera 11.1 to 12.0 */
+            background: -moz-linear-gradient(#1b4707, #58983c); /* For Firefox 3.6 to 15 */
+            background: linear-gradient(#1b4707, #58983c); /* Standard syntax */
+            border-left: 1px black solid;
+            border-top: 1px black solid;
+            border-right: 1px black solid;
+        }
+        .KeapMenuList {
+            margin: 0 5px;
+            padding: 2px 0;
+            border-bottom: #002569 dotted 1px;
+            font-size: 12pt;
+        }
+        .RadMenu_Windows7 .rmRootGroup 
+        {
+            background-color: transparent !important;
+        }
+        .RadDropDownList_Windows7, .RadComboBoxDropDown_Windows7, .RadComboBox, .RadButton
+        {
+            font-size: 12pt !important;
+        }
+        .smSiteMap{
+            margin-left: 15px;
+        }
+        .loader
+        {
+            position:fixed;
+            left:0;top:0;
+            width:100%;
+            height:100%;z-index:9999;
+            background:url(images/loader.gif) 50% 50% no-repeat #000;
+            opacity:0.55;
+        }
+
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+        .header-container {
+            position: relative;
+            text-align: center;
+            color: white;
+        }
+
+        .header-image {
+            width: 100%;
+            height: auto;
+        }
+        .dev-text{                  
+            position: absolute;
+            top: 50%;
+            left: 36%;
+            transform: translate(-10%, -35%);
+            font-size: 74px;
+            font-weight: bold;
+            color: red;
+            white-space: nowrap;
+        }
+        .header-text {
+            position: absolute;
+            top: 76%;
+            left: 78%;
+            transform: translate(-30%, -35%);
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.8); /* Add shadow  Horizontal offsent, vertical offset, and blur radius  the fourth parameter on the rgba is the alpha value for transparency*/
+            white-space: nowrap;
+        }
+
+        /* Media queries for different screen sizes */
+        @media (max-width: 1200px) {
+      .header-text {
+                font-size: 2vw;
+            }
+
+        }
+
+        @media (max-width: 992px) {
+         .header-text {
+                font-size: 1.9vw;
+            }
+
+        }
+
+        @media (max-width: 768px) {
+        .header-text {
+                font-size: 1.9vw;
+            }
+        }
+    </style>
+     <script type="text/javascript">
+        $(window).on(function () {
+            $(".loader").fadeOut("slow");
+        });
+        ! function (a) {
+            jQuery(window).bind("unload", function () { }), a(document).ready(function () {
+                a(".loader").hide(), a('a:not([href^="#"])').on("click", function () {
+                    "" != a(this).attr("href") && a(".loader").show(), a(this).is('[href*="Download"]') && a(".loader").hide()
+                }), a("a:not([href])").click(function () {
+                    a(".loader").hide()
+                }), a('a[href*="javascript:void(0)"]').click(function () {
+                    a(".loader").hide()
+                }), a(".rcRefreshImage").click(function () {
+                    a(".loader").hide()
+                }),
+                 a(".ButtonLoader").click(function () {
+                     a(".loader").hide()
+                 }),
+                a(".LoadLinks").click(function () {
+                    a(".loader").hide()
+                }),
+                a(".blackfooter").click(function () {
+                    a(".loader").hide()
+                }),
+                a(".export").click(function () {
+                    setTimeout(function () {
+                        a(".loader").fadeOut("fast")
+                    }, 1e3)
+                })
+            })
+        }(jQuery);
+    </script>
+
+<link href="/OIDS/WebResource.axd?d=rhRRvYQTYv6mNRHqzCKJ7o7y73RLNZIR2WM2bZmV3NOpZXbkFX_pQo7WITYFy8kWPeNnxvlZ2oA39hRBqjEtbD7Wjc-oRsty3isPayQrWEtSv3lwIe_k0IK9rbkm5f65aO_1xRF0F8xm9m4iPhFPbw2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=VdPoLqp1pEU6N0-IfFplZFPsvpNP2QMvQAfkmBAM_Pdtb0wlWRHcPYQ7myJlzcByPIcB4ZxKBjgfewgj7i8H4SI3RPQUaJwfADJiLOj_xOHTc_Cua43qe66za083H3amoWnLTHTQhgBSwwPUSKLLfA2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=6d0ORl_GDQ8il0vfaye5YWX2_LbBc9WDXzhSAjNq2nPI9YBDKnTtgcaef8H-mfLD0bg9b7mwUzRe3Bz-iSuagQROl2dZrGmFJZsMsQFw0S68S42aqYTkiLLg95hQ4XhCpft9AbmPaC-3IZmcl2CRFg2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=U4fmqBE__aLMLwH7DJyJBBCn7ewQJ-V--4xb3kej-kxqaxIrRSs3e7JmM7vmsRHO48UCSBg7d0417U68PkmruRLc4Mtc2G1WkltxYhn98I-Y0pcR9eQw4WlU-7Rn-bR1iWUQGJqbUQLKkvG7QDMcXA2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=kDkw17-uEIms1kNrL30a2qUGjB4Wnmar3ksEKyzR-nUqtKOTjMk9sYTHUHbngVpPmh9XupM-aG6_wuUgp3skwu5syw3QijJgRYapt_6H1zpFCNplzovRrFfc1lsju_hve2C-djW7iw95ldZSKKFgILDVRukdDWnpuftvFonhTN01&amp;t=639076038940000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=lkmN1N_d-VFp8mPAmEJ_Q0FfBMBU_0Q9xRatYl0tVe6XWalN_Cgy2Kj-9y-R479FVmDz4v5ZAo7MmDXmi_yORyhizc9Ce8vWLN6CJTyhX8lCzERN_C2qzs_0icWGdAXS0&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=q7YOl4-apqfV5ZJtHLhy-AG6fbIzdsn6eZ4uSXDjei_nZMstmhNcwQvuGInJ4YL-R1VObBqzJ1omQsD2evacIQ_pOaUz7EaV9ocKyhooaRMdivVE2KrEdjiqR32mNBCDpkc0YwFRmDOvyjTXtuN-xaDiM7SxILx08Wksw_Srqxs1&amp;t=639076038940000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=qpDogBCh8B2zFH7Wt5kgoJQW9leSvvwPZBSJ6MV4Hdfu7fqrSBxZhxdDzE-95dlq_JYLBD2vDPP0Y5g29fzI-rKhvOw2h_VNDiaO5vpxC3oUgO0MGFGe4WN0__dQ49HFR13Maq1goRAyH96D4W-tpw2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=t6lEicJDdwQCDCtDa-HaWJqxZMbiEKnKSRHbyRXwnng2CFgyy_SjOnjX0b51Pqj3LxsBC26ZwmyCH3n0BdCPczAXDTohmh2ghgI_jrxYgXOgPXqrceZ4X4J1QgSqc1pvv48cT7fKNOH_3I8tRBNDLR1HOiEt7PnnSRcmmgPPVIk1&amp;t=639076038940000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=20hJFSY0zhL663XKQtyuk8zUJM4ZFHjoB87g2TXkAUKv7lvF_eRHVJJrGO42ua5YOIG6A7LFhLSFKzsy5iVt5cSHYTQty_W54HnAKwskUIEGR88kuYNTwgYmhQ9UQgb2GXhReeHwshE8sSV-6S6u0Q2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=MdXEAQktXF5LnI0JAc7GQQo9mQMAPFtj4Ts6tuJ8i251R8yNDyPB0b0aO75k9IUAXhmBM8qw2s53us3IBw1Gu4qPiWNOPFesvjgDaFcxXCDJqhX5fp1p1D8heTTu_lY2XqzaqS6W8zP1SqiL9AQtrA2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=IG578N0p6m7eayprz5HnNYrGyXKOOQfgpEqWHy6jrbLOhYX-1mI4LXmpgOoAtqeJ1cCwDM0y3pV-1bEDTmitM9WlMOpK-3fD34z3EMcUoqnvb9vEPiXWeblB2kPhDWIpvyH87Frub5F_CtoV9S37ax3ktTfDvd8UYVA_BFhg0Q41&amp;t=639076038940000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /></head>
+    
+<body>
+    <form method="post" action="./OIDS_ViewFacility.aspx?facilitysearch=0lMMcLiMgS1%2ftH7gYmeBEnYk6XMNY3c5XAeiO%2bwD4Uj%2bwPClOD2qQ6wAKSy9uGvU4RijEgMxlBw%3d" id="form1">
+<div class="aspNetHidden">
+<input type="hidden" name="RadScriptManager1_TSM" id="RadScriptManager1_TSM" value="" />
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="7FEzZVu2RolY0b0j4tYCVliMkpiwHAjY1frC3E69bBXgbABadCTnZffCv18ncjwTehpeVl3CTNJWgD8NxIKEpPv4EaSULnGy5KBiil4WyRs0Q9y6D4Q4sGjupqklUHbwxdIcsey6mWcZfmoaPBAqyBANKrKJbBLPDpLwHLgC+GoTi52FCsikBoaAbq2VYoQ+Xf0KMBASsQ1oarTi+7y66wvcSieZYsMorzOomHLtirJtNeTI9GAJ1QE1Ax/GlwOCKA/61XorLJczj07E3VaqR4FPo+PYq6y1rlpB/acANmIWgY6BBHRNlFyA3x01Zq7yIDAkfEDnyxUXhe6OKw1pda8DMQzmEPKPgJgjoSzYdQamnMpb1fBgraX1163583b/3BFLLhv5woTUN2G+nwy+Mgi6UCZOWGPfg+o8nPUAEO/XwAOG/npRzfEgyXQcQUKraou54+Yc/EcTmpEygzPDQaps4LapK+F6zX+5P1oNwcfQs0sWluFhR5VY84WhxYEH2XMw1qovGnMgj5Urd781gTRqEoWoBWoWtwkDLvVwh68on1/5wFBu0kAfgAIaJb6yW+E4VXkvEUkNbYauIjHI/xZ7RK6m1/8o0l7bAjviP2rYh8P9ye2V8pEQ/pAIZUNcaWqlO2EVf/DVonNSOaAPlQIYshmCe+33+amyBnwBfw8E3YBg6L9JUaKk9SDYuSyn3zkkIT3tJyNnSe9VZO6bC8xzQSqaNFzrHdv3fCQATPEcwbytkZb1QzowjWitVC8OarbJ1mbUkL2ynoUzQTbvjfWgzRAmGyrGuzR5J4J+XF0koLJvlhhsqsJ1tOv8JDgKHa0fQgSOaapaY6t9UGe8BG7YTDFIqYo67d4fwbo9L59t9ucKDy/7SF8Z8GRf/hTmcBpy32abMV5hAtO475FmU7PwxcmTi3rHUPfc1OewiFNffMbyD8IDbuUoFUsbqFjr5LuHYCAbLnney3SCQ85bs+2R61e9axWgOEhoO6Ayvic2S5y5WQSVMQixLzCV+tz2/+qmgsVpjOTtwhxnunqAYQzaIirDUE3xkcT+Y+TFwv2NItaavDQ+XniOgwMVmeMKL3vnM93zCkS81M3oe5yT+llfWqkHt365nUpNz0OfFbGsYqbvjbg4ijB+06+CnPy202Jthoh8ttqOiIWaTdq36rHYRH8MCd6T+hOdQ6aR+JhSVxpckUXvWlCC8eAyV9Tru3OiIxnQFP/7SDtS67yZ/EdeEiZoB3MjnhgKMs/VKGB03W7oVlr/03XLuui2mPZbrhlYpcb2fuW4a58N0fWomQXRFqmRrddOMxUuAD7y5VPGOjm98rsX1Z3NYnHMIse1+BNjgdgekAdOnR9t1zLrAAR7xFL2yUDOLK/FSqNNsWLbIYeP1IiJDWbSRruEonYP2BS5IoC3m5eV2GRHY9ozNWTRnZ6iAmKKIrVnJKFOPfs2wybdRClZIxjDi+MFky3wIxqYv0vYjm7eX3j1sVJD65opGjOSiicykf2tWzPZUbnZrX4rwga4P9dwLuhKX/0ZMszu5YNUyuWDKorJPvoDA15POsGnALi0ClhupVFcCXR4Nma/vsYicE8/hawUpS2quuEgTJ4ML01gzVnizPDulc2fzlYGG5o4m+BaX5ef+PbO/eOTc6166YQGCoLJLJT2vtOn5SRplVZpBqaAlCZhZVhhrY7LgLWzm7Wx0JpaA6tQba9k9Yf8Y1v6XjiYxkhvdu4xp13swdoB38/Gb19/v1aFPUJOW2X3/fgpEI7b5KduEX1FVI1m9UsS9hmTem5YUtOBz+Rew5dcbtsSPVTpY3CyKHpExBS9YFbnCtzSokgCZHycdsY2C7sHrn79d/lVkFucgr5jn93OOCiTu4ot4a0LKEgfwZr7u6XgNdNqYKZvU+0Z900jN3BTdqbyMIKkT5LuayocGZzcanJTlG7sqz2Wk0KHNDUfxF2NDPF1Ao0vo/8+AJ3gNB6we6xNb6LOZwaFy6L8LiKO4ocKHDN2MkB+Hx6dF8ZnlhhTWpw9hHr+E2iACoPCQuIDiEsfsNg3Y0V95w89Gg/BxW6/Fl7ohwPOzPvBxD0agS/NVT58DVtqkvXn6QPZIY96IWBtynFC91JTMZGMBSomNBUApY4Pi7nQj/YiKpcf4gGbrGNvjzj+iZN1wqBv5VgZ8hLpQiGMC09eNfjoCW3Wlm8dC/8PJsFzgOMWZ77iBeM/n9OCJMfoKgwqCv2Q7OqyMkVn2ASK5wvymY0tCRZ/u64+9Rgac+Pn4v7PM0f3gNM8f2VPd0xb3MAWsx8yP37iJLuinArkHcHLZTLf6i+Z+FVA+L5XKRQ9LYqGqUt//qVt6T5YxLfrOn/7iY/XGWwaToZNJWBIW1r4zJZTm6xmzX6k8zmIeY326+5lAsVB3VesDicJmNg1PtnDQLOdN4ZQlbtU8nKl+RbO7/XTDq+qTtY5W9AN5k4K6mLFjowsF/esivEG8omiq5+2YpzDU57h640se0c+28BWc2Mcj8XV5hfzyh6Uhj/6rNuzshElmHdAQpssn9QoElkFl/HJmTLB7Tob/yLDZTvp8EFnigpnYzCG36ckjwCPYr0jwYveZAMXj0smBzmiIMLJygs1JWaKiM6OdD1/oJTlMTKB5qkgPXfpuz+XnCXA4626g92E3YnAfABAKnYuB5M0HO8lgzbZRdnt0mYDBRDKYHBRuK/6+MZaNxUY6datLZ3QbAbzT/TL1lI2EnboliXpLxPtGhKzE601gkA5TUbCW6EdZf+d2mV6k/8f5y3qnCHeDDptVZuE5apMUVq+XTr532vntl67d8zx7+A4EG9Pi5my6/IZoI3WUfgjosVlFnnqucsaxMEINd71siMwSsBgxonMFgxdIYbuSgtT9y9nKxsmzs7MieBBEUAg3OmwA7V4izOcHpr/RPlov8186tAmEqL/BPZWv8DHnVjr4mZfHQqcnP8CUfgmhrdP/QQCO372kddA0gKAw5fUfULmr2uzGyZk87GetAc/JI7hgibOHAwsTmLCHc6oD9Sz7Ho5fXtjsiWdkYYQVMOPGzkp6Sp8Q6AhDqCDNRlodnHVGy+rIZeFGS4lfhKk+ho0QG89rGim/Unc1BaLlR5k8V4QF3AW5cDTda2JxkdBiBdulg1QAo9ZpfTIwY9V7adnWtcNJ+43JN2Doaz9sKa9OgGPjrY2w/kBNhaDXhgifJkaVR9jbjpAlasvJJQfZ8NIt99ciBmkAm5fzatsZCWQKcFc2IllAaUkVgFTyDTQZfhDhrjQ4aGgdhSHKc+cNUaYTAbhEtodebnlVMld16qAenVKhFGsQ5rwpTFdFpRa1VvHzz0J/wbUDHDB6VBOfXv6Om196OBNonhNx6TvBifsyRMAzSirpGcGnYx7e9tsA7zq2Go2EF3pyhTwVI+rR09wnLlFYkhJ9UwFtJz+VDS8R6fmxlSRIyx7KVg1SvCHz7QCBoOHukNZq9b9Rctk0VaKQ1uF3YSMoJuJp6ovbsZTlz8BJ6USsm6/TQsvJqppxME6/sswr5M8iroUFg9GQ2PccCBj90HSo+DIHQOdoIQNEic03kgcBPmUJBvpn91Fa0HAbqp5T2QJBd9g4oi8xuS28RbqjX5DNO+G0uVxWUJ2jGo7VMdB5jgXYIt503liYkeg8E8eDToCG5M1q268c9/BpORTMok+xBd2nCkU8t8AQzioByMaEBuEx8BJmWr7Ajihz6PahvhRMdp64IAgbsh0aSOVEZaXDl2nheMU2MI1t45DfXsx4X7ZwzgWx9ZohpRnH10ecOrygONw4ywP++6QiEHI7XV/91uyOLvlN84jE5BmomxK3i0Ac1XEzeie1wQlq11Zcx2JA7XIfS5tOF69GBb6shYNNgl9yTGC5dMKAIIqplzDTGqrwjlsEljGS6OfDK9Fx3OHvcTvN71/X+NwUf9Ev82a4BJYhiCe9l7N356gW0CpPAW+9is6M44HJ062Ovw5lnpqpJnD/RDeXNsLoHgVzKHb1XtpwjNB2Q6v3fzsNtTpOpslSsp4lY3gsRecaiLlrUNoXY5Iy/oYCTKQ1ZFDONAO9jRu+y2i6y7JD6i+S+qwEB15cr0Ozw0Jk5brAjSae91Eoi4925bAcabEMQk08h6Ikge5UuaMd535r3lL6KpslKD5z2wrGYtFXlH3cbbrXTeLztplbjh467eQwwKNPknstYSVnJNZ03tPI0gCBs5cejwxtQO4yVOzx+952ebjRRUzDDKnUYesuGGIPUek1rQRud6kDTa1+/R5G+cZFhroLNDIcq9Gqh/rk/yvJlRzbYkhmY65zvy6faK/i2shVfvmuJXat7e8JUlEyoSpVTZpQVMW2wQHzu3IT8Gp36CteXv/Q1lwkPAlG4SotHr4XMRmRVjkiK40WqzfDh5sVVpR27Fv60aT1d5LBfgvWc9lmIHYR/p3PRkmcxO3lA683qWhlzX4yekOahra+uPzdX4I5+RL76lboYRxAgratKloFw9n2r/YqJbHg8CUnF5bk29cEf4K9wCaSRJ++ddLdQ4AfPq+oDYoOZ9lJx29z8T0ew9WpLvVzDFFPIG/VU4dO/GJNoXHXzDhXfZZDPzaYn1mHuZeczyGDoVFGfOGReQEMR711eZbuxHLyJoAbJSKnnXpuB9pF+dYU/LL3CYK9O/6fend+9fM9LW6Jz8tGfeewsXN4pLevmgSSWtbZcRUMS490i+1h8eKEYFuqy9LeSkA0/6WdKlB4N4xdZWJPZnUO8TiZymAka57kzi/oLGlrJuNl3pdJxmNDpRGFWkYm5Icr3sYSX6o9O0WftXqEiP126G5mPwTi1W0zm3YduXmb5zSrCIopKWwghpSxJJZ1k72gl1i+a2fBFu4DX/RTPhOthe30DKvcwwtBELaUuubsjA2+A3HYdsR0vAda71HQ5bWPrxU5ba/rhUcnTVK4dWQruAbZncQBiTPBDD/+UWdtkQKlGLNRF1jS0QP/IrMRjxNu0eayj1gBJLIkHIQsjY7gvV/wPly1YSf3jrtjKmSCzy+vEkGaTWqMT+WsQ0XfM6a1oIN92cqZ0POxHfDzAABv0QAO17jHGGhiH7HhXDfqBdSx/g4suXC+tGgnRI5dMU3YDrHSFeVT0Y7tQvbSBQ69x4oL44IilCo+fUAqaa/QuJUU590NsuGSJEQj7swVXXvOcW9lN1rPWY71S5DeHWaSXwMc0nOmSZrwqB3/cKh9LNJNJAzp7J7b/FXDhgbGj8DwSieMtJgdvQGuoA6KzKSGbOtKXFbhYkg+9LmJOKPVS87DEmdoiNcNgM3eKzovZM1mngsPFz3d6SKPq3WEEe4AmECqvBgKlx1tDtcypZ/M4cXPMhgtu/rC+E4oWbD7ai0DJBm/R30fG44jR9r7jPgolVC5YcDolpWm3ME27eLkdbh/i1iTufZHNsEb5yYq+My/1886FWd2UdRY9PK1sVI/cgHiaIyASYS9P4vzYogUJg8Zhxyrl41SMXm6jzd9XGVt90QBva8ELsbh3sh6Pry0/CPi6NpUfMcAoBHeWohU9Ylu20Sc4nh4JQwN/ip+k6DT16vBE+vVvsgnNCLLCXZQiH/2HMGBiNxt7Z/kp2bVwe8wcoIVy9SnhxL7FpdlCkHuk1G1ClZREEwF0fyvWjMUnr0pqTpljReZoln1KsddKha+uZj1icOKxFTeIO3N0mcZ6K3Udqf85v3wOiwVjuZpNSOmtLKhFHCJwrM+PbYZZhpz9q1YqGpG6TE5MnaglwYRtI3t0fhmTeDmb/jcQmmEHdZruNUThSE+vIaiTV0vcNdIK8mmgRlbcEJFJbdrxtjV5/dcvzgAfHx3m8FGF2LvuZHUQrAp3JS+UXm/ATYm0fGxZtgZFcH8ParEfRu8b44ybxzkeSi31AHUd9qVTUM6Uw1FykRlvIFwH9OO9eEDoW3yESB/2A3oLK/M8RGApbZYEXsVQSbk6XK6dApRlrFz36/kUs1S4KS1MY8WIuCbmKQ8pfcnUkzqsw9lQN/Q4h3ZnZB4BnAiBr808fbGEXzaqoIYCFp3y5lefSe2X91sYnpzBmsGhADaHo6yhCE+yp7yExQUovcz/vEsfk4AsxQhYXjv0iFnMV1gFm2gq4WeWqVAXX+YZgkiUl508ZLSLk5z/GCmqbhr21NJowv5hXYxq/5+gh/HL3K9rkkG81qw3Ps43BMlTsVJ1CgitcOEV8we55bswYa3Rnw/ZCOEm6SlNZCiUJ9nePm27XseP+Gi+gRz4PfcAh1sc0XaWENeWh4Z7fdd+9jh0ksXt52D4LBsJVzX34JUL35tE1D0WwUsaWUizV1JokDJAnrIhf4ALSz2X8Vnhe5lF2K3NfoTd6uZnrCwcyfXfHFayd6aR8JVjKBl76GmIUy4V0SnZRKcfCZ72vGXhzJFHqZnfucSKB5OsFSFBWsKB1lKVkrQ0JWdz5zzBkWusdi8fGWsbbWsn4FkSIcKA1A6aMLEUndog+Qah8TrzBIYZXk3i8J5HWPkz+BT18XEXqlojOPpkwYc5w5NujlIxLBSAtcjn0ahdItTe9vyWg69CDDE/rtwiuE42p+0+fTLcUKurlWLkFNVE81DJPz2+GOMl0TL+1rzNlxyctA19hQO8tlr/Bw3ePBka4cxJlImFAL05tCzOwsUeiaSD0eBTIZZf7dJZrNzlGS7gi7JjVTvNG7dxL4QuxZhMZCL4m5P78zzy6tEwSUHHQlapjBXvp2EWxfeS6+w6TMSvx8mX5LnOt2TacoMIrBQHIrRh14ngVR9F0e8Q9qjO8pwR6PeuAwO6yIDyDP3nANgIlzyEfsVlXWHS9YEYRJXZmPP2Ur3+qEYjRIuWjTFn2F6uVvPIenSZ1TqHJlcHC9GpdNp/FCYifkjzC+fkny+kiw+ZzLr5Vo84z4sULQilHyRDhqW7DjdBqbHuGoef1yRpYptFSwcpHF73OYxgrDXcsUdKdRLYUjFTCgs48Br9vVDAwfXbo4PqAOE05oIZbjfm/I1DWPdUQ4YymjZYlZb/447tBB9lE3rQ8qc7ojA/STOgJClQqlicvY++8EdkeytM8bf12e2Pdgizn4t6cHH4JkJGKp/iZPrrMTe/pstWbJEPHPXjhvEfQcTMtrahuMQBNjfzvKD2E4LXKUAXjNod4vS8Wr9qc1Xml4bAk3Mm/NYNfIxBtPVctbNvqFH0LYUH6brlbfCHMPtnisRRdqEHdSM4NpFipmri3KbMgWGeOMvloDDPt5TmE22WyVE+y6BxAfOS7LPLCrNXSJOrmj07MoHNFMWTJO8O/tTDI65hmSN42zopaBq4/9ck6X8p4dlQnOvxDcnSCZGHkgoz6vlKgKL2k8kwgPM2mJGlLyDBJxQlkrfDjckQS+n+E6ff7Q15JFWfxchfqaFpNe1XIkIL5WqYzJ2eSrsN+4wPpRHNVJrggSCJ5NwmlW2KSucggGDb/1HjydTVKUy8qrm6/ZecHV2+ExOvqn4mdxAVuVzkS2JtGcbE6yiNs3ZzEQD5dvWDVfzQaVixRA9MNobL6XmbwQT+io7dNfMiFd6sGxe1k3hjYZ9M7TYiQg93uYT99nLOBuYKOqS5CtU2wXeO7KURoSBK2Po/VfGV4fEZJdcMuUdXxPe11mw6SQvs4UmY010UVQOMgAmw2Pkin+oaQXMzArjdYC94wqOX6HgDn7gr9StOx4SyG+YDWTAxuoBTF/By+zozkq84iEhBkIxRB3HU8idRl1FcYxHUtTn1AOvrcXAsfUtbFK2xncuSlQGjubO58kAN9ZcthumiTG9sySNrI2yTcQ3N2o+QiBUj0y/nZXvsUd1S9vTOu7hPvwHfjcPBFpblzO3bztMNoLaPrupJHMvoSgI30IfU6ukCVny0fe4BhE1hqJSb61/PLb9dVbnXD3VOj5BSnk/Dh7vxvhoiAoJwdAVoFr5ApnUf7fkuJZpCD+DLLhXSEPzZQq20oP4Q3I0KFQ1VpwJkWg/PuGeHgDd+JaW5PZAUrxIEzcadWE6jnSpSzk2v6NnHcGfLVH5Taq+ieGH2g4GN2GUFYlOhaneGogm4DSQoI0Mz0AIQtmpPzicfxfarwrVTifUTFQAsrlDsu4vggCHZsgT+xZGdi0axRWjWvAvaOFjeiA02InWRYqQ0nivDTNnPgVSZfzHOojEbZVrmLoYxvYZO4SdzrMu5c6n1ZCcLpMotvRHChLeG8AeElDEKQQyNsPyboUQOcjxx6X8PC8NfK3VlE3f2lGcYv+lnj2qdQ89+3rbej5x4THo3CM/J2vbuJfAJ30/WEuOLoJ2mTuici/X0JG8NtzfZ8ZFzcHcpDzm5Sbjlco13Tc8PKwrmYzXaUnARLZ3DhlaEiWt4hbPa+xBwKep/bQHOvCuzjP/JM0999xiB61xrxeU9R0VNt5wn2e8CI2AxQbEIilvuFoPsmxK84EEysj0NvUG9nR1BjDgaQJ1obEG2/G6QlpY0C1Db2Iii3KdXrZJwtf8ALeqUgj6Ez1nv5wWEV89OwDeoJ2mveNljZC378QJBK6CtAN4jw6hjhUgJ2OzuyiuFqUkr1edDEvm+aTPPpT+EG0uBNfJmcNmm3egcC+ERn+xcgA8T828EPatvpnnjuw+pQ+JdbbKSJ+n7Uc5GvIZN+GEuWrTEGJbCiT9iG170tJbcHEbGe4Ni9m8NFC+7vVChD0a9OypFi+of4OiiFQMLHI7P5NS+s54NIXngfDV0qp5HQ8IjG1sJ5JETDfM46ZlcAzlFV+i3T3Kt4dS96ZZAxBgpDmfRgWbeQQGr3iBbGdM3ldcP6lMrZZ656bxHBUDkwhIRiRkt3o50W+sw+jh6R+cAOeflYpBWQ5PcLbGB9mSc1KW3fb8Ha0JYou3wj40vPRcwAPVm0A3pHYl+qvxZ4NPNHlDJC3G0issjlVyct2YsYTgT8bDq/UADMUE2S/VHnHhiCobbYFZXDpJiVxd4HOAHb3sscdYFKTbhYO1BKSqD1ItAhx2pO6BEd4iO+BxscrRy+aPwRP7+LG5uMUA5se58LLpvtbVUPDAXUbdE6hw0g2SY4uFhX4l4BctU5z9Lc0Ybvxuy6olc3UmvUh0FLuZdRKjSrQDKcBxtB4PcwMsVW+Hn83iEhgVH/XWYzmGBtUzuUqK2ussnarrb0Av/9qykastvvL5Ianc1FwE4MHKWzWg0XlsoyrWQIr3v+9LHgIKDD6qsS0jYGIXIYMP9x5UZRjqOmescZVKuygoouTNAAm+SrJkjm5iP6C3rQ2SzPxkvJ9qyRKReQQEyA7hXeZbnah9cSRTpVgeKU+d+p5Fxgkt6r11a5+3+7astkRWWga0BUCgtXE8nhIzQk4y1zsCrBFjpdphKChqKD1FmEr7/ffLSM/Mkfd3kK9lV6wRkqZ25vZSJ0zFjEQyPDhOHLrXn4lHENeQlQI16zW7Bc/m/BQxyKjLL+5wLNpJWDwpxFS5kQfXxCnER4o5HRV8LQltZZGBjeLc0qIrbGXD0ZZqi75V9xBkVImMU5iq1MNNpkOEx693eHtvi8wxSoLAKKOSaiKjBLduWfNLhvaTy1Jfh29sONZ6t3DLupMtwsKE7u8rK/C5nqlycMGHyCG7m+3XT2mw4E4qIiQIRoDMet868s+YHq909ealJR5Jk0gWslD9EeW3O2J7n28TyXigN0F6bz6ydnOOiswHarmp0cfWNNjMNuokbz+xtTvtPpdvgfp5YSb9Hne1e4oSXZ7sm2iVvic7EhThRMYCJXtkWW0fKNybk6wwvlgGeyQpWXKyUZLlAXVMk8F2/EiiQxQO1p+XD8kCzp7N9XMOGh+ICF7Crjr3Mui/91U/FIJvMSmLpY8lWLKZF7efoOcNn1SZ/osLT/q52F5rCbegDgvSalZ7UNJEqCjYkhQFABfhK+Bq/uxywkCDHFPh8h70tEklozBe1vSBGUGWTPQ8f5srBE05YFvD7NViWNeD5mSRQ3aHPgyQFgFtAypKTollMWvx5JIin3wpGjjP+MiBzP+weN/T22wZF5BU9qV0XA5BVQ2s9uExv2dll2zDgl3gfrec6xfP3s1bOzX9L8RKflz0wZofLUmWrdY34ssAdW40jraQfqI/q5vtY9vO683JRuquGQNxFbBsoEiJuBMiSYUOW2z0bYSwyi3gMNBI5uug4y0dE+A9SYkEN4NaNZ0rn3N6ZUSJfTMHCtWBO7U9xew/RKH5qISVriWr348vRhNvx7ifoI1yajKVWbr2Y3Bs3wrbiNPRo/BEl5U2Uel5A+GUJUJOhErFhSYN13B3DseVEJU77bz5em+PY4Czpf6pU3NRwT8dEDAOAYq14bK9JKaCkdvE5nRe1CMVM/dG/ezkvIMp54NOgIyajVEKHIDWAxSebeN7gsfKFaKyQ0fKANVX++9ve0UmjRLPDTx/K/sbNvgK8cyPS4cgn5IoHaPGozl/O17Rs6uBu6AjdwsWo8tuHPztKRR3xHSGuFLgreOpn7ABgnCcQD91kKx/oeps0hu4CXlFXr4ac/Q0LCS3gkI0lKsbmNRVVSErOvus1sRJY0SB8SQmoqtB0QTs1DslUC/d/G5k5o7HbQO77fqjSrVAAaUXBoTdKSg7544wsk1+bjuF3EJ2p0AU7XnUo6QxLnTChi9Irw6c3cEC59RKwM4mBHlOXY3VnYe0TsFHEmHhCNXoSSnbVZj8boQU5qH7tfD6bjT2+USd0ZyztrW59c5+bA85bHb0NpiGuQt0M8dbzruka8vBUdx/FFQGoAfSnc3oLvc1RWg9WS+uE0V8MED+l68hqpWOraOLDnDevgEa4JhSFSLJ/++Xi420niOfyYPFGvjNuNF/p+A8oFDV6yzhc88c+/YE3KF6RS1dRsOiSaZDotLtRqH0FYQpYWJMB0a125eEyQXAhd6Er0rlPYEsxk7e/ulzH3xwj86vT3ANlxJ0acge9Wh6RPmq4eSSv5aaF+f1eiNeIjQ/ib/yWQ8xDpASYCB4kThAleu6/wAMOAF/d4nIEiZXGxyFfpfCbuUJgzksrfvtNWRhdEpitmFRGGahWX2thoJ06toVCjIJ1MQtwcpYDLdiMp24Dqj8Und8ErbELEMPkpS6DkCHjn0vATj9W+ENK11lNMLfv4uHDxC9JFawk3Vfd32necOMZftExmeIUNq9bDfjDIqqZGZpUMYE2qgSJZabvkfvr6MhDUWMz9LjffzDcLaqWqqBe+KN/aJxWCfHf3BIg07WEhVO2J1zsyIWq+ptFkuXOQMiyKmwyTG8eKi7uf04KO+aEghDylJPaOYDrkHhn6c0CXmZ0Q9UhJvu9ToyuvrnoldBgOMQyghpnCp/7w4Pk6VHs2fXzLWr2waIO2ezbYUel/o21MscuSkVQPXJOLfQ98cYQfmVcUwHwwo21O1md2ENuSz1X3Fk4QSMjNqNRiUNX0GvWn/kFjL540XrorVEe23Swme75Pux6AK93JKkm63c3MwOBienPtgeC9sEhFT4bDNHmSHTyyfsUBjCiJcJ5btjaTM1znDSno5Q3r/aK9EkTF/fMVRwHVWH9MPdTEs69HOcb0ePLPwicrSexfDBlc1QR0K5Ea1ZNESZV1QgnklngRDnzrakPniCqZZfI4L20F7m8G/XUhvy6eQIXNJf8qX9t1Q5piYDoMZqg5F2ts7AFRufQVDapW+as6TDT1QSM2ck4jDMwdnbU0uk9tMYeg2/eo35cXYisx4LzNKPZKjfRarX3Vj0iu0dI47xEJg61p19v7vFybh5garBDxsJelFuuLhmQFN///J2khyPG+B+NbYjeLWO+HR0OrXHKmNBq9hZ0q130aal3wRe2PF32/X3FdS16tDZVrjfxRSXfAYE8J/YEFEcrROoBoA47YST6RrM4yWoHZjrnIlmUw/S+Y+c+FbDjnZzeOUBBTo2DgUjTux6PqlFvtT8OWlqTQHDJoncqoPFqBVCjajoO6fCAR4yK4h/WYNdboSduQICQepkqLnJmHtUrRvCqjzRchAInId/eduEyM9rAFnUCR6/yj02dkzU7tXQQIAEQUtDMByr19VQ7UO4EasA/sz6dvf/p6i1ldWQxNy6VpM3pRakXyJ/hdWx8GItV0MSN0UbgKVlrMomN00O40afv4UEpT9Xkryk75tZOhSRJ5MXqXqXauJiHkNaXpRzpx4vVgskG3Z5juwwXUeUbZWeTBOVsFwWOkELzRGMC/BN8zt1p7glfZPMh9oesNg/Ui1+D2/6z8qq5lI7I92CP7p27Qaq95tPOMNOINeCZmA0tA2BrWOBJw0dCe5upTQ8BC6MNQzA7ZIcHEP9/Y5PiBRGJOr2+T89LADNx2g5IuImxbr7BKGEiNQWDKmC2iWzaK0076BLoqIDTCLJi2UzX2FnMS/PS835b2i5fWWrbTvz0iUwTnnx2WH0RY3DVpcn5Hl/ru+AXUpiSdX4Al0npEWj72XWmobykwPRO7KKrfLZGRX5YrBy5yn1y+N83DVLzRsnxQO6wadWtaCdNiKMnpz2oVaimRKTGJQrNiIGTWL3rFOFAuTToN/XEBFy9zy3cC+BLhGDKhq306aG07RhX+uG5dnUPpgNP5MDqDGVS+JzyUmmpw9HlnI7eY183DPRgEkw6ZrFKyJ0il/nJKvNWZLvu9mON6ci7eI/jVk9fuT1Ql9H3apqOxXwdV2dJ1YZKtPl3KIYhfbVilHMNCaQKYIUXq0AozKwpwQm3y9KWyoQGFV/5yTR6YA6VInedPl8VdA/YdCHXyFPot7+S9LEhabtY/poZQa/G/eoeAFgYYcOCct4JEdEnhYPda/vk+59wruZAZbkkoUXHp+y/LsBkJ8AUGvem+rKhI80RIMUlTgxDFMK37PQq2KeStpxR2AfaKrc7eifYJymcc19rab/C3QxRfay/RQVf+FS3REhK17+1Wwz2S/1ckIocIuuL7+UsTMjlzGxXPcH4L9xBV+iiHI4hSynm0aNWiyOz/r4MdfnX4Kjf1hkY2hYy3rBZNE4dOZRBB5/4+Ya1q89vcpjL8B2ngDLt3NLEFTuuptTDquykFNENp30UFhmeTPUgCZwziCyM0yDtj9MjL2rqbm1vUd+5YL95sTTVOC/HlJLOl+mAC93xixnxwtCufP2u/xjzhJaL1Ykb6zlPmVc4BXrpNeV96wulQV7IuOX69mw4YSJxkhqy1Z2DKqAdKCKQEbaUQLIGWVyF8fVwcY/SJTW8kkLqLiVJpBhTCmNZ7DUKo9lwjk4zDclYyJofBCAtDQ8OGwGOIeSxZIdC53PGyrGU7pz+9MclTnOCXB28k9E6pD2CpX5P4ANhmWSHFjJUucgJXl3dB7vCUgu+WqWEOZv0jstexeLTwh28mSqofF877N7l7Js/aTlVGnXoJHKrA6Da3+zW4E43t69BsxvmMyV22ARab8LkxZCgYGCH1pvu8QwgL4Grycn6J85VXrzMeoV0BI1WDefTo7kSIYAbgl8nBow8zUsYPYaHkOQJkNC+vSJ5hgM7TemDaGkrmUIKfHukTq8PgiF/on7/ILgjOkrMkL11HpPrfp+ssNkTNY18qUSnvZ3OQdNM7vtDNsXdeRKFDzrpV4Wmx4byZUajB1yqm226TRF91a++4K08zsYEFg3ErPbzvgwHOsX6m2AB9hmCQnq9NHb/2LzOvxkD9yH6t03EsS7veCWh54gw/bxx4C1ZfdQD+HmaRBtC6i34BjXoHX8f5FWAS6nftsmAiO4NelDak1rALtBbziCZ/5ZpYIqd7A7K398emL8bdtn9gLuqq5d5gu8Z34ZY9ORs9VITyuINbCCy+sCe+cM0wiFH9Z2mINOVrckBWWXOGLMYAk6NCiF+gop6J01PAafrxfZmUVzFhoiLQ5UbaUPJdIhirZ0FNFScahSA6wegr6JeDeqs3L2bB1K08l5qH62UljOCyrIsaDh7XeLFKAFh/gV5xkpu7ahOFsJC8MC2cdt5Km+1Lrd8W3fKBen7S5RLIMYP4p41uIbdCpT1j2/GeRwxv2Sp9g6t9kNIVYrCYrMyv02X/Pa6drqso8uMr7/akDTEHII4wE/XJSprtBSTegwtL1jRXaOtEVPBf8nPIboBJspzI52PA7yeuFseSNp0T0wWTpjFnyi0HR5xKufPHnnqDGAjpHpdBgiHz97Y4foNPge7oQSefF5gZ/igGGjqkmB4w6KIRr4wyq0H2hGjkqj+qqKvlFfJY0XXVeyYfVGbQzSzXMPv6ZAVib0bnsdcEeZ7z01JSXE/g6JNGYjrZtThrpzPjYP9Vd7UUFzEMbtUpsw5ouL3EdXP+TpK0f8bkzVjIX2AWHvUJjDzujMpYF2pAOySF70/DDBdGnmmZEbE39egjo8AJiaGobaHvHoaump7wLOYpvwxriSMUBv5cu5RHIOuz3A+AR7XWHNEXFMMNkHEIcVxUpRAtxv2Py0mKNP1OS5b8O3u35AR1NbnYUhBWIj08x2oZRqhOInbpklFhVICTkYuqvmMbbK0A283Vz37Cqw2EdAwM9H9b6ZhT7pZiv5/KM0j+mum3/AxENM90pAO0Ut/QXXVDHy1EJJJM84/2NfnDZVFPE9oV4xABinCya79lDqcy9yEYbj7zNStDXUJ4cKIZIzwfKlIfy5AxfSQfc452VSE/rfkyngU8HKSVaT3QxaIxxciMT9/2Q4vrj64oJfDsLmEcxbJBDxrMUHAKD32YPGua5KWWWHn3KZWECbgMZyUY1dJX2ktBJXd4Zs3ggdemun/j6csQH93n1lD6+RdaGPmLJaZ3zxbmjUOouoVRRv/cL+6SIArBduRdk1yonNu9ndv5HvvgdEz8VqQ+piVsv+1D2J8lMOFZroV8lnjdix5FtFNZMjp50Kv2D8Wa3L/Oirsj153bGDXcclly6WAH5N8ezIFUB3qk9n7DygHzT8VOHHXSdB7fPvtJ4PXRXslHjrzCAbQdZWmTIuPFv2BkWNyokBPw6new2xM4ETystccqu7lZrPmlbuwBLM0/8mxgjtDGiMz2+oRRxRNSmD7SJr+BDF16VJSuug82FUtMGoWA1Z+NIaN2qdnjmslFPS6FaKrliAsxHNUjoXQvIQ1aW4gmfdyM27DWVUV7B7svCu97bu4SAC3tDTUv1fVYhT47CNqSZPpQgCumPFhavBWcyWiNtDTjnfMnPijhcxVnUc0CPbU4pUAqwkUyJIKMqZz8zBr9J1U1rZL9yChQftZCdTekmgaI6IuVBeLWpyJ52Hpa6NEq1UxGx7f3FTlxhjGzwj1fOlgxxSvKwHSPKmmSNcZpvycItqN0WI9HU3xSb3zodf1QZvZRhC5yJyiDzVGd2SPlDcb7hNyy7YsPlXEqXYY31Q3VM5garltENRi7ZJpQa9qbGXZg6b1B72BVWRE02y3KdpA+zf17an/GC/44/MnqpnRg70gkFNiXuNOVx6muN/yndT5exf40H/DaaFcRmmJ9U0Y/3dFo1iFovDuo3xHqnW8gxa56Kx2dTD1wT3/o3WH0WoEiZNlpxdPpzaU1uUs21+dTrSq17HhbiqW8=" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['form1'];
+if (!theForm) {
+    theForm = document.form1;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/OIDS/WebResource.axd?d=pynGkmcFUV13He1Qd6_TZOL3LTfK9B8ulPAwngVuAXWetE3d7rCUw0O-mGO49G1HkRgTBlAJdVNxpOYWl736_g2&amp;t=639224623058683406" type="text/javascript"></script>
+
+
+<script src="/OIDS/Telerik.Web.UI.WebResource.axd?_TSM_HiddenField_=RadScriptManager1_TSM&amp;compress=1&amp;_TSM_CombinedScripts_=%3b%3bSystem.Web.Extensions%2c+Version%3d4.0.0.0%2c+Culture%3dneutral%2c+PublicKeyToken%3d31bf3856ad364e35%3aen-US%3a9ead301a-2c07-4fc5-be19-f8423a34e117%3aea597d4b%3ab25378d2%3bTelerik.Web.UI%2c+Version%3d2026.1.225.462%2c+Culture%3dneutral%2c+PublicKeyToken%3d121fae78165ba3d4%3aen-US%3acb3af45e-afa6-485c-beef-0037df1863bf%3a16e4e7cd%3af7645509%3a24ee1bba%3ac128760b%3a19620875%3a874f8ea2%3ab2e06756%3af46195d3%3a92fe8ea0%3afa31b949%3a4877f69a%3a33715776%3a490a9d4e%3abd8f85e4%3a6d43f6d9%3a58366029" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+if (typeof(Sys) === 'undefined') throw new Error('ASP.NET Ajax client-side framework failed to load.');
+//]]>
+</script>
+
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="887519DF" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="pJAD2DF5TXi4dU6NZbELOXc+j8V1fLn+G+RFOXWsmeGRsMcukUSC8dha0DJO6BGJhFLTBn6a/L8Rp9e8RyD/NiloL1RB9Wqm5fnQM0JzJBGlHZqBhO2PeRP0NVP7d1iINOz7SqfvssTuksEk6OHkH1nMMXqTmKoicSJwNWAa+cZWD5AXS5lrYgStPu40C5tXY1cPdKpyG+AvSpn0NfW1Qnyjgv0/+0N5yPl4Pb02fFOwH3cSwhbvxs+iVv59R3c/MC4EL66T/QDVP6yUSED2+KTTinwK4wjfVAQVIbEi94acvVeqaEdQHUNbZdggmbxsWuRGhK5dbt750SZ5h0vRnOiuEJ2CaL4Pk2L3iSM2QasiIiXuhwIPj4mibTdT0ILoJh2JYSK+ZbgEIgBgzfqG3O001HwNqDjqkC8pL3MbXtk=" />
+</div>
+        <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('ctl00$RadScriptManager1', 'form1', [], [], [], 90, 'ctl00');
+//]]>
+</script>
+
+        <div id="rpl" class="t-container t-container-fluid wrap">
+	<div class="t-row">
+		<div id="Header" class="t-col t-col-12">
+			
+                            <div class="t-container t-container-static">
+				<div class="t-row headerwrap">
+					<div class="t-col t-col-12 t-hidden-xs t-hidden-sm t-hidden-md t-hidden-lg HeaderRow">
+						
+                                            <img src="/images/KOECBannerImage.png" alt="Kansas Department of Health &amp; Environment 1280" class="HeaderImage" />
+                                                <div id="headerText" class="header-text">Laura Kelly, Governor<br />Christi Smith, Executive Director</div>
+                                                <div id="devText" class="dev-text"></div>
+
+                                        
+					</div>
+				</div><div class="t-row">
+					<div id="rmLogobar" class="t-col t-col-12 logos">
+						
+                                            <span style="color: white;"> Child Care Licensing Program Online Facility Compliance Search</span>
+                                      
+                                        
+					</div>
+				</div>
+			</div>
+                        
+		</div>
+	</div><div id="layoutWrapper" class="t-row pagewrapper">
+		<div id="mainbody" class="t-col t-col-10">
+			
+                            <div id="hideData">
+                            <div style="width: 100%">
+                                <div style="width: 115%;text-align:center;">
+                                 <span style="color:green; font-weight:bold;font-size:large">Data last updated <script type="text/javascript">
+                                                             var date = new Date()
+                                                             date.setDate(date.getDate() - 1)
+                                                             document.write(date.toLocaleDateString())</script></span>
+                                    </div>
+                                
+
+    <input type="hidden" name="ctl00$ContentPlaceHolder1$gre_captcha_resp_value" id="ContentPlaceHolder1_gre_captcha_resp_value" />
+    <div id="ctl00_ContentPlaceHolder1_SearchWindow" style="display:none;">
+				<!-- 2026.1.225.462 --><div id="ctl00_ContentPlaceHolder1_ExpireWindow" style="font-family:TrebuchetMS;font-size:Medium;display:none;">
+					<div id="ctl00_ContentPlaceHolder1_ExpireWindow_C" style="display:none;">
+						
+                    <div class="rwDialogPopup radconfirm">
+                        <div style="text-align: left;">
+                            <span id="ctl00_ContentPlaceHolder1_ExpireWindow_C_ctl04" class="RadLabel RadLabel_Windows7">View Facility Page Request has expired and no longer valid. Please try again from the OIDS Search Page
+                            </span>
+                            <br />
+                            <br />
+                        </div>
+                        <div style="text-align: center;">
+                            <button type="submit" name="ctl00$ContentPlaceHolder1$ExpireWindow$C$rbConfirm_OK" value="Return To Search Results" id="ctl00_ContentPlaceHolder1_ExpireWindow_C_rbConfirm_OK" class="RadButton RadButton_Windows7 rbButton rbRounded rbIconButton" style="font-family:Trebuchet MS;font-size:Medium;"><span class="rbText">Return To Search Results</span><input id="ctl00_ContentPlaceHolder1_ExpireWindow_C_rbConfirm_OK_ClientState" name="ctl00_ContentPlaceHolder1_ExpireWindow_C_rbConfirm_OK_ClientState" type="hidden" /></button>
+                            &nbsp;&nbsp;&nbsp; 
+                        <button type="submit" name="ctl00$ContentPlaceHolder1$ExpireWindow$C$rbConfirm_Cancel" value="Close Window" id="ctl00_ContentPlaceHolder1_ExpireWindow_C_rbConfirm_Cancel" class="RadButton RadButton_Windows7 rbButton rbRounded rbIconButton" style="font-family:Trebuchet MS;font-size:Medium;"><span class="rbText">Close Window</span><input id="ctl00_ContentPlaceHolder1_ExpireWindow_C_rbConfirm_Cancel_ClientState" name="ctl00_ContentPlaceHolder1_ExpireWindow_C_rbConfirm_Cancel_ClientState" type="hidden" /></button>
+                        </div>
+                    </div>
+                
+					</div><input id="ctl00_ContentPlaceHolder1_ExpireWindow_ClientState" name="ctl00_ContentPlaceHolder1_ExpireWindow_ClientState" type="hidden" />
+				</div><div id="ctl00_ContentPlaceHolder1_SearchWindow_alerttemplate" style="display:none;">
+        <div class="rwDialog rwAlertDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+            </div>
+        </div>
+        </div><div id="ctl00_ContentPlaceHolder1_SearchWindow_prompttemplate" style="display:none;">
+        <div class="rwDialog rwPromptDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+                <div class="rwPromptInputContainer">
+                    <script type="text/javascript">
+                        function RadWindowprompt_detectenter(id, ev, input) {
+                            if (!ev) ev = window.event;
+                            if (ev.keyCode == 13) {
+                                var but = input.parentNode.parentNode.parentNode.getElementsByTagName("button")[0];
+                                if (but) {
+                                    if (but.click) {
+                                        but.click();
+                                    }
+                                    else if (but.onclick) {
+                                        but.focus();
+                                        var click = but.onclick;
+                                        but.onclick = null;
+                                        if (click) click.call(but);
+                                    }
+                                }
+                                return false;
+                            }
+                            else return true;
+                        }
+                    </script>
+                    <input title="Enter Value" aria-label="input" onkeydown="return RadWindowprompt_detectenter('{0}', event, this);" type="text" class="rwPromptInput radPreventDecorate" value="{2}" />
+                </div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(this.parentNode.parentNode.getElementsByTagName('input')[0].value); return false;">##LOC[OK]##</button>
+                <button type="button" class="rwCancelBtn" onclick="$find('{0}').close(null); return false;">##LOC[Cancel]##</button>
+            </div>
+        </div>
+        </div><div id="ctl00_ContentPlaceHolder1_SearchWindow_confirmtemplate" style="display:none;">
+        <div class="rwDialog rwConfirmDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+                <button type="button" class="rwCancelBtn" onclick="$find('{0}').close(false); return false;">##LOC[Cancel]##</button>
+            </div>
+        </div>
+        </div><input id="ctl00_ContentPlaceHolder1_SearchWindow_ClientState" name="ctl00_ContentPlaceHolder1_SearchWindow_ClientState" type="hidden" />
+			</div>
+    <div style="text-align: center; width: 120%;">
+        <span id="ctl00_ContentPlaceHolder1_RadLabel13" class="RadLabel RadLabel_Windows7" style="color:#153777;font-size:XX-Large;font-weight:bold;font-style:italic;">Child Care Licensing Facility Compliance Search</span>
+    </div>
+    <hr style="width: 119.8%;" />
+    
+    <table id="ContentPlaceHolder1_reportTable" style="width:120%;">
+				<tr>
+					<td colspan="4"><span id="ctl00_ContentPlaceHolder1_RadLabel15" class="RadLabel RadLabel_Windows7" style="font-size:Large;">Return to </span><a id="ContentPlaceHolder1_LinkButton1" href="javascript:__doPostBack(&#39;ctl00$ContentPlaceHolder1$LinkButton1&#39;,&#39;&#39;)" style="font-size:Large;">Search Results Page</a>
+                &nbsp;&nbsp;&nbsp; (OR) &nbsp;&nbsp;&nbsp;
+          <span id="ctl00_ContentPlaceHolder1_RadLabel16" class="RadLabel RadLabel_Windows7" style="font-size:Large;">Start </span><a id="ContentPlaceHolder1_LinkButton2" href="javascript:__doPostBack(&#39;ctl00$ContentPlaceHolder1$LinkButton2&#39;,&#39;&#39;)" style="font-size:Large;">New Search</a>
+                <br />
+                <hr style="width: 100%" />
+
+                <br />
+            </td>
+				</tr><tr>
+					<th align="left" valign="middle" colspan="4" scope="column"><span id="ctl00_ContentPlaceHolder1_repLabel" class="RadLabel RadLabel_Windows7" style="font-size:Large;font-weight:bold;">Child Care Facility Report</span>
+                <br />
+                <br />
+            </th>
+				</tr><tr>
+					<td align="left" valign="middle" style="width:21%;"><span id="ctl00_ContentPlaceHolder1_facNameLabel" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">Facility Name:</span></td><td align="left" valign="middle" style="width:43%;"><span id="ctl00_ContentPlaceHolder1_faciltyNameValue" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">Suds Little Buds</span></td><td align="left" valign="middle" style="width:21%;"><span id="ctl00_ContentPlaceHolder1_RadLabel2" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">License Number:</span></td><td align="left" valign="middle" style="width:35%;"><span id="ctl00_ContentPlaceHolder1_licnseNumberValue" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">0073197</span></td>
+				</tr><tr>
+					<td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_RadLabel1" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">Owner:</span></td><td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_OwnerValue" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">Sudia Martinez</span></td><td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_RadLabel4" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">Program Type:</span></td><td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_ProgramTypeValue" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">Family Child Care Home</span></td>
+				</tr><tr>
+					<td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_RadLabel3" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">Address:</span></td><td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_AddressValue" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">Not Displayed by Owner’s Request</span></td><td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_RadLabel6" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">License Effective Date:</span></td><td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_LicenseEffDateVal" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">12/01/2025</span></td>
+				</tr><tr>
+					<td align="left" valign="middle" colspan="2">
+            &nbsp;
+            </td><td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_RadLabel8" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">License Expiration Date:</span></td><td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_LicenseExpDateVal" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">11/30/2026</span></td>
+				</tr><tr>
+					<td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_RadLabel5" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">County:</span></td><td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_CountyValue" class="RadLabel RadLabel_Windows7" style="font-size:Medium;"> -- </span></td><td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_RadLabel9" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">	Facility Status:</span></td><td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_FacilityStatusValue" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">Open</span></td>
+				</tr><tr>
+					<td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_RadLabel7" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">Telephone Number:</span></td><td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_TelephoneNumberValue" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">Not Displayed by Owner’s Request</span></td><td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_RadLabel11" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">	Maximum Capacity:</span></td><td align="left" valign="middle"><span id="ctl00_ContentPlaceHolder1_MaximumCapacityValue" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">12</span></td>
+				</tr>
+			</table>
+    <hr style="width: 119.8%;" />
+    <table id="ContentPlaceHolder1_SurveyTable" style="width:120%;">
+				<tr>
+					<td><span id="ctl00_ContentPlaceHolder1_RadLabel10" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">Licensing Surveys</span><a id="ContentPlaceHolder1_HyperLink4" class="LoadLinks" href="Documents/KOECSurveysMoreInfo20260416.pdf" target="_blank" style="font-size:Small;">More Info</a>
+                <br />
+                <a id="ContentPlaceHolder1_HyperLink1" class="collapsible" href="javascript:void(0);" style="font-size:Medium;">Description of columns</a>
+                <div class="content">
+                    <span><strong>Survey:</strong> A visit to check that all State rules are followed. </span>
+                    <br />
+                    <span><strong>Survey Number:</strong> Unique Number given to each survey.</span><br />
+                    <span><strong>Date of Survey:</strong> Survey Completion Date.</span><br />
+                    <span><strong>Survey Reason:</strong> The regulatory reason of the visit. See More Info tab for more in depth information.</span><br />
+                    <span><strong>Survey Link:</strong> a blank survey template which shows all the regulations reviewed. </span>
+                    <br />
+                    <span><strong>Findings (#/###):</strong> A record of survey noncompliance cited.  (#/###) Indicates how many regulations were noncompliant out of how many total regulations reviewed. </span>
+                    <br />
+                    <span><strong>Facility Response:</strong> An option for the facility to respond to violations. It does not mean that the facility made a correction. The facility’s response is called a Compliance Action Plan. </span>
+                    <br />
+
+                </div>
+            </td>
+				</tr><tr>
+					<td><div id="ctl00_ContentPlaceHolder1_licenseSurveyGrid" class="RadGrid RadGrid_Windows7">
+
+					<table class="rgMasterTable" summary="Grid table view level . Contains flat or hierarchical data represented in a tabular manner." id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00" style="width:100%;table-layout:auto;empty-cells:show;">
+						<colgroup>
+        <col style="display:none;" />
+        <col style="display:none;" />
+        <col  />
+        <col  />
+        <col  />
+        <col style="display:none;" />
+        <col style="display:none;" />
+        <col  />
+        <col  />
+        <col  />
+    </colgroup>
+<thead>
+							<tr>
+								<th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;display:none;text-align:left;">Survey ID</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;display:none;text-align:left;">NOSF ID</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;text-align:left;">Survey Number</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;text-align:left;">Date of Survey</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;text-align:left;">Survey Reason</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;display:none;text-align:left;">SURVEY_TEMPLATE_OID</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;display:none;text-align:left;">SURVEY_TEMPLATE_INSTR_OID</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;text-align:center;">Survey Link</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;text-align:center;">Findings</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;text-align:center;">Facility Response</th>
+							</tr>
+						</thead><tbody>
+						<tr class="rgRow" id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00__0" style="font-size:Small;">
+							<td style="display:none;">282348</td><td style="display:none;">159781</td><td>25-007131</td><td>10/8/2025</td><td>Annual Survey</td><td style="display:none;">1476</td><td style="display:none;">1475</td><td align="center" valign="middle">
+                                    <input type="image" name="ctl00$ContentPlaceHolder1$licenseSurveyGrid$ctl00$ctl04$viewTLinkNonComp" id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00_ctl04_viewTLinkNonComp" title="View Survey" class="LoadLinks" Text="View Survey" src="images/CommandItemIcons/pdf.gif" alt="View Survey" />
+                                    <a id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00_ctl04_viewTHyperLinkNonComp" class="LoadLinks" href="https://claris.kdhe.state.ks.us:8443/claris/public/fillSurveyInstrumentPublicFull.3mv?surveyTemplateOid=1476&amp;surveyTemplateInstrumentOid=1475" target="_blank" style="font-size:Small;">View Survey</a>
+                                </td><td align="center" valign="middle">
+                                    <input type="image" name="ctl00$ContentPlaceHolder1$licenseSurveyGrid$ctl00$ctl04$viewLinkNonComp" id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00_ctl04_viewLinkNonComp" title="View Findings" class="LoadLinks" Text="View Findings" src="images/CommandItemIcons/im_view.gif" alt="View Findings" />
+                                    <a id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00_ctl04_viewHyperLinkNonComp" class="LoadLinks" href="https://khap.kdhe.ks.gov/OIDS/OIDS_ViewFacilityFindings.aspx?vn=1anlkfdkEy1kV0YTVeEoqjTaOyzqRQdBpL8WI8T%2bvoJh4Zs7HOoKKezW9ADpWmgO%2bcLjl0pRvinfbhmS5lGfsJGgewMwTbD%2bAuxKeDnt2CpHyNnIUpYC6Q%3d%3d" target="_blank" style="font-size:Small;">View Findings (0/568)</a>
+
+                                </td><td align="center" valign="middle">
+                                    
+                                    <a id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00_ctl04_viewHyperCAPLinkNonComp" class="LoadLinks" target="_blank" style="font-size:Small;text-decoration:none;">No Response</a>
+                                </td>
+						</tr><tr class="rgAltRow" id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00__1" style="font-size:Small;">
+							<td style="display:none;">271523</td><td style="display:none;">146220</td><td>24-006776</td><td>10/1/2024</td><td>Annual Survey</td><td style="display:none;">1428</td><td style="display:none;">1385</td><td align="center" valign="middle">
+                                    <input type="image" name="ctl00$ContentPlaceHolder1$licenseSurveyGrid$ctl00$ctl06$viewTLinkNonComp" id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00_ctl06_viewTLinkNonComp" title="View Survey" class="LoadLinks" Text="View Survey" src="images/CommandItemIcons/pdf.gif" alt="View Survey" />
+                                    <a id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00_ctl06_viewTHyperLinkNonComp" class="LoadLinks" href="https://claris.kdhe.state.ks.us:8443/claris/public/fillSurveyInstrumentPublicFull.3mv?surveyTemplateOid=1428&amp;surveyTemplateInstrumentOid=1385" target="_blank" style="font-size:Small;">View Survey</a>
+                                </td><td align="center" valign="middle">
+                                    <input type="image" name="ctl00$ContentPlaceHolder1$licenseSurveyGrid$ctl00$ctl06$viewLinkNonComp" id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00_ctl06_viewLinkNonComp" title="View Findings" class="LoadLinks" Text="View Findings" src="images/CommandItemIcons/im_view.gif" alt="View Findings" />
+                                    <a id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00_ctl06_viewHyperLinkNonComp" class="LoadLinks" href="https://khap.kdhe.ks.gov/OIDS/OIDS_ViewFacilityFindings.aspx?vn=1anlkfdkEy0qT%2bt2C%2bVW4a%2bTm2Xtb2EU6TJQn%2fGqZuTxT%2fNtziIpGLZxM5%2fESZKmAyVtyr5a7XZGTWoXIq5SUbuULyKy04FHL%2bsh0H0iu6jkWwW2l%2fr2Eg%3d%3d" target="_blank" style="font-size:Small;">View Findings (0/564)</a>
+
+                                </td><td align="center" valign="middle">
+                                    
+                                    <a id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00_ctl06_viewHyperCAPLinkNonComp" class="LoadLinks" target="_blank" style="font-size:Small;text-decoration:none;">No Response</a>
+                                </td>
+						</tr><tr class="rgRow" id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00__2" style="font-size:Small;">
+							<td style="display:none;">261041</td><td style="display:none;">134545</td><td>23-006700</td><td>11/6/2023</td><td>Annual Survey</td><td style="display:none;">1312</td><td style="display:none;">1184</td><td align="center" valign="middle">
+                                    <input type="image" name="ctl00$ContentPlaceHolder1$licenseSurveyGrid$ctl00$ctl08$viewTLinkNonComp" id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00_ctl08_viewTLinkNonComp" title="View Survey" class="LoadLinks" Text="View Survey" src="images/CommandItemIcons/pdf.gif" alt="View Survey" />
+                                    <a id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00_ctl08_viewTHyperLinkNonComp" class="LoadLinks" href="https://claris.kdhe.state.ks.us:8443/claris/public/fillSurveyInstrumentPublicFull.3mv?surveyTemplateOid=1312&amp;surveyTemplateInstrumentOid=1184" target="_blank" style="font-size:Small;">View Survey</a>
+                                </td><td align="center" valign="middle">
+                                    <input type="image" name="ctl00$ContentPlaceHolder1$licenseSurveyGrid$ctl00$ctl08$viewLinkNonComp" id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00_ctl08_viewLinkNonComp" title="View Findings" class="LoadLinks" Text="View Findings" src="images/CommandItemIcons/im_view.gif" alt="View Findings" />
+                                    <a id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00_ctl08_viewHyperLinkNonComp" class="LoadLinks" href="https://khap.kdhe.ks.gov/OIDS/OIDS_ViewFacilityFindings.aspx?vn=1anlkfdkEy3IqAgJ5Pk5y8FeuM0BHc8pGB2uIO3Ws0vxGu99pNWao%2b7yGDXZT73%2fp%2fuHoU3bkMiitZcZXrDBuV%2fxBqdcvWyKIsBnUPqaru%2bxHNJB5ThMww%3d%3d" target="_blank" style="font-size:Small;">View Findings (1/445)</a>
+
+                                </td><td align="center" valign="middle">
+                                    
+                                    <a id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00_ctl08_viewHyperCAPLinkNonComp" class="LoadLinks" target="_blank" style="font-size:Small;text-decoration:none;">No Response</a>
+                                </td>
+						</tr>
+						</tbody>
+
+					</table><div id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_SharedCalendarContainer" style="display:none;">
+
+					</div><input id="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ClientState" name="ctl00_ContentPlaceHolder1_licenseSurveyGrid_ClientState" type="hidden" />    </div>
+					</td>
+				</tr><tr>
+					<td>
+                &nbsp;
+            </td>
+				</tr><tr>
+					<td><span id="ctl00_ContentPlaceHolder1_RadLabel12" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">Complaint Surveys</span><a id="ContentPlaceHolder1_HyperLink2" class="LoadLinks" href="Documents/KOECSurveysMoreInfo20260416.pdf" target="_blank" style="font-size:Small;">More Info</a>
+                <br />
+                <a id="ContentPlaceHolder1_HyperLink6" class="collapsible" href="javascript:void(0);" style="font-size:Medium;">Description of columns</a>
+                <div class="content">
+                    <span><strong>Survey:</strong> A visit to check that all State rules are followed. </span>
+                    <br />
+                    <span><strong>Survey Number:</strong> Unique Number given to each survey.</span><br />
+                    <span><strong>Date of Survey:</strong> Survey Completion Date.</span><br />
+                    <span><strong>Survey Reason:</strong> The regulatory reason of the visit. See More Info tab for more in depth information.</span><br />
+                    <span><strong>Survey Link:</strong> a blank survey template which shows all the regulations reviewed. </span>
+                    <br />
+                    <span><strong>Findings (#/###):</strong> A record of survey noncompliance cited.  (#/###) Indicates how many regulations were noncompliant out of how many total regulations reviewed. </span>
+                    <br />
+                    <span><strong>Facility Response:</strong> An option for the facility to respond to violations. It does not mean that the facility made a correction. The facility’s response is called a Compliance Action Plan. </span>
+                    <br />
+
+                </div>
+            </td>
+				</tr><tr>
+					<td><div id="ctl00_ContentPlaceHolder1_complSurveyGrid" class="RadGrid RadGrid_Windows7">
+
+					<table class="rgMasterTable" summary="Grid table view level . Contains flat or hierarchical data represented in a tabular manner." id="ctl00_ContentPlaceHolder1_complSurveyGrid_ctl00" style="width:100%;table-layout:auto;empty-cells:show;">
+						<colgroup>
+        <col style="display:none;" />
+        <col style="display:none;" />
+        <col  />
+        <col  />
+        <col  />
+        <col style="display:none;" />
+        <col style="display:none;" />
+        <col  />
+        <col  />
+        <col  />
+    </colgroup>
+<thead>
+							<tr>
+								<th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;display:none;text-align:left;">Survey ID</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;display:none;text-align:left;">NOSF ID</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;text-align:left;">Survey Number</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;text-align:left;">Date of Survey</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;text-align:left;">Survey Reason</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;display:none;text-align:left;">SURVEY_TEMPLATE_OID</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;display:none;text-align:left;">SURVEY_TEMPLATE_INSTR_OID</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;text-align:center;">Survey Link</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;text-align:center;">Findings</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;text-align:center;">Facility Response</th>
+							</tr>
+						</thead><tbody>
+						<tr class="rgNoRecords">
+							<td colspan="6" style="text-align:left;"><div>No Complaint Survey Records Found.</div></td>
+						</tr>
+						</tbody>
+
+					</table><div id="ctl00_ContentPlaceHolder1_complSurveyGrid_SharedCalendarContainer" style="display:none;">
+
+					</div><input id="ctl00_ContentPlaceHolder1_complSurveyGrid_ClientState" name="ctl00_ContentPlaceHolder1_complSurveyGrid_ClientState" type="hidden" />    </div>
+					</td>
+				</tr><tr>
+					<td>
+                &nbsp;
+            </td>
+				</tr><tr>
+					<td><span id="ctl00_ContentPlaceHolder1_RadLabel14" class="RadLabel RadLabel_Windows7" style="font-size:Medium;font-weight:bold;">Administrative Orders Issued</span><a id="ContentPlaceHolder1_HyperLink3" class="LoadLinks" href="Documents/KOECAdminOrdersMoreInfo20260416.pdf" target="_blank" style="font-size:X-Small;">More Info</a>
+                <br />
+                <a id="ContentPlaceHolder1_HyperLink5" class="collapsible" href="javascript:void(0);" style="font-size:Medium;">Description of columns</a>
+                <div class="content">
+                    <span><strong>Number:</strong> Unique Number given to each Administrative Order.</span><br />
+                    <span><strong>Issue Date:</strong> The date the action was taken.</span><br />
+                    <span><strong>Type of Order:</strong> The action issued by the agency.  See More Info tab for more in depth information.</span><br />
+                    <span><strong>Reason:</strong> The Regulatory reason the order was issued.</span><br />
+                    <span><strong>Final Status:</strong> The status of the order in Administrative Hearing process.</span><br />
+
+                </div>
+            </td>
+				</tr><tr>
+					<td><div id="ctl00_ContentPlaceHolder1_adminOrderGrid" class="RadGrid RadGrid_Windows7">
+
+					<table class="rgMasterTable" summary="Grid table view level . Contains flat or hierarchical data represented in a tabular manner." id="ctl00_ContentPlaceHolder1_adminOrderGrid_ctl00" style="width:100%;table-layout:auto;empty-cells:show;">
+						<colgroup>
+        <col  />
+        <col  />
+        <col  />
+        <col  />
+        <col  />
+    </colgroup>
+<thead>
+							<tr>
+								<th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;text-align:left;">Number</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;text-align:left;">Issue Date </th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;text-align:left;">Type of Order</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;text-align:left;">Reason</th><th scope="col" class="rgHeader" valign="middle" style="background-color:Gray;font-size:Medium;font-weight:bold;text-align:left;">Final Status</th>
+							</tr>
+						</thead><tbody>
+						<tr class="rgNoRecords">
+							<td colspan="5" style="text-align:left;"><div>No Administrative Orders Found.</div></td>
+						</tr>
+						</tbody>
+
+					</table><div id="ctl00_ContentPlaceHolder1_adminOrderGrid_SharedCalendarContainer" style="display:none;">
+
+					</div><input id="ctl00_ContentPlaceHolder1_adminOrderGrid_ClientState" name="ctl00_ContentPlaceHolder1_adminOrderGrid_ClientState" type="hidden" />    </div>
+					</td>
+				</tr>
+			</table>
+    <hr style="width: 1268px; border: 1px solid #153777" />
+    <table id="ContentPlaceHolder1_infoTable">
+				<tr>
+					<td>
+                <p style="margin-top:0px;width:1260px;">
+<i>Three years of compliance history is provided for the facility. Therefore, information contained in the report may not reflect the complete history of the facility's compliance. <br />
+    Additional information and records may be available. Public records contained in the file of a child care facility may be requested from KOEC in accordance with the <br />
+     Kansas Open Records Act (KORA) pursuant to K.S.A. 45-215 et seq. Disclosure of certain information is prohibited pursuant to K.S.A. 65-525 and other statutes <br />
+     regarding confidential information. For more information about Child Care Licensing and the requirements for child care facilities, please visit the <a href="https://www.kdhe.ks.gov/280/Child-Care-Licensing">KDHE website.</a>
+   </i>
+                </p>
+            </td>
+				</tr><tr>
+					<td>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_retPageLabel" class="RadLabel RadLabel_Windows7" style="font-size:Large;">Return to </span><a id="ContentPlaceHolder1_searchResLink" href="javascript:__doPostBack(&#39;ctl00$ContentPlaceHolder1$searchResLink&#39;,&#39;&#39;)" style="font-size:Large;">Search Results Page</a>
+                &nbsp;&nbsp;&nbsp; (OR) &nbsp;&nbsp;&nbsp;
+                <span id="ctl00_ContentPlaceHolder1_newpageLbl" class="RadLabel RadLabel_Windows7" style="font-size:Large;">Start </span><a id="ContentPlaceHolder1_newSearchPageLink" href="javascript:__doPostBack(&#39;ctl00$ContentPlaceHolder1$newSearchPageLink&#39;,&#39;&#39;)" style="font-size:Large;">New Search</a></td>
+				</tr>
+			</table>
+    <br />
+    <br />
+    
+        <script type="text/javascript">
+            var coll = document.getElementsByClassName("collapsible");
+            var i;
+
+            for (i = 0; i < coll.length; i++) {
+                coll[i].addEventListener("click", function () {
+                    this.classList.toggle("active");
+                    var content = this.nextElementSibling;
+                    if (content.style.display === "block") {
+                        content.style.display = "none";
+                    } else {
+                        content.style.display = "block";
+                    }
+                });
+            }
+        </script>
+    
+
+                            </div>
+                                </div>
+                        
+		</div>
+	</div><div class="t-row noMargin">
+		<div id="MainFooter" class="t-col t-col-12">
+			<div class="t-row">
+				<div class="t-col t-col-12">
+					
+                                            <div>
+                                                <p class="footerLinks"><br/>
+
+                                                    <span class="whitebold"> </span>
+                                                </p>
+                                                 <p style="color: white;" class="footer">
+                                                     Kansas Office of Early Childhood<br/>915 SW Harrison Street<br/>Topeka, KS 66612
+    </p>
+                                            </div>
+                                        
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+        <style type="text/css">
+            div.RadMenu {
+                float: right;
+            }
+        </style>
+            <div class="loader"></div>
+    
+
+<script type="text/javascript">
+//<![CDATA[
+window.__TsmHiddenField = $get('RadScriptManager1_TSM');Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadButton, {"_accessKey":"","_hasIcon":false,"_hasImage":false,"_isClientSubmit":false,"_isImageButton":false,"_postBackReference":"","_renderMode":2,"clientStateFieldID":"ctl00_ContentPlaceHolder1_ExpireWindow_C_rbConfirm_OK_ClientState","confirmSettings":{},"iconData":{},"imageData":{},"text":"Return To Search Results","toggleStatesData":[],"uniqueGroupName":"","uniqueID":"ctl00$ContentPlaceHolder1$ExpireWindow$C$rbConfirm_OK"}, null, null, $get("ctl00_ContentPlaceHolder1_ExpireWindow_C_rbConfirm_OK"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadButton, {"_accessKey":"","_hasIcon":false,"_hasImage":false,"_isClientSubmit":false,"_isImageButton":false,"_postBackReference":"","_renderMode":2,"clientStateFieldID":"ctl00_ContentPlaceHolder1_ExpireWindow_C_rbConfirm_Cancel_ClientState","confirmSettings":{},"iconData":{},"imageData":{},"text":"Close Window","toggleStatesData":[],"uniqueGroupName":"","uniqueID":"ctl00$ContentPlaceHolder1$ExpireWindow$C$rbConfirm_Cancel"}, {"clicked":closeWindow}, null, $get("ctl00_ContentPlaceHolder1_ExpireWindow_C_rbConfirm_Cancel"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadWindow, {"_dockMode":true,"_renderMode":2,"behaviors":32,"clientStateFieldID":"ctl00_ContentPlaceHolder1_ExpireWindow_ClientState","formID":"form1","height":"200px","iconUrl":"","minimizeIconUrl":"","modal":true,"name":"ExpireWindow","skin":"Windows7","title":"\u003cb\u003eOIDS Search Expiry Window\u003c/b\u003e","visibleStatusbar":false,"width":"600px"}, null, null, $get("ctl00_ContentPlaceHolder1_ExpireWindow"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadWindowManager, {"_renderMode":2,"clientStateFieldID":"ctl00_ContentPlaceHolder1_SearchWindow_ClientState","formID":"form1","iconUrl":"","minimizeIconUrl":"","name":"SearchWindow","skin":"Windows7","windowControls":"['ctl00_ContentPlaceHolder1_ExpireWindow']"}, null, {"child":"ctl00_ContentPlaceHolder1_ExpireWindow"}, $get("ctl00_ContentPlaceHolder1_SearchWindow"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadGrid, {"ClientID":"ctl00_ContentPlaceHolder1_licenseSurveyGrid","ClientSettings":{"AllowAutoScrollOnDragDrop":true,"ShouldCreateRows":true,"DataBinding":{},"Selecting":{"CellSelectionMode":0},"Scrolling":{},"Resizing":{},"ClientMessages":{},"KeyboardNavigationSettings":{"AllowActiveRowCycle":false,"EnableKeyboardShortcuts":true,"FocusKey":89,"InitInsertKey":73,"RebindKey":82,"ExitEditInsertModeKey":27,"UpdateInsertItemKey":13,"DeleteActiveRow":127,"ExpandDetailTableKey":39,"CollapseDetailTableKey":37,"MoveDownKey":40,"MoveUpKey":38,"SaveChangesKey":85,"CancelChangesKey":81},"Animation":{},"Virtualization":{}},"Skin":"Windows7","UniqueID":"ctl00$ContentPlaceHolder1$licenseSurveyGrid","_activeRowIndex":"","_controlToFocus":"","_currentPageIndex":0,"_defaultDateTimeFormat":"M/d/yyyy h:mm:ss tt","_editIndexes":"[]","_embeddedSkin":true,"_enableAriaSupport":true,"_freezeText":"Freeze","_gridTableViewsData":"[{\"ClientID\":\"ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00\",\"UniqueID\":\"ctl00$ContentPlaceHolder1$licenseSurveyGrid$ctl00\",\"PageSize\":10,\"PageCount\":1,\"EditMode\":\"EditForms\",\"AllowPaging\":false,\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"PageButtonCount\":10,\"HasDetailTables\":false,\"HasMultiHeaders\":false,\"CheckListWebServicePath\":\"\",\"GroupLoadMode\":\"Server\",\"PagerAlwaysVisible\":false,\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"hasDetailItemTemplate\":false,\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"SURVEYOID\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.Decimal\",\"DataField\":\"SURVEYOID\",\"Display\":false},{\"UniqueName\":\"NOSFOID\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.Decimal\",\"DataField\":\"NOSFOID\",\"Display\":false},{\"UniqueName\":\"SURNUMBER\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.String\",\"DataField\":\"SURNUMBER\",\"Display\":true},{\"UniqueName\":\"CONDCTDATE\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.DateTime\",\"DataField\":\"CONDCTDATE_DT\",\"DataFormatString\":\"{0:M/d/yyyy}\",\"Display\":true},{\"UniqueName\":\"CAPP_VALUES\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.String\",\"DataField\":\"CAPP_VALUES\",\"Display\":true},{\"UniqueName\":\"SURVEY_TEMPLATE_OID\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.Decimal\",\"DataField\":\"SURVEY_TEMPLATE_OID\",\"Display\":false},{\"UniqueName\":\"SURVEY_TEMPLATE_INSTR_OID\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.Decimal\",\"DataField\":\"SURVEY_TEMPLATE_INSTR_OID\",\"Display\":false},{\"UniqueName\":\"ViewTempNonComp\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"ColumnGroupName\":\"\",\"Editable\":false,\"DataTypeName\":\"System.String\",\"DataField\":\"\",\"Display\":true},{\"UniqueName\":\"ViewFindingsNonComp\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"ColumnGroupName\":\"\",\"Editable\":false,\"DataTypeName\":\"System.String\",\"DataField\":\"\",\"Display\":true},{\"UniqueName\":\"ViewCAPLinkNonComp\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"ColumnGroupName\":\"\",\"Editable\":false,\"DataTypeName\":\"System.String\",\"DataField\":\"\",\"Display\":true}]}]","_masterClientID":"ctl00_ContentPlaceHolder1_licenseSurveyGrid_ctl00","_shouldFocusOnPage":false,"_unfreezeText":"Unfreeze","allowMultiRowSelection":false,"clientStateFieldID":"ctl00_ContentPlaceHolder1_licenseSurveyGrid_ClientState","expandItems":{},"renderMode":2}, null, null, $get("ctl00_ContentPlaceHolder1_licenseSurveyGrid"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadGrid, {"ClientID":"ctl00_ContentPlaceHolder1_complSurveyGrid","ClientSettings":{"AllowAutoScrollOnDragDrop":true,"ShouldCreateRows":true,"DataBinding":{},"Selecting":{"CellSelectionMode":0},"Scrolling":{},"Resizing":{},"ClientMessages":{},"KeyboardNavigationSettings":{"AllowActiveRowCycle":false,"EnableKeyboardShortcuts":true,"FocusKey":89,"InitInsertKey":73,"RebindKey":82,"ExitEditInsertModeKey":27,"UpdateInsertItemKey":13,"DeleteActiveRow":127,"ExpandDetailTableKey":39,"CollapseDetailTableKey":37,"MoveDownKey":40,"MoveUpKey":38,"SaveChangesKey":85,"CancelChangesKey":81},"Animation":{},"Virtualization":{}},"Skin":"Windows7","UniqueID":"ctl00$ContentPlaceHolder1$complSurveyGrid","_activeRowIndex":"","_controlToFocus":"","_currentPageIndex":0,"_defaultDateTimeFormat":"M/d/yyyy h:mm:ss tt","_editIndexes":"[]","_embeddedSkin":true,"_enableAriaSupport":true,"_freezeText":"Freeze","_gridTableViewsData":"[{\"ClientID\":\"ctl00_ContentPlaceHolder1_complSurveyGrid_ctl00\",\"UniqueID\":\"ctl00$ContentPlaceHolder1$complSurveyGrid$ctl00\",\"PageSize\":10,\"PageCount\":1,\"EditMode\":\"EditForms\",\"AllowPaging\":false,\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"PageButtonCount\":10,\"HasDetailTables\":false,\"HasMultiHeaders\":false,\"CheckListWebServicePath\":\"\",\"GroupLoadMode\":\"Server\",\"PagerAlwaysVisible\":false,\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"hasDetailItemTemplate\":false,\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"SURVEYOID\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.Decimal\",\"DataField\":\"SURVEYOID\",\"Display\":false},{\"UniqueName\":\"NOSFOID\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.Int32\",\"DataField\":\"NOSFOID\",\"Display\":false},{\"UniqueName\":\"SURNUMBER\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.String\",\"DataField\":\"SURNUMBER\",\"Display\":true},{\"UniqueName\":\"CONDCTDATE\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.DateTime\",\"DataField\":\"CONDCTDATE_DT\",\"DataFormatString\":\"{0:M/d/yyyy}\",\"Display\":true},{\"UniqueName\":\"CAPP_VALUES\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.String\",\"DataField\":\"CAPP_VALUES\",\"Display\":true},{\"UniqueName\":\"SURVEY_TEMPLATE_OID\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.Decimal\",\"DataField\":\"SURVEY_TEMPLATE_OID\",\"Display\":false},{\"UniqueName\":\"SURVEY_TEMPLATE_INSTR_OID\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.Decimal\",\"DataField\":\"SURVEY_TEMPLATE_INSTR_OID\",\"Display\":false},{\"UniqueName\":\"ViewTempComp\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"ColumnGroupName\":\"\",\"Editable\":false,\"DataTypeName\":\"System.String\",\"DataField\":\"\",\"Display\":true},{\"UniqueName\":\"ViewFindingsComp\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"ColumnGroupName\":\"\",\"Editable\":false,\"DataTypeName\":\"System.String\",\"DataField\":\"\",\"Display\":true},{\"UniqueName\":\"ViewCAPLinkComp\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridTemplateColumn\",\"ColumnGroupName\":\"\",\"Editable\":false,\"DataTypeName\":\"System.String\",\"DataField\":\"\",\"Display\":true}]}]","_masterClientID":"ctl00_ContentPlaceHolder1_complSurveyGrid_ctl00","_shouldFocusOnPage":false,"_unfreezeText":"Unfreeze","allowMultiRowSelection":false,"clientStateFieldID":"ctl00_ContentPlaceHolder1_complSurveyGrid_ClientState","renderMode":2}, null, null, $get("ctl00_ContentPlaceHolder1_complSurveyGrid"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadGrid, {"ClientID":"ctl00_ContentPlaceHolder1_adminOrderGrid","ClientSettings":{"AllowAutoScrollOnDragDrop":true,"ShouldCreateRows":true,"DataBinding":{},"Selecting":{"CellSelectionMode":0},"Scrolling":{},"Resizing":{},"ClientMessages":{},"KeyboardNavigationSettings":{"AllowActiveRowCycle":false,"EnableKeyboardShortcuts":true,"FocusKey":89,"InitInsertKey":73,"RebindKey":82,"ExitEditInsertModeKey":27,"UpdateInsertItemKey":13,"DeleteActiveRow":127,"ExpandDetailTableKey":39,"CollapseDetailTableKey":37,"MoveDownKey":40,"MoveUpKey":38,"SaveChangesKey":85,"CancelChangesKey":81},"Animation":{},"Virtualization":{}},"Skin":"Windows7","UniqueID":"ctl00$ContentPlaceHolder1$adminOrderGrid","_activeRowIndex":"","_controlToFocus":"","_currentPageIndex":0,"_defaultDateTimeFormat":"M/d/yyyy h:mm:ss tt","_editIndexes":"[]","_embeddedSkin":true,"_enableAriaSupport":true,"_freezeText":"Freeze","_gridTableViewsData":"[{\"ClientID\":\"ctl00_ContentPlaceHolder1_adminOrderGrid_ctl00\",\"UniqueID\":\"ctl00$ContentPlaceHolder1$adminOrderGrid$ctl00\",\"PageSize\":10,\"PageCount\":1,\"EditMode\":\"EditForms\",\"AllowPaging\":false,\"CurrentPageIndex\":0,\"VirtualItemCount\":0,\"AllowMultiColumnSorting\":false,\"AllowNaturalSort\":true,\"AllowFilteringByColumn\":false,\"PageButtonCount\":10,\"HasDetailTables\":false,\"HasMultiHeaders\":false,\"CheckListWebServicePath\":\"\",\"GroupLoadMode\":\"Server\",\"PagerAlwaysVisible\":false,\"IsItemInserted\":false,\"clientDataKeyNames\":[],\"hasDetailItemTemplate\":false,\"_dataBindTemplates\":false,\"_selectedItemStyle\":\"\",\"_selectedItemStyleClass\":\"rgSelectedRow\",\"_columnsData\":[{\"UniqueName\":\"ENFNUMBER\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.String\",\"DataField\":\"ENFNUMBER\",\"Display\":true},{\"UniqueName\":\"ACTVTYDATE\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.String\",\"DataField\":\"ACTVTYDATE_DT \",\"DataFormatString\":\"{0:M/d/yyyy}\",\"Display\":true},{\"UniqueName\":\"TypeOfOrder\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.String\",\"DataField\":\"TypeOfOrder\",\"Display\":true},{\"UniqueName\":\"ENFREASON\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.String\",\"DataField\":\"ENFREASON\",\"Display\":true},{\"UniqueName\":\"STATUSNAME\",\"Resizable\":true,\"Reorderable\":true,\"Selectable\":true,\"Groupable\":true,\"ColumnType\":\"GridBoundColumn\",\"ColumnGroupName\":\"\",\"Editable\":true,\"DataTypeName\":\"System.String\",\"DataField\":\"STATUSNAME\",\"Display\":true}]}]","_masterClientID":"ctl00_ContentPlaceHolder1_adminOrderGrid_ctl00","_shouldFocusOnPage":false,"_unfreezeText":"Unfreeze","allowMultiRowSelection":false,"clientStateFieldID":"ctl00_ContentPlaceHolder1_adminOrderGrid_ClientState","renderMode":2}, null, null, $get("ctl00_ContentPlaceHolder1_adminOrderGrid"));
+});
+//]]>
+</script>
+</form>
+
+    <div id="ctl00_rwmNewsReleaseView" style="display:none;">
+	<div id="ctl00_rwmNewsReleaseView_alerttemplate" style="display:none;">
+        <div class="rwDialog rwAlertDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+            </div>
+        </div>
+        </div><div id="ctl00_rwmNewsReleaseView_prompttemplate" style="display:none;">
+        <div class="rwDialog rwPromptDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+                <div class="rwPromptInputContainer">
+                    <script type="text/javascript">
+                        function RadWindowprompt_detectenter(id, ev, input) {
+                            if (!ev) ev = window.event;
+                            if (ev.keyCode == 13) {
+                                var but = input.parentNode.parentNode.parentNode.getElementsByTagName("button")[0];
+                                if (but) {
+                                    if (but.click) {
+                                        but.click();
+                                    }
+                                    else if (but.onclick) {
+                                        but.focus();
+                                        var click = but.onclick;
+                                        but.onclick = null;
+                                        if (click) click.call(but);
+                                    }
+                                }
+                                return false;
+                            }
+                            else return true;
+                        }
+                    </script>
+                    <input title="Enter Value" aria-label="input" onkeydown="return RadWindowprompt_detectenter('{0}', event, this);" type="text" class="rwPromptInput radPreventDecorate" value="{2}" />
+                </div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(this.parentNode.parentNode.getElementsByTagName('input')[0].value); return false;">##LOC[OK]##</button>
+                <button type="button" class="rwCancelBtn" onclick="$find('{0}').close(null); return false;">##LOC[Cancel]##</button>
+            </div>
+        </div>
+        </div><div id="ctl00_rwmNewsReleaseView_confirmtemplate" style="display:none;">
+        <div class="rwDialog rwConfirmDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+                <button type="button" class="rwCancelBtn" onclick="$find('{0}').close(false); return false;">##LOC[Cancel]##</button>
+            </div>
+        </div>
+        </div><input id="ctl00_rwmNewsReleaseView_ClientState" name="ctl00_rwmNewsReleaseView_ClientState" type="hidden" />
+</div>
+</body>
+</html>

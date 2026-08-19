@@ -1,0 +1,709 @@
+
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-us">
+<head><meta http-equiv="X-UA-Compatible" content="IE=edge" /><title>
+	Kansas Department of Health and Environment - Child Care Licensing Program Online Facility Compliance Search
+</title><link rel="stylesheet" href="StyleSheet/Styles.css" /><link rel="stylesheet" type="text/css" href="StyleSheet/MasterStyle.css" /><meta name="format-detection" content="telephone=no" />
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.3.1.min.js"></script>
+
+    
+    <style type="text/css">
+        /* Style the button that is used to open and close the collapsible content */
+        .collapsible {
+           text-decoration: none;
+
+        }
+
+            /* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+            .active, .collapsible:hover {
+                background-color: #ccc;
+                /* Style the collapsible content. Note: hidden by default */
+            }
+.collapsible:after {
+  content: '\002B';
+  color: -webkit-link;
+  font-weight: bold;
+  padding-left:15px;
+  margin-left: 5px;
+}
+
+.active:after {
+  content: "\2212";
+}
+        .content {
+            padding: 0 18px;
+            display: none;
+            overflow: hidden;
+            background-color: #f1f1f1;
+        }
+    </style>
+    <script type = "text/javascript" >
+     
+     function DisableBackButton() {
+       window.history.forward()
+      }
+     DisableBackButton();
+     window.onload = DisableBackButton;
+     window.onpageshow = function(evt) { if (evt.persisted) DisableBackButton() }
+        window.onunload = function () { void (0) }
+        function pageLoad(sender, eventArgs)
+        {
+            var buttons = document.querySelectorAll('.rcbActionButton');
+            for(var i=0;i<buttons.length; i++)
+            {
+                buttons[i].setAttribute('aria-label', 'ComboBoxAccessible' + i);
+            }
+            var combInputs = document.querySelectorAll('.rcbInput');
+            for (var i = 0; i < combInputs.length; i++) {
+                combInputs[i].setAttribute('aria-label', 'ComboBoxInputAccess' + i);
+            }
+            var buttons = document.querySelectorAll('.p-icon');
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].setAttribute('aria-label', 'GridAccessibleicon' + i);
+            }
+            if (document.getElementById('ctl00_ContentPlaceHolder1_cityText') != null) {
+                document.getElementById('ctl00_ContentPlaceHolder1_cityText').setAttribute('aria-label', 'CityAccessible');
+            }
+            if (document.getElementById('ctl00_ContentPlaceHolder1_zipCodeTextValue') != null) {
+                document.getElementById('ctl00_ContentPlaceHolder1_zipCodeTextValue').setAttribute('aria-label', 'ZipCodeAccessible');
+            }
+        }
+        function closeWindow()
+            {
+                window.close();
+        }  
+    </script>
+      <!-- RECAPTCHA INFO  -->
+   <script src="https://www.google.com/recaptcha/api.js?render=6Ld34-kUAAAAAAADgUngPcyDRZP4ilXQSa5-JpWN"></script>
+    <script type="text/javascript">
+        grecaptcha.ready(function () {
+            grecaptcha.execute('6Ld34-kUAAAAAAADgUngPcyDRZP4ilXQSa5-JpWN', { action: 'findingsview' }).then(function (token) {
+                document.getElementById('ContentPlaceHolder1_gre_captcha_resp_value').value = token;
+            });
+        });
+    </script>
+   
+
+    <style>
+       .pagewrapper {
+            padding-left: 10px;
+        }
+        #homesidewrapper { float:right; margin:-20px 0 0 0; padding:0; width:218px; border:#1b4707 solid 1px; min-height:842px; }
+        .SideMenu {
+            border: 1px black solid;
+        }
+        .SideMenu h1
+        {
+            padding: 4px 15px;
+            font-size: 12pt;
+            margin: 0;
+            color: #ffffff;
+            font-weight: bold;
+            background: #1b4707; /* For browsers that do not support gradients */
+            background: -webkit-linear-gradient(#1b4707, #58983c ); /* For Safari 5.1 to 6.0 */
+            background: -o-linear-gradient(#1b4707, #58983c); /* For Opera 11.1 to 12.0 */
+            background: -moz-linear-gradient(#1b4707, #58983c); /* For Firefox 3.6 to 15 */
+            background: linear-gradient(#1b4707, #58983c); /* Standard syntax */
+            border-left: 1px black solid;
+            border-top: 1px black solid;
+            border-right: 1px black solid;
+        }
+        .KeapMenuList {
+            margin: 0 5px;
+            padding: 2px 0;
+            border-bottom: #002569 dotted 1px;
+            font-size: 12pt;
+        }
+        .RadMenu_Windows7 .rmRootGroup 
+        {
+            background-color: transparent !important;
+        }
+        .RadDropDownList_Windows7, .RadComboBoxDropDown_Windows7, .RadComboBox, .RadButton
+        {
+            font-size: 12pt !important;
+        }
+        .smSiteMap{
+            margin-left: 15px;
+        }
+        .loader
+        {
+            position:fixed;
+            left:0;top:0;
+            width:100%;
+            height:100%;z-index:9999;
+            background:url(images/loader.gif) 50% 50% no-repeat #000;
+            opacity:0.55;
+        }
+
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+        .header-container {
+            position: relative;
+            text-align: center;
+            color: white;
+        }
+
+        .header-image {
+            width: 100%;
+            height: auto;
+        }
+        .dev-text{                  
+            position: absolute;
+            top: 50%;
+            left: 36%;
+            transform: translate(-10%, -35%);
+            font-size: 74px;
+            font-weight: bold;
+            color: red;
+            white-space: nowrap;
+        }
+        .header-text {
+            position: absolute;
+            top: 76%;
+            left: 78%;
+            transform: translate(-30%, -35%);
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.8); /* Add shadow  Horizontal offsent, vertical offset, and blur radius  the fourth parameter on the rgba is the alpha value for transparency*/
+            white-space: nowrap;
+        }
+
+        /* Media queries for different screen sizes */
+        @media (max-width: 1200px) {
+      .header-text {
+                font-size: 2vw;
+            }
+
+        }
+
+        @media (max-width: 992px) {
+         .header-text {
+                font-size: 1.9vw;
+            }
+
+        }
+
+        @media (max-width: 768px) {
+        .header-text {
+                font-size: 1.9vw;
+            }
+        }
+    </style>
+     <script type="text/javascript">
+        $(window).on(function () {
+            $(".loader").fadeOut("slow");
+        });
+        ! function (a) {
+            jQuery(window).bind("unload", function () { }), a(document).ready(function () {
+                a(".loader").hide(), a('a:not([href^="#"])').on("click", function () {
+                    "" != a(this).attr("href") && a(".loader").show(), a(this).is('[href*="Download"]') && a(".loader").hide()
+                }), a("a:not([href])").click(function () {
+                    a(".loader").hide()
+                }), a('a[href*="javascript:void(0)"]').click(function () {
+                    a(".loader").hide()
+                }), a(".rcRefreshImage").click(function () {
+                    a(".loader").hide()
+                }),
+                 a(".ButtonLoader").click(function () {
+                     a(".loader").hide()
+                 }),
+                a(".LoadLinks").click(function () {
+                    a(".loader").hide()
+                }),
+                a(".blackfooter").click(function () {
+                    a(".loader").hide()
+                }),
+                a(".export").click(function () {
+                    setTimeout(function () {
+                        a(".loader").fadeOut("fast")
+                    }, 1e3)
+                })
+            })
+        }(jQuery);
+    </script>
+
+<link href="/OIDS/WebResource.axd?d=rhRRvYQTYv6mNRHqzCKJ7o7y73RLNZIR2WM2bZmV3NOpZXbkFX_pQo7WITYFy8kWPeNnxvlZ2oA39hRBqjEtbD7Wjc-oRsty3isPayQrWEtSv3lwIe_k0IK9rbkm5f65aO_1xRF0F8xm9m4iPhFPbw2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=VdPoLqp1pEU6N0-IfFplZFPsvpNP2QMvQAfkmBAM_Pdtb0wlWRHcPYQ7myJlzcByPIcB4ZxKBjgfewgj7i8H4SI3RPQUaJwfADJiLOj_xOHTc_Cua43qe66za083H3amoWnLTHTQhgBSwwPUSKLLfA2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=6d0ORl_GDQ8il0vfaye5YWX2_LbBc9WDXzhSAjNq2nPI9YBDKnTtgcaef8H-mfLD0bg9b7mwUzRe3Bz-iSuagQROl2dZrGmFJZsMsQFw0S68S42aqYTkiLLg95hQ4XhCpft9AbmPaC-3IZmcl2CRFg2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=U4fmqBE__aLMLwH7DJyJBBCn7ewQJ-V--4xb3kej-kxqaxIrRSs3e7JmM7vmsRHO48UCSBg7d0417U68PkmruRLc4Mtc2G1WkltxYhn98I-Y0pcR9eQw4WlU-7Rn-bR1iWUQGJqbUQLKkvG7QDMcXA2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=kDkw17-uEIms1kNrL30a2qUGjB4Wnmar3ksEKyzR-nUqtKOTjMk9sYTHUHbngVpPmh9XupM-aG6_wuUgp3skwu5syw3QijJgRYapt_6H1zpFCNplzovRrFfc1lsju_hve2C-djW7iw95ldZSKKFgILDVRukdDWnpuftvFonhTN01&amp;t=639076038940000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=lkmN1N_d-VFp8mPAmEJ_Q0FfBMBU_0Q9xRatYl0tVe6XWalN_Cgy2Kj-9y-R479FVmDz4v5ZAo7MmDXmi_yORyhizc9Ce8vWLN6CJTyhX8lCzERN_C2qzs_0icWGdAXS0&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=q7YOl4-apqfV5ZJtHLhy-AG6fbIzdsn6eZ4uSXDjei_nZMstmhNcwQvuGInJ4YL-R1VObBqzJ1omQsD2evacIQ_pOaUz7EaV9ocKyhooaRMdivVE2KrEdjiqR32mNBCDpkc0YwFRmDOvyjTXtuN-xaDiM7SxILx08Wksw_Srqxs1&amp;t=639076038940000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=ki1n1Eahlh7Hg67y-z8gJtxc31JR6-0Z57ubsCEmS7jsQ3YN9s5eJEcAO95IQyOI7C92zqwhAGpSoYdy4ANnHAZx7fCi3jVNKOfsVhPHnFDxTozDV5FF116FR85iEYJzLBXRdftSmMIkRrsnCXk16g2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=3pE53VNpmLUeHamhU7pJSmkBm0kVaBo08KdmlrryqiPHmpnrcXN-LBG2EHQ38MHCjy8P2mnfSL-5tSUBC_aEEEp0NNkB5Y5OpZUsi0TnVahSm_kEaxKMNvxclkytxNteefddoRmVVFt7xddlFKI4Xfpgul-lWN7qL-NgLa_9Ke41&amp;t=639076038940000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=eg6OhsAllQmu_wDET7uKp2tXj6C8doSryt6-gerBBQiLxzIChPHDPh1cBfMLzQKebeRoKqp4L4FZQyAcxmPA54NDleu96PbdOBB6lRwghlv3ftER8xAYmJ76bbqSVIUj6fM6BLNfsCvMU4K6bqZzVQ2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=Akia8O5xpASJfPgCOoqwwa9ZuF95FzRjRYfMXh8OZcoY-yBR1EkgkADGWYFNeok6E32tR3mWDq2sfma4o-UffkY-DHjYQ9SDDYFC7RMvZ0CAtthufwdZwoqocSLhA9Mr-7x6gUjkcLOF0mareLZXbyEDOYEKUxwdzSEDgzQgPwQ1&amp;t=639076038940000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=jATR2aT4MP7vIvfz8UagJKoGhB7NrYTyl_gTLe-B4jC5UY3PFBkneaU2VwuF4Gy1IY076XWRNDMD5DbxskrjljYBMzODfirYkt_UgQevtMdhaNt7hYXzFMu8EoTU13n4b6ulkUQB7lRFO-27paW_Sw2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=9oIhLHFFDAGttAlxHaDK-RvzwtqGA-nMFTjwj529NHafO-gpZM48Pqp10kJUlYE58aV1YxsjCnFUpQr4NbjtNFj72dLAIxSSG11guUtvw8EXKZjwXI8b5qrPVj3Fgh65nR8oG3Ev9Hc1IkNaUzMLz501WxjCVozU_h4bxGvuUvk1&amp;t=639076038940000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=qpDogBCh8B2zFH7Wt5kgoJQW9leSvvwPZBSJ6MV4Hdfu7fqrSBxZhxdDzE-95dlq_JYLBD2vDPP0Y5g29fzI-rKhvOw2h_VNDiaO5vpxC3oUgO0MGFGe4WN0__dQ49HFR13Maq1goRAyH96D4W-tpw2&amp;t=639076038920000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /><link href="/OIDS/WebResource.axd?d=u3vH1fMvap-p0F6wUcLeputmNkK2By3-1rbcn3Pqz1Nx3OLWdww875y82xGQJw08i2H5_vJUofTmv3qWze1kL1xbJOVxuT9ys8BLgcAAjytki2iILei_OI43nCTh81VmDVS-tzTN2bWlOzS1ijoXUAA_5zqJTF6Oh9Z8C2DOjLk1&amp;t=639076038940000000" type="text/css" rel="stylesheet" class="Telerik_stylesheet" /></head>
+    
+<body>
+    <form method="post" action="./OIDS_Search.aspx" onsubmit="javascript:return WebForm_OnSubmit();" id="form1">
+<div class="aspNetHidden">
+<input type="hidden" name="RadScriptManager1_TSM" id="RadScriptManager1_TSM" value="" />
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="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" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['form1'];
+if (!theForm) {
+    theForm = document.form1;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/OIDS/WebResource.axd?d=pynGkmcFUV13He1Qd6_TZOL3LTfK9B8ulPAwngVuAXWetE3d7rCUw0O-mGO49G1HkRgTBlAJdVNxpOYWl736_g2&amp;t=639224623058683406" type="text/javascript"></script>
+
+
+<script src="/OIDS/ScriptResource.axd?d=nv7asgRUU0tRmHNR2D6t1Ab2tGXldleNcpHkOXHSJHrh_TaHOY09cQlGeM2geCvfNlHfburph90h1kuP1NCFQIySMbWHe2U6XAjTio51xyuv654q6abqgmcM_I6vje4oAnXrXPH6xWE6W0eqIlAQ2A2&amp;t=ffffffffa0bc9515" type="text/javascript"></script>
+<script src="/OIDS/Telerik.Web.UI.WebResource.axd?_TSM_HiddenField_=RadScriptManager1_TSM&amp;compress=1&amp;_TSM_CombinedScripts_=%3b%3bSystem.Web.Extensions%2c+Version%3d4.0.0.0%2c+Culture%3dneutral%2c+PublicKeyToken%3d31bf3856ad364e35%3aen-US%3a9ead301a-2c07-4fc5-be19-f8423a34e117%3aea597d4b%3ab25378d2%3bTelerik.Web.UI%2c+Version%3d2026.1.225.462%2c+Culture%3dneutral%2c+PublicKeyToken%3d121fae78165ba3d4%3aen-US%3acb3af45e-afa6-485c-beef-0037df1863bf%3a16e4e7cd%3af7645509%3a24ee1bba%3ac128760b%3a19620875%3a874f8ea2%3ab2e06756%3af46195d3%3a92fe8ea0%3afa31b949%3a4877f69a%3a33715776%3a490a9d4e%3abd8f85e4%3ab7778d6c%3a2003d0b8%3a1e771326%3a88144a7a%3a2bef5fcc%3aa9b7ace7%3aaa288e2d%3ab092aa46%3a6d43f6d9" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+if (typeof(Sys) === 'undefined') throw new Error('ASP.NET Ajax client-side framework failed to load.');
+//]]>
+</script>
+
+<script type="text/javascript">
+//<![CDATA[
+function WebForm_OnSubmit() {
+if (typeof(ValidatorOnSubmit) == "function" && ValidatorOnSubmit() == false) return false;
+return true;
+}
+//]]>
+</script>
+
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="C5204C39" />
+	<input type="hidden" name="__SCROLLPOSITIONX" id="__SCROLLPOSITIONX" value="0" />
+	<input type="hidden" name="__SCROLLPOSITIONY" id="__SCROLLPOSITIONY" value="0" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="Y+9vajuu6QTlX7NFeh6y2YUv77kB7hbAER62A8siycR/HfBDJch2DSiOm438BlOTz8y5gQy6sShbpiTvZQHCWKaQWz3rATp3bZ8gWxL7iEErbf1NTB2t8Jxoqf6H44KSTM6cV8hMAuusZXgcjBJVlm+mhsm1upOlIZ5s6GHJ/WATHAm/vhy+Ilo+EN4i9bx19tP5d2Sw2GQ92WKm8u9nMVQtcdMpmo9Edw7i43qbEFtJd/W1vPt+AD9Um+9FT57i7XCuflNY+Z949DF6s3ZyFkRhTpjUR8J8JUF6XgwzKrOoLZqa/oNUKz6EUxv7rC6ftaf7md5hEM25VbHxTpAG6w==" />
+</div>
+        <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('ctl00$RadScriptManager1', 'form1', [], [], [], 90, 'ctl00');
+//]]>
+</script>
+
+        <div id="rpl" class="t-container t-container-fluid wrap">
+	<div class="t-row">
+		<div id="Header" class="t-col t-col-12">
+			
+                            <div class="t-container t-container-static">
+				<div class="t-row headerwrap">
+					<div class="t-col t-col-12 t-hidden-xs t-hidden-sm t-hidden-md t-hidden-lg HeaderRow">
+						
+                                            <img src="/images/KOECBannerImage.png" alt="Kansas Department of Health &amp; Environment 1280" class="HeaderImage" />
+                                                <div id="headerText" class="header-text">Laura Kelly, Governor<br />Christi Smith, Executive Director</div>
+                                                <div id="devText" class="dev-text"></div>
+
+                                        
+					</div>
+				</div><div class="t-row">
+					<div id="rmLogobar" class="t-col t-col-12 logos">
+						
+                                            <span style="color: white;"> Child Care Licensing Program Online Facility Compliance Search</span>
+                                      
+                                        
+					</div>
+				</div>
+			</div>
+                        
+		</div>
+	</div><div id="layoutWrapper" class="t-row pagewrapper">
+		<div id="mainbody" class="t-col t-col-10">
+			
+                            <div id="hideData">
+                            <div style="width: 100%">
+                                <div style="width: 115%;text-align:center;">
+                                 <span style="color:green; font-weight:bold;font-size:large">Data last updated <script type="text/javascript">
+                                                             var date = new Date()
+                                                             date.setDate(date.getDate() - 1)
+                                                             document.write(date.toLocaleDateString())</script></span>
+                                    </div>
+                                
+
+      
+   <input type="hidden" name="ctl00$ContentPlaceHolder1$gre_captcha_resp_value" id="ContentPlaceHolder1_gre_captcha_resp_value" />
+    <div id="ctl00_ContentPlaceHolder1_SearchWindow" style="display:none;">
+				<!-- 2026.1.225.462 --><div id="ctl00_ContentPlaceHolder1_SearchWindow_alerttemplate" style="display:none;">
+        <div class="rwDialog rwAlertDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+            </div>
+        </div>
+        </div><div id="ctl00_ContentPlaceHolder1_SearchWindow_prompttemplate" style="display:none;">
+        <div class="rwDialog rwPromptDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+                <div class="rwPromptInputContainer">
+                    <script type="text/javascript">
+                        function RadWindowprompt_detectenter(id, ev, input) {
+                            if (!ev) ev = window.event;
+                            if (ev.keyCode == 13) {
+                                var but = input.parentNode.parentNode.parentNode.getElementsByTagName("button")[0];
+                                if (but) {
+                                    if (but.click) {
+                                        but.click();
+                                    }
+                                    else if (but.onclick) {
+                                        but.focus();
+                                        var click = but.onclick;
+                                        but.onclick = null;
+                                        if (click) click.call(but);
+                                    }
+                                }
+                                return false;
+                            }
+                            else return true;
+                        }
+                    </script>
+                    <input title="Enter Value" aria-label="input" onkeydown="return RadWindowprompt_detectenter('{0}', event, this);" type="text" class="rwPromptInput radPreventDecorate" value="{2}" />
+                </div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(this.parentNode.parentNode.getElementsByTagName('input')[0].value); return false;">##LOC[OK]##</button>
+                <button type="button" class="rwCancelBtn" onclick="$find('{0}').close(null); return false;">##LOC[Cancel]##</button>
+            </div>
+        </div>
+        </div><div id="ctl00_ContentPlaceHolder1_SearchWindow_confirmtemplate" style="display:none;">
+        <div class="rwDialog rwConfirmDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+                <button type="button" class="rwCancelBtn" onclick="$find('{0}').close(false); return false;">##LOC[Cancel]##</button>
+            </div>
+        </div>
+        </div><input id="ctl00_ContentPlaceHolder1_SearchWindow_ClientState" name="ctl00_ContentPlaceHolder1_SearchWindow_ClientState" type="hidden" />
+			</div> 
+    <div style="text-align:center;width:120%">
+ 
+        <span id="ctl00_ContentPlaceHolder1_RadLabel9" class="RadLabel RadLabel_Windows7" style="color:#153777;font-size:XX-Large;font-weight:bold;font-style:italic;">Child Care Licensing Facility Compliance Search</span>
+    </div>
+        <hr style="width:119.8%;" />
+    <div id="ContentPlaceHolder1_searchSection">
+        <table id="ContentPlaceHolder1_searchTable" style="width:100%;">
+				<tr>
+					<td colspan="3"><span id="ctl00_ContentPlaceHolder1_searchLabel" class="RadLabel RadLabel_Windows7" style="font-size:X-Large;font-weight:bold;">Search</span></td>
+				</tr><tr>
+					<td colspan="3">
+                    <br />
+                    <span id="ctl00_ContentPlaceHolder1_searchContentLabel" class="RadLabel RadLabel_Windows7" style="font-size:Large;">Please enter all known information for the child care facility. </span>
+                    <br />
+                    <a id="ContentPlaceHolder1_searchLink" class="collapsible" href="javascript:void(0);" style="font-size:Large;">Click here for search tips</a>
+                    <div class="content">
+                      <p>  Search tips:</p>
+       <ol>
+
+           <li>If you don’t search using the license number, your search must include at least 2 search fields/criteria. (I.e. County and program type).</li>
+           <li>Do not use any punctuation in the search fields.</li>
+           <li>The search is exact. Recheck the spelling of owner and facility names. The spelling must match the license to bring back results.</li>
+       </ol>
+                        <p>If you have questions about the search process, email child care licensing at <a href="mailto: kdhe.cclr@ks.gov">kdhe.cclr@ks.gov</a> or call 785-296-1270 during business hours. </p>
+                    </div>
+                </td>
+				</tr><tr>
+					<td align="left" valign="middle" colspan="3"><span id="ctl00_ContentPlaceHolder1_errorLabel" class="RadLabel RadLabel_Windows7" style="color:Red;font-size:Large;"></span></td>
+				</tr><tr>
+					<td align="left" valign="middle" style="width:15%;"><label for="ctl00_ContentPlaceHolder1_licneseNotext" id="ctl00_ContentPlaceHolder1_licnumLabel" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">License Number</label></td><td align="left" valign="middle" style="width:20%;"><span id="ctl00_ContentPlaceHolder1_licneseNotext_wrapper" class="RadInput RadInput_Windows7" style="width:250px;height:35px;"><input id="ctl00_ContentPlaceHolder1_licneseNotext" name="ctl00$ContentPlaceHolder1$licneseNotext" size="20" maxlength="7" class="riTextBox riEnabled" type="text" value="" /><input id="ctl00_ContentPlaceHolder1_licneseNotext_ClientState" name="ctl00_ContentPlaceHolder1_licneseNotext_ClientState" type="hidden" /></span></td><td align="left" valign="middle"><span id="ContentPlaceHolder1_RegularExpressionValidator1" style="color:Red;font-size:12pt;font-weight:bold;display:none;"> * Please enter valid digits for License Number</span></td>
+				</tr><tr>
+					<td align="left" valign="middle" style="width:15%;"><label for="ctl00_ContentPlaceHolder1_ownerFNameText" id="ctl00_ContentPlaceHolder1_RadLabel1" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">Owner First Name</label></td><td align="left" valign="middle" colspan="2"><span id="ctl00_ContentPlaceHolder1_ownerFNameText_wrapper" class="RadInput RadInput_Windows7" style="width:250px;height:35px;"><input id="ctl00_ContentPlaceHolder1_ownerFNameText" name="ctl00$ContentPlaceHolder1$ownerFNameText" size="20" class="riTextBox riEnabled" type="text" value="" /><input id="ctl00_ContentPlaceHolder1_ownerFNameText_ClientState" name="ctl00_ContentPlaceHolder1_ownerFNameText_ClientState" type="hidden" /></span>
+                 &nbsp;<span id="ContentPlaceHolder1_RegularExpressionValidator2" style="color:Red;font-size:12pt;font-weight:bold;display:none;"> * Invalid Format</span></td>
+				</tr><tr>
+					<td align="left" valign="middle" style="width:15%;"><label for="ctl00_ContentPlaceHolder1_ownerLNameText" id="ctl00_ContentPlaceHolder1_RadLabel2" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">Owner Last Name </label></td><td align="left" valign="middle" style="width:20%;"><span id="ctl00_ContentPlaceHolder1_ownerLNameText_wrapper" class="RadInput RadInput_Windows7" style="width:250px;height:35px;"><input id="ctl00_ContentPlaceHolder1_ownerLNameText" name="ctl00$ContentPlaceHolder1$ownerLNameText" size="20" class="riTextBox riEnabled" type="text" value="" /><input id="ctl00_ContentPlaceHolder1_ownerLNameText_ClientState" name="ctl00_ContentPlaceHolder1_ownerLNameText_ClientState" type="hidden" /></span></td><td align="left" valign="middle"><span id="ContentPlaceHolder1_RegularExpressionValidator4" style="color:Red;font-size:12pt;font-weight:bold;display:none;"> * Invalid Format</span></td>
+				</tr><tr>
+					<td align="left" valign="middle" style="width:15%;"><label for="ctl00_ContentPlaceHolder1_facilityNameText" id="ctl00_ContentPlaceHolder1_RadLabel3" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">Facility Name</label></td><td align="left" valign="middle" colspan="2" style="width:20%;"><span id="ctl00_ContentPlaceHolder1_facilityNameText_wrapper" class="RadInput RadInput_Windows7" style="width:250px;height:35px;"><input id="ctl00_ContentPlaceHolder1_facilityNameText" name="ctl00$ContentPlaceHolder1$facilityNameText" size="20" class="riTextBox riEnabled" type="text" value="" /><input id="ctl00_ContentPlaceHolder1_facilityNameText_ClientState" name="ctl00_ContentPlaceHolder1_facilityNameText_ClientState" type="hidden" /></span></td><td align="left" valign="middle"></td>
+				</tr><tr>
+					<td align="left" valign="middle" style="width:15%;"><label for="ctl00_ContentPlaceHolder1_programTypeListDetails" id="ctl00_ContentPlaceHolder1_RadLabel4" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">Program Type</label></td><td align="left" valign="middle" style="width:20%;"><div id="ctl00_ContentPlaceHolder1_programTypeListDetails" class="RadListBox RadListBox_Windows7 rlbFixedHeight" style="height:150px;width:350px;">
+						<div tabindex="0" class="rlbGroup" role="listbox" aria-label="ctl00_ContentPlaceHolder1_programTypeListDetails" aria-multiselectable="true">
+							<ul class="rlbList" role="presentation">
+								<li id="ctl00_ContentPlaceHolder1_programTypeListDetails_i0" class="rlbItem rlbSelected" role="option" aria-selected="true" style="font-size:Small;">Please Select</li><li id="ctl00_ContentPlaceHolder1_programTypeListDetails_i1" class="rlbItem" role="option" aria-selected="false">Building Based School Age Program</li><li id="ctl00_ContentPlaceHolder1_programTypeListDetails_i2" class="rlbItem" role="option" aria-selected="false">Child Care Center</li><li id="ctl00_ContentPlaceHolder1_programTypeListDetails_i3" class="rlbItem" role="option" aria-selected="false">Family Child Care Home</li><li id="ctl00_ContentPlaceHolder1_programTypeListDetails_i4" class="rlbItem" role="option" aria-selected="false">Head Start Child Care Center</li><li id="ctl00_ContentPlaceHolder1_programTypeListDetails_i5" class="rlbItem" role="option" aria-selected="false">Outdoor Summer Camp School Age Program</li><li id="ctl00_ContentPlaceHolder1_programTypeListDetails_i6" class="rlbItem" role="option" aria-selected="false">Preschool</li><li id="ctl00_ContentPlaceHolder1_programTypeListDetails_i7" class="rlbItem" role="option" aria-selected="false">Youth Development Program</li>
+							</ul>
+						</div><input id="ctl00_ContentPlaceHolder1_programTypeListDetails_ClientState" name="ctl00_ContentPlaceHolder1_programTypeListDetails_ClientState" type="hidden" />
+					</div></td><td align="left" valign="middle">
+                &nbsp;
+            </td>
+				</tr><tr>
+					<td align="left" valign="middle" style="width:15%;"><span id="ctl00_ContentPlaceHolder1_RadLabel5" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">County</span></td><td align="left" valign="middle" style="width:20%;"><div id="ctl00_ContentPlaceHolder1_countyComboList" class="RadComboBox RadComboBox_Vista" style="font-size:Small;width:250px;">
+						<span class="rcbInner"><input name="ctl00$ContentPlaceHolder1$countyComboList" type="text" class="rcbInput radPreventDecorate rcbEmptyMessage" id="ctl00_ContentPlaceHolder1_countyComboList_Input" value="Select County From Below" style="font-size:Small;" /><button class="rcbActionButton" tabindex="-1" type="button"><span id="ctl00_ContentPlaceHolder1_countyComboList_Arrow" class="p-icon p-i-arrow-60-down"></span><span class="rcbButtonText">select</span></button></span><div class="rcbSlide" style="z-index:6000;display:none;"><div id="ctl00_ContentPlaceHolder1_countyComboList_DropDown" class="RadComboBoxDropDown RadComboBoxDropDown_Vista "><div class="rcbScroll rcbWidth"><ul class="rcbList"><li class="rcbItem">Allen</li><li class="rcbItem">Anderson</li><li class="rcbItem">Atchison</li><li class="rcbItem">Barber</li><li class="rcbItem">Barton</li><li class="rcbItem">Bourbon</li><li class="rcbItem">Brown</li><li class="rcbItem">Butler</li><li class="rcbItem">Chase</li><li class="rcbItem">Chautauqua</li><li class="rcbItem">Cherokee</li><li class="rcbItem">Cheyenne</li><li class="rcbItem">Clark</li><li class="rcbItem">Clay</li><li class="rcbItem">Cloud</li><li class="rcbItem">Coffey</li><li class="rcbItem">Commanche</li><li class="rcbItem">Cowley</li><li class="rcbItem">Crawford</li><li class="rcbItem">Decatur</li><li class="rcbItem">Dickinson</li><li class="rcbItem">Doniphan</li><li class="rcbItem">Douglas</li><li class="rcbItem">Edwards</li><li class="rcbItem">Elk</li><li class="rcbItem">Ellis</li><li class="rcbItem">Ellsworth</li><li class="rcbItem">Finney</li><li class="rcbItem">Ford</li><li class="rcbItem">Franklin</li><li class="rcbItem">Geary</li><li class="rcbItem">Gove</li><li class="rcbItem">Graham</li><li class="rcbItem">Grant</li><li class="rcbItem">Gray</li><li class="rcbItem">Greeley</li><li class="rcbItem">Greenwood</li><li class="rcbItem">Hamilton</li><li class="rcbItem">Harper</li><li class="rcbItem">Harvey</li><li class="rcbItem">Haskell</li><li class="rcbItem">Hodgeman</li><li class="rcbItem">Jackson</li><li class="rcbItem">Jefferson</li><li class="rcbItem">Jewell</li><li class="rcbItem">Johnson</li><li class="rcbItem">Kearny</li><li class="rcbItem">Kingman</li><li class="rcbItem">Kiowa</li><li class="rcbItem">Labette</li><li class="rcbItem">Lane</li><li class="rcbItem">Leavenworth</li><li class="rcbItem">Lincoln</li><li class="rcbItem">Linn</li><li class="rcbItem">Logan</li><li class="rcbItem">Lyon</li><li class="rcbItem">Marion</li><li class="rcbItem">Marshall</li><li class="rcbItem">Mcpherson</li><li class="rcbItem">Meade</li><li class="rcbItem">Miami</li><li class="rcbItem">Mitchell</li><li class="rcbItem">Montgomery</li><li class="rcbItem">Morris</li><li class="rcbItem">Morton</li><li class="rcbItem">Nemaha</li><li class="rcbItem">Neosho</li><li class="rcbItem">Ness</li><li class="rcbItem">Norton</li><li class="rcbItem">Osage</li><li class="rcbItem">Osborne</li><li class="rcbItem">Ottawa</li><li class="rcbItem">Out of state</li><li class="rcbItem">Pawnee</li><li class="rcbItem">Phillips</li><li class="rcbItem">Pottawatomie</li><li class="rcbItem">Pratt</li><li class="rcbItem">Rawlins</li><li class="rcbItem">Reno</li><li class="rcbItem">Republic</li><li class="rcbItem">Rice</li><li class="rcbItem">Riley</li><li class="rcbItem">Rooks</li><li class="rcbItem">Rush</li><li class="rcbItem">Russell</li><li class="rcbItem">Saline</li><li class="rcbItem">Scott</li><li class="rcbItem">Sedgwick</li><li class="rcbItem">Seward</li><li class="rcbItem">Shawnee</li><li class="rcbItem">Sheridan</li><li class="rcbItem">Sherman</li><li class="rcbItem">Smith</li><li class="rcbItem">Stafford</li><li class="rcbItem">Stanton</li><li class="rcbItem">Stevens</li><li class="rcbItem">Sumner</li><li class="rcbItem">Thomas</li><li class="rcbItem">Trego</li><li class="rcbItem">Wabaunsee</li><li class="rcbItem">Wallace</li><li class="rcbItem">Washington</li><li class="rcbItem">Wichita</li><li class="rcbItem">Wilson</li><li class="rcbItem">Woodson</li><li class="rcbItem">Wyandotte</li></ul></div></div></div><input id="ctl00_ContentPlaceHolder1_countyComboList_ClientState" name="ctl00_ContentPlaceHolder1_countyComboList_ClientState" type="hidden" />
+					</div></td><td align="left" valign="middle">
+                &nbsp;
+            </td>
+				</tr><tr>
+					<td align="left" valign="middle" style="width:15%;"><label for="ctl00_ContentPlaceHolder1_cityText" id="ctl00_ContentPlaceHolder1_RadLabel6" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">City</label></td><td align="left" valign="middle" style="width:20%;"><span id="ctl00_ContentPlaceHolder1_cityText_wrapper" class="RadInput RadInput_Windows7" style="width:250px;height:35px;"><input id="ctl00_ContentPlaceHolder1_cityText" name="ctl00$ContentPlaceHolder1$cityText" size="20" class="riTextBox riEnabled" type="text" value="" /><input id="ctl00_ContentPlaceHolder1_cityText_ClientState" name="ctl00_ContentPlaceHolder1_cityText_ClientState" type="hidden" /></span></td><td align="left" valign="middle"><span id="ContentPlaceHolder1_RegularExpressionValidator5" style="color:Red;font-size:12pt;font-weight:bold;display:none;"> * Invalid Format</span></td>
+				</tr><tr>
+					<td align="left" valign="middle" style="width:15%;"><label for="ctl00_ContentPlaceHolder1_zipCodeTextValue" id="ctl00_ContentPlaceHolder1_RadLabel7" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">Zip Code</label></td><td align="left" valign="middle" style="width:20%;"><span id="ctl00_ContentPlaceHolder1_zipCodeTextValue_wrapper" class="RadInput RadInput_Windows7" style="width:250px;height:35px;"><input id="ctl00_ContentPlaceHolder1_zipCodeTextValue" name="ctl00$ContentPlaceHolder1$zipCodeTextValue" size="20" class="riTextBox riEnabled" type="text" value="" /><input id="ctl00_ContentPlaceHolder1_zipCodeTextValue_ClientState" name="ctl00_ContentPlaceHolder1_zipCodeTextValue_ClientState" type="hidden" /></span></td><td align="left" valign="middle"><span id="ContentPlaceHolder1_RegularExpressionValidator6" style="color:Red;font-size:12pt;font-weight:bold;display:none;"> * Invalid Format</span></td>
+				</tr><tr>
+					<td align="left" valign="middle" style="width:15%;"><label id="ctl00_ContentPlaceHolder1_RadLabel8" class="RadLabel RadLabel_Windows7" style="font-size:Medium;">Enter Captcha: </label></td><td align="left" valign="middle" colspan="2">
+
+                  <div class="g-recaptcha" data-sitekey='6LeCkx4pAAAAAM8Q-d-komzMDXDCAvfhwz-f4ts5'></div>
+
+            </td>
+				</tr><tr>
+					<td align="center" valign="middle" colspan="2"><button type="submit" name="ctl00$ContentPlaceHolder1$searchBtn" value="Search" id="ctl00_ContentPlaceHolder1_searchBtn" class="RadButton RadButton_Vista rbButton rbRounded rbIconButton ButtonLoader" style="font-size:Medium;"><span class="rbText">Search</span><input id="ctl00_ContentPlaceHolder1_searchBtn_ClientState" name="ctl00_ContentPlaceHolder1_searchBtn_ClientState" type="hidden" /></button>
+                             &nbsp;&nbsp;&nbsp;   <button type="submit" name="ctl00$ContentPlaceHolder1$clearBtn" value="Clear" id="ctl00_ContentPlaceHolder1_clearBtn" class="RadButton RadButton_Vista rbButton rbRounded rbIconButton" style="font-size:Medium;"><span class="rbText">Clear</span><input id="ctl00_ContentPlaceHolder1_clearBtn_ClientState" name="ctl00_ContentPlaceHolder1_clearBtn_ClientState" type="hidden" /></button></td><td>
+                &nbsp;
+            </td>
+				</tr>
+			</table>
+        <br />
+        
+         <br />
+         <br />
+         </div>
+    
+     
+             <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+            
+
+           <script type="text/javascript">
+               var coll = document.getElementsByClassName("collapsible");
+               var i;
+
+               for (i = 0; i < coll.length; i++) {
+                   coll[i].addEventListener("click", function () {
+                       this.classList.toggle("active");
+                       var content = this.nextElementSibling;
+                       if (content.style.display === "block") {
+                           content.style.display = "none";
+                       } else {
+                           content.style.display = "block";
+                       }
+                   });
+               }
+     </script>
+ 
+  
+
+                            </div>
+                                </div>
+                        
+		</div>
+	</div><div class="t-row noMargin">
+		<div id="MainFooter" class="t-col t-col-12">
+			<div class="t-row">
+				<div class="t-col t-col-12">
+					
+                                            <div>
+                                                <p class="footerLinks"><br/>
+
+                                                    <span class="whitebold"> </span>
+                                                </p>
+                                                 <p style="color: white;" class="footer">
+                                                     Kansas Office of Early Childhood<br/>915 SW Harrison Street<br/>Topeka, KS 66612
+    </p>
+                                            </div>
+                                        
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+        <style type="text/css">
+            div.RadMenu {
+                float: right;
+            }
+        </style>
+            <div class="loader"></div>
+    
+<script type="text/javascript">
+//<![CDATA[
+var Page_Validators =  new Array(document.getElementById("ContentPlaceHolder1_RegularExpressionValidator1"), document.getElementById("ContentPlaceHolder1_RegularExpressionValidator2"), document.getElementById("ContentPlaceHolder1_RegularExpressionValidator4"), document.getElementById("ContentPlaceHolder1_RegularExpressionValidator5"), document.getElementById("ContentPlaceHolder1_RegularExpressionValidator6"));
+//]]>
+</script>
+
+<script type="text/javascript">
+//<![CDATA[
+var ContentPlaceHolder1_RegularExpressionValidator1 = document.all ? document.all["ContentPlaceHolder1_RegularExpressionValidator1"] : document.getElementById("ContentPlaceHolder1_RegularExpressionValidator1");
+ContentPlaceHolder1_RegularExpressionValidator1.controltovalidate = "ctl00_ContentPlaceHolder1_licneseNotext";
+ContentPlaceHolder1_RegularExpressionValidator1.errormessage = " * Please enter valid digits for License Number";
+ContentPlaceHolder1_RegularExpressionValidator1.display = "Dynamic";
+ContentPlaceHolder1_RegularExpressionValidator1.validationGroup = "SearchValidation";
+ContentPlaceHolder1_RegularExpressionValidator1.evaluationfunction = "RegularExpressionValidatorEvaluateIsValid";
+ContentPlaceHolder1_RegularExpressionValidator1.validationexpression = "^[0-9]{0,7}$";
+var ContentPlaceHolder1_RegularExpressionValidator2 = document.all ? document.all["ContentPlaceHolder1_RegularExpressionValidator2"] : document.getElementById("ContentPlaceHolder1_RegularExpressionValidator2");
+ContentPlaceHolder1_RegularExpressionValidator2.controltovalidate = "ctl00_ContentPlaceHolder1_ownerFNameText";
+ContentPlaceHolder1_RegularExpressionValidator2.errormessage = " * Invalid Format";
+ContentPlaceHolder1_RegularExpressionValidator2.display = "Dynamic";
+ContentPlaceHolder1_RegularExpressionValidator2.validationGroup = "SearchValidation";
+ContentPlaceHolder1_RegularExpressionValidator2.evaluationfunction = "RegularExpressionValidatorEvaluateIsValid";
+ContentPlaceHolder1_RegularExpressionValidator2.validationexpression = "[a-zA-Z ]*$";
+var ContentPlaceHolder1_RegularExpressionValidator4 = document.all ? document.all["ContentPlaceHolder1_RegularExpressionValidator4"] : document.getElementById("ContentPlaceHolder1_RegularExpressionValidator4");
+ContentPlaceHolder1_RegularExpressionValidator4.controltovalidate = "ctl00_ContentPlaceHolder1_ownerLNameText";
+ContentPlaceHolder1_RegularExpressionValidator4.errormessage = " * Invalid Format";
+ContentPlaceHolder1_RegularExpressionValidator4.display = "Dynamic";
+ContentPlaceHolder1_RegularExpressionValidator4.validationGroup = "SearchValidation";
+ContentPlaceHolder1_RegularExpressionValidator4.evaluationfunction = "RegularExpressionValidatorEvaluateIsValid";
+ContentPlaceHolder1_RegularExpressionValidator4.validationexpression = "[a-zA-Z ]*$";
+var ContentPlaceHolder1_RegularExpressionValidator5 = document.all ? document.all["ContentPlaceHolder1_RegularExpressionValidator5"] : document.getElementById("ContentPlaceHolder1_RegularExpressionValidator5");
+ContentPlaceHolder1_RegularExpressionValidator5.controltovalidate = "ctl00_ContentPlaceHolder1_cityText";
+ContentPlaceHolder1_RegularExpressionValidator5.errormessage = " * Invalid Format";
+ContentPlaceHolder1_RegularExpressionValidator5.display = "Dynamic";
+ContentPlaceHolder1_RegularExpressionValidator5.validationGroup = "SearchValidation";
+ContentPlaceHolder1_RegularExpressionValidator5.evaluationfunction = "RegularExpressionValidatorEvaluateIsValid";
+ContentPlaceHolder1_RegularExpressionValidator5.validationexpression = "[a-zA-Z ]*$";
+var ContentPlaceHolder1_RegularExpressionValidator6 = document.all ? document.all["ContentPlaceHolder1_RegularExpressionValidator6"] : document.getElementById("ContentPlaceHolder1_RegularExpressionValidator6");
+ContentPlaceHolder1_RegularExpressionValidator6.controltovalidate = "ctl00_ContentPlaceHolder1_zipCodeTextValue";
+ContentPlaceHolder1_RegularExpressionValidator6.errormessage = " * Invalid Format";
+ContentPlaceHolder1_RegularExpressionValidator6.display = "Dynamic";
+ContentPlaceHolder1_RegularExpressionValidator6.validationGroup = "SearchValidation";
+ContentPlaceHolder1_RegularExpressionValidator6.evaluationfunction = "RegularExpressionValidatorEvaluateIsValid";
+ContentPlaceHolder1_RegularExpressionValidator6.validationexpression = "\\d{5}(-\\d{4})?";
+//]]>
+</script>
+
+
+<script type="text/javascript">
+//<![CDATA[
+window.__TsmHiddenField = $get('RadScriptManager1_TSM');
+var Page_ValidationActive = false;
+if (typeof(ValidatorOnLoad) == "function") {
+    ValidatorOnLoad();
+}
+
+function ValidatorOnSubmit() {
+    if (Page_ValidationActive) {
+        return ValidatorCommonOnSubmit();
+    }
+    else {
+        return true;
+    }
+}
+        Telerik.Web.UI.RadListBox._preInitialize("ctl00_ContentPlaceHolder1_programTypeListDetails","0");
+theForm.oldSubmit = theForm.submit;
+theForm.submit = WebForm_SaveScrollPositionSubmit;
+
+theForm.oldOnSubmit = theForm.onsubmit;
+theForm.onsubmit = WebForm_SaveScrollPositionOnSubmit;
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadWindowManager, {"_renderMode":2,"clientStateFieldID":"ctl00_ContentPlaceHolder1_SearchWindow_ClientState","formID":"form1","iconUrl":"","minimizeIconUrl":"","name":"SearchWindow","skin":"Windows7","windowControls":"[]"}, null, null, $get("ctl00_ContentPlaceHolder1_SearchWindow"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadTextBox, {"_displayText":"","_focused":false,"_initialValueAsText":"","_postBackEventReferenceScript":"setTimeout(\"__doPostBack(\\\u0027ctl00$ContentPlaceHolder1$licneseNotext\\\u0027,\\\u0027\\\u0027)\", 0)","_renderMode":2,"_skin":"Windows7","_validationText":"","clientStateFieldID":"ctl00_ContentPlaceHolder1_licneseNotext_ClientState","enabled":true,"styles":{HoveredStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riHover"],InvalidStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riError"],DisabledStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riDisabled"],FocusedStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riFocused"],EmptyMessageStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riEmpty"],ReadOnlyStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riRead"],EnabledStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riEnabled"]}}, null, null, $get("ctl00_ContentPlaceHolder1_licneseNotext"));
+});
+
+document.getElementById('ContentPlaceHolder1_RegularExpressionValidator1').dispose = function() {
+    Array.remove(Page_Validators, document.getElementById('ContentPlaceHolder1_RegularExpressionValidator1'));
+}
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadTextBox, {"_displayText":"","_focused":false,"_initialValueAsText":"","_postBackEventReferenceScript":"setTimeout(\"__doPostBack(\\\u0027ctl00$ContentPlaceHolder1$ownerFNameText\\\u0027,\\\u0027\\\u0027)\", 0)","_renderMode":2,"_skin":"Windows7","_validationText":"","clientStateFieldID":"ctl00_ContentPlaceHolder1_ownerFNameText_ClientState","enabled":true,"styles":{HoveredStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riHover"],InvalidStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riError"],DisabledStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riDisabled"],FocusedStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riFocused"],EmptyMessageStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riEmpty"],ReadOnlyStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riRead"],EnabledStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riEnabled"]}}, null, null, $get("ctl00_ContentPlaceHolder1_ownerFNameText"));
+});
+
+document.getElementById('ContentPlaceHolder1_RegularExpressionValidator2').dispose = function() {
+    Array.remove(Page_Validators, document.getElementById('ContentPlaceHolder1_RegularExpressionValidator2'));
+}
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadTextBox, {"_displayText":"","_focused":false,"_initialValueAsText":"","_postBackEventReferenceScript":"setTimeout(\"__doPostBack(\\\u0027ctl00$ContentPlaceHolder1$ownerLNameText\\\u0027,\\\u0027\\\u0027)\", 0)","_renderMode":2,"_skin":"Windows7","_validationText":"","clientStateFieldID":"ctl00_ContentPlaceHolder1_ownerLNameText_ClientState","enabled":true,"styles":{HoveredStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riHover"],InvalidStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riError"],DisabledStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riDisabled"],FocusedStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riFocused"],EmptyMessageStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riEmpty"],ReadOnlyStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riRead"],EnabledStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riEnabled"]}}, null, null, $get("ctl00_ContentPlaceHolder1_ownerLNameText"));
+});
+
+document.getElementById('ContentPlaceHolder1_RegularExpressionValidator4').dispose = function() {
+    Array.remove(Page_Validators, document.getElementById('ContentPlaceHolder1_RegularExpressionValidator4'));
+}
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadTextBox, {"_displayText":"","_focused":false,"_initialValueAsText":"","_postBackEventReferenceScript":"setTimeout(\"__doPostBack(\\\u0027ctl00$ContentPlaceHolder1$facilityNameText\\\u0027,\\\u0027\\\u0027)\", 0)","_renderMode":2,"_skin":"Windows7","_validationText":"","clientStateFieldID":"ctl00_ContentPlaceHolder1_facilityNameText_ClientState","enabled":true,"styles":{HoveredStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riHover"],InvalidStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riError"],DisabledStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riDisabled"],FocusedStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riFocused"],EmptyMessageStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riEmpty"],ReadOnlyStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riRead"],EnabledStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riEnabled"]}}, null, null, $get("ctl00_ContentPlaceHolder1_facilityNameText"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadListBox, {"_renderMode":2,"_selectedValue":"default","_uniqueId":"ctl00$ContentPlaceHolder1$programTypeListDetails","checkedIndices":[],"clientStateFieldID":"ctl00_ContentPlaceHolder1_programTypeListDetails_ClientState","itemData":[{"value":"default","selected":true},{"value":"School Age Program"},{"value":"Child Care Center"},{"value":"Family Child Care Home"},{"value":"Head Start Child Care Center"},{"value":"Outdoor Summer Camp"},{"value":"Preschool"},{"value":"Youth Development Program"}],"selectedIndices":[0],"selectionMode":1}, null, null, $get("ctl00_ContentPlaceHolder1_programTypeListDetails"));
+});
+
+var callBackFrameUrl='/OIDS/WebResource.axd?d=beToSAE3vdsL1QUQUxjWdW_X3BQB0DZMrY46UBCaZpuNC9K378i_VbZWTlq6sghPPfiCFI61fMoRIHW71wElpg2&t=639224623058683406';
+WebForm_InitCallback();Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadComboBox, {"_dropDownWidth":0,"_height":150,"_renderMode":2,"_skin":"Vista","_uniqueId":"ctl00$ContentPlaceHolder1$countyComboList","clientStateFieldID":"ctl00_ContentPlaceHolder1_countyComboList_ClientState","collapseAnimation":"{\"duration\":450}","emptyMessage":"Select County From Below","enableAriaSupport":true,"expandAnimation":"{\"duration\":450}","itemData":[{"value":"Allen"},{"value":"Anderson"},{"value":"Atchison"},{"value":"Barber"},{"value":"Barton"},{"value":"Bourbon"},{"value":"Brown"},{"value":"Butler"},{"value":"Chase"},{"value":"Chautauqua"},{"value":"Cherokee"},{"value":"Cheyenne"},{"value":"Clark"},{"value":"Clay"},{"value":"Cloud"},{"value":"Coffey"},{"value":"Commanche"},{"value":"Cowley"},{"value":"Crawford"},{"value":"Decatur"},{"value":"Dickinson"},{"value":"Doniphan"},{"value":"Douglas"},{"value":"Edwards"},{"value":"Elk"},{"value":"Ellis"},{"value":"Ellsworth"},{"value":"Finney"},{"value":"Ford"},{"value":"Franklin"},{"value":"Geary"},{"value":"Gove"},{"value":"Graham"},{"value":"Grant"},{"value":"Gray"},{"value":"Greeley"},{"value":"Greenwood"},{"value":"Hamilton"},{"value":"Harper"},{"value":"Harvey"},{"value":"Haskell"},{"value":"Hodgeman"},{"value":"Jackson"},{"value":"Jefferson"},{"value":"Jewell"},{"value":"Johnson"},{"value":"Kearny"},{"value":"Kingman"},{"value":"Kiowa"},{"value":"Labette"},{"value":"Lane"},{"value":"Leavenworth"},{"value":"Lincoln"},{"value":"Linn"},{"value":"Logan"},{"value":"Lyon"},{"value":"Marion"},{"value":"Marshall"},{"value":"Mcpherson"},{"value":"Meade"},{"value":"Miami"},{"value":"Mitchell"},{"value":"Montgomery"},{"value":"Morris"},{"value":"Morton"},{"value":"Nemaha"},{"value":"Neosho"},{"value":"Ness"},{"value":"Norton"},{"value":"Osage"},{"value":"Osborne"},{"value":"Ottawa"},{"value":"Out of state"},{"value":"Pawnee"},{"value":"Phillips"},{"value":"Pottawatomie"},{"value":"Pratt"},{"value":"Rawlins"},{"value":"Reno"},{"value":"Republic"},{"value":"Rice"},{"value":"Riley"},{"value":"Rooks"},{"value":"Rush"},{"value":"Russell"},{"value":"Saline"},{"value":"Scott"},{"value":"Sedgwick"},{"value":"Seward"},{"value":"Shawnee"},{"value":"Sheridan"},{"value":"Sherman"},{"value":"Smith"},{"value":"Stafford"},{"value":"Stanton"},{"value":"Stevens"},{"value":"Sumner"},{"value":"Thomas"},{"value":"Trego"},{"value":"Wabaunsee"},{"value":"Wallace"},{"value":"Washington"},{"value":"Wichita"},{"value":"Wilson"},{"value":"Woodson"},{"value":"Wyandotte"}],"localization":"{\"AllItemsCheckedString\":\"All items checked\",\"ItemsCheckedString\":\"items checked\",\"CheckAllString\":\"Check All\"}","markFirstMatch":true}, null, null, $get("ctl00_ContentPlaceHolder1_countyComboList"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadTextBox, {"_displayText":"","_focused":false,"_initialValueAsText":"","_postBackEventReferenceScript":"setTimeout(\"__doPostBack(\\\u0027ctl00$ContentPlaceHolder1$cityText\\\u0027,\\\u0027\\\u0027)\", 0)","_renderMode":2,"_skin":"Windows7","_validationText":"","clientStateFieldID":"ctl00_ContentPlaceHolder1_cityText_ClientState","enabled":true,"styles":{HoveredStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riHover"],InvalidStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riError"],DisabledStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riDisabled"],FocusedStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riFocused"],EmptyMessageStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riEmpty"],ReadOnlyStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riRead"],EnabledStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riEnabled"]}}, null, null, $get("ctl00_ContentPlaceHolder1_cityText"));
+});
+
+document.getElementById('ContentPlaceHolder1_RegularExpressionValidator5').dispose = function() {
+    Array.remove(Page_Validators, document.getElementById('ContentPlaceHolder1_RegularExpressionValidator5'));
+}
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadTextBox, {"_displayText":"","_focused":false,"_initialValueAsText":"","_postBackEventReferenceScript":"setTimeout(\"__doPostBack(\\\u0027ctl00$ContentPlaceHolder1$zipCodeTextValue\\\u0027,\\\u0027\\\u0027)\", 0)","_renderMode":2,"_skin":"Windows7","_validationText":"","clientStateFieldID":"ctl00_ContentPlaceHolder1_zipCodeTextValue_ClientState","enabled":true,"styles":{HoveredStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riHover"],InvalidStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riError"],DisabledStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riDisabled"],FocusedStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riFocused"],EmptyMessageStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riEmpty"],ReadOnlyStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riRead"],EnabledStyle: ["font-size:Medium;height:35px;width:250px;", "riTextBox riEnabled"]}}, null, null, $get("ctl00_ContentPlaceHolder1_zipCodeTextValue"));
+});
+
+document.getElementById('ContentPlaceHolder1_RegularExpressionValidator6').dispose = function() {
+    Array.remove(Page_Validators, document.getElementById('ContentPlaceHolder1_RegularExpressionValidator6'));
+}
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadButton, {"_accessKey":"","_hasIcon":false,"_hasImage":false,"_isClientSubmit":false,"_isImageButton":false,"_postBackReference":"WebForm_DoPostBackWithOptions(new WebForm_PostBackOptions('ctl00$ContentPlaceHolder1$searchBtn', '', true, 'SearchValidation', '', false, false))","_renderMode":2,"_validationGroup":"SearchValidation","clientStateFieldID":"ctl00_ContentPlaceHolder1_searchBtn_ClientState","confirmSettings":{},"cssClass":"ButtonLoader","iconData":{},"imageData":{},"text":"Search","toggleStatesData":[],"uniqueGroupName":"","uniqueID":"ctl00$ContentPlaceHolder1$searchBtn"}, null, null, $get("ctl00_ContentPlaceHolder1_searchBtn"));
+});
+Sys.Application.add_init(function() {
+    $create(Telerik.Web.UI.RadButton, {"_accessKey":"","_causesValidation":false,"_hasIcon":false,"_hasImage":false,"_isClientSubmit":false,"_isImageButton":false,"_postBackReference":"","_renderMode":2,"clientStateFieldID":"ctl00_ContentPlaceHolder1_clearBtn_ClientState","confirmSettings":{},"iconData":{},"imageData":{},"text":"Clear","toggleStatesData":[],"uniqueGroupName":"","uniqueID":"ctl00$ContentPlaceHolder1$clearBtn"}, null, null, $get("ctl00_ContentPlaceHolder1_clearBtn"));
+});
+//]]>
+</script>
+</form>
+
+    <div id="ctl00_rwmNewsReleaseView" style="display:none;">
+	<div id="ctl00_rwmNewsReleaseView_alerttemplate" style="display:none;">
+        <div class="rwDialog rwAlertDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+            </div>
+        </div>
+        </div><div id="ctl00_rwmNewsReleaseView_prompttemplate" style="display:none;">
+        <div class="rwDialog rwPromptDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+                <div class="rwPromptInputContainer">
+                    <script type="text/javascript">
+                        function RadWindowprompt_detectenter(id, ev, input) {
+                            if (!ev) ev = window.event;
+                            if (ev.keyCode == 13) {
+                                var but = input.parentNode.parentNode.parentNode.getElementsByTagName("button")[0];
+                                if (but) {
+                                    if (but.click) {
+                                        but.click();
+                                    }
+                                    else if (but.onclick) {
+                                        but.focus();
+                                        var click = but.onclick;
+                                        but.onclick = null;
+                                        if (click) click.call(but);
+                                    }
+                                }
+                                return false;
+                            }
+                            else return true;
+                        }
+                    </script>
+                    <input title="Enter Value" aria-label="input" onkeydown="return RadWindowprompt_detectenter('{0}', event, this);" type="text" class="rwPromptInput radPreventDecorate" value="{2}" />
+                </div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(this.parentNode.parentNode.getElementsByTagName('input')[0].value); return false;">##LOC[OK]##</button>
+                <button type="button" class="rwCancelBtn" onclick="$find('{0}').close(null); return false;">##LOC[Cancel]##</button>
+            </div>
+        </div>
+        </div><div id="ctl00_rwmNewsReleaseView_confirmtemplate" style="display:none;">
+        <div class="rwDialog rwConfirmDialog">
+            <div class="rwDialogContent">
+                <div class="rwDialogMessage">{1}</div>
+            </div>
+            <div class="rwDialogButtons">
+                <button type="button" class="rwOkBtn" onclick="$find('{0}').close(true); return false;">##LOC[OK]##</button>
+                <button type="button" class="rwCancelBtn" onclick="$find('{0}').close(false); return false;">##LOC[Cancel]##</button>
+            </div>
+        </div>
+        </div><input id="ctl00_rwmNewsReleaseView_ClientState" name="ctl00_rwmNewsReleaseView_ClientState" type="hidden" />
+</div>
+</body>
+</html>

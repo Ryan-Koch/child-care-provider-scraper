@@ -308,6 +308,10 @@ STATUS_BUCKETS = {
         # (not neutral closures), so they live with enforcement rather than
         # closed.
         "Denied", "App Withdrawn",
+        # Kansas (khap.kdhe.ks.gov OIDS): a suspended licence is a regulatory
+        # action, not a neutral closure -- matches the bare "Suspended" above.
+        # Approved Ryan 2026-08-20.
+        "License Suspended",
     ],
     "closed": [
         "CLOSED", "Closed", "INACTIVE", "NOT LICENSED", "Revoked",
@@ -317,6 +321,9 @@ STATUS_BUCKETS = {
         # covered by the generic entries above; Revoked/Not Renewed is the
         # state-specific label.
         "Revoked/Not Renewed",
+        # Kansas: the licence lapsed -- no longer licensed, cf. "NOT
+        # LICENSED". Approved Ryan 2026-08-20.
+        "License Expired",
     ],
 }
 
@@ -392,6 +399,12 @@ FACILITY_CATEGORY_BUCKETS = {
         # Iowa (Titan TypeOfCareDesc) "Licensed Center" reuses the exact
         # "Licensed Center" string already listed above for Indiana -- no
         # new entry needed.
+        # Kansas (khap.kdhe.ks.gov OIDS): data-label program types (NOT the
+        # search-form labels, which differ -- see kansas_plan.md Sec 5.7).
+        # A bare "Preschool" and a facility-based Head Start center are both
+        # center-based institutional care, matching the "Preschool Program" /
+        # "Head Start Site" precedents already above.
+        "Preschool", "Head Start Child Care Center",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME", "Family Child Care Home", "Family Home", "FDC",
@@ -462,6 +475,10 @@ FACILITY_CATEGORY_BUCKETS = {
         "HHS-Licensed School Age Child Care",
         # Vermont (brightfutures.dcf.state.vt.us) detail "License Type".
         "Afterschool Child Care Program",
+        # Kansas (khap.kdhe.ks.gov OIDS): licensed for school-age youth
+        # programming -- cf. "School Age Program" above (Ryan, 2026-08-19).
+        # "School Age Program" itself is already covered by the entry above.
+        "Youth Development Program",
     ],
     "exempt": [
         "Exempt Only", "Religious Exempt Child Day Center",
@@ -510,6 +527,10 @@ FACILITY_CATEGORY_BUCKETS = {
         # Iowa's Titan "In-Home" type is the same concept (care in the
         # child's own home) and maps here too.
         "Informal", "In-Home",
+        # Kansas (khap.kdhe.ks.gov OIDS): outdoor/day camp program -- matches
+        # the "Resident Camp" / "Summer Day Camp" / "Licensed Camp" precedents
+        # above.
+        "Outdoor Summer Camp",
     ],
 }
 
