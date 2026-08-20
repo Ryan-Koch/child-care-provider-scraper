@@ -326,6 +326,13 @@ STATUS_BUCKETS = {
         # Kansas: the licence lapsed -- no longer licensed, cf. "NOT
         # LICENSED". Approved Ryan 2026-08-20.
         "License Expired",
+        # Connecticut (211childcare.org): the directory publishes no licence
+        # status. `searchable: false` means CT withholds the provider from its
+        # own public search; 62 of 63 sampled such records have zero CT OEC
+        # inspections and 83% are not accepting referrals, so a lapsed/closed
+        # listing is the best reading. This is an inference, not a published
+        # status. Approved Ryan 2026-08-20.
+        "Not Listed",
     ],
 }
 
@@ -410,6 +417,11 @@ FACILITY_CATEGORY_BUCKETS = {
         # Kentucky (kynect.ky.gov): "Licensed" == a Licensed Child Care Center
         # (licence numbers are L-prefixed).
         "Licensed",
+        # Connecticut (211childcare.org): a preschool program -- matches the
+        # "Preschool Program" / "Certified Pre-School" precedents above. Note
+        # DCEX (license-exempt) records also carry this same "Child Care
+        # Center" -> center mapping (see ct_license_type doc, items.py).
+        "Nursery School",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME", "Family Child Care Home", "Family Home", "FDC",
@@ -539,6 +551,10 @@ FACILITY_CATEGORY_BUCKETS = {
         # the "Resident Camp" / "Summer Day Camp" / "Licensed Camp" precedents
         # above.
         "Outdoor Summer Camp",
+        # Connecticut (211childcare.org): a licensed youth/day camp -- matches
+        # the "Resident Camp" / "Summer Day Camp" / "Licensed Camp" precedents
+        # above (license numbers are YCYC-prefixed).
+        "Summer Camp/Program",
     ],
 }
 
@@ -591,18 +607,18 @@ FIELD_COLLAPSE_MAP = {
         "va_license_type", "mt_license_type", "ut_license_type",
         "co_license_type", "az_license_type", "nc_license_type",
         "nj_license_type", "wv_license_type", "wa_license_type",
-        "hi_license_type", "ak_license_type",
+        "hi_license_type", "ak_license_type", "ct_license_type",
     ],
     "school_district": [
         "co_school_district", "ny_school_district_name", "pa_school_district",
-        "ut_school_district", "wa_school_district",
+        "ut_school_district", "wa_school_district", "ct_school_districts",
     ],
     "mailing_address": [
         "al_mailing_address", "ga_mailing_address", "hi_mailing_address",
     ],
     "accreditation": [
         "al_accreditations", "ga_accreditation", "hi_accreditations",
-        "nj_accreditation", "md_accreditation",
+        "nj_accreditation", "md_accreditation", "ct_accreditations",
     ],
     "meals": [
         "ut_meals", "ga_meals", "hi_meals", "nm_meals", "nj_meal_options",
@@ -610,11 +626,13 @@ FIELD_COLLAPSE_MAP = {
     ],
     "accepting_new_children": [
         "co_accepting_new_children", "ga_accepting_new_children",
+        "ct_accepting_referrals",
     ],
-    "transportation": ["ga_transportation", "nj_transportation"],
+    "transportation": ["ga_transportation", "nj_transportation",
+                       "ct_transportation"],
     "head_start": [
         "co_head_start", "az_headstart", "wa_head_start", "ri_head_start",
-        "fl_is_head_start",
+        "fl_is_head_start", "ct_head_start",
     ],
     "curriculum": ["ga_curriculum", "nj_curriculum"],
 }

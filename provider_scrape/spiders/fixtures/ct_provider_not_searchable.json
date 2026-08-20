@@ -1,0 +1,198 @@
+{
+ "accepting_referrals": false,
+ "accreditations": [],
+ "address": "141 Hop River Rd",
+ "administers_meds": true,
+ "age_range_max": 624,
+ "age_range_min": 6,
+ "business_name": "Shirley Burgie",
+ "capacity": 9,
+ "capacity_full_time": 6,
+ "capacity_school_aged": 3,
+ "capacity_three_and_under": null,
+ "city": "Coventry",
+ "created_at": "2021-06-30T21:24:45.314Z",
+ "date_established": "07/31/1994",
+ "education_levels": [
+  "Associates Degree"
+ ],
+ "elevate_membership_level": "not_a_member",
+ "email": "zrm2bur@sbcglobal.net",
+ "financial_assistance": false,
+ "first_name": "Shirley",
+ "headstart_funding": false,
+ "id": 3235,
+ "inspections": [],
+ "languages": [
+  "English"
+ ],
+ "last_name": "Burgie",
+ "latitude": 41.7487524,
+ "license": true,
+ "license_number": "DCFH.41163",
+ "longitude": -72.3156886,
+ "oec_contact_id": 1251242,
+ "phone_number": "860-742-9011",
+ "provider_uid": "d60c2d35-5abc-43f3-af08-68b9854d7a5a",
+ "quality_rating": null,
+ "school_districts": [
+  "Coventry Grammar",
+  "Robertson (Coventry)"
+ ],
+ "searchable": false,
+ "shifts": [
+  {
+   "created_at": "2025-06-24T20:51:39.890Z",
+   "id": 926260,
+   "population": {
+    "Infant (0-17 Months)": "",
+    "School Age (5-12 Years)": "",
+    "Toddler/Preschool (18-71 Months)": ""
+   },
+   "population_by_age": [
+    {
+     "group": "Infant",
+     "label": "0-17 Months",
+     "max": 73.94999999999999,
+     "min": 6,
+     "population": ""
+    },
+    {
+     "group": "Toddler/Preschool",
+     "label": "18-71 Months",
+     "max": 100.05,
+     "min": 78.3,
+     "population": ""
+    },
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "population": ""
+    }
+   ],
+   "provider_id": 3235,
+   "provider_uid": null,
+   "rates": {
+    "Infant (0-17 Months)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": "280.00",
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    },
+    "School Age (5-12 Years)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": null,
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    },
+    "Toddler/Preschool (18-71 Months)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": "280.00",
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    }
+   },
+   "rates_by_age": [
+    {
+     "group": "Infant",
+     "label": "0-17 Months",
+     "max": 73.94999999999999,
+     "min": 6,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": "280.00",
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    {
+     "group": "Toddler/Preschool",
+     "label": "18-71 Months",
+     "max": 100.05,
+     "min": 78.3,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": "280.00",
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    }
+   ],
+   "schedule": {
+    "Friday": {
+     "end_time": "17:00:00",
+     "start_time": "07:00:00"
+    },
+    "Monday": {
+     "end_time": "17:00:00",
+     "start_time": "07:00:00"
+    },
+    "Thursday": {
+     "end_time": "17:00:00",
+     "start_time": "07:00:00"
+    },
+    "Tuesday": {
+     "end_time": "17:00:00",
+     "start_time": "07:00:00"
+    },
+    "Wednesday": {
+     "end_time": "17:00:00",
+     "start_time": "07:00:00"
+    }
+   },
+   "shift_uid": null,
+   "updated_at": "2025-06-24T20:51:39.890Z"
+  }
+ ],
+ "showRates": true,
+ "special_needs": [],
+ "state": "CT",
+ "town": "Coventry",
+ "transportation": [
+  "School Transportation"
+ ],
+ "type_of_care": "Family Child Care",
+ "type_of_provider": "Family Child Care",
+ "updated_at": "2025-06-24T20:51:39.894Z",
+ "website": null,
+ "wheelchair": false,
+ "zip": "06238"
+}

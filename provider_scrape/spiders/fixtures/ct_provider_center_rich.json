@@ -1,0 +1,453 @@
+{
+ "accepting_referrals": true,
+ "accreditations": [
+  "NAEYC"
+ ],
+ "address": "778 Long Ridge Road",
+ "administers_meds": true,
+ "age_range_max": 624,
+ "age_range_min": 6,
+ "business_name": "Long Ridge Child Development Center",
+ "capacity": 126,
+ "capacity_full_time": null,
+ "capacity_school_aged": 26,
+ "capacity_three_and_under": 48,
+ "city": "Stamford",
+ "created_at": "2021-06-30T21:19:57.122Z",
+ "date_established": null,
+ "education_levels": [
+  "Associates Degree",
+  "Bachelor's Degree",
+  "CDA-Child Development Associate",
+  "Master's Degree"
+ ],
+ "elevate_membership_level": "member_accredited",
+ "email": "lrr@brighthorizons.com",
+ "financial_assistance": false,
+ "first_name": "Tj",
+ "headstart_funding": false,
+ "id": 772,
+ "inspections": [
+  {
+   "case_uid": 795788,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 0,
+   "id": 14864,
+   "provider_uid": "99519a2c-90e8-4242-b88d-6b849286a012",
+   "reason": "Inspection & Findings",
+   "resolution": "PENDING",
+   "severity": "PENDING",
+   "status": "PENDING",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 8,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2026-07-20T00:00:00.000Z"
+  },
+  {
+   "case_uid": 787687,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 14856,
+   "provider_uid": "99519a2c-90e8-4242-b88d-6b849286a012",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 06/17/2026",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 11,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2026-05-14T00:00:00.000Z"
+  },
+  {
+   "case_uid": 770394,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 14861,
+   "provider_uid": "99519a2c-90e8-4242-b88d-6b849286a012",
+   "reason": "Inspection & Findings",
+   "resolution": "Closed No Violations 12/09/2025",
+   "severity": "N/A",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "UNANNOUNCED INSPECTION - PARTIAL",
+   "visited_on": "2025-12-09T00:00:00.000Z"
+  },
+  {
+   "case_uid": 763141,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 14857,
+   "provider_uid": "99519a2c-90e8-4242-b88d-6b849286a012",
+   "reason": "Follow-Up Visit for 09/30/2025",
+   "resolution": "Corrective Action Plan 10/08/2025",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "Investigation - Self-Reported",
+   "visited_on": "2025-10-06T00:00:00.000Z"
+  },
+  {
+   "case_uid": 763141,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 14863,
+   "provider_uid": "99519a2c-90e8-4242-b88d-6b849286a012",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 10/08/2025",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 2,
+   "visit_type": "Investigation - Self-Reported",
+   "visited_on": "2025-09-30T00:00:00.000Z"
+  },
+  {
+   "case_uid": 756170,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 14867,
+   "provider_uid": "99519a2c-90e8-4242-b88d-6b849286a012",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 08/06/2025",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 7,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2025-07-16T00:00:00.000Z"
+  },
+  {
+   "case_uid": 744498,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 14858,
+   "provider_uid": "99519a2c-90e8-4242-b88d-6b849286a012",
+   "reason": "Inspection & Findings",
+   "resolution": "Closed No Violations 04/10/2025",
+   "severity": "N/A",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "UNANNOUNCED INSPECTION - PARTIAL",
+   "visited_on": "2025-04-02T00:00:00.000Z"
+  },
+  {
+   "case_uid": 736116,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 14855,
+   "provider_uid": "99519a2c-90e8-4242-b88d-6b849286a012",
+   "reason": "Follow-Up Visit for 01/15/2025",
+   "resolution": "Corrective Action Plan 02/03/2025",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "Investigation - Self-Reported",
+   "visited_on": "2025-01-22T00:00:00.000Z"
+  },
+  {
+   "case_uid": 736116,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 14859,
+   "provider_uid": "99519a2c-90e8-4242-b88d-6b849286a012",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 02/03/2025",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 3,
+   "visit_type": "Investigation - Self-Reported",
+   "visited_on": "2025-01-15T00:00:00.000Z"
+  },
+  {
+   "case_uid": 720915,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 14866,
+   "provider_uid": "99519a2c-90e8-4242-b88d-6b849286a012",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 10/21/2024",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 1,
+   "visit_type": "Investigation - Self-Reported",
+   "visited_on": "2024-08-09T00:00:00.000Z"
+  },
+  {
+   "case_uid": 719137,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 14865,
+   "provider_uid": "99519a2c-90e8-4242-b88d-6b849286a012",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 07/31/2024",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 4,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2024-07-16T00:00:00.000Z"
+  },
+  {
+   "case_uid": 687225,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 14860,
+   "provider_uid": "99519a2c-90e8-4242-b88d-6b849286a012",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 09/05/2023",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 2,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2023-08-24T00:00:00.000Z"
+  },
+  {
+   "case_uid": 659214,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 14862,
+   "provider_uid": "99519a2c-90e8-4242-b88d-6b849286a012",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 11/16/2022",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 1,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2022-10-28T00:00:00.000Z"
+  },
+  {
+   "case_uid": 631051,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 14868,
+   "provider_uid": "99519a2c-90e8-4242-b88d-6b849286a012",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 12/13/2021",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 8,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2021-11-30T00:00:00.000Z"
+  }
+ ],
+ "languages": [
+  "English",
+  "Chinese",
+  "Polish",
+  "Russian",
+  "Spanish"
+ ],
+ "last_name": "Mcnamara",
+ "latitude": 41.0951158,
+ "license": true,
+ "license_number": "DCCC.15079",
+ "longitude": -73.5652561,
+ "oec_contact_id": 1265962,
+ "phone_number": "203-461-8653",
+ "provider_uid": "99519a2c-90e8-4242-b88d-6b849286a012",
+ "quality_rating": null,
+ "school_districts": [
+  "Hart"
+ ],
+ "searchable": true,
+ "shifts": [
+  {
+   "created_at": "2026-06-18T19:55:22.260Z",
+   "id": 1107915,
+   "population": {
+    "Infant/Toddler (0-17 Months)": "",
+    "Infant/Toddler (18-35 Months)": "",
+    "Preschool (3-5 years)": "",
+    "School Age (5-12 Years)": ""
+   },
+   "population_by_age": [
+    {
+     "group": "Infant",
+     "label": "0-17 Months",
+     "max": 73.94999999999999,
+     "min": 6,
+     "population": ""
+    },
+    {
+     "group": "Toddler",
+     "label": "18-35 Months",
+     "max": 152.25,
+     "min": 78.3,
+     "population": ""
+    },
+    {
+     "group": "Preschool",
+     "label": "3-5 Years",
+     "max": 260,
+     "min": 156,
+     "population": ""
+    },
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "population": ""
+    }
+   ],
+   "provider_id": 772,
+   "provider_uid": null,
+   "rates": {
+    "Infant/Toddler (0-17 Months)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": "285.00",
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    },
+    "Infant/Toddler (18-35 Months)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": "285.00",
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    },
+    "Preschool (3-5 years)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": "214.00",
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    },
+    "School Age (5-12 Years)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": null,
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    }
+   },
+   "rates_by_age": [
+    {
+     "group": "Infant",
+     "label": "0-17 Months",
+     "max": 73.94999999999999,
+     "min": 6,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": "285.00",
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    {
+     "group": "Toddler",
+     "label": "18-35 Months",
+     "max": 152.25,
+     "min": 78.3,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": "285.00",
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    {
+     "group": "Preschool",
+     "label": "3-5 Years",
+     "max": 260,
+     "min": 156,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": "214.00",
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    }
+   ],
+   "schedule": {
+    "Friday": {
+     "end_time": "18:30:00",
+     "start_time": "07:30:00"
+    },
+    "Monday": {
+     "end_time": "18:30:00",
+     "start_time": "07:30:00"
+    },
+    "Thursday": {
+     "end_time": "18:30:00",
+     "start_time": "07:30:00"
+    },
+    "Tuesday": {
+     "end_time": "18:30:00",
+     "start_time": "07:30:00"
+    },
+    "Wednesday": {
+     "end_time": "18:30:00",
+     "start_time": "07:30:00"
+    }
+   },
+   "shift_uid": null,
+   "updated_at": "2026-06-18T19:55:22.260Z"
+  }
+ ],
+ "showRates": true,
+ "special_needs": [],
+ "state": "CT",
+ "town": "Stamford",
+ "transportation": [
+  "Walking Distance to School",
+  "Near Public Transportation",
+  "Near Public Bus Stop"
+ ],
+ "type_of_care": "Child Care Center",
+ "type_of_provider": "Child Care Center",
+ "updated_at": "2026-06-18T19:55:22.263Z",
+ "website": "http://www.brighthorizons.com",
+ "wheelchair": true,
+ "zip": "06902"
+}

@@ -1,0 +1,218 @@
+{
+ "accepting_referrals": true,
+ "accreditations": null,
+ "address": "This provider's address has been hidden",
+ "administers_meds": false,
+ "age_range_max": 624,
+ "age_range_min": 6,
+ "business_name": "Children's Land Early Learning",
+ "capacity": 9,
+ "capacity_full_time": 6,
+ "capacity_school_aged": 3,
+ "capacity_three_and_under": null,
+ "city": "Wallingford",
+ "created_at": "2026-06-25T15:54:35.034Z",
+ "date_established": null,
+ "education_levels": [
+  "Early Childhood Education",
+  "Master's Degree",
+  "Special Education"
+ ],
+ "elevate_membership_level": "member",
+ "email": "eagle6926@hotmail.com",
+ "financial_assistance": false,
+ "first_name": "Kishwer S",
+ "headstart_funding": false,
+ "id": 7578,
+ "inspections": [
+  {
+   "case_uid": 785719,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 4,
+   "id": 4649,
+   "provider_uid": "3075f8a9-110b-4e18-9bc8-06128a231c11",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 05/20/2026",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 10,
+   "visit_type": "INITIAL CREDENTIAL INSPECTION",
+   "visited_on": "2026-05-01T00:00:00.000Z"
+  }
+ ],
+ "languages": [
+  "English",
+  "Hindi",
+  "Punjabi (Gurmukhi)"
+ ],
+ "last_name": "Zaidi",
+ "latitude": 41.47453193830695,
+ "license": true,
+ "license_number": "DCFH.58372",
+ "longitude": -72.79553313613921,
+ "oec_contact_id": null,
+ "phone_number": "203-213-3414",
+ "provider_uid": "3075f8a9-110b-4e18-9bc8-06128a231c11",
+ "quality_rating": null,
+ "school_districts": [
+  "Beach",
+  "Mary G. Fritz"
+ ],
+ "searchable": true,
+ "shifts": [
+  {
+   "created_at": "2026-08-04T17:40:48.421Z",
+   "id": 1110808,
+   "population": {
+    "Infant (0-17 Months)": "",
+    "School Age (5-12 Years)": "",
+    "Toddler/Preschool (18-71 Months)": ""
+   },
+   "population_by_age": [
+    {
+     "group": "Toddler/Preschool",
+     "label": "18-71 Months",
+     "max": 100.05,
+     "min": 78.3,
+     "population": ""
+    },
+    {
+     "group": "Infant",
+     "label": "0-17 Months",
+     "max": 73.94999999999999,
+     "min": 6,
+     "population": ""
+    },
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "population": ""
+    }
+   ],
+   "provider_id": 7578,
+   "provider_uid": null,
+   "rates": {
+    "Infant (0-17 Months)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": null,
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    },
+    "School Age (5-12 Years)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": null,
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    },
+    "Toddler/Preschool (18-71 Months)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": null,
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    }
+   },
+   "rates_by_age": [
+    {
+     "group": "Infant",
+     "label": "0-17 Months",
+     "max": 73.94999999999999,
+     "min": 6,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    {
+     "group": "Toddler/Preschool",
+     "label": "18-71 Months",
+     "max": 100.05,
+     "min": 78.3,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    }
+   ],
+   "schedule": {
+    "Friday": {
+     "end_time": "18:00:00",
+     "start_time": "06:00:00"
+    },
+    "Monday": {
+     "end_time": "18:00:00",
+     "start_time": "06:00:00"
+    },
+    "Thursday": {
+     "end_time": "18:00:00",
+     "start_time": "06:00:00"
+    },
+    "Tuesday": {
+     "end_time": "18:00:00",
+     "start_time": "06:00:00"
+    },
+    "Wednesday": {
+     "end_time": "18:00:00",
+     "start_time": "06:00:00"
+    }
+   },
+   "shift_uid": null,
+   "updated_at": "2026-08-04T17:40:48.421Z"
+  }
+ ],
+ "showRates": true,
+ "special_needs": [
+  "Social/Emotional/Behavior Concerns"
+ ],
+ "state": "CT",
+ "town": "Wallingford",
+ "transportation": null,
+ "type_of_care": "Family Child Care",
+ "type_of_provider": "Family Child Care",
+ "updated_at": "2026-08-04T17:40:48.424Z",
+ "website": null,
+ "wheelchair": true,
+ "zip": "06492-2542"
+}

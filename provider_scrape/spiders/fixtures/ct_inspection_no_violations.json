@@ -1,0 +1,40 @@
+{
+ "case_uid": 770394,
+ "created_at": "2026-08-20T06:20:45.000Z",
+ "document_count": 1,
+ "documents": [
+  {
+   "created_at": "2026-08-20T06:20:46.000Z",
+   "description": "Inspection Report",
+   "document_type": "Inspections",
+   "id": 14720,
+   "inspection_case_uid": 770394,
+   "link": "https://elicense.ct.gov/Lookup/ViewPublicLookupDocument.aspx?DocumentIdnt=8260380&GUID=2AE57EFA-5A20-4812-83F2-9A160518AA04",
+   "updated_at": "2026-08-20T06:20:46.000Z",
+   "visited_on": "2025-12-09"
+  }
+ ],
+ "id": 14861,
+ "provider_uid": "99519a2c-90e8-4242-b88d-6b849286a012",
+ "reason": "Inspection & Findings",
+ "resolution": "Closed No Violations 12/09/2025",
+ "severity": "N/A",
+ "status": "CLOSED",
+ "updated_at": "2026-08-20T06:20:45.000Z",
+ "violations": [
+  {
+   "category": "No Violations",
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "description": "[-]",
+   "id": 84034,
+   "inspection_case_uid": "770394",
+   "inspection_id": null,
+   "inspection_visited_on": "2025-12-09T00:00:00.000Z",
+   "statute": "-",
+   "updated_at": "2026-08-20T06:20:45.000Z"
+  }
+ ],
+ "violations_count": 0,
+ "visit_type": "UNANNOUNCED INSPECTION - PARTIAL",
+ "visited_on": "2025-12-09T00:00:00.000Z"
+}

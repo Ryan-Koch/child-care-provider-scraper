@@ -1,0 +1,180 @@
+{
+ "accepting_referrals": true,
+ "accreditations": [],
+ "address": "220 Jefferson Street",
+ "administers_meds": true,
+ "age_range_max": 676,
+ "age_range_min": 312,
+ "business_name": "St. Patrick's G.f.c. Gaelic Football Camp",
+ "capacity": 50,
+ "capacity_full_time": null,
+ "capacity_school_aged": null,
+ "capacity_three_and_under": null,
+ "city": "Fairfield",
+ "created_at": "2021-06-30T21:24:04.558Z",
+ "date_established": "02/06/2011",
+ "education_levels": [],
+ "elevate_membership_level": "not_a_member",
+ "email": "camp@stpatricksgaa.us",
+ "financial_assistance": false,
+ "first_name": "St. Patrick's G.f.c. Gaelic Football",
+ "headstart_funding": false,
+ "id": 2830,
+ "inspections": [
+  {
+   "case_uid": 790150,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 12427,
+   "provider_uid": "80fcc773-a006-44d3-8379-c98e926ccbfc",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 07/07/2026",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 3,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2026-06-18T00:00:00.000Z"
+  },
+  {
+   "case_uid": 754802,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 12425,
+   "provider_uid": "80fcc773-a006-44d3-8379-c98e926ccbfc",
+   "reason": "Inspection & Findings",
+   "resolution": "Closed No Violations 06/26/2025",
+   "severity": "N/A",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2025-06-26T00:00:00.000Z"
+  },
+  {
+   "case_uid": 715260,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 12426,
+   "provider_uid": "80fcc773-a006-44d3-8379-c98e926ccbfc",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 07/11/2024",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 1,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2024-06-27T00:00:00.000Z"
+  },
+  {
+   "case_uid": 644433,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 12424,
+   "provider_uid": "80fcc773-a006-44d3-8379-c98e926ccbfc",
+   "reason": "Inspection & Findings",
+   "resolution": "Closed No Violations 06/29/2022",
+   "severity": "N/A",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2022-06-29T00:00:00.000Z"
+  }
+ ],
+ "languages": [
+  "English"
+ ],
+ "last_name": "Camp",
+ "latitude": 41.2239793,
+ "license": true,
+ "license_number": "YCYC.01002",
+ "longitude": -73.2463574,
+ "oec_contact_id": 1308971,
+ "phone_number": "(203) 372-6521",
+ "provider_uid": "80fcc773-a006-44d3-8379-c98e926ccbfc",
+ "quality_rating": null,
+ "school_districts": [],
+ "searchable": true,
+ "shifts": [
+  {
+   "created_at": "2026-07-06T20:01:29.723Z",
+   "id": 1108891,
+   "population": {
+    "School Age (5-12 Years)": ""
+   },
+   "population_by_age": [
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "population": ""
+    }
+   ],
+   "provider_id": 2830,
+   "provider_uid": null,
+   "rates": {
+    "School Age (5-12 Years)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": "300.00",
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    }
+   },
+   "rates_by_age": [
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": "300.00",
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    }
+   ],
+   "schedule": {
+    "Friday": {
+     "end_time": "15:00:00",
+     "start_time": "09:00:00"
+    },
+    "Thursday": {
+     "end_time": "15:00:00",
+     "start_time": "09:00:00"
+    },
+    "Tuesday": {
+     "end_time": "15:00:00",
+     "start_time": "09:00:00"
+    },
+    "Wednesday": {
+     "end_time": "15:00:00",
+     "start_time": "09:00:00"
+    }
+   },
+   "shift_uid": null,
+   "updated_at": "2026-07-06T20:01:29.723Z"
+  }
+ ],
+ "showRates": true,
+ "special_needs": [],
+ "state": "CT",
+ "town": "Fairfield",
+ "transportation": [],
+ "type_of_care": "Summer Program",
+ "type_of_provider": "Summer Camp/Program",
+ "updated_at": "2026-07-06T20:01:29.725Z",
+ "website": "https://www.stpatricksgfc.org/program/cul-camp/8176",
+ "wheelchair": false,
+ "zip": "06825-1062\t"
+}

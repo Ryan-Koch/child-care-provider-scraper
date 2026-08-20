@@ -71,15 +71,15 @@ Each common field is populated from a single populated source field (additive â€
 
 | Common field | Source state-specific fields |
 |---|---|
-| `accepting_new_children` | `co_accepting_new_children`, `ga_accepting_new_children` |
-| `accreditation` | `al_accreditations`, `ga_accreditation`, `hi_accreditations`, `md_accreditation`, `nj_accreditation` |
+| `accepting_new_children` | `co_accepting_new_children`, `ct_accepting_referrals`, `ga_accepting_new_children` |
+| `accreditation` | `al_accreditations`, `ct_accreditations`, `ga_accreditation`, `hi_accreditations`, `md_accreditation`, `nj_accreditation` |
 | `curriculum` | `ga_curriculum`, `nj_curriculum` |
-| `head_start` | `az_headstart`, `co_head_start`, `fl_is_head_start`, `ri_head_start`, `wa_head_start` |
-| `license_type` | `ak_license_type`, `az_license_type`, `co_license_type`, `hi_license_type`, `mt_license_type`, `nc_license_type`, `nj_license_type`, `ut_license_type`, `va_license_type`, `wa_license_type`, `wv_license_type` |
+| `head_start` | `az_headstart`, `co_head_start`, `ct_head_start`, `fl_is_head_start`, `ri_head_start`, `wa_head_start` |
+| `license_type` | `ak_license_type`, `az_license_type`, `co_license_type`, `ct_license_type`, `hi_license_type`, `mt_license_type`, `nc_license_type`, `nj_license_type`, `ut_license_type`, `va_license_type`, `wa_license_type`, `wv_license_type` |
 | `mailing_address` | `al_mailing_address`, `ga_mailing_address`, `hi_mailing_address` |
 | `meals` | `ga_meals`, `hi_meals`, `nj_meal_options`, `nm_meals`, `pa_meal_options`, `ut_meals` |
-| `school_district` | `co_school_district`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
-| `transportation` | `ga_transportation`, `nj_transportation` |
+| `school_district` | `co_school_district`, `ct_school_districts`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
+| `transportation` | `ct_transportation`, `ga_transportation`, `nj_transportation` |
 
 ## Controlled vocabulary: `status`
 
@@ -88,7 +88,7 @@ Raw status values mapped to each canonical bucket (replaced in place; unmapped -
 | Canonical | Raw values |
 |---|---|
 | `active` | `A`, `APPROVED`, `Active`, `Active/Open`, `Amended permit (AP)`, `CERTIFIED`, `CONTINUOUS LICENSE`, `Certified`, `Compliance Certificate`, `Continuing - Full`, `Exempt`, `Full Permit`, `LICENSED`, `License`, `License issued (IL)`, `Licensed`, `Listed`, `Open`, `Open - Certified`, `Open - Payment Only`, `Operational`, `Original`, `Registered`, `Registration`, `Regular` |
-| `closed` | `CLOSED`, `Closed`, `INACTIVE`, `License Expired`, `NOT LICENSED`, `Revoked`, `Revoked/Not Renewed`, `Surrendered under Investigation (SI)`, `Surrendered with Cause (SC)`, `Temporary Closure` |
+| `closed` | `CLOSED`, `Closed`, `INACTIVE`, `License Expired`, `NOT LICENSED`, `Not Listed`, `Revoked`, `Revoked/Not Renewed`, `Surrendered under Investigation (SI)`, `Surrendered with Cause (SC)`, `Temporary Closure` |
 | `enforcement` | `App Withdrawn`, `Denied`, `ENFORCEMENT`, `License Suspended`, `ON PROBATION`, `Open - Enforcement Pending`, `Open â€“ Pending Legal Action Outcome`, `Pending Revocation`, `Pending Revocation and Denial`, `Pending revocation (PR)`, `Refuse to Renew (RR)`, `RevocationPending`, `Revoke License (RL)`, `Suspended`, `Suspended - Emergency` |
 | `pending` | `PENDING`, `Pending`, `Pending - Certified`, `Pending address change application (AD)`, `Pending renewal application (RN)`, `Pending/Re-license` |
 | `provisional` | `Initial - Full`, `Initial Permit`, `PROVISIONAL LICENSE`, `Permit issued (IP)`, `Provisional`, `Provisional 1`, `Provisional 2`, `Provisional 3`, `Renewed Initial` |
@@ -99,11 +99,11 @@ Raw `provider_type` values mapped to each canonical category (additive; unmapped
 
 | Canonical | Raw provider_type values |
 |---|---|
-| `center` | `CDC (Child Development Center)`, `CTR`, `Center`, `Center Based Child Care and Preschool Program`, `Center Based Child Care and Preschool Program - Non-Recurring`, `Certified Pre-School`, `Child Care`, `Child Care Center`, `Child Care Commercial Preschool`, `Child Care Facility`, `Child Care Hourly Center`, `Child Care Learning Center`, `Child Care Registered Center Based Program`, `Child Day Center`, `DAY CARE CENTER`, `DAY CARE CENTER - ILL CENTER`, `DCC`, `DOE`, `Department of Defense`, `GA Early Head Start`, `GA Head Start`, `HHS Four-Year Old Program`, `HHS-Licensed Child Care Center`, `HHS-Licensed Group Child Care Facility`, `HHS-Licensed Preschool`, `Head Start Child Care Center`, `Head Start Site`, `INFANT CENTER`, `Infant and Toddler Center`, `LOC`, `Licensed`, `Licensed Center`, `Licensed Child Care Center`, `Licensed Group`, `Licensed School-Based Preschool`, `Local School System`, `Outdoor Nature Based Program`, `Preschool`, `Preschool Center`, `Preschool Program`, `Public School`, `SDCC`, `SINGLE LICENSED CHILD CARE CENTER`, `Short Term Child Day Center`, `Small Employer Based Child Care`, `University` |
+| `center` | `CDC (Child Development Center)`, `CTR`, `Center`, `Center Based Child Care and Preschool Program`, `Center Based Child Care and Preschool Program - Non-Recurring`, `Certified Pre-School`, `Child Care`, `Child Care Center`, `Child Care Commercial Preschool`, `Child Care Facility`, `Child Care Hourly Center`, `Child Care Learning Center`, `Child Care Registered Center Based Program`, `Child Day Center`, `DAY CARE CENTER`, `DAY CARE CENTER - ILL CENTER`, `DCC`, `DOE`, `Department of Defense`, `GA Early Head Start`, `GA Head Start`, `HHS Four-Year Old Program`, `HHS-Licensed Child Care Center`, `HHS-Licensed Group Child Care Facility`, `HHS-Licensed Preschool`, `Head Start Child Care Center`, `Head Start Site`, `INFANT CENTER`, `Infant and Toddler Center`, `LOC`, `Licensed`, `Licensed Center`, `Licensed Child Care Center`, `Licensed Group`, `Licensed School-Based Preschool`, `Local School System`, `Nursery School`, `Outdoor Nature Based Program`, `Preschool`, `Preschool Center`, `Preschool Program`, `Public School`, `SDCC`, `SINGLE LICENSED CHILD CARE CENTER`, `Short Term Child Day Center`, `Small Employer Based Child Care`, `University` |
 | `exempt` | `CCAP Certified/Accredited`, `Child Care Exempt Program`, `DWS Approved, Exempt Center`, `DWS Approved, Exempt School Age Program`, `Exempt`, `Exempt Child Care Center`, `Exempt Only`, `Exempt from Licensing`, `License Exempt`, `Religious Exempt Child Day Center`, `Self-Declared Provider`, `Unlicensed CCDF Certified Center/School`, `Unlicensed CCDF Certified Home`, `Unlicensed Registered Ministry`, `Voluntary Registration` |
 | `family_home` | `CDH (Child Development Home)`, `Certified`, `Child Care Licensed Family`, `Child Care Residential Certificate`, `FAMILY DAY CARE HOME`, `FCCH`, `FDC`, `Family`, `Family Child Care`, `Family Child Care Home`, `Family Child Care Learning Home`, `Family Day Care`, `Family Day Care Home`, `Family Day Home`, `Family Home`, `Family Home Child Care`, `HHS-Licensed Family Child Care`, `LFCCH`, `Large Family Child Care Home`, `Licensed Child-Care Home`, `Licensed Family`, `Licensed Family Child Care Home`, `Licensed Family Home`, `Licensed Home`, `Licensed Type A Family Child Care Home`, `Licensed Type B Family Child Care Home`, `Listed Family Home`, `Non-Registered Child Care Home`, `Provisional Certified`, `Registered Child Development Home A`, `Registered Child Development Home B`, `Registered Child Development Home C`, `Registered Child Development Home C1`, `Registered Child-Care Home`, `Registered Family Child Care Home`, `Registered Home`, `Regular Certified`, `System Approved FDH`, `Unlicensed/Unregistered FDH` |
 | `group_home` | `CDX (Child Development Home Expanded)`, `GFDC`, `Group`, `Group Child Care Home`, `Group Home`, `Group Home Child Care`, `HHS-Licensed Group Child Care Home`, `Licensed Group Home` |
-| `other` | `(FCC)Nanny Individual`, `Certified In Home Aide`, `Family, Friends & Neighbor (FFN) Providers`, `HHS-Licensed Multiple License`, `Illegally Unlicensed`, `In-Home`, `Informal`, `Licensed Camp`, `Neighborhood Youth Organization`, `Other`, `Outdoor Summer Camp`, `Registered Day Camp or Approved Day Camp`, `Resident Camp`, `Substitute Placement Agency`, `Summer Day Camp`, `Tribal Subsidy Recipient` |
+| `other` | `(FCC)Nanny Individual`, `Certified In Home Aide`, `Family, Friends & Neighbor (FFN) Providers`, `HHS-Licensed Multiple License`, `Illegally Unlicensed`, `In-Home`, `Informal`, `Licensed Camp`, `Neighborhood Youth Organization`, `Other`, `Outdoor Summer Camp`, `Registered Day Camp or Approved Day Camp`, `Resident Camp`, `Substitute Placement Agency`, `Summer Camp/Program`, `Summer Day Camp`, `Tribal Subsidy Recipient` |
 | `school_age` | `Afterschool Child Care Program`, `Child Care Out of School Time Program`, `HHS-Licensed School Age Child Care`, `Licensed School-Age Child Care`, `SACC`, `SCHOOL AGE DAY CARE CENTER`, `School Age Program`, `School-age Center`, `School-age Program`, `Youth Development Program` |
 
 ## Per-state fields
@@ -196,6 +196,45 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `co_school_district` -> collapses into `school_district`
 - `co_special_needs` -> pass-through
 - `co_toddler_openings` -> pass-through
+
+### Connecticut (CT)
+
+- `ct_accepting_referrals` -> collapses into `accepting_new_children`
+- `ct_accreditations` -> collapses into `accreditation`
+- `ct_address_suppressed` -> pass-through
+- `ct_administers_meds` -> pass-through
+- `ct_age_range_max_weeks` -> pass-through
+- `ct_age_range_min_weeks` -> pass-through
+- `ct_capacity_full_time` -> pass-through
+- `ct_capacity_school_aged` -> pass-through
+- `ct_capacity_three_and_under` -> pass-through
+- `ct_case_uid` -> pass-through
+- `ct_date_established` -> pass-through
+- `ct_document_count` -> pass-through
+- `ct_documents` -> pass-through
+- `ct_education_levels` -> pass-through
+- `ct_elevate_membership_level` -> pass-through
+- `ct_head_start` -> collapses into `head_start`
+- `ct_inspection_id` -> pass-through
+- `ct_inspection_status` -> pass-through
+- `ct_license_type` -> collapses into `license_type`
+- `ct_licensed` -> pass-through
+- `ct_oec_contact_id` -> pass-through
+- `ct_provider_id` -> pass-through
+- `ct_provider_uid` -> pass-through
+- `ct_rates` -> pass-through
+- `ct_reason` -> pass-through
+- `ct_resolution` -> pass-through
+- `ct_schedule` -> pass-through
+- `ct_school_districts` -> collapses into `school_district`
+- `ct_searchable` -> pass-through
+- `ct_severity` -> pass-through
+- `ct_special_needs` -> pass-through
+- `ct_transportation` -> collapses into `transportation`
+- `ct_type_of_care` -> pass-through
+- `ct_violations` -> pass-through
+- `ct_violations_count` -> pass-through
+- `ct_wheelchair_accessible` -> pass-through
 
 ### District Of Columbia (DC)
 
