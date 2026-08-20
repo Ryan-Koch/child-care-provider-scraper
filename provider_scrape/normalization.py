@@ -279,6 +279,10 @@ STATUS_BUCKETS = {
         # from provider_type. The project's status vocab has no `exempt`
         # bucket, so `active` is the operationally-correct home.
         "Active/Open", "Exempt",
+        # Iowa (Titan StatusCode): "A" is the only value observed (170/170,
+        # then 3,370/3,370 on a full harvest -- the public search appears to
+        # expose only active providers).
+        "A",
     ],
     "provisional": [
         "PROVISIONAL LICENSE", "Initial Permit", "Provisional 1",
@@ -304,6 +308,10 @@ STATUS_BUCKETS = {
         # (not neutral closures), so they live with enforcement rather than
         # closed.
         "Denied", "App Withdrawn",
+        # Kansas (khap.kdhe.ks.gov OIDS): a suspended licence is a regulatory
+        # action, not a neutral closure -- matches the bare "Suspended" above.
+        # Approved Ryan 2026-08-20.
+        "License Suspended",
     ],
     "closed": [
         "CLOSED", "Closed", "INACTIVE", "NOT LICENSED", "Revoked",
@@ -313,6 +321,9 @@ STATUS_BUCKETS = {
         # covered by the generic entries above; Revoked/Not Renewed is the
         # state-specific label.
         "Revoked/Not Renewed",
+        # Kansas: the licence lapsed -- no longer licensed, cf. "NOT
+        # LICENSED". Approved Ryan 2026-08-20.
+        "License Expired",
     ],
 }
 
@@ -385,6 +396,15 @@ FACILITY_CATEGORY_BUCKETS = {
         "Center Based Child Care and Preschool Program - Non-Recurring",
         # Tennessee (onedhs.tn.gov): coarse provider_type.
         "Child Care", "DOE",
+        # Iowa (Titan TypeOfCareDesc) "Licensed Center" reuses the exact
+        # "Licensed Center" string already listed above for Indiana -- no
+        # new entry needed.
+        # Kansas (khap.kdhe.ks.gov OIDS): data-label program types (NOT the
+        # search-form labels, which differ -- see kansas_plan.md Sec 5.7).
+        # A bare "Preschool" and a facility-based Head Start center are both
+        # center-based institutional care, matching the "Preschool Program" /
+        # "Head Start Site" precedents already above.
+        "Preschool", "Head Start Child Care Center",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME", "Family Child Care Home", "Family Home", "FDC",
@@ -419,6 +439,20 @@ FACILITY_CATEGORY_BUCKETS = {
         # South Dakota (olapublic.sd.gov) Program Category: registered care
         # provided in the provider's own residence.
         "Family Day Care",
+        # Iowa (Titan TypeOfCareDesc): all four Registered Child Development
+        # Home tiers (A/B/C/C1) are one registration scheme scaling
+        # capacity/staffing within the provider's own residence -- the
+        # category letter is a size/staffing tier, not a distinct facility
+        # type, so all four -> family_home (a deliberate departure from the
+        # ND "HHS-Licensed Group Child Care Home" / AK "Licensed Group Home"
+        # precedent below -- Iowa does not name a separate group license).
+        # provider_type preserves the exact tier. Non-Registered Child Care
+        # Home matches the existing "Unlicensed/Unregistered FDH" entry.
+        "Registered Child Development Home A",
+        "Registered Child Development Home B",
+        "Registered Child Development Home C",
+        "Registered Child Development Home C1",
+        "Non-Registered Child Care Home",
     ],
     "group_home": [
         "GFDC", "Group Home", "Group Home Child Care", "Group",
@@ -441,6 +475,10 @@ FACILITY_CATEGORY_BUCKETS = {
         "HHS-Licensed School Age Child Care",
         # Vermont (brightfutures.dcf.state.vt.us) detail "License Type".
         "Afterschool Child Care Program",
+        # Kansas (khap.kdhe.ks.gov OIDS): licensed for school-age youth
+        # programming -- cf. "School Age Program" above (Ryan, 2026-08-19).
+        # "School Age Program" itself is already covered by the entry above.
+        "Youth Development Program",
     ],
     "exempt": [
         "Exempt Only", "Religious Exempt Child Day Center",
@@ -464,6 +502,8 @@ FACILITY_CATEGORY_BUCKETS = {
         # participate in the subsidy program without being state-licensed.
         "License Exempt", "CCAP Certified/Accredited",
         "Exempt",
+        # Iowa (Titan TypeOfCareDesc).
+        "Exempt from Licensing",
     ],
     "other": [
         "Other", "Resident Camp", "Summer Day Camp",
@@ -484,7 +524,13 @@ FACILITY_CATEGORY_BUCKETS = {
         # South Dakota (olapublic.sd.gov) Program Category: informal FFN-style
         # care and single-family in-home care -- both are informal care per
         # the field-mapping playbook, not a licensed home/center category.
+        # Iowa's Titan "In-Home" type is the same concept (care in the
+        # child's own home) and maps here too.
         "Informal", "In-Home",
+        # Kansas (khap.kdhe.ks.gov OIDS): outdoor/day camp program -- matches
+        # the "Resident Camp" / "Summer Day Camp" / "Licensed Camp" precedents
+        # above.
+        "Outdoor Summer Camp",
     ],
 }
 
