@@ -1,0 +1,258 @@
+{
+ "accepting_referrals": true,
+ "accreditations": null,
+ "address": "1 Mackenzie Rd",
+ "administers_meds": true,
+ "age_range_max": 624,
+ "age_range_min": 6,
+ "business_name": "Lola's Little Ones",
+ "capacity": 9,
+ "capacity_full_time": 6,
+ "capacity_school_aged": 3,
+ "capacity_three_and_under": null,
+ "city": "Waterford",
+ "created_at": "2021-06-30T21:23:44.292Z",
+ "date_established": "05/01/2016",
+ "education_levels": [
+  "High School Diploma"
+ ],
+ "elevate_membership_level": "member",
+ "email": "lolasdaycare1@yahoo.com",
+ "financial_assistance": false,
+ "first_name": "Lisa",
+ "headstart_funding": false,
+ "id": 2653,
+ "inspections": [
+  {
+   "case_uid": 769678,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 11181,
+   "provider_uid": "75a32f6f-25ba-466c-94f9-4e8d3285252a",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 01/14/2026",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 1,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2025-11-25T00:00:00.000Z"
+  },
+  {
+   "case_uid": 727504,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 0,
+   "id": 11178,
+   "provider_uid": "75a32f6f-25ba-466c-94f9-4e8d3285252a",
+   "reason": "Inspection & Findings",
+   "resolution": "Closed No Violations 10/01/2024",
+   "severity": "N/A",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2024-10-01T00:00:00.000Z"
+  },
+  {
+   "case_uid": 696414,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 11179,
+   "provider_uid": "75a32f6f-25ba-466c-94f9-4e8d3285252a",
+   "reason": "Inspection & Findings",
+   "resolution": "Closed No Violations 11/27/2023",
+   "severity": "N/A",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2023-11-27T00:00:00.000Z"
+  },
+  {
+   "case_uid": 660262,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 11180,
+   "provider_uid": "75a32f6f-25ba-466c-94f9-4e8d3285252a",
+   "reason": "Inspection & Findings",
+   "resolution": "Closed No Violations 11/10/2022",
+   "severity": "N/A",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2022-11-10T00:00:00.000Z"
+  }
+ ],
+ "languages": [
+  "English"
+ ],
+ "last_name": "Newman",
+ "latitude": 41.3554375,
+ "license": true,
+ "license_number": "DCFH.56737",
+ "longitude": -72.1386744,
+ "oec_contact_id": null,
+ "phone_number": "860-941-6292",
+ "provider_uid": "75a32f6f-25ba-466c-94f9-4e8d3285252a",
+ "quality_rating": null,
+ "school_districts": [
+  "Oswegatchie"
+ ],
+ "searchable": true,
+ "shifts": [
+  {
+   "created_at": "2026-01-22T19:49:27.075Z",
+   "id": 1048242,
+   "population": {
+    "Infant (0-17 Months)": "",
+    "School Age (5-12 Years)": "",
+    "Toddler/Preschool (18-71 Months)": ""
+   },
+   "population_by_age": [
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "population": ""
+    },
+    {
+     "group": "Toddler/Preschool",
+     "label": "18-71 Months",
+     "max": 100.05,
+     "min": 78.3,
+     "population": ""
+    },
+    {
+     "group": "Infant",
+     "label": "0-17 Months",
+     "max": 73.94999999999999,
+     "min": 6,
+     "population": ""
+    }
+   ],
+   "provider_id": 2653,
+   "provider_uid": null,
+   "rates": {
+    "Infant (0-17 Months)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": "225.00",
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    },
+    "School Age (5-12 Years)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": "175.00",
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    },
+    "Toddler/Preschool (18-71 Months)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": "200.00",
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    }
+   },
+   "rates_by_age": [
+    {
+     "group": "Infant",
+     "label": "0-17 Months",
+     "max": 73.94999999999999,
+     "min": 6,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": "225.00",
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    {
+     "group": "Toddler/Preschool",
+     "label": "18-71 Months",
+     "max": 100.05,
+     "min": 78.3,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": "200.00",
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": "175.00",
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    }
+   ],
+   "schedule": {
+    "Friday": {
+     "end_time": "17:00:00",
+     "start_time": "07:00:00"
+    },
+    "Monday": {
+     "end_time": "17:00:00",
+     "start_time": "07:00:00"
+    },
+    "Thursday": {
+     "end_time": "17:00:00",
+     "start_time": "07:00:00"
+    },
+    "Tuesday": {
+     "end_time": "17:00:00",
+     "start_time": "07:00:00"
+    },
+    "Wednesday": {
+     "end_time": "17:00:00",
+     "start_time": "07:00:00"
+    }
+   },
+   "shift_uid": null,
+   "updated_at": "2026-01-22T19:49:27.075Z"
+  }
+ ],
+ "showRates": true,
+ "special_needs": [],
+ "state": "CT",
+ "town": "Waterford",
+ "transportation": [
+  "School Transportation"
+ ],
+ "type_of_care": "Family Child Care",
+ "type_of_provider": "Family Child Care",
+ "updated_at": "2026-01-22T19:49:27.077Z",
+ "website": "http://www.facebook page /Lolas Little Ones",
+ "wheelchair": false,
+ "zip": "06385-2107"
+}

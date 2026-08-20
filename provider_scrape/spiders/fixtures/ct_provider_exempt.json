@@ -1,0 +1,321 @@
+{
+ "accepting_referrals": true,
+ "accreditations": [
+  "NEASC"
+ ],
+ "address": "423 Ferry Street",
+ "administers_meds": true,
+ "age_range_max": 624,
+ "age_range_min": 156,
+ "business_name": "All Saints Catholic Academy Inc.",
+ "capacity": 100,
+ "capacity_full_time": null,
+ "capacity_school_aged": 100,
+ "capacity_three_and_under": 0,
+ "city": "New Haven",
+ "created_at": "2021-06-30T21:22:14.687Z",
+ "date_established": null,
+ "education_levels": [
+  "Associates Degree",
+  "Bachelor's Degree",
+  "Master's Degree"
+ ],
+ "elevate_membership_level": "member",
+ "email": "lizzybear10@att.net",
+ "financial_assistance": false,
+ "first_name": "Bette",
+ "headstart_funding": false,
+ "id": 1759,
+ "inspections": [
+  {
+   "case_uid": 788481,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 4619,
+   "provider_uid": "3032f433-1cee-40f7-94b3-bd5c5cdeec93",
+   "reason": "Inspection & Findings",
+   "resolution": "Closed No Violations 05/21/2026",
+   "severity": "N/A",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "DCEX - ANNOUNCED",
+   "visited_on": "2026-05-21T00:00:00.000Z"
+  },
+  {
+   "case_uid": 744481,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 4622,
+   "provider_uid": "3032f433-1cee-40f7-94b3-bd5c5cdeec93",
+   "reason": "Follow-Up Visit for 04/03/2025",
+   "resolution": "Corrective Action Plan 04/03/2025",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "Follow-Up Inspection",
+   "visited_on": "2025-04-24T00:00:00.000Z"
+  },
+  {
+   "case_uid": 744481,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 4618,
+   "provider_uid": "3032f433-1cee-40f7-94b3-bd5c5cdeec93",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 04/03/2025",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 2,
+   "visit_type": "DCEX - ANNOUNCED",
+   "visited_on": "2025-04-03T00:00:00.000Z"
+  },
+  {
+   "case_uid": 695684,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 4623,
+   "provider_uid": "3032f433-1cee-40f7-94b3-bd5c5cdeec93",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 12/07/2023",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 1,
+   "visit_type": "DCEX - ANNOUNCED",
+   "visited_on": "2023-11-29T00:00:00.000Z"
+  },
+  {
+   "case_uid": 675533,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 0,
+   "id": 4617,
+   "provider_uid": "3032f433-1cee-40f7-94b3-bd5c5cdeec93",
+   "reason": "Inspection & Findings",
+   "resolution": "Closed No Violations 05/05/2023",
+   "severity": "N/A",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "DCEX - UNANNOUNCED PARTIAL",
+   "visited_on": "2023-05-05T00:00:00.000Z"
+  },
+  {
+   "case_uid": 661623,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 4620,
+   "provider_uid": "3032f433-1cee-40f7-94b3-bd5c5cdeec93",
+   "reason": "Follow-Up Visit for 11/30/2022",
+   "resolution": "Corrective Action Plan 01/13/2023",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "Follow-Up Inspection",
+   "visited_on": "2023-01-13T00:00:00.000Z"
+  },
+  {
+   "case_uid": 661623,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 4616,
+   "provider_uid": "3032f433-1cee-40f7-94b3-bd5c5cdeec93",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 01/13/2023",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 3,
+   "visit_type": "DCEX - ANNOUNCED",
+   "visited_on": "2022-11-30T00:00:00.000Z"
+  },
+  {
+   "case_uid": 633551,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 4621,
+   "provider_uid": "3032f433-1cee-40f7-94b3-bd5c5cdeec93",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 05/25/2022",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 1,
+   "visit_type": "DCEX - ANNOUNCED",
+   "visited_on": "2022-01-11T00:00:00.000Z"
+  }
+ ],
+ "languages": [
+  "English",
+  "Spanish"
+ ],
+ "last_name": "Ellen",
+ "latitude": 41.3113832,
+ "license": false,
+ "license_number": "DCEX.80638",
+ "longitude": -72.8955604,
+ "oec_contact_id": 1636374,
+ "phone_number": "203-777-5352",
+ "provider_uid": "3032f433-1cee-40f7-94b3-bd5c5cdeec93",
+ "quality_rating": null,
+ "school_districts": [
+  "Clinton Avenue"
+ ],
+ "searchable": true,
+ "shifts": [
+  {
+   "created_at": "2026-08-14T18:36:01.638Z",
+   "id": 1111943,
+   "population": {
+    "Preschool (3-5 years)": "",
+    "School Age After School (5-12 Years)": "",
+    "School Age Before School (5-12 Years)": ""
+   },
+   "population_by_age": [
+    {
+     "group": "Preschool",
+     "label": "3-5 Years",
+     "max": 260,
+     "min": 156,
+     "population": ""
+    },
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "population": ""
+    },
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "population": ""
+    }
+   ],
+   "provider_id": 1759,
+   "provider_uid": null,
+   "rates": {
+    "Preschool (3-5 years)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": null,
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    },
+    "School Age After School (5-12 Years)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": null,
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    },
+    "School Age Before School (5-12 Years)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": null,
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    }
+   },
+   "rates_by_age": [
+    {
+     "group": "Preschool",
+     "label": "3-5 Years",
+     "max": 260,
+     "min": 156,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    }
+   ],
+   "schedule": {
+    "Friday": {
+     "end_time": "17:30:00",
+     "start_time": "07:30:00"
+    },
+    "Monday": {
+     "end_time": "17:30:00",
+     "start_time": "07:30:00"
+    },
+    "Thursday": {
+     "end_time": "17:30:00",
+     "start_time": "07:30:00"
+    },
+    "Tuesday": {
+     "end_time": "17:30:00",
+     "start_time": "07:30:00"
+    },
+    "Wednesday": {
+     "end_time": "17:30:00",
+     "start_time": "07:30:00"
+    }
+   },
+   "shift_uid": null,
+   "updated_at": "2026-08-14T18:36:01.638Z"
+  }
+ ],
+ "showRates": true,
+ "special_needs": [],
+ "state": "CT",
+ "town": "New Haven",
+ "transportation": [],
+ "type_of_care": "Child Care Center",
+ "type_of_provider": "Child Care Center",
+ "updated_at": "2026-08-14T18:36:01.648Z",
+ "website": null,
+ "wheelchair": false,
+ "zip": "06513"
+}

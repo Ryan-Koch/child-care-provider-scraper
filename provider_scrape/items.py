@@ -113,6 +113,28 @@ class InspectionItem(scrapy.Item):
     ky_report_name = scrapy.Field()     # form id, e.g. "KID013A"
     ky_poc_id = scrapy.Field()          # Plan-of-Correction id
 
+    # Connecticut specific inspection fields (www.211childcare.org). Each
+    # entry of a provider's embedded `inspections[]` becomes one InspectionItem
+    # from summary fields alone (free -- no extra request); `ct_violations`/
+    # `ct_documents`/`report_url` are filled in only by the Phase 3 detail
+    # fan-out to /inspections/{id}.json (default on, `-a violations=0` to
+    # skip -- see connecticut_plan.md Sec 4.3/6.3).
+    ct_inspection_id = scrapy.Field()     # the /inspections/{id} key
+    ct_case_uid = scrapy.Field()          # CT OEC case id
+    ct_inspection_status = scrapy.Field()  # "CLOSED" (97%) / "PENDING"
+    ct_severity = scrapy.Field()          # "Low" / "High" / "N/A" / "PENDING"
+    ct_reason = scrapy.Field()
+    ct_resolution = scrapy.Field()
+    ct_violations_count = scrapy.Field()  # int, 0 on ~35% of inspections
+    ct_document_count = scrapy.Field()    # int, 0 on ~7% of inspections
+    # [{regulation, category, statute}] -- NOTE the source API's own field
+    # names are swapped: `description` holds the regulation cite and
+    # `statute` holds the requirement text (Sec 6.3). Unset when
+    # ct_violations_count is 0 (the API still returns a "No Violations"
+    # sentinel row in that case, which is deliberately filtered out).
+    ct_violations = scrapy.Field()
+    ct_documents = scrapy.Field()         # [{description, document_type, visited_on, link}]
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
@@ -721,6 +743,58 @@ class ProviderItem(scrapy.Item):
     ky_accreditation_available = scrapy.Field()  # bool; null in source -> unset
                                                  # (source typo'd "Acceditations")
     ky_service_costs = scrapy.Field()           # [{age_group, full_time_cost, part_time_cost}]
+
+    # Connecticut specific fields (www.211childcare.org -- 211 Child Care, a
+    # Rails JSON API front for CT's Office of Early Childhood). Per D-1 the
+    # spider sweeps every provider id (1..max_id) and emits every record,
+    # including the ~34% CT hides from its own public search -- `ct_searchable`
+    # flags those; the inference that a non-searchable record is a lapsed/
+    # closed listing is documented on `status`/`STATUS_BUCKETS`, not asserted
+    # here (connecticut_plan.md Sec 5.3). Per D-3, `status` derives from
+    # `searchable` ("Listed"/"Not Listed") -- CT publishes no license status.
+    ct_provider_id = scrapy.Field()             # int -- the /providers/{id} key
+    ct_provider_uid = scrapy.Field()            # uuid str -- CT OEC join key
+    ct_searchable = scrapy.Field()              # bool -- visible in CT's own directory
+    ct_licensed = scrapy.Field()                # bool (`license`); false == exempt/unlisted
+    # Derived from the license_number prefix (Sec 5.6) -- a clean, fully
+    # correlated taxonomy. NOTE: a DCEX (license-exempt) record's
+    # type_of_provider is still a plain "Child Care Center", so the pipeline's
+    # facility_category buckets it as `center`, not `exempt` -- an accepted,
+    # documented limitation (~2.3% of searchable records). This field is the
+    # one place the exemption signal survives; do not "fix" facility_category
+    # with a global override for it.
+    ct_license_type = scrapy.Field()
+    ct_elevate_membership_level = scrapy.Field()  # CT's Elevate QRIS; stays state-specific
+    ct_type_of_care = scrapy.Field()            # coarser vocab; emitted only when != provider_type
+    ct_accreditations = scrapy.Field()          # list, e.g. NAEYC, NAFCC, Head Start
+    ct_school_districts = scrapy.Field()        # list
+    ct_transportation = scrapy.Field()          # list
+    ct_accepting_referrals = scrapy.Field()     # bool
+    ct_head_start = scrapy.Field()              # headstart_funding OR "Head Start" in accreditations
+    ct_education_levels = scrapy.Field()        # list of staff credentials
+    ct_special_needs = scrapy.Field()           # list
+    ct_administers_meds = scrapy.Field()        # bool
+    ct_wheelchair_accessible = scrapy.Field()   # bool
+    ct_capacity_three_and_under = scrapy.Field()  # int
+    ct_capacity_full_time = scrapy.Field()      # int
+    ct_capacity_school_aged = scrapy.Field()    # int
+    # Licensed age range in WEEKS, not months/years (6 == 6 weeks old). Never a
+    # fallback for ages_served/age flags -- age_range_max: 0 and shifts: [] are
+    # the exact same 38 (of 4,114) records, so that fallback path is broken in
+    # the one case that would trigger it (Sec 5.8). 0 on the max is normalized
+    # to unset here.
+    ct_age_range_min_weeks = scrapy.Field()
+    ct_age_range_max_weeks = scrapy.Field()
+    ct_date_established = scrapy.Field()        # business founding date, NOT a licence date
+    ct_oec_contact_id = scrapy.Field()          # CT Office of Early Childhood contact id
+    ct_schedule = scrapy.Field()                # [{day, open, close}] (cf. in_schedule)
+    ct_rates = scrapy.Field()                   # [{age_group, label, full_time_weekly, ...}]
+    # bool: the provider opted out of publishing a street address -- the source
+    # `address` is the literal sentence "This provider's address has been
+    # hidden" rather than a street (15 of 6,910 on the 2026-08-21 run). When
+    # true, `address` is left unset; `city`/`zip`/coordinates are still
+    # published and are kept. Mirrors ks_address_suppressed.
+    ct_address_suppressed = scrapy.Field()
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()

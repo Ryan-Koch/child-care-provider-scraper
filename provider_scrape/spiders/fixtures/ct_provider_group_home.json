@@ -1,0 +1,256 @@
+{
+ "accepting_referrals": true,
+ "accreditations": null,
+ "address": "264 School St",
+ "administers_meds": false,
+ "age_range_max": 624,
+ "age_range_min": 6,
+ "business_name": "First Path Academy-Bloomfield",
+ "capacity": 12,
+ "capacity_full_time": null,
+ "capacity_school_aged": 3,
+ "capacity_three_and_under": 12,
+ "city": "Bloomfield",
+ "created_at": "2025-07-31T15:07:11.864Z",
+ "date_established": null,
+ "education_levels": null,
+ "elevate_membership_level": "member_plus",
+ "email": "firstpathacademy25@gmail.com",
+ "financial_assistance": false,
+ "first_name": "Jessica",
+ "headstart_funding": false,
+ "id": 6925,
+ "inspections": [
+  {
+   "case_uid": 749138,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 1153,
+   "provider_uid": "0be98fb2-de43-456f-be98-ab21aff4e749",
+   "reason": "Follow-Up Visit for 05/12/2025",
+   "resolution": "Corrective Action Plan 07/03/2025",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 3,
+   "visit_type": "Follow-Up Inspection",
+   "visited_on": "2025-06-23T00:00:00.000Z"
+  },
+  {
+   "case_uid": 749138,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 1154,
+   "provider_uid": "0be98fb2-de43-456f-be98-ab21aff4e749",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 07/03/2025",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 8,
+   "visit_type": "INITIAL CREDENTIAL INSPECTION",
+   "visited_on": "2025-05-12T00:00:00.000Z"
+  }
+ ],
+ "languages": [
+  "English"
+ ],
+ "last_name": "Salvador",
+ "latitude": 41.8279637,
+ "license": true,
+ "license_number": "DCGH.80040",
+ "longitude": -72.7061435,
+ "oec_contact_id": null,
+ "phone_number": "(860) 202-2819",
+ "provider_uid": "0be98fb2-de43-456f-be98-ab21aff4e749",
+ "quality_rating": null,
+ "school_districts": null,
+ "searchable": true,
+ "shifts": [
+  {
+   "created_at": "2026-07-17T19:17:52.817Z",
+   "id": 1109682,
+   "population": {
+    "Infant/Toddler (0-17 Months)": "",
+    "Infant/Toddler (18-35 Months)": "",
+    "Preschool (3-5 years)": "",
+    "School Age (5-12 Years)": ""
+   },
+   "population_by_age": [
+    {
+     "group": "Infant",
+     "label": "0-17 Months",
+     "max": 73.94999999999999,
+     "min": 6,
+     "population": ""
+    },
+    {
+     "group": "Preschool",
+     "label": "3-5 Years",
+     "max": 260,
+     "min": 156,
+     "population": ""
+    },
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "population": ""
+    },
+    {
+     "group": "Toddler",
+     "label": "18-35 Months",
+     "max": 152.25,
+     "min": 78.3,
+     "population": ""
+    }
+   ],
+   "provider_id": 6925,
+   "provider_uid": null,
+   "rates": {
+    "Infant/Toddler (0-17 Months)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": null,
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    },
+    "Infant/Toddler (18-35 Months)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": null,
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    },
+    "Preschool (3-5 years)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": null,
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    },
+    "School Age (5-12 Years)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": null,
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    }
+   },
+   "rates_by_age": [
+    {
+     "group": "Infant",
+     "label": "0-17 Months",
+     "max": 73.94999999999999,
+     "min": 6,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    {
+     "group": "Toddler",
+     "label": "18-35 Months",
+     "max": 152.25,
+     "min": 78.3,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    {
+     "group": "Preschool",
+     "label": "3-5 Years",
+     "max": 260,
+     "min": 156,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    }
+   ],
+   "schedule": {
+    "Friday": {
+     "end_time": "18:00:00",
+     "start_time": "07:00:00"
+    },
+    "Monday": {
+     "end_time": "18:00:00",
+     "start_time": "07:00:00"
+    },
+    "Thursday": {
+     "end_time": "18:00:00",
+     "start_time": "07:00:00"
+    },
+    "Tuesday": {
+     "end_time": "18:00:00",
+     "start_time": "07:00:00"
+    },
+    "Wednesday": {
+     "end_time": "18:00:00",
+     "start_time": "07:00:00"
+    }
+   },
+   "shift_uid": null,
+   "updated_at": "2026-07-17T19:17:52.817Z"
+  }
+ ],
+ "showRates": true,
+ "special_needs": null,
+ "state": "CT",
+ "town": "Bloomfield",
+ "transportation": null,
+ "type_of_care": "Child Care Center",
+ "type_of_provider": "Group Home",
+ "updated_at": "2026-07-17T19:17:52.820Z",
+ "website": "https://www.facebook.com/profile.php?id=61577908996799",
+ "wheelchair": false,
+ "zip": "06002-2720"
+}

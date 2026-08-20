@@ -1,0 +1,150 @@
+{
+ "case_uid": 787687,
+ "created_at": "2026-08-20T06:20:45.000Z",
+ "document_count": 1,
+ "documents": [
+  {
+   "created_at": "2026-08-20T06:20:46.000Z",
+   "description": "Corrective Action Plan",
+   "document_type": "Inspections",
+   "id": 47097,
+   "inspection_case_uid": 787687,
+   "link": "https://elicense.ct.gov/Lookup/ViewPublicLookupDocument.aspx?DocumentIdnt=8664528&GUID=4B6C0B82-E4FB-414D-A052-3ADA8D7FBB96",
+   "updated_at": "2026-08-20T06:20:46.000Z",
+   "visited_on": "2026-05-14"
+  }
+ ],
+ "id": 14856,
+ "provider_uid": "99519a2c-90e8-4242-b88d-6b849286a012",
+ "reason": "Inspection & Findings",
+ "resolution": "Corrective Action Plan 06/17/2026",
+ "severity": "Low",
+ "status": "CLOSED",
+ "updated_at": "2026-08-20T06:20:45.000Z",
+ "violations": [
+  {
+   "category": " Adequate sinks-handwashing-diapering/other use-food prep",
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "description": "[19a-79-10(d)(1)(A-C)]",
+   "id": 92437,
+   "inspection_case_uid": "787687",
+   "inspection_id": null,
+   "inspection_visited_on": "2026-05-14T00:00:00.000Z",
+   "statute": "In child care centers there shall be a sink with hot and cold running water designated for diaper changing and hand washing of program staff and children. This sink shall be located in the program space. Child care centers which have three program staff for a group of infants or toddlers may use an accessible diaper changing facility if it is immediately adjoining the program area. Separate sinks shall be available for purposes other than hand washing after diaper changing within child care centers. Group child care homes shall have a sink accessible for hand washing other than the sink used for food preparation.",
+   "updated_at": "2026-08-20T06:20:45.000Z"
+  },
+  {
+   "category": "Ensuring the safety & health of children",
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "description": "[19a-79-3a(a)]",
+   "id": 92438,
+   "inspection_case_uid": "787687",
+   "inspection_id": null,
+   "inspection_visited_on": "2026-05-14T00:00:00.000Z",
+   "statute": "The operator of the child care center or group child care home shall be responsible for compliance with the requirements of the Regulations of Connecticut State Agencies and applicable endorsements in such a manner as to ensure the safety, health and development of the children while in the operator's care.",
+   "updated_at": "2026-08-20T06:20:45.000Z"
+  },
+  {
+   "category": " Individual care plan- signed by parents/staff",
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "description": "[19a-79-5a(a)(2)(E)]",
+   "id": 92439,
+   "inspection_case_uid": "787687",
+   "inspection_id": null,
+   "inspection_visited_on": "2026-05-14T00:00:00.000Z",
+   "statute": "An individual plan of care for any child with special health care needs or disabilities when it is necessary that special care be taken or provided while a child is in attendance shall be developed and implemented with the child's parent(s) and health care provider and updated, as necessary. The plan shall include appropriate care of the child to prevent and respond to a medical or other emergency and shall be signed by the parent and program staff responsible for the care of the child.",
+   "updated_at": "2026-08-20T06:20:45.000Z"
+  },
+  {
+   "category": " Fire marshal codes/certificate",
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "description": "[19a-79-7a(a)(2)]",
+   "id": 92440,
+   "inspection_case_uid": "787687",
+   "inspection_id": null,
+   "inspection_visited_on": "2026-05-14T00:00:00.000Z",
+   "statute": "The operator shall comply with all local codes and ordinances, including the State of Connecticut Fire Safey Code. These codes include but are not limited to: inspections by the fire marshal, ensuring fire marshal inspection certificates are on file, smoke detectors, fire extinguishers and documentation of fire drills.",
+   "updated_at": "2026-08-20T06:20:45.000Z"
+  },
+  {
+   "category": " Licensed premises-clean, good repair, hazard free-maintenance program",
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "description": "[19a-79-7a(c)(2)]",
+   "id": 92441,
+   "inspection_case_uid": "787687",
+   "inspection_id": null,
+   "inspection_visited_on": "2026-05-14T00:00:00.000Z",
+   "statute": "For programs serving children younger than school age, the building, equipment and furnishings shall be maintained in a good state of repair. A maintenance program shall be established that ensures that the interior, exterior and grounds of the building are maintained, kept clean and orderly, free from accumulations of refuse, dampness, stagnant water, dilapidated structures and other health and safety hazards.  ",
+   "updated_at": "2026-08-20T06:20:45.000Z"
+  },
+  {
+   "category": " Individual storage of clothing/bedding",
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "description": "[19a-79-7a(d)(7)]",
+   "id": 92442,
+   "inspection_case_uid": "787687",
+   "inspection_id": null,
+   "inspection_visited_on": "2026-05-14T00:00:00.000Z",
+   "statute": "There shall be an area available for the individual storage of each child's clothing and bedding.",
+   "updated_at": "2026-08-20T06:20:45.000Z"
+  },
+  {
+   "category": " Electrical safety- outlets inaccessible/covered",
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "description": "[19a-79-7a(d)(9)]",
+   "id": 92443,
+   "inspection_case_uid": "787687",
+   "inspection_id": null,
+   "inspection_visited_on": "2026-05-14T00:00:00.000Z",
+   "statute": "The use and maintenance of electrical cords, appliances and adaptors shall be in full compliance with state codes. For programs serving children less than school age, electrical outlets shall be made inaccessible by use of a safety device or covering that prevents access to the receptacle opening.",
+   "updated_at": "2026-08-20T06:20:45.000Z"
+  },
+  {
+   "category": " Potentially hazardous substances, materials \u2013 labeled, inaccessible to children",
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "description": "[19a-79-7a(e)(10)]",
+   "id": 92444,
+   "inspection_case_uid": "787687",
+   "inspection_id": null,
+   "inspection_visited_on": "2026-05-14T00:00:00.000Z",
+   "statute": "Potentially hazardous substances and materials in the child care centers and group child care homes shall be stored in a labeled container identifying the exact contents and dilutions, used according to the manufacturer\u2019s instructions and for the intended purpose, handled in a safe manner and  inaccessible to children.",
+   "updated_at": "2026-08-20T06:20:45.000Z"
+  },
+  {
+   "category": " Carbon monoxide detector- each level",
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "description": "[19a-79-7a(e)(18)]",
+   "id": 92445,
+   "inspection_case_uid": "787687",
+   "inspection_id": null,
+   "inspection_visited_on": "2026-05-14T00:00:00.000Z",
+   "statute": "Child care centers and group child care homes that utilize combustible fuel shall be equipped with at least one operable carbon monoxide (CO) detector on each occupied level of the licensed premises.",
+   "updated_at": "2026-08-20T06:20:45.000Z"
+  },
+  {
+   "category": " Outdoor space",
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "description": "[19a-79-7a(h)(1-9)]",
+   "id": 92447,
+   "inspection_case_uid": "787687",
+   "inspection_id": null,
+   "inspection_visited_on": "2026-05-14T00:00:00.000Z",
+   "statute": "There shall be access to a minimum of seventy-five (75) square feet per child of outdoor space for the number of children using the space at any one time. The outdoor area shall be fenced or protected for safety. Outdoor play equipment shall have a shock absorbing surface, under and around, that shall effectively cushion the fall of a child, except where the child is sitting or standing at ground level. The shock absorbing surface shall be maintained at a depth of at least eight inches, be free of water and not allowed to become compacted. Acceptable shock absorbing surfaces may include mulch, sand, and wood chips. Synthetic material that is less than eight inches in depth, including but not limited to, rubber mats or tiles may be acceptable surfaces provided the operator maintains documentation on the licensed premises that the synthetic material is manufactured for this purpose, installed in accordance with the manufacturer\u2019s specifications and sufficient to cushion the fall of a child. Concrete, asphalt, grass and dirt shall not be considered a shock absorbing surface. The playground shall be free of glass, debris, holes and other hazards. Nuts, bolts and screws shall be tight; and those that protrude shall be covered or protected. Outside equipment shall be anchored for stability when recommended by the manufacturer. Anchors shall be buried below ground level. The operator shall provide documentation to the Office, upon request, by a certified playground safety inspector that newly constructed playgrounds and all newly installed playground equipment that are set in position and anchored in such a way to last indefinitely are designed and installed in accordance with U.S. Consumer Product Safety Commission and the American Society for Testing and Materials Standards. Drinking water shall be available and accessible to children. Outdoor equipment shall be arranged in such a way as to avoid accidents. All play equipment, fences, and structures shall not pose a hazard.",
+   "updated_at": "2026-08-20T06:20:45.000Z"
+  },
+  {
+   "category": " Authorized prescriber/parent permission",
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "description": "[19a-79-9a(b)(3)(A-B)]",
+   "id": 92448,
+   "inspection_case_uid": "787687",
+   "inspection_id": null,
+   "inspection_visited_on": "2026-05-14T00:00:00.000Z",
+   "statute": "Except for nonprescription topical medications, no medication shall be administered to a child without the written order of an authorized prescriber and the written permission of the child's parent(s) which shall be on file at the facility. Individual written medication administration records for each child shall be written in ink, reviewed prior to administering each dose of medication and kept on file at the facility for at least three years after the child is no longer attending the program.",
+   "updated_at": "2026-08-20T06:20:45.000Z"
+  }
+ ],
+ "violations_count": 11,
+ "visit_type": "UNANNOUNCED INSPECTION - FULL",
+ "visited_on": "2026-05-14T00:00:00.000Z"
+}

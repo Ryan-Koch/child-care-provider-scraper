@@ -1,0 +1,363 @@
+{
+ "accepting_referrals": true,
+ "accreditations": [
+  "Head Start",
+  "NAEYC"
+ ],
+ "address": "80 Howard Ave",
+ "administers_meds": true,
+ "age_range_max": 624,
+ "age_range_min": 6,
+ "business_name": "Lower Naugatuck Valley School Early Ch Ed",
+ "capacity": 146,
+ "capacity_full_time": null,
+ "capacity_school_aged": 0,
+ "capacity_three_and_under": 48,
+ "city": "Ansonia",
+ "created_at": "2021-06-30T21:20:22.782Z",
+ "date_established": null,
+ "education_levels": [
+  "Associates Degree",
+  "Bachelor's Degree",
+  "CDA-Child Development Associate"
+ ],
+ "elevate_membership_level": "member_accredited",
+ "email": "astanisci@teaminc.org",
+ "financial_assistance": true,
+ "first_name": "Lower Naugatuck Valley School Early Ch",
+ "headstart_funding": false,
+ "id": 970,
+ "inspections": [
+  {
+   "case_uid": 773177,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 22899,
+   "provider_uid": "e9e9730d-f421-4b57-a94c-7006042cb6e9",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 01/27/2026",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 3,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2026-01-13T00:00:00.000Z"
+  },
+  {
+   "case_uid": 768625,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 22900,
+   "provider_uid": "e9e9730d-f421-4b57-a94c-7006042cb6e9",
+   "reason": "Inspection & Findings",
+   "resolution": "Closed No Violations 11/17/2025",
+   "severity": "N/A",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "UNANNOUNCED INSPECTION - PARTIAL",
+   "visited_on": "2025-11-17T00:00:00.000Z"
+  },
+  {
+   "case_uid": 728724,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 22902,
+   "provider_uid": "e9e9730d-f421-4b57-a94c-7006042cb6e9",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 10/30/2024",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 3,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2024-10-15T00:00:00.000Z"
+  },
+  {
+   "case_uid": 694466,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 22901,
+   "provider_uid": "e9e9730d-f421-4b57-a94c-7006042cb6e9",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 11/29/2023",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 10,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2023-11-13T00:00:00.000Z"
+  },
+  {
+   "case_uid": 661558,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 22903,
+   "provider_uid": "e9e9730d-f421-4b57-a94c-7006042cb6e9",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 11/17/2022",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 6,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2022-11-17T00:00:00.000Z"
+  },
+  {
+   "case_uid": 631579,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 22898,
+   "provider_uid": "e9e9730d-f421-4b57-a94c-7006042cb6e9",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 01/05/2022",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 8,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2021-12-06T00:00:00.000Z"
+  }
+ ],
+ "languages": [
+  "English"
+ ],
+ "last_name": "Ed",
+ "latitude": 41.3387449,
+ "license": true,
+ "license_number": "DCCC.14288",
+ "longitude": -73.0833689,
+ "oec_contact_id": 1265662,
+ "phone_number": "203-734-8609",
+ "provider_uid": "e9e9730d-f421-4b57-a94c-7006042cb6e9",
+ "quality_rating": null,
+ "school_districts": [
+  "Mead"
+ ],
+ "searchable": true,
+ "shifts": [
+  {
+   "created_at": "2026-06-17T18:37:08.559Z",
+   "id": 1107560,
+   "population": {
+    "Infant/Toddler (0-17 Months)": "",
+    "Infant/Toddler (18-35 Months)": "",
+    "Preschool (3-5 years)": ""
+   },
+   "population_by_age": [
+    {
+     "group": "Infant",
+     "label": "0-17 Months",
+     "max": 73.94999999999999,
+     "min": 6,
+     "population": ""
+    },
+    {
+     "group": "Preschool",
+     "label": "3-5 Years",
+     "max": 260,
+     "min": 156,
+     "population": ""
+    },
+    {
+     "group": "Toddler",
+     "label": "18-35 Months",
+     "max": 152.25,
+     "min": 78.3,
+     "population": ""
+    }
+   ],
+   "provider_id": 970,
+   "provider_uid": null,
+   "rates": {
+    "Infant/Toddler (0-17 Months)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": null,
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    },
+    "Infant/Toddler (18-35 Months)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": null,
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    },
+    "Preschool (3-5 years)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": null,
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    }
+   },
+   "rates_by_age": [
+    {
+     "group": "Infant",
+     "label": "0-17 Months",
+     "max": 73.94999999999999,
+     "min": 6,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    {
+     "group": "Toddler",
+     "label": "18-35 Months",
+     "max": 152.25,
+     "min": 78.3,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    {
+     "group": "Preschool",
+     "label": "3-5 Years",
+     "max": 260,
+     "min": 156,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    }
+   ],
+   "schedule": {
+    "Friday": {
+     "end_time": "17:30:00",
+     "start_time": "07:15:00"
+    },
+    "Monday": {
+     "end_time": "17:30:00",
+     "start_time": "07:15:00"
+    },
+    "Thursday": {
+     "end_time": "17:30:00",
+     "start_time": "07:15:00"
+    },
+    "Tuesday": {
+     "end_time": "17:30:00",
+     "start_time": "07:15:00"
+    },
+    "Wednesday": {
+     "end_time": "17:30:00",
+     "start_time": "07:15:00"
+    }
+   },
+   "shift_uid": null,
+   "updated_at": "2026-06-17T18:37:08.559Z"
+  },
+  {
+   "created_at": "2026-06-17T18:37:08.567Z",
+   "id": 1107561,
+   "population": {
+    "School Age (5-12 Years)": ""
+   },
+   "population_by_age": [
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "population": ""
+    }
+   ],
+   "provider_id": 970,
+   "provider_uid": null,
+   "rates": {
+    "School Age (5-12 Years)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": null,
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    }
+   },
+   "rates_by_age": [
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    }
+   ],
+   "schedule": {
+    "Friday": {
+     "end_time": "17:30:00",
+     "start_time": "07:15:00"
+    },
+    "Monday": {
+     "end_time": "17:30:00",
+     "start_time": "07:15:00"
+    },
+    "Thursday": {
+     "end_time": "17:30:00",
+     "start_time": "07:15:00"
+    },
+    "Tuesday": {
+     "end_time": "17:30:00",
+     "start_time": "07:15:00"
+    },
+    "Wednesday": {
+     "end_time": "17:30:00",
+     "start_time": "07:15:00"
+    }
+   },
+   "shift_uid": null,
+   "updated_at": "2026-06-17T18:37:08.567Z"
+  }
+ ],
+ "showRates": true,
+ "special_needs": [],
+ "state": "CT",
+ "town": "Ansonia",
+ "transportation": [],
+ "type_of_care": "Child Care Center",
+ "type_of_provider": "Child Care Center",
+ "updated_at": "2026-06-17T18:37:08.573Z",
+ "website": null,
+ "wheelchair": true,
+ "zip": "06401"
+}

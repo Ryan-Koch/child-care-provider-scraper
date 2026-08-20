@@ -1,0 +1,248 @@
+{
+ "accepting_referrals": true,
+ "accreditations": [],
+ "address": "125 Pulaski Hwy",
+ "administers_meds": false,
+ "age_range_max": 520,
+ "age_range_min": 364,
+ "business_name": "Cub Scout Day Camp",
+ "capacity": 110,
+ "capacity_full_time": null,
+ "capacity_school_aged": null,
+ "capacity_three_and_under": null,
+ "city": "Ansonia",
+ "created_at": "2021-06-30T21:19:29.376Z",
+ "date_established": "07/07/2000",
+ "education_levels": [
+  "Associates Degree",
+  "Bachelor's Degree",
+  "High School Diploma"
+ ],
+ "elevate_membership_level": "not_a_member",
+ "email": "cynthia.pepe@scouting.org",
+ "financial_assistance": false,
+ "first_name": "Cindy",
+ "headstart_funding": false,
+ "id": 594,
+ "inspections": [
+  {
+   "case_uid": 794746,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 0,
+   "id": 14174,
+   "provider_uid": "92deb445-e1ab-425b-af22-f2196195c90d",
+   "reason": "Inspection & Findings",
+   "resolution": "PENDING",
+   "severity": "PENDING",
+   "status": "PENDING",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 3,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2026-08-06T00:00:00.000Z"
+  },
+  {
+   "case_uid": 753271,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 2,
+   "id": 14176,
+   "provider_uid": "92deb445-e1ab-425b-af22-f2196195c90d",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 08/07/2025",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 2,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2025-08-07T00:00:00.000Z"
+  },
+  {
+   "case_uid": 708571,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 0,
+   "id": 14177,
+   "provider_uid": "92deb445-e1ab-425b-af22-f2196195c90d",
+   "reason": "Follow-Up Visit for 07/30/2024",
+   "resolution": "Corrective Action Plan 08/05/2024",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "Follow-Up Inspection",
+   "visited_on": "2024-08-09T00:00:00.000Z"
+  },
+  {
+   "case_uid": 708571,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 3,
+   "id": 14173,
+   "provider_uid": "92deb445-e1ab-425b-af22-f2196195c90d",
+   "reason": "Inspection & Findings",
+   "resolution": "Corrective Action Plan 08/05/2024",
+   "severity": "Low",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 5,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2024-07-30T00:00:00.000Z"
+  },
+  {
+   "case_uid": 677701,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 14178,
+   "provider_uid": "92deb445-e1ab-425b-af22-f2196195c90d",
+   "reason": "Inspection & Findings",
+   "resolution": "Closed No Violations 08/02/2023",
+   "severity": "N/A",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2023-08-02T00:00:00.000Z"
+  },
+  {
+   "case_uid": 677700,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 14175,
+   "provider_uid": "92deb445-e1ab-425b-af22-f2196195c90d",
+   "reason": "Inspection & Findings",
+   "resolution": "Closed No Violations 07/17/2023",
+   "severity": "N/A",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "INITIAL CREDENTIAL INSPECTION",
+   "visited_on": "2023-07-17T00:00:00.000Z"
+  },
+  {
+   "case_uid": 643753,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 14172,
+   "provider_uid": "92deb445-e1ab-425b-af22-f2196195c90d",
+   "reason": "Inspection & Findings",
+   "resolution": "Closed No Violations 08/01/2022",
+   "severity": "N/A",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2022-08-01T00:00:00.000Z"
+  },
+  {
+   "case_uid": 643752,
+   "created_at": "2026-08-20T06:20:45.000Z",
+   "document_count": 1,
+   "id": 14179,
+   "provider_uid": "92deb445-e1ab-425b-af22-f2196195c90d",
+   "reason": "Inspection & Findings",
+   "resolution": "Closed No Violations 07/21/2022",
+   "severity": "N/A",
+   "status": "CLOSED",
+   "updated_at": "2026-08-20T06:20:45.000Z",
+   "violations_count": 0,
+   "visit_type": "UNANNOUNCED INSPECTION - FULL",
+   "visited_on": "2022-07-21T00:00:00.000Z"
+  }
+ ],
+ "languages": [
+  "English"
+ ],
+ "last_name": "Pepe",
+ "latitude": 41.304438,
+ "license": true,
+ "license_number": "YCYC.00424",
+ "longitude": -73.160577,
+ "oec_contact_id": 1308276,
+ "phone_number": "203-435-3378",
+ "provider_uid": "92deb445-e1ab-425b-af22-f2196195c90d",
+ "quality_rating": null,
+ "school_districts": [],
+ "searchable": true,
+ "shifts": [
+  {
+   "created_at": "2026-08-04T16:25:42.698Z",
+   "id": 1110746,
+   "population": {
+    "School Age (5-12 Years)": ""
+   },
+   "population_by_age": [
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "population": ""
+    }
+   ],
+   "provider_id": 594,
+   "provider_uid": null,
+   "rates": {
+    "School Age (5-12 Years)": {
+     "full_time_daily": null,
+     "full_time_hourly": null,
+     "full_time_monthly": null,
+     "full_time_weekly": null,
+     "part_time_daily": null,
+     "part_time_hourly": null,
+     "part_time_monthly": null,
+     "part_time_weekly": null
+    }
+   },
+   "rates_by_age": [
+    {
+     "group": "School Age",
+     "label": "5-12 Years",
+     "max": 624,
+     "min": 260,
+     "rates": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    }
+   ],
+   "schedule": {
+    "Friday": {
+     "end_time": "16:00:00",
+     "start_time": "09:00:00"
+    },
+    "Monday": {
+     "end_time": "16:00:00",
+     "start_time": "09:00:00"
+    },
+    "Thursday": {
+     "end_time": "16:00:00",
+     "start_time": "09:00:00"
+    },
+    "Tuesday": {
+     "end_time": "16:00:00",
+     "start_time": "09:00:00"
+    },
+    "Wednesday": {
+     "end_time": "16:00:00",
+     "start_time": "09:00:00"
+    }
+   },
+   "shift_uid": null,
+   "updated_at": "2026-08-04T16:25:42.698Z"
+  }
+ ],
+ "showRates": true,
+ "special_needs": [],
+ "state": "CT",
+ "town": "Ansonia",
+ "transportation": [],
+ "type_of_care": "Summer Program",
+ "type_of_provider": "Summer Camp/Program",
+ "updated_at": "2026-08-04T16:25:42.700Z",
+ "website": "https://www.housatonicscouting.org/cub-scout-summer-camp",
+ "wheelchair": false,
+ "zip": "06401-2926"
+}

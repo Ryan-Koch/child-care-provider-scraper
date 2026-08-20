@@ -1,0 +1,1293 @@
+[
+ {
+  "accepting_referrals": true,
+  "accreditations": null,
+  "address": "1 Macedonia Rd",
+  "administers_meds": false,
+  "age_range_max": 936,
+  "age_range_min": 520,
+  "business_name": "Squash And Education Alliance Summer Academy",
+  "capacity": 24,
+  "capacity_full_time": null,
+  "capacity_school_aged": null,
+  "capacity_three_and_under": null,
+  "city": "Kent",
+  "created_at": "2021-06-30T21:23:23.348Z",
+  "date_established": null,
+  "education_levels": null,
+  "elevate_membership_level": "not_a_member",
+  "email": "paulina.rojek@squashandeducation.org",
+  "financial_assistance": false,
+  "first_name": "Squash And Education Alliance Summer",
+  "headstart_funding": false,
+  "id": 2491,
+  "languages": [
+   "English"
+  ],
+  "last_name": "Academy",
+  "latitude": 41.7258759,
+  "license": true,
+  "license_number": "YCYC.01490",
+  "longitude": -73.4854149,
+  "oec_contact_id": null,
+  "phone_number": "860-927-6000",
+  "provider_uid": "a9389d51-7a13-4176-976a-7347b3863cf5",
+  "quality_rating": null,
+  "school_districts": null,
+  "searchable": true,
+  "shifts": [
+   {
+    "created_at": "2026-08-04T15:16:26.420Z",
+    "id": 1110647,
+    "population": {
+     "School Age (5-12 Years)": ""
+    },
+    "population_by_age": [
+     {
+      "group": "School Age",
+      "label": "5-12 Years",
+      "max": 624,
+      "min": 260,
+      "population": ""
+     }
+    ],
+    "provider_id": 2491,
+    "provider_uid": null,
+    "rates": {
+     "School Age (5-12 Years)": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    "rates_by_age": [
+     {
+      "group": "School Age",
+      "label": "5-12 Years",
+      "max": 624,
+      "min": 260,
+      "rates": {
+       "full_time_daily": null,
+       "full_time_hourly": null,
+       "full_time_monthly": null,
+       "full_time_weekly": null,
+       "part_time_daily": null,
+       "part_time_hourly": null,
+       "part_time_monthly": null,
+       "part_time_weekly": null
+      }
+     }
+    ],
+    "schedule": {
+     "Friday": {
+      "end_time": "24:00:00",
+      "start_time": "00:00:00"
+     },
+     "Monday": {
+      "end_time": "24:00:00",
+      "start_time": "00:00:00"
+     },
+     "Thursday": {
+      "end_time": "24:00:00",
+      "start_time": "00:20:00"
+     },
+     "Tuesday": {
+      "end_time": "24:00:00",
+      "start_time": "00:00:00"
+     },
+     "Wednesday": {
+      "end_time": "24:00:00",
+      "start_time": "00:00:00"
+     }
+    },
+    "shift_uid": null,
+    "updated_at": "2026-08-04T15:16:26.420Z"
+   }
+  ],
+  "showRates": true,
+  "special_needs": null,
+  "state": "CT",
+  "town": "Kent",
+  "transportation": null,
+  "type_of_care": "Summer Program",
+  "type_of_provider": "Summer Camp/Program",
+  "updated_at": "2026-08-04T15:16:26.422Z",
+  "website": "https://squashandeducation.org/2025-26-calendar-of-events/",
+  "wheelchair": false,
+  "zip": "06757-1304"
+ },
+ {
+  "accepting_referrals": true,
+  "accreditations": null,
+  "address": "1 Macedonia Rd",
+  "administers_meds": false,
+  "age_range_max": 832,
+  "age_range_min": 780,
+  "business_name": "Squared X Kent School",
+  "capacity": null,
+  "capacity_full_time": null,
+  "capacity_school_aged": null,
+  "capacity_three_and_under": null,
+  "city": "Kent",
+  "created_at": "2024-06-18T17:37:01.613Z",
+  "date_established": "12/06/2024",
+  "education_levels": null,
+  "elevate_membership_level": "not_a_member",
+  "email": "jonathan.price@squarednetwork.org",
+  "financial_assistance": true,
+  "first_name": "Squared X Kent",
+  "headstart_funding": false,
+  "id": 6315,
+  "languages": [
+   "English"
+  ],
+  "last_name": "School",
+  "latitude": 41.7272585,
+  "license": true,
+  "license_number": "YCYC.01606",
+  "longitude": -73.4860592,
+  "oec_contact_id": null,
+  "phone_number": "860-927-6000\t",
+  "provider_uid": "69a33520-9955-40fb-abcf-d9448be8e61c",
+  "quality_rating": null,
+  "school_districts": null,
+  "searchable": true,
+  "shifts": [
+   {
+    "created_at": "2026-07-06T14:29:58.846Z",
+    "id": 1108663,
+    "population": {
+     "School Age (5-12 Years)": ""
+    },
+    "population_by_age": [
+     {
+      "group": "School Age",
+      "label": "5-12 Years",
+      "max": 624,
+      "min": 260,
+      "population": ""
+     }
+    ],
+    "provider_id": 6315,
+    "provider_uid": null,
+    "rates": {
+     "School Age (5-12 Years)": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    "rates_by_age": [
+     {
+      "group": "School Age",
+      "label": "5-12 Years",
+      "max": 624,
+      "min": 260,
+      "rates": {
+       "full_time_daily": null,
+       "full_time_hourly": null,
+       "full_time_monthly": null,
+       "full_time_weekly": null,
+       "part_time_daily": null,
+       "part_time_hourly": null,
+       "part_time_monthly": null,
+       "part_time_weekly": null
+      }
+     }
+    ],
+    "schedule": {
+     "Friday": {
+      "end_time": "24:00:00",
+      "start_time": "00:00:00"
+     },
+     "Monday": {
+      "end_time": "24:00:00",
+      "start_time": "00:00:00"
+     },
+     "Saturday": {
+      "end_time": "24:00:00",
+      "start_time": "00:00:00"
+     },
+     "Sunday": {
+      "end_time": "24:00:00",
+      "start_time": "00:00:00"
+     },
+     "Thursday": {
+      "end_time": "24:00:00",
+      "start_time": "00:00:00"
+     },
+     "Tuesday": {
+      "end_time": "24:00:00",
+      "start_time": "00:00:00"
+     },
+     "Wednesday": {
+      "end_time": "24:00:00",
+      "start_time": "00:00:00"
+     }
+    },
+    "shift_uid": null,
+    "updated_at": "2026-07-06T14:29:58.846Z"
+   }
+  ],
+  "showRates": true,
+  "special_needs": null,
+  "state": "CT",
+  "town": "Kent",
+  "transportation": null,
+  "type_of_care": "Summer Program",
+  "type_of_provider": "Summer Camp/Program",
+  "updated_at": "2026-07-06T14:29:58.849Z",
+  "website": "https://www.squarednetwork.org/",
+  "wheelchair": false,
+  "zip": "06757-1304"
+ },
+ {
+  "accepting_referrals": true,
+  "accreditations": [],
+  "address": "6 Bridge St",
+  "administers_meds": true,
+  "age_range_max": 308,
+  "age_range_min": 156,
+  "business_name": "Kent Community Nursery School",
+  "capacity": 25,
+  "capacity_full_time": null,
+  "capacity_school_aged": 0,
+  "capacity_three_and_under": 0,
+  "city": "Kent",
+  "created_at": "2021-06-30T21:25:19.764Z",
+  "date_established": null,
+  "education_levels": [
+   "Bachelor's Degree",
+   "Master's Degree",
+   "Early Childhood Education"
+  ],
+  "elevate_membership_level": "member",
+  "email": "director.kcns@gmail.com",
+  "financial_assistance": false,
+  "first_name": "Anna de Rham & Veronique",
+  "headstart_funding": false,
+  "id": 3588,
+  "languages": [
+   "English"
+  ],
+  "last_name": "Mertl",
+  "latitude": 41.7252574,
+  "license": true,
+  "license_number": "DCCC.12349",
+  "longitude": -73.4771433,
+  "oec_contact_id": 1264366,
+  "phone_number": "860-927-1294",
+  "provider_uid": "2aa54042-fbd6-4d54-85b8-bcb3d99a34b9",
+  "quality_rating": null,
+  "school_districts": [
+   "Kent Center"
+  ],
+  "searchable": true,
+  "shifts": [
+   {
+    "created_at": "2026-01-28T17:32:22.617Z",
+    "id": 1050081,
+    "population": {
+     "Preschool (3-5 years)": ""
+    },
+    "population_by_age": [
+     {
+      "group": "Preschool",
+      "label": "3-5 Years",
+      "max": 260,
+      "min": 156,
+      "population": ""
+     }
+    ],
+    "provider_id": 3588,
+    "provider_uid": null,
+    "rates": {
+     "Preschool (3-5 years)": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    "rates_by_age": [
+     {
+      "group": "Preschool",
+      "label": "3-5 Years",
+      "max": 260,
+      "min": 156,
+      "rates": {
+       "full_time_daily": null,
+       "full_time_hourly": null,
+       "full_time_monthly": null,
+       "full_time_weekly": null,
+       "part_time_daily": null,
+       "part_time_hourly": null,
+       "part_time_monthly": null,
+       "part_time_weekly": null
+      }
+     }
+    ],
+    "schedule": {
+     "Friday": {
+      "end_time": "17:30:00",
+      "start_time": "08:00:00"
+     },
+     "Monday": {
+      "end_time": "17:30:00",
+      "start_time": "08:00:00"
+     },
+     "Thursday": {
+      "end_time": "17:30:00",
+      "start_time": "08:00:00"
+     },
+     "Tuesday": {
+      "end_time": "17:30:00",
+      "start_time": "08:00:00"
+     },
+     "Wednesday": {
+      "end_time": "17:30:00",
+      "start_time": "08:00:00"
+     }
+    },
+    "shift_uid": null,
+    "updated_at": "2026-01-28T17:32:22.617Z"
+   }
+  ],
+  "showRates": true,
+  "special_needs": [],
+  "state": "CT",
+  "town": "Kent",
+  "transportation": [],
+  "type_of_care": "Child Care Center",
+  "type_of_provider": "Child Care Center",
+  "updated_at": "2026-01-28T17:32:22.621Z",
+  "website": "https://www.kcnschool.org",
+  "wheelchair": false,
+  "zip": "06757"
+ },
+ {
+  "accepting_referrals": true,
+  "accreditations": null,
+  "address": "476 Skiff Mountain Rd",
+  "administers_meds": false,
+  "age_range_max": 832,
+  "age_range_min": 416,
+  "business_name": "Skiff Mountain Summer Camp",
+  "capacity": null,
+  "capacity_full_time": null,
+  "capacity_school_aged": null,
+  "capacity_three_and_under": null,
+  "city": "Kent",
+  "created_at": "2026-06-10T16:46:02.501Z",
+  "date_established": "05/06/2026",
+  "education_levels": null,
+  "elevate_membership_level": "member",
+  "email": "camp@marvelwood.org",
+  "financial_assistance": false,
+  "first_name": "Skiff Mountain Summer",
+  "headstart_funding": false,
+  "id": 7558,
+  "languages": null,
+  "last_name": "Camp",
+  "latitude": 41.781571,
+  "license": true,
+  "license_number": "YCYC.01684",
+  "longitude": -73.4585336,
+  "oec_contact_id": null,
+  "phone_number": "(860) 927-0047",
+  "provider_uid": "e19f8145-0e23-41d0-9032-4a2e289cd5c4",
+  "quality_rating": null,
+  "school_districts": null,
+  "searchable": true,
+  "shifts": [
+   {
+    "created_at": "2026-06-10T18:37:45.589Z",
+    "id": 1105061,
+    "population": {
+     "School Age (5-12 Years)": ""
+    },
+    "population_by_age": [
+     {
+      "group": "School Age",
+      "label": "5-12 Years",
+      "max": 624,
+      "min": 260,
+      "population": ""
+     }
+    ],
+    "provider_id": 7558,
+    "provider_uid": null,
+    "rates": {
+     "School Age (5-12 Years)": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    "rates_by_age": [
+     {
+      "group": "School Age",
+      "label": "5-12 Years",
+      "max": 624,
+      "min": 260,
+      "rates": {
+       "full_time_daily": null,
+       "full_time_hourly": null,
+       "full_time_monthly": null,
+       "full_time_weekly": null,
+       "part_time_daily": null,
+       "part_time_hourly": null,
+       "part_time_monthly": null,
+       "part_time_weekly": null
+      }
+     }
+    ],
+    "schedule": {
+     "Friday": {
+      "end_time": "18:00:00",
+      "start_time": "07:00:00"
+     },
+     "Monday": {
+      "end_time": "18:00:00",
+      "start_time": "07:00:00"
+     },
+     "Thursday": {
+      "end_time": "18:00:00",
+      "start_time": "07:00:00"
+     },
+     "Tuesday": {
+      "end_time": "18:00:00",
+      "start_time": "07:00:00"
+     },
+     "Wednesday": {
+      "end_time": "18:00:00",
+      "start_time": "07:00:00"
+     }
+    },
+    "shift_uid": null,
+    "updated_at": "2026-06-10T18:37:45.589Z"
+   }
+  ],
+  "showRates": true,
+  "special_needs": null,
+  "state": "CT",
+  "town": "Kent",
+  "transportation": null,
+  "type_of_care": "Summer Program",
+  "type_of_provider": "Summer Camp/Program",
+  "updated_at": "2026-06-10T18:37:45.591Z",
+  "website": null,
+  "wheelchair": false,
+  "zip": "06757-1112"
+ },
+ {
+  "accepting_referrals": true,
+  "accreditations": [
+   "NAEYC"
+  ],
+  "address": "80 Macedonia Rd",
+  "administers_meds": true,
+  "age_range_max": 260,
+  "age_range_min": 6,
+  "business_name": "Kent School Early Learning Center",
+  "capacity": 29,
+  "capacity_full_time": null,
+  "capacity_school_aged": 0,
+  "capacity_three_and_under": 16,
+  "city": "Kent",
+  "created_at": "2021-06-30T21:24:55.048Z",
+  "date_established": "09/09/1998",
+  "education_levels": [
+   "Associates Degree",
+   "Bachelor's Degree",
+   "Master's Degree"
+  ],
+  "elevate_membership_level": "member_accredited",
+  "email": "ohazor@kent-school.edu",
+  "financial_assistance": false,
+  "first_name": "Rachel",
+  "headstart_funding": false,
+  "id": 3337,
+  "languages": [
+   "English"
+  ],
+  "last_name": "Ohazo",
+  "latitude": 41.7337473,
+  "license": true,
+  "license_number": "DCCC.15290",
+  "longitude": -73.49224629999999,
+  "oec_contact_id": 1266156,
+  "phone_number": "860-927-0185",
+  "provider_uid": "39895961-b7b7-4dad-8f2b-03f81d8fee17",
+  "quality_rating": null,
+  "school_districts": [],
+  "searchable": true,
+  "shifts": [
+   {
+    "created_at": "2026-06-17T15:42:03.618Z",
+    "id": 1106955,
+    "population": {
+     "Infant/Toddler (0-17 Months)": "",
+     "Infant/Toddler (18-35 Months)": "",
+     "Preschool (3-5 years)": ""
+    },
+    "population_by_age": [
+     {
+      "group": "Infant",
+      "label": "0-17 Months",
+      "max": 73.94999999999999,
+      "min": 6,
+      "population": ""
+     },
+     {
+      "group": "Toddler",
+      "label": "18-35 Months",
+      "max": 152.25,
+      "min": 78.3,
+      "population": ""
+     },
+     {
+      "group": "Preschool",
+      "label": "3-5 Years",
+      "max": 260,
+      "min": 156,
+      "population": ""
+     }
+    ],
+    "provider_id": 3337,
+    "provider_uid": null,
+    "rates": {
+     "Infant/Toddler (0-17 Months)": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     },
+     "Infant/Toddler (18-35 Months)": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     },
+     "Preschool (3-5 years)": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    "rates_by_age": [
+     {
+      "group": "Infant",
+      "label": "0-17 Months",
+      "max": 73.94999999999999,
+      "min": 6,
+      "rates": {
+       "full_time_daily": null,
+       "full_time_hourly": null,
+       "full_time_monthly": null,
+       "full_time_weekly": null,
+       "part_time_daily": null,
+       "part_time_hourly": null,
+       "part_time_monthly": null,
+       "part_time_weekly": null
+      }
+     },
+     {
+      "group": "Toddler",
+      "label": "18-35 Months",
+      "max": 152.25,
+      "min": 78.3,
+      "rates": {
+       "full_time_daily": null,
+       "full_time_hourly": null,
+       "full_time_monthly": null,
+       "full_time_weekly": null,
+       "part_time_daily": null,
+       "part_time_hourly": null,
+       "part_time_monthly": null,
+       "part_time_weekly": null
+      }
+     },
+     {
+      "group": "Preschool",
+      "label": "3-5 Years",
+      "max": 260,
+      "min": 156,
+      "rates": {
+       "full_time_daily": null,
+       "full_time_hourly": null,
+       "full_time_monthly": null,
+       "full_time_weekly": null,
+       "part_time_daily": null,
+       "part_time_hourly": null,
+       "part_time_monthly": null,
+       "part_time_weekly": null
+      }
+     }
+    ],
+    "schedule": {
+     "Friday": {
+      "end_time": "17:30:00",
+      "start_time": "08:00:00"
+     },
+     "Monday": {
+      "end_time": "17:30:00",
+      "start_time": "08:00:00"
+     },
+     "Thursday": {
+      "end_time": "17:30:00",
+      "start_time": "08:00:00"
+     },
+     "Tuesday": {
+      "end_time": "17:30:00",
+      "start_time": "08:00:00"
+     },
+     "Wednesday": {
+      "end_time": "17:30:00",
+      "start_time": "08:00:00"
+     }
+    },
+    "shift_uid": null,
+    "updated_at": "2026-06-17T15:42:03.618Z"
+   }
+  ],
+  "showRates": true,
+  "special_needs": [],
+  "state": "CT",
+  "town": "Kent",
+  "transportation": [
+   "School Transportation"
+  ],
+  "type_of_care": "Child Care Center",
+  "type_of_provider": "Child Care Center",
+  "updated_at": "2026-06-17T15:42:03.628Z",
+  "website": null,
+  "wheelchair": true,
+  "zip": "06757"
+ },
+ {
+  "accepting_referrals": true,
+  "accreditations": [
+   "American Camping Association"
+  ],
+  "address": "65 Kenmont Road",
+  "administers_meds": true,
+  "age_range_max": 780,
+  "age_range_min": 364,
+  "business_name": "Kenmont And Kenwood Camps",
+  "capacity": 650,
+  "capacity_full_time": null,
+  "capacity_school_aged": null,
+  "capacity_three_and_under": null,
+  "city": "Kent",
+  "created_at": "2021-06-30T21:23:49.397Z",
+  "date_established": "05/27/1999",
+  "education_levels": [],
+  "elevate_membership_level": "not_a_member",
+  "email": "brad@kencamp.com",
+  "financial_assistance": false,
+  "first_name": "Hylton",
+  "headstart_funding": false,
+  "id": 2675,
+  "languages": [
+   "English"
+  ],
+  "last_name": "Wener",
+  "latitude": 41.724284,
+  "license": true,
+  "license_number": "YCYC.01504",
+  "longitude": -73.432395,
+  "oec_contact_id": 1308518,
+  "phone_number": "860-927-3042",
+  "provider_uid": "210562a6-a836-4bcd-b259-5d07cea5e8fd",
+  "quality_rating": null,
+  "school_districts": [],
+  "searchable": true,
+  "shifts": [
+   {
+    "created_at": "2026-06-01T15:23:37.852Z",
+    "id": 1101810,
+    "population": {
+     "School Age (5-12 Years)": ""
+    },
+    "population_by_age": [
+     {
+      "group": "School Age",
+      "label": "5-12 Years",
+      "max": 624,
+      "min": 260,
+      "population": ""
+     }
+    ],
+    "provider_id": 2675,
+    "provider_uid": null,
+    "rates": {
+     "School Age (5-12 Years)": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    "rates_by_age": [
+     {
+      "group": "School Age",
+      "label": "5-12 Years",
+      "max": 624,
+      "min": 260,
+      "rates": {
+       "full_time_daily": null,
+       "full_time_hourly": null,
+       "full_time_monthly": null,
+       "full_time_weekly": null,
+       "part_time_daily": null,
+       "part_time_hourly": null,
+       "part_time_monthly": null,
+       "part_time_weekly": null
+      }
+     }
+    ],
+    "schedule": {
+     "Friday": {
+      "end_time": "23:59:00",
+      "start_time": "00:00:00"
+     },
+     "Monday": {
+      "end_time": "23:59:00",
+      "start_time": "00:00:00"
+     },
+     "Saturday": {
+      "end_time": "23:59:00",
+      "start_time": "00:00:00"
+     },
+     "Sunday": {
+      "end_time": "23:59:00",
+      "start_time": "00:00:00"
+     },
+     "Thursday": {
+      "end_time": "23:59:00",
+      "start_time": "00:00:00"
+     },
+     "Tuesday": {
+      "end_time": "23:59:00",
+      "start_time": "00:00:00"
+     },
+     "Wednesday": {
+      "end_time": "23:59:00",
+      "start_time": "00:00:00"
+     }
+    },
+    "shift_uid": null,
+    "updated_at": "2026-06-01T15:23:37.852Z"
+   }
+  ],
+  "showRates": true,
+  "special_needs": [],
+  "state": "CT",
+  "town": "Kent",
+  "transportation": [
+   "Camp Transportation"
+  ],
+  "type_of_care": "Summer Program",
+  "type_of_provider": "Summer Camp/Program",
+  "updated_at": "2026-06-01T15:23:37.855Z",
+  "website": "https://www.kenmontkenwood.com/",
+  "wheelchair": false,
+  "zip": "06757"
+ },
+ {
+  "accepting_referrals": true,
+  "accreditations": null,
+  "address": "1 Macedonia Rd",
+  "administers_meds": false,
+  "age_range_max": 780,
+  "age_range_min": 520,
+  "business_name": "X10 Lacrosse",
+  "capacity": 150,
+  "capacity_full_time": null,
+  "capacity_school_aged": null,
+  "capacity_three_and_under": null,
+  "city": "Kent",
+  "created_at": "2024-05-14T14:31:10.628Z",
+  "date_established": "10/05/2024",
+  "education_levels": null,
+  "elevate_membership_level": "not_a_member",
+  "email": "mbocklet10@gmail.com",
+  "financial_assistance": false,
+  "first_name": "X10",
+  "headstart_funding": false,
+  "id": 6243,
+  "languages": [
+   "English"
+  ],
+  "last_name": "Lacrosse",
+  "latitude": 41.7272585,
+  "license": true,
+  "license_number": "YCYC.01598",
+  "longitude": -73.4860592,
+  "oec_contact_id": null,
+  "phone_number": "860-927-6000",
+  "provider_uid": "8ef38356-de0c-4d08-9c31-c62309cbc39b",
+  "quality_rating": null,
+  "school_districts": null,
+  "searchable": true,
+  "shifts": [
+   {
+    "created_at": "2026-07-08T20:13:25.807Z",
+    "id": 1109202,
+    "population": {
+     "School Age (5-12 Years)": ""
+    },
+    "population_by_age": [
+     {
+      "group": "School Age",
+      "label": "5-12 Years",
+      "max": 624,
+      "min": 260,
+      "population": ""
+     }
+    ],
+    "provider_id": 6243,
+    "provider_uid": null,
+    "rates": {
+     "School Age (5-12 Years)": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    "rates_by_age": [
+     {
+      "group": "School Age",
+      "label": "5-12 Years",
+      "max": 624,
+      "min": 260,
+      "rates": {
+       "full_time_daily": null,
+       "full_time_hourly": null,
+       "full_time_monthly": null,
+       "full_time_weekly": null,
+       "part_time_daily": null,
+       "part_time_hourly": null,
+       "part_time_monthly": null,
+       "part_time_weekly": null
+      }
+     }
+    ],
+    "schedule": {
+     "Friday": {
+      "end_time": "14:00:00",
+      "start_time": "00:00:00"
+     },
+     "Thursday": {
+      "end_time": "24:00:00",
+      "start_time": "00:00:00"
+     },
+     "Tuesday": {
+      "end_time": "24:00:00",
+      "start_time": "09:00:00"
+     },
+     "Wednesday": {
+      "end_time": "24:00:00",
+      "start_time": "00:00:00"
+     }
+    },
+    "shift_uid": null,
+    "updated_at": "2026-07-08T20:13:25.807Z"
+   }
+  ],
+  "showRates": true,
+  "special_needs": null,
+  "state": "CT",
+  "town": "Kent",
+  "transportation": null,
+  "type_of_care": "Summer Program",
+  "type_of_provider": "Summer Camp/Program",
+  "updated_at": "2026-07-08T20:13:25.809Z",
+  "website": "https://www.x10lacrosse.com/new-england",
+  "wheelchair": false,
+  "zip": "06757-1304"
+ },
+ {
+  "accepting_referrals": false,
+  "accreditations": [],
+  "address": "9 Judd St",
+  "administers_meds": true,
+  "age_range_max": 260,
+  "age_range_min": 156,
+  "business_name": "Kent Public Schools Preschool Program @ Kent Center",
+  "capacity": 96,
+  "capacity_full_time": null,
+  "capacity_school_aged": 0,
+  "capacity_three_and_under": 0,
+  "city": "Kent",
+  "created_at": "2021-06-30T21:21:27.177Z",
+  "date_established": "01/01/1999",
+  "education_levels": [
+   "Associates Degree",
+   "Bachelor's Degree"
+  ],
+  "elevate_membership_level": "member",
+  "email": null,
+  "financial_assistance": false,
+  "first_name": "Martha",
+  "headstart_funding": false,
+  "id": 1602,
+  "languages": [
+   "English"
+  ],
+  "last_name": "Schweikert",
+  "latitude": 41.724077,
+  "license": false,
+  "license_number": null,
+  "longitude": -73.48203,
+  "oec_contact_id": null,
+  "phone_number": "860-824-5639",
+  "provider_uid": "d81f3d33-2277-490b-b98b-ea6e79bb964a",
+  "quality_rating": null,
+  "school_districts": [
+   "Kent Center"
+  ],
+  "searchable": true,
+  "shifts": [
+   {
+    "created_at": "2026-02-26T14:12:31.746Z",
+    "id": 1062693,
+    "population": {
+     "Nursery School (3-5 Years)": ""
+    },
+    "population_by_age": [
+     {
+      "population": ""
+     }
+    ],
+    "provider_id": 1602,
+    "provider_uid": null,
+    "rates": {
+     "Nursery School (3-5 Years)": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    "rates_by_age": [
+     {
+      "rates": {
+       "full_time_daily": null,
+       "full_time_hourly": null,
+       "full_time_monthly": null,
+       "full_time_weekly": null,
+       "part_time_daily": null,
+       "part_time_hourly": null,
+       "part_time_monthly": null,
+       "part_time_weekly": null
+      }
+     }
+    ],
+    "schedule": {
+     "Monday": {
+      "end_time": "15:30:00",
+      "start_time": "12:30:00"
+     },
+     "Thursday": {
+      "end_time": "15:30:00",
+      "start_time": "12:30:00"
+     },
+     "Tuesday": {
+      "end_time": "15:30:00",
+      "start_time": "12:30:00"
+     },
+     "Wednesday": {
+      "end_time": "15:30:00",
+      "start_time": "12:30:00"
+     }
+    },
+    "shift_uid": null,
+    "updated_at": "2026-02-26T14:12:31.746Z"
+   },
+   {
+    "created_at": "2026-02-26T14:12:31.755Z",
+    "id": 1062694,
+    "population": {
+     "Nursery School (3-5 Years)": ""
+    },
+    "population_by_age": [
+     {
+      "population": ""
+     }
+    ],
+    "provider_id": 1602,
+    "provider_uid": null,
+    "rates": {
+     "Nursery School (3-5 Years)": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    "rates_by_age": [
+     {
+      "rates": {
+       "full_time_daily": null,
+       "full_time_hourly": null,
+       "full_time_monthly": null,
+       "full_time_weekly": null,
+       "part_time_daily": null,
+       "part_time_hourly": null,
+       "part_time_monthly": null,
+       "part_time_weekly": null
+      }
+     }
+    ],
+    "schedule": {
+     "Monday": {
+      "end_time": "11:30:00",
+      "start_time": "08:30:00"
+     },
+     "Thursday": {
+      "end_time": "11:30:00",
+      "start_time": "08:30:00"
+     },
+     "Tuesday": {
+      "end_time": "11:30:00",
+      "start_time": "08:30:00"
+     },
+     "Wednesday": {
+      "end_time": "11:30:00",
+      "start_time": "08:30:00"
+     }
+    },
+    "shift_uid": null,
+    "updated_at": "2026-02-26T14:12:31.755Z"
+   }
+  ],
+  "showRates": true,
+  "special_needs": [
+   "Social/Emotional/Behavior Concerns",
+   "Health Impairment",
+   "Autism Spectrum Disorders",
+   "Hearing/Visual Impairment",
+   "Speech/Language Impairment"
+  ],
+  "state": "CT",
+  "town": "Kent",
+  "transportation": [
+   "School Transportation"
+  ],
+  "type_of_care": "Child Care Center",
+  "type_of_provider": "Nursery School",
+  "updated_at": "2026-02-26T14:12:31.759Z",
+  "website": "https://www.kentcenterschool.org/",
+  "wheelchair": true,
+  "zip": "06757"
+ },
+ {
+  "accepting_referrals": false,
+  "accreditations": [],
+  "address": "9 Judd Avenue",
+  "administers_meds": false,
+  "age_range_max": 624,
+  "age_range_min": 260,
+  "business_name": "Town Of Kent Park And Recreation @ Kent Center School",
+  "capacity": 10,
+  "capacity_full_time": null,
+  "capacity_school_aged": 10,
+  "capacity_three_and_under": 0,
+  "city": "Kent",
+  "created_at": "2021-06-30T21:22:32.629Z",
+  "date_established": "12/05/2017",
+  "education_levels": [],
+  "elevate_membership_level": "member",
+  "email": null,
+  "financial_assistance": false,
+  "first_name": "Lesly",
+  "headstart_funding": false,
+  "id": 1930,
+  "languages": [
+   "English"
+  ],
+  "last_name": "Ferris",
+  "latitude": 41.724077,
+  "license": false,
+  "license_number": null,
+  "longitude": -73.48203,
+  "oec_contact_id": null,
+  "phone_number": "860-927-1003",
+  "provider_uid": "a674e79e-0f9c-41a7-a219-02012480fdca",
+  "quality_rating": null,
+  "school_districts": [
+   "Kent Center"
+  ],
+  "searchable": true,
+  "shifts": [
+   {
+    "created_at": "2026-03-05T21:04:37.683Z",
+    "id": 1066549,
+    "population": {
+     "School Age After School (5-12 Years)": "",
+     "School Age Before School (5-12 Years)": ""
+    },
+    "population_by_age": [
+     {
+      "group": "School Age",
+      "label": "5-12 Years",
+      "max": 624,
+      "min": 260,
+      "population": ""
+     },
+     {
+      "group": "School Age",
+      "label": "5-12 Years",
+      "max": 624,
+      "min": 260,
+      "population": ""
+     }
+    ],
+    "provider_id": 1930,
+    "provider_uid": null,
+    "rates": {
+     "School Age After School (5-12 Years)": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     },
+     "School Age Before School (5-12 Years)": {
+      "full_time_daily": null,
+      "full_time_hourly": null,
+      "full_time_monthly": null,
+      "full_time_weekly": null,
+      "part_time_daily": null,
+      "part_time_hourly": null,
+      "part_time_monthly": null,
+      "part_time_weekly": null
+     }
+    },
+    "rates_by_age": [
+     {
+      "group": "School Age",
+      "label": "5-12 Years",
+      "max": 624,
+      "min": 260,
+      "rates": {
+       "full_time_daily": null,
+       "full_time_hourly": null,
+       "full_time_monthly": null,
+       "full_time_weekly": null,
+       "part_time_daily": null,
+       "part_time_hourly": null,
+       "part_time_monthly": null,
+       "part_time_weekly": null
+      }
+     },
+     {
+      "group": "School Age",
+      "label": "5-12 Years",
+      "max": 624,
+      "min": 260,
+      "rates": {
+       "full_time_daily": null,
+       "full_time_hourly": null,
+       "full_time_monthly": null,
+       "full_time_weekly": null,
+       "part_time_daily": null,
+       "part_time_hourly": null,
+       "part_time_monthly": null,
+       "part_time_weekly": null
+      }
+     }
+    ],
+    "schedule": {
+     "Friday": {
+      "end_time": "18:30:00",
+      "start_time": "08:30:00"
+     },
+     "Monday": {
+      "end_time": "18:30:00",
+      "start_time": "08:30:00"
+     },
+     "Thursday": {
+      "end_time": "18:30:00",
+      "start_time": "08:30:00"
+     },
+     "Tuesday": {
+      "end_time": "18:30:00",
+      "start_time": "08:30:00"
+     },
+     "Wednesday": {
+      "end_time": "18:30:00",
+      "start_time": "08:30:00"
+     }
+    },
+    "shift_uid": null,
+    "updated_at": "2026-03-05T21:04:37.683Z"
+   }
+  ],
+  "showRates": true,
+  "special_needs": [],
+  "state": "CT",
+  "town": "Kent",
+  "transportation": [],
+  "type_of_care": "Child Care Center",
+  "type_of_provider": "Child Care Center",
+  "updated_at": "2026-03-05T21:04:37.684Z",
+  "website": null,
+  "wheelchair": false,
+  "zip": "06757"
+ }
+]
