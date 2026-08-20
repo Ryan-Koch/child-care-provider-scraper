@@ -1,0 +1,272 @@
+{
+ "actions": [
+  {
+   "id": "86;a",
+   "state": "SUCCESS",
+   "returnValue": {
+    "returnValue": {
+     "bIsSuccess": true,
+     "mapResponse": {
+      "KICCSDataDetails": {
+       "Capacity": 6,
+       "DPOCAgreementsListUpdated": [],
+       "InspectionHistoryList": "{\"inspections\":[{\"ProviderId\":103038,\"InspectionId\":16159,\"InspectionEndDate\":\"2013-01-17\",\"InspectionType\":\"Initial Application\",\"ReportName\":\"KID013\",\"ReportId\":76},{\"ProviderId\":103038,\"InspectionId\":51963,\"InspectionEndDate\":\"2013-09-27\",\"InspectionType\":\"Annual Inspection\",\"ReportName\":\"KID013\",\"ReportId\":76},{\"ProviderId\":103038,\"InspectionId\":64819,\"InspectionEndDate\":\"2014-04-10\",\"InspectionType\":\"Change of Location\",\"ReportName\":\"KID013\",\"ReportId\":76},{\"ProviderId\":103038,\"InspectionId\":107146,\"InspectionEndDate\":\"2014-09-29\",\"InspectionType\":\"Renewal Application\",\"ReportName\":\"KID013\",\"ReportId\":76},{\"ProviderId\":103038,\"InspectionId\":191058,\"InspectionEndDate\":\"2015-06-16\",\"InspectionType\":\"Change of Location\",\"ReportName\":\"KID013\",\"ReportId\":76},{\"ProviderId\":103038,\"InspectionId\":192138,\"InspectionEndDate\":\"2015-09-02\",\"InspectionType\":\"Annual Inspection\",\"ReportName\":\"KID013\",\"ReportId\":76},{\"ProviderId\":103038,\"InspectionId\":215972,\"InspectionEndDate\":\"2016-06-23\",\"InspectionType\":\"Change of Service\",\"ReportName\":\"KID013\",\"ReportId\":76},{\"ProviderId\":103038,\"InspectionId\":217268,\"InspectionEndDate\":\"2016-10-14\",\"InspectionType\":\"Renewal Application\",\"ReportName\":\"KID013A\",\"ReportId\":171},{\"ProviderId\":103038,\"InspectionId\":221473,\"InspectionEndDate\":\"2017-08-18\",\"InspectionType\":\"Change of Location\",\"ReportName\":\"KID013A\",\"ReportId\":171},{\"ProviderId\":103038,\"InspectionId\":231691,\"InspectionEndDate\":\"2017-09-20\",\"InspectionType\":\"Annual Inspection\",\"ReportName\":\"KID013A\",\"ReportId\":171},{\"ProviderId\":103038,\"InspectionId\":246095,\"InspectionEndDate\":\"2018-09-25\",\"InspectionType\":\"Renewal Application\",\"ReportName\":\"KID013A\",\"ReportId\":171},{\"ProviderId\":103038,\"InspectionId\":289600,\"InspectionEndDate\":\"2019-05-06\",\"InspectionType\":\"Change of Location\",\"ReportName\":\"KID013A\",\"ReportId\":171},{\"ProviderId\":103038,\"InspectionId\":290697,\"InspectionEndDate\":\"2019-08-20\",\"InspectionType\":\"Annual Inspection\",\"ReportName\":\"KID013A\",\"ReportId\":171,\"POC_ID\":350261,\"ApprovalDate\":\"2019-11-06\"},{\"ProviderId\":103038,\"InspectionId\":293921,\"InspectionEndDate\":\"2020-06-16\",\"InspectionType\":\"Change of Location\",\"ReportName\":\"KID013A\",\"ReportId\":171},{\"ProviderId\":103038,\"InspectionId\":304882,\"InspectionEndDate\":\"2020-10-12\",\"InspectionType\":\"Renewal Application\",\"ReportName\":\"KID013A\",\"ReportId\":171},{\"ProviderId\":103038,\"InspectionId\":306595,\"InspectionEndDate\":\"2021-03-15\",\"InspectionType\":\"Investigation\",\"ReportName\":\"KID013A\",\"ReportId\":171,\"SOURCE\":\"DMS\",\"DOC_ID\":\"A78080B7-1AB0-EBC8-0092-3A1348022954\",\"DOC_TYPE\":\"pdf\",\"POC_ID\":375492,\"ApprovalDate\":\"2021-06-22\"},{\"ProviderId\":103038,\"InspectionId\":307900,\"InspectionEndDate\":\"2021-07-08\",\"InspectionType\":\"Follow-up\",\"ReportName\":\"KID013A\",\"ReportId\":171},{\"ProviderId\":103038,\"InspectionId\":319360,\"InspectionEndDate\":\"2021-10-19\",\"InspectionType\":\"Investigation\",\"ReportName\":\"KID013A\",\"ReportId\":171},{\"ProviderId\":103038,\"InspectionId\":319509,\"InspectionEndDate\":\"2021-11-19\",\"InspectionType\":\"Investigation\",\"ReportName\":\"KID013A\",\"ReportId\":171},{\"ProviderId\":103038,\"InspectionId\":322469,\"InspectionEndDate\":\"2022-10-05\",\"InspectionType\":\"Renewal Application\",\"ReportName\":\"KID013A\",\"ReportId\":171,\"SOURCE\":\"SSRS\",\"DOC_ID\":\"KID013A\",\"DOC_TYPE\":\"PDF\",\"POC_ID\":422407,\"ApprovalDate\":\"2023-05-01\"},{\"ProviderId\":103038,\"InspectionId\":338003,\"InspectionEndDate\":\"2024-01-09\",\"InspectionType\":\"Annual Inspection\",\"ReportName\":\"KID013A\",\"ReportId\":171,\"SOURCE\":\"SSRS\",\"DOC_ID\":\"KID013A\",\"DOC_TYPE\":\"PDF\",\"POC_ID\":425466,\"ApprovalDate\":\"2024-02-12\"},{\"ProviderId\":103038,\"InspectionId\":341022,\"InspectionEndDate\":\"2024-06-27\",\"InspectionType\":\"Investigation\",\"ReportName\":\"KID013A\",\"ReportId\":171},{\"ProviderId\":103038,\"InspectionId\":342117,\"InspectionEndDate\":\"2024-09-19\",\"InspectionType\":\"Renewal Application\",\"ReportName\":\"KID013A\",\"ReportId\":171,\"SOURCE\":\"SSRS\",\"DOC_ID\":\"KID013A\",\"DOC_TYPE\":\"PDF\",\"POC_ID\":428768,\"ApprovalDate\":\"2024-11-25\"},{\"ProviderId\":103038,\"InspectionId\":346548,\"InspectionEndDate\":\"2025-10-27\",\"InspectionType\":\"Annual Inspection\",\"ReportName\":\"KID013B\",\"ReportId\":282},{\"ProviderId\":103038,\"InspectionId\":347799,\"InspectionEndDate\":\"2025-10-14\",\"InspectionType\":\"Investigation\",\"ReportName\":\"KID013B\",\"ReportId\":282}]}",
+       "InspectionHistoryListUpdated": [
+        {
+         "docId": "eQGOVbPimEXcAKbyFsBh7i2yq4CxRzLm85iLMkepZF06gPeCUweD381iQgV38qOkXktBUd3rP/Z1V5O60+3NnlI/XAtzQW9ZRcTkfGyqGTj6PxlCZm3uVawC1zYgkvjreKKO3lTirOC3TzCiEq0JJ6wFhAbBx06TRLkOxgTY4wfh+hHEiXwdxp6WYriYP+XriNrNbhKyrX621AegX2uIcg+iCCGJ20KoIQbEvqIrIz9kyzJb6dzG4f40viF5gfjahn4sSq2V/dE6SfaYmKwZP4z9RBufdOPBMMO75rjCaE+Q773xL4nO2HGXkao1cWeGt93Kpkcjw6cTiisPRq+uIxGAwHL68WDiH4PhXn3qKbKk5lfrCtbpHV9SAhNwT5RP0ao0gxzD6g51ZRD4iKVbwQ==",
+         "InspectionEndDate": "2013-01-17",
+         "InspectionId": 16159.0,
+         "InspectionType": "Initial Application",
+         "ReportName": "KID013"
+        },
+        {
+         "docId": "rQSvclnjiur1E6AOaIwS4m316FLhdycovQiuZf40T5iUMmfcvA8vLsdTLi1JDtuIUWyvVEWYsGLrXQREauyC4nxisxdLHnzjPP7+7CzJ9aD0AegEnCJZQQbfnw72jzYtxDSB4f/4qmA+lz4tRWnSzbX3V3cItwBrU0w7cRVU82hABAyXiaygDHmaxITw9CMUWrS0qZB6I8qlUxDs8nxBfDgORUunPrqRFN7uD2nGbrl775TekcUPY99hBD+NrF1YaLaPi6HHPKdvUNwL1dAABNdRHXW9rapVR3hwUsuln8o/jjfBX1RhWMGQ3h3pPja6I/YI8a0y61RL3O9KgdMjSPHYVxP+Kqgq1pk86AVTH+gwsoT8qCf3lMZGkXd1DrctfK+2NpOKLOWAigILhdiPiw==",
+         "InspectionEndDate": "2013-09-27",
+         "InspectionId": 51963.0,
+         "InspectionType": "Annual Inspection",
+         "ReportName": "KID013"
+        },
+        {
+         "docId": "v+/vhZTI9tiMHgzTD0HaNif7gDaXQ/bbBVExmsRTbgrRJQGlCGpFkveh4CSvD7UYFXhPm5c1QQAnw8qrgWhZE0cu/ymKE9S4oxx/4QbO6UWK4xZZUgDjYx/2JqosatrD3YCugVsKaF+RdRWtcZhpVy8v/sfsSsUBloFEnYgUlfrWWALqDLDc+95RdstGxuozVTci2/BIfiFqcGrfLMebUq5Vl5Jnu7hhrgQIUyw1UnIv/sC0lv31ckFaw09rkQAUHvaBTQOXO47uxjVFZkzuz0QsGDmPyfnihe55hPJyGlIYqr1ShRWmjowm7vG0aa0RCUvt989A/gg5ThPWFAHD/GOhWyN79J06OXZ8t9+mTlMAMz4SUoCvMnWE7zM6A/9+8XRvkJp0iqB4Qc+8DO/xCw==",
+         "InspectionEndDate": "2014-04-10",
+         "InspectionId": 64819.0,
+         "InspectionType": "Change of Location",
+         "ReportName": "KID013"
+        },
+        {
+         "docId": "BaI244kl6T1IvhbZJKDze2JjIn1pzWhA6UKGO/EzUmK3fnj2NavbzXKfqwe7fUaZxpTQIZr6nUdIRF7tksarG8NrALxOfKw+4+uwnnHmT9Uq2H0JeQNPS83jjNjB9ruUGTq4sh3ko9SxxnSPWnnVjUPt1wgWnQ75GAwSjWZpXRycDZIaAmr+z+17fYTuOwrJIDhnPZU65E/wa2XYN00x5hDKAXyHVjHGbzxcz7p6iE8oc1Adcz8ADKa7HfENJHC2aP3sFLLPeejiGaiSLRM+CzsQPXKDPTQ3XuvYcCByqakgiUop5H9f3RKKYhEWXGGKBvxRzs8N9Fr5ujjh3K+9xiWivM0eTNaUJOWRlsEQzVhtSy9HJKDoD6gl9nLmUkRwmvMQMKrnzKWk1lz9K2IA7A==",
+         "InspectionEndDate": "2014-09-29",
+         "InspectionId": 107146.0,
+         "InspectionType": "Renewal Application",
+         "ReportName": "KID013"
+        },
+        {
+         "docId": "X/eEhU6rCoBFOxG7cbTLgTgAMurgvsa1cVA283geG7cKqg3V4Rk9zrb3InHQS5syhq0ifFKtIE/6S8YBRSQg6xYxQUQjQFqepxJcZtyPPzXqVO9pXcOXlQ43MLZ3wCWrzdP7dI5mZP468fh59zFmVD8shI0xiUiF2RoYPGW10MtVkQefR0yiQ4W/cILw1QiWq7HmUgp6L7/cyG+vjAaqDhZ7TLkBf1wN/zTgcds7JUeFuyru6DCFYP7vQxYL7AYOUqc5mG33k39Rgu4JOXcKPzUSj91JOkYpVg4+YbvHSv0d85pbgnnYNEXR0A5icfLJsaZiMS4iJ+9RuFkWND8R/1FAhg5YncO0rT3gaFJGRz2ubJmyWZejaUOM2K431R2A9GmjuYYldixL3QBLLLPjVA==",
+         "InspectionEndDate": "2015-06-16",
+         "InspectionId": 191058.0,
+         "InspectionType": "Change of Location",
+         "ReportName": "KID013"
+        },
+        {
+         "docId": "Zl3vL8iJMO+0fhqA+CO8O54N7vgFkwW6IbpBt1W9YA0XZ+9K3lDAB0CQ6/8svfyfm4GkUN/KvWWS6Ydjs+IpDF3686YAq5wnijI3Ig2D/+cc6UMGtGKYu8A5pB49jdoeMHBkk/W3RnMpEEdyXD6d7RxR4Iq1R7e1dLZuVxvbTiLgyGiMCVvBnvKjl8E/ikkF4FmTzobFSUiq9ui+8K7TRz62Tg71eMzt331UHs2ets4yJgbWi8Lt7w2FQPuvcPwS+1PruwYn3UtDQt9iAyyoHnU1aPqL1/Stx6/QitupD3zFkj5Hbj11T3gV254d8BLqnU6m4kam07QBc2wdRz4857UJOTSvmuCBITSvKks1taLz4c2j0bXlwEI71/5JExEfBbAw4pxGLj2N31Cm95TxSg==",
+         "InspectionEndDate": "2015-09-02",
+         "InspectionId": 192138.0,
+         "InspectionType": "Annual Inspection",
+         "ReportName": "KID013"
+        },
+        {
+         "docId": "UYcpWzGtV62qX9WEh7J+LIWV+uud/zq9ph0ZxE5nBHcpy9/Rt5szrcvN3CK67eEA/twha5MX0nVb3toQUv4yQetMqm7JwTOG2EuSb5ZOGfO+6GokDfGYuNSM6ZHyn4JayAwuaYt+tDbW9FwHV8P5wZgd3KT2Cn55QtQrMY3jHrq28aY0ymeHVqgXUE+OVv6QahkfasX7IBCxJDETWpJPa+g+iNlj7In9B8s46T71cUJuzNa0XFlUK95UEqsH0GaqvN3kqEks4D+WkTtU5iQkJf9+Wr0bcy3+dDiRmVT5jIR7468HI0LoQ6hM6OcSO/4XdnlpcaSEQRJf2mdkzRawYLNHYznkFHPKrcOIpOpxqwCfocyavzRtcgUWb7VQ6kEi7izm9i0Pch8OCXEftZUhcw==",
+         "InspectionEndDate": "2016-06-23",
+         "InspectionId": 215972.0,
+         "InspectionType": "Change of Service",
+         "ReportName": "KID013"
+        },
+        {
+         "docId": "lSKkV6okT1Fih5IeMuC3RyK3rtveaz+JPFmdl9akGrAWLr8Ng8IdHrR9TuFFMHMM4SkiJDq4IABizBfsVhxgaSyg0yWpZzpI0DFxoE1ZeDFYXBWKbC80kByuBQ3r6ywpz7TyNEd7eIL54RANIBlGeg3fucddf9kkn1xcQjxocSxSRBiVZjdnPRfNFBbBfP+x0fDbwL3lcvBY/26wKvtoUUnTykyFvECU7X4qBa8bieI0QwQoKaT1RpYfGv1rPCee0gY9RztRs8u2P06++0PcohIOvAqtV2Zl4y0PiTpmC7Gg43enbO7BVmMu+djHCiu2cRduzevYaAbc5RmubeOvtEY45kpn+pSggS+0FbcyPuWVZv0Oil7SCWTYcNrbUMacuT3AxMCY4cS6ZCApxm6eYQ==",
+         "InspectionEndDate": "2016-10-14",
+         "InspectionId": 217268.0,
+         "InspectionType": "Renewal Application",
+         "ReportName": "KID013A"
+        },
+        {
+         "docId": "NL//nw6Q24Ck3pr/nMsNhiDqmeNrx+fzIBXf69COwdcYrRpY4qefvDTzas2zvLIG585yNNyqEyrDwbx3Fv3eIty0gnTuNh+B5eNLSbQmJ8YPSNBJ4DSCHtODHmZ+37H5tDq4MHpLONacYuH3jO61e2R9JQ+5NFozvIlzAzyhM6Em92WZUXjNc/Y6UQvWgpGd9dBpQIoeW5bBVHjlioiGNJYqgmmaEKK6F2R5f5yQ5dBxCYJlmxyi0qSAWAoYaTEeXpQ5LjmUhRS9GGUJjUJamh6IjalkiBfe3dx4EKEsNF7YrHVLjMFS1+rFU33AjjpMjPw2fn2cj+uKQrHdz9JK2IvGhWumJNNK2pEz0rG98khGqUWozBCHi5gqFtFnokbt0WX+fEnSW3PGxO/3R3zz4g==",
+         "InspectionEndDate": "2017-08-18",
+         "InspectionId": 221473.0,
+         "InspectionType": "Change of Location",
+         "ReportName": "KID013A"
+        },
+        {
+         "docId": "4FOw2/+fFwfkgWvTBpLUQrqFEC1R91TYiODcf4aao6t4r3LPHZ4bzIMRTZG0AWTDpvryXi1EA6qaQH35vVTnR9RjmogJkwQf2VE7FfbpNB1x1ZlKnqHvTOURPAQ6HqakSZVimMcTm6RstVW6uKmJ6f8AqkESkQnUA/P7B7eVUZDsGihcpehY7jdNagItUaH+LB8Udubh8YajzK8f3DjY1DInF0H3P/gzQjTMDsGc9YAsNnaK7cTMWjpA9n7kkpqtkguzkefSxspxhC3hIqGv8UFfZO0+aMUBYoJQCshg9vYgojIxwr9L0trk8ALVfQEndgb7KlT2HwCvI68r7zpfdLVR2qTbX0SlYhXblovIzXwU0ynxVoym0wrcH43yLo7AMf62G3OXoXBfpBDjn3V8Lg==",
+         "InspectionEndDate": "2017-09-20",
+         "InspectionId": 231691.0,
+         "InspectionType": "Annual Inspection",
+         "ReportName": "KID013A"
+        },
+        {
+         "docId": "+F/sOJpVFMKfXgRkfma3e2VNhgqg/wopnC19uUXrXrRnKSCrcn6ILvrsMWh8FHr86SkSNvv4F5r8uhNInMPeFg9k4fnH/kfYt/+VX856V/qPqxs2pZAnR5qVzB8CKFciDysrxwvEn5QNFDSCAw5hDk0qKh1n8nVX/XJiF8udoKdmlbTYEIIPkVxLhf+arx/2kI5zL6hy3VsL4JTPkCgNuwA9EjpWDEWcH7vB9ttutqIofDIFp9PJHPkgoyYP+OYLEGMlGIeAdVr+OY8X05WNDxicLhBNSrS3LIoolVaT/V5rUFXmZmMNvwzLm7gmSg8ZuhPXum5YAspjkQk5aXeVY1mJlzCGHE14/bi2fIYmnW7rZ4RWlLkxQbS0WX6pAiy5nrKksFA7F7Vi87lf1woc3g==",
+         "InspectionEndDate": "2018-09-25",
+         "InspectionId": 246095.0,
+         "InspectionType": "Renewal Application",
+         "ReportName": "KID013A"
+        },
+        {
+         "docId": "wZUU4W/W2Rw9LvHu6iekMDei4+PMl1jyU1TPOep3ooTBuSawv24eYJZL/DRakHz8e7bRGWxrD4nv/dMSbrIyJKiN3eCZBB1Bp9rLWiYrIapBedpFlNehQQxBw3Lr9KuEaB/LVEbjUm63FFr/Ijnta/KDjSOOkuKz26Hw7h9+9tJ7EPs4rLRzjea7RvIBtpWBPZS1qHJq4Cj3T0X0lrsxWQYhf7SMbPu/Ca6z6yluoiUtbfJea54Zl/WiB9MO0FPF6s6twFwJk4It6j0AYXSlcEz3Q94nK9La6In9cj70LCCVRGYEkI3RPJpA8sNM6WESyKfBAwzM2sRslcoz2TYR1AypG1SjPeWA3ORVGH+NzbEesYeXePKrv2R4qimoD0qrZgUXQRt5NVj7tafE67Sxzg==",
+         "InspectionEndDate": "2019-05-06",
+         "InspectionId": 289600.0,
+         "InspectionType": "Change of Location",
+         "ReportName": "KID013A"
+        },
+        {
+         "ApprovalDate": "2019-11-06",
+         "docId": "9qZoX+QYT4YZerMs1r3t5ks94qL0Qdfzo+2ujX71uEUocbBCqjDxx+i5rCJVwFkzeswx/e/KfizmRUqxJM1O7cV0E2b+rApSV0zZkAAyOBUptUBIN/4hyEWCN/IYZl6VSKn2e59CXydJMfYDtSzW+9Qh6suwU7kWDKCgGR4cuETe1Ex8c0ZTtJ0LjOKz+ajx8Bfj6vzLQYlKj+uA87Febh9hIua3LeuAgTnQGuKs1k/20pCm3+sCvzlN0psrlK8WBXXqzUPi8jHoZP4sgQj+yByb7QGPWA1UZ/mJSgABXCakC/EOeU/RZgA0a8Mv1pm47oLYHVbHX8PfjSPuxMlb4C9aVuAUSHgjLODhAw0kOAXMIHhfNCG9bV0MWmPZf1alDox3Md6Zn5N2SnTfnOWspA==",
+         "InspectionEndDate": "2019-08-20",
+         "InspectionId": 290697.0,
+         "InspectionType": "Annual Inspection",
+         "PlanOfCorrectionID": "350261",
+         "POC_ID": "350261",
+         "pocId": "LAjAQKbF70RDaGB/HtnRGX938GD+gD09hcF1o6G0xm7nSA3minZ/iJCMhvD/G2sOiE1EJ8emUAghtRdxQxz8K9MCqC/v7zKWVGMkp0pGvrMbYwdLcz/DL9cvVe1qp58qAqZ8kbCt/DaUTSgFiuRtnLxp/YHLxOU7zzA4iFaEKTnR5gZJZMMykRKSUoUFXzFsJgj761Jw4xFKK2Hj8iBH7IuL4D/w2l2PeQ1Qz0rqf1LBayeKXxps+/A2oswPljDg/MWBL9KM7oSbtHy8VNOK72Is/ciBeDz4glvg29RhKKOnw4grGIYLL7KTRRC84sbz2A+uYJTvGMFOZwi0HMyAW29KMys0MikK0+mulSGIQ89xL6Ihtw/5cimEG+h/5bfIaWxT8qNW7GNFVtS3JrFkp6AJjheEdCHcjo5BxAeoinw=",
+         "ReportName": "KID013A"
+        },
+        {
+         "docId": "BZzfpIIRVZL2lgolWcEmenbyoWtQtqPN5jBSAB8lQI6wfa94F+aWXaFH5l5HZVQ/QlnE10sXE8QphQMWieqt+ANlE50W4+0+g6FYtqSqcRZp799qaoWEg8J7u8Pxt8H4HnXS5+kG81mWAPGtBGIpVdRCmNj3RX9/T1aM6aLaYmk51d/HODXxrQ/J33HEKK48nEj30FbMxFisnJMIYLD+xZNs7Edybmvy9ZWtm20rQbfADqcREjPY53KIqOf41ffEFos1tcSrRz32SDnVhDAucuvTHlzLYqHd8XGS+J4BF8rtd6CcsTKCXIv3YgTeFeyO9EoWQqJW1/3mgz5egR/tzfQaaB/nIsMGmSoV5JpZj4GYBoCwbGE+2ZekMZjERvw5XIhr7DvPOph0ZWi0qszPBQ==",
+         "InspectionEndDate": "2020-06-16",
+         "InspectionId": 293921.0,
+         "InspectionType": "Change of Location",
+         "ReportName": "KID013A"
+        },
+        {
+         "docId": "2scQs5FffBQIDqayriALFHWVuS/Kkrf3+dnZQmnqC5JnkXlM4jGBWTgkr+wv3qsZcUCHoGRwX7hfOTJV8MylUQaQemt766T6vefGpdhlPNqy51wTl8g5nqyXSE3Scuuq+1zP0xJp/vSwrjkjLli3aRvsMVtzX7v6RHPUy5bQ38I0i1OKV/HHKWiOKUAQiDUWOFKC7+axpUx1lthjdkfabo2J+maGaLb2DPsUF7xYYgsjQcioDU5ne9fHfLqXBzz1QHjJs1v2GX7A0vy7D6FtrMw1Eh2WYa4o+nKUekFohEcMGNunnesxcj/TBv0tP7I3FOklDBIQxsWL2IABGHXgww6i10eNqaHe1Pd6IYvSUlzuOw8dLJ38B/3SACmYx40pIHXl+Yc1+0UAIyABHsYkzA==",
+         "InspectionEndDate": "2020-10-12",
+         "InspectionId": 304882.0,
+         "InspectionType": "Renewal Application",
+         "ReportName": "KID013A"
+        },
+        {
+         "ApprovalDate": "2021-06-22",
+         "docId": "ad8dw7VKVATbD1+ys7+L0+HhLcQ/9YM3kRv2qNZZIq66OnsoQeV5yVXGHCrfvG5JYAVE0DfhoggUjDu7S0h4WL0CjHvxVKhFwESxByIfVXpsmR6Ty9dXCH845KIAUcAYFz5xlpe7qkBKFgRHJyAJhLV109VRNxYD7Ry+MaYrHFKebR2LssQ9xZvouNC7GqHX/Tj4FyzK1Ip2jeDd1vmbd5mYhAqZbSVvjiLcwbr/aPkjm10nOUZ2Yp2HaZFb5YB+RfMxJLXfwQzgzB3N+YWDXjQlb6CY4tiNAGmN5cNbPcwHv7BqgTO4kB62jPAMRQY3awzb6IqTyPRA2T3PXaKOp4BNBfrI92tFBTDFn03S4krvVahbagE/LOUTyl3peqZabLz/iBDc8K49ryO+PHpjssU4eJHu4+Z1PlUkDxMvpWY=",
+         "InspectionEndDate": "2021-03-15",
+         "InspectionId": 306595.0,
+         "InspectionType": "Investigation",
+         "PlanOfCorrectionID": "375492",
+         "POC_ID": "375492",
+         "pocId": "4/qnszj6jJXW7nWIbpfJrFvO8TNP5hIRn6du1NlU+ogmBFExilHoPxh6vCFzXxUQBk8yB4eNZmLc6vm9Y4hwoKro5JfPeMPQUWmizyqMcKXd7bSZ0zwNqAeQ3kNHLeE64/eFljk1h7p89MGbX7D7T1PUJOar7g68xt1oRNBDdvEiJcXoHf+5Pdk4CGJ322FRQOqJVpjhteZRZlEb1pa4fnEDvM3lX6yIkyu2Ic7WD124UPBTwaXZPmRUGCdv2q9GElZv+39hAsoNHW4N06mv28pewLJbQHDOabtwVRTHLqmB8G85ma3WJJWy6rfLaHr/N2bLWh8au4ny/dE3gAkTwjBk+Mxr386OEy1nZB62WOP5mgX1zRuFVKm+Do0ku9QhTFgWJXzgKdSLNfTXU4cYDcTHXeDcJT2/+MIp8auAT54=",
+         "ReportName": "KID013A",
+         "Source": "DMS"
+        },
+        {
+         "docId": "0bNMtfNbs0Jxm+aVqks+0GMnrxUSJBA8e/Hxjn16/jPWUiwr1zVxXMK7JBLx46RQUaqpG2SrvYNgFFQ5BGGehAC8iNnAdp7BTStGDqZHuoOtVPauqcT95A8q/OlHye+0TtQ76x9jn8SSMQ+YeyACuT41CVA+W5RBjbpxL9kjC/FXfwApwuzezDcGOyzeqh2aj25rCg52ZEp04HpDNtfX7HLhET5wc9lFhsMolF1f1OX82/7XK5JUYhvF/ZHL56Y0+spcKNz3SNbyS83W4zEDEZHPc+vcneJkU2ch6iwHlbbi3/ZwTD+KM2qWVdveZx/kvUMgBoSWo5hsV353jejyAiPzapXmzLPo3RojBlteLgRsZ7lkLleN0PeJYUPZn8gh6XlpTdoijm0qVwjD/67hKA==",
+         "InspectionEndDate": "2021-07-08",
+         "InspectionId": 307900.0,
+         "InspectionType": "Follow-up",
+         "ReportName": "KID013A"
+        },
+        {
+         "docId": "Ovus8VGEId6CAYYWDTkGiCft4yJnP1newn4HbtXgJRNGHAVSwcFPMXVaTJH2tYZzXheXIfAA+17+UzfGxRiT9GaP6zWsRLqHtsWVgzRXDBYw+jfbQOBs80Xkdr53tWuwvF8fnzdaQ1oxMQ48SQhqdWwLpcVErKSeMKPJm/gJHC4ZlirSyzKg2Pb+Obu25G6HZCtOSK0kTvq08pAyQRoRlGeDqHVYy5EtCnjhoemBxozQnojVUMUpFQzqLlrLyY5fMGsxZuqyrxRQgK9JFmrDzXz8BLzNaErxTjewpO4y33BFNLAWepKxXmPFOEk00OIMJfFDAuhDgLNoW+VxWsuFblRUG5aHtdLAa2+7INm5FQvNo6BIvT7WEBGKuq4mQ6ekQwO9yQkTg8ZiVYAmY1NgDg==",
+         "InspectionEndDate": "2021-10-19",
+         "InspectionId": 319360.0,
+         "InspectionType": "Investigation",
+         "ReportName": "KID013A"
+        },
+        {
+         "docId": "w+fPEGc/ba4yF9ahy3pBal5NjKEyuk6B1tt/bqLD1GJ5XqTjN+d5ywdoO359R0fcebPWBKfaMEUxGKwhi5InwcnuHa80NMhf8nUOJt0Db3qfk3GrBhpM96sA86BEtVZI8Xch0tmgbaLPWetSRPo1/CLfvYXmUgkcSObKmb2RR46dtCkfUDOUwRs9EbHOlQf9PaV+Mo2mku+iuHaNSdH/7+725qoCDesqfu6Tym8a3jdT9Jn1v613oOFw3PELLpIymru02jXOG9Age7Pe5XCbI28eWt2iVvM4XbDI4TAOXYqpk1cLLPrY43incPEXPmcYHWOby8sNO/GQJFDjG+w723M+le4ujqVuibWUoNYqYu5RKzgvpj3PNPVi0cmpS38BIjiAzqn7fO5KuFholovgIw==",
+         "InspectionEndDate": "2021-11-19",
+         "InspectionId": 319509.0,
+         "InspectionType": "Investigation",
+         "ReportName": "KID013A"
+        },
+        {
+         "ApprovalDate": "2023-05-01",
+         "docId": "5P3tuBhgTWRQsnAmqmv3CyxoW3bTgA3fdEpJmBTar5bT8xlsKDbvt35lE9jzjcs+XqveWZLn/PZd9wlR6uAcB9sUCX+KMm8vSNjDlvXLZGXfGhWVRQ4/NXyO1O6bUmOpsJKbT0SPasof+tShN1kwsch59ulFhm4bJLN9MXudtc6p3a77YuQvPkSCYA7i1SfKEqaw8E6hSz//uEoS8Z5sxnq4aciCOjDGn3YW8LWChGVWIPPuuooGX5b7z7D06uL6cMRGJVROBWN2L2WquOm1q0ZIkpVqsaQUsgS7o9NAxcYNSKCvQ6xpPyrEToWC/Ld0ZQDZriIjVQxioKG/M6tikuCtOa3h2PopGxTQSmUCQFl7uDhYprSZk1jfYFtdwGhICchTnjFNTrNR1pdbmqHjVYtGHUdIYRYxMtV0hseuh88=",
+         "InspectionEndDate": "2022-10-05",
+         "InspectionId": 322469.0,
+         "InspectionType": "Renewal Application",
+         "PlanOfCorrectionID": "422407",
+         "POC_ID": "422407",
+         "pocId": "oMdwhu5XsVzFXboM6HQirnI+WN9RtxgpzAFPb7UJ9hDwgf8s00XqhLMZgA+YtEtXpBJN1FkViRzJ1i5HhxAEglEfHkkkZ9EXUSIaBrnUjwYFhiFAOa9teulXC98HyU4SQCayu4Wl2j+nV+n30g84ccoRrSFOc6nsmf8Nf9S/hukjZDkilcAHYNSNooy7b/a8eOztYk9M4OwEe1XHDRUTJzZAOE6uJCFmweEpi4QiF3USijB8llvx9S+YdWya2DUatxFXFhvRO+klD3Ld+H2x2GH94zN4ud5rwo0ZPmaHfFpTshMLod4upLAkacsAxyscyZASYSuf+RXK+5Sagx+KzDsXRIBbJlZOy+/td3cvUI7VnIXZhp7gzgX06HNlLEptaKrv9HfNSNh6DsulUKoD1abKZqPyxW69e2UbEWJkgFM=",
+         "ReportName": "KID013A",
+         "Source": "SSRS"
+        },
+        {
+         "ApprovalDate": "2024-02-12",
+         "docId": "hvkIjneUY9ZlEkMc02o57UAkVnNcNaAl9KfOIdNS1EOEECDnoRCpl6OcJu+nY8tVDrVic3oKG6FMwFt6LIDEycO/paJCQAWfqpubg1RngvW0rV5r+7XpLyuWx5hfexNLDW/BfjJEB0eDY5lw68ZRpgoBFKzlcJBtnTy6I3P+V72H8h41dYFuqkv94gNnkkA2xQaEgh6wMiyvsN2Q+NYuAhOChQcOxZTwxyAM434NnaaPCXkipzWVL9jh1niZxBnQElKHQIJGmGZE90Dl8t17imL738CCEwlqemimL9DSm738Xi4+HGzq/xoYC9YH9L0v6n9MxiLchjHiifBbDmdXn6FurzJccN2mdTclGHXdmZxP6UuMpFQuXtPSmhj/jUjS1ysVeuTG546iMPaQ8XlOxHLLGHECxZy8NkRcJQ5hFx4=",
+         "InspectionEndDate": "2024-01-09",
+         "InspectionId": 338003.0,
+         "InspectionType": "Annual Inspection",
+         "PlanOfCorrectionID": "425466",
+         "POC_ID": "425466",
+         "pocId": "m1quPrb9Z6BDI3YM3XILttRp3Q0sOB8KCxtJEPk+zJOCZMmn9M43JVf+Wu35NNhZt6XVhfHSeRRsg1wYz1sk44InGVH5jTPCJBz//TUkKiyBDKKJMQcclQgbw38FsmQk7iUNbLBhtxAqOvrFFgNfR1jKX+2oO+a1Bp7BQHRWNODC/OReX+rColu+5NQiglqCNvwY/KtxQZEwo8/IS0e/Lo1f8sulln/KQ3paNC2IOHRT+vVbbeb54Vvj6f130+FeUG6cXhFNv8d+gPusLwO5g4D/kSSbAreckOwfch8TFrYzHa45T8nIbDoJvAkr2Ed2MrGJBoBBLrsmZcObxcwb12WYo1KJ4xunD1A5Nqmh+UjFjsjVO3u5GoCjmDPiC8hcMkAvSBgbTJCjfxa/2yQZHUW6ZJuK9mwVaWJgsZTQbjg=",
+         "ReportName": "KID013A",
+         "Source": "SSRS"
+        },
+        {
+         "docId": "CFVfZ50hjiGTUVV+6twG3zDYBpyBkLbQSLEbEm1rXdcA/VeTqfbJnDgmWuCynqVPL2R+JRj9KgEE+e6OksMwrXkICLmbJKuw+doG0IABUMfcHTHuoRFL0jITELvoDasJIBWen09Nq4Whj/lXQ7rnN3zlTsKer8ewiyg0HbaovC/g3TKjp3AFDHDfjMy5cgtRS5q21rJtPsW/d/iAafqEWTPVSGqXEOfsT8qUX1tfL8OiisagwXdl1hrN8P9dDL6Rb9oQjdQWXZr7izxpROv7FY6PRS7hnu3OUfTDQBV3rO+rfabzLBCO6PV0GG0UpZmy57BXWjKOkjhNSkQjLR/pOmnhpI5Y7m4nr8/1UPyuouLaGsihPDTixBlkNLc4SXefT4yTzbmAc+sB3594aZUiJg==",
+         "InspectionEndDate": "2024-06-27",
+         "InspectionId": 341022.0,
+         "InspectionType": "Investigation",
+         "ReportName": "KID013A"
+        },
+        {
+         "ApprovalDate": "2024-11-25",
+         "docId": "QtCr2n3J1H79vOR0UmRm3B9QVuD5PciYeO1ZTGdSs4cSt1iZ53TtbDKAiQ10ERQhLtmcUp3i4qWVbdiaW6YBxFotlikBXHVLzbC/Z9joTxjLTS6SxJcpR4ZdBPHetCcbt1gGOAtKhCIsrX7vV3P/Z67k+jgy9tT2VWU/M77I9StF+ej0BkZBIAJs4A16G0zGVJgZ+HLW4y6ihv9rqfrbrEmjob5YHFOcWtnTtGfWiLLt6cSYQ+LdZvg52EZAASItbHpDnkjGwiVlU7AQWh2ujTL1aD4QQUAEAAWenJVrpkoId0pB69XDpte6XlhvbPBytmVZ2AsbfDzha9GkbDE8Ag0U2SwEzi576mg0XjKda+kpJwLgppTN+ULoeAUGc1WgNFRO2ZXl/VkZI8zsXPRkhDicB4g7VYo7axu322ZTo2A=",
+         "InspectionEndDate": "2024-09-19",
+         "InspectionId": 342117.0,
+         "InspectionType": "Renewal Application",
+         "PlanOfCorrectionID": "428768",
+         "POC_ID": "428768",
+         "pocId": "nf1oymrprczcYu8G1uzqhMq5zyLkAI79qzwJzkTZxwxVlOTnftrKB78mVbynjdjxJc1NY5TVdKXf3CxSwNUijw8gdfLzEZAVpohcxHQTr9uENVstsJ6DD4YfVjRjplpaKNwEWRTbsGFHV4UFQap8y4D81HgXlhMHecT15UzjeUMD/mEDgasqfqBe9Bo/LjHDzkJvy9ZL0omlWsDvjMxHDUVVcomBX0AgX44xe6beZJ26a49VK0SB2G/uhzODr2w5dHy285wUVNto2dBNbDdry3Hlu8llPDtRi21yAKnt7p+G6gazzKVEgXvRDl3/h3rNfhtf2tJXfUR6PokQotDdkHIGceLhUS2RawsbUbCnFojlBufxQW/JAOiQkGdhwNE7miNoJFTl2ouDJcRQhyOEuXxYxI1tkuCq1TBpTIm2dwk=",
+         "ReportName": "KID013A",
+         "Source": "SSRS"
+        },
+        {
+         "docId": "1S9x/Hsa6RLTk73wjatH/0txGMCBsC6YC8XEOhkUwGjDsJ3oRaJ/3k9XkdxwLPy7QG3NGDTm/wx6wrJ5N/phrkoS4gOUR2HvgsRrwmfuyZO1UxcCBSsqjk3Wo6FDuwrhMx6448e/ETVTfds6sC5+p3jYtIeQ/l+Oa19Sm4NHbEz+Fygrc3foAs/yreRpiiQomMTmkEBgreefrKOvqap81+AHKYdmOyDilT09WUN3lvcBUy7x7Qh8A9WP8ap64cN9V9RX0icbbo5RvmyUsCGNdathcDCFDlmutSCaNwHBcKkRuKm/DbToq7iciKa//ZB/OBMi61thRGXltJf0Gs5ANHbmSb+197wR03sFthBAx1XiNOw09Uqe+skKsfG6QwoTsdClkTsQawBT6GStMFz8bw==",
+         "InspectionEndDate": "2025-10-27",
+         "InspectionId": 346548.0,
+         "InspectionType": "Annual Inspection",
+         "ReportName": "KID013B"
+        },
+        {
+         "docId": "KWU61RL9eDhTk4s9lO8WDPlxezUjZ5sKDLgL0ULF9+y5Z7fNjsjaQEu0iE/+YjmfezVHhrI4yCodQoL7+UiJ3UK0PvIzisIFvLvPH+/yoXFdJXvf7xx8ualyPsuTSOnYUdbzZXXzU98fYpJ/UMb1wFRL/S3ljocCoraj9hzVuEfPyq1lPlFT1T7nUNTczc3vaeqXAXfawbf/JO1Vlv3VR4hJk/CuzmzVh5enltbn6y5qGcaDWk7MOweQY/xGE4qQPCt55KXCUD8bTHFZpOMWgbK6ea+mj6L5XdodaGXFQKd1kY/ikhLbD/mYCJ5YzQRyome/5ttQw+uFIkfp1qTbx24zgAfl3Q/nxulePN//loP7vDny4mXZj5Q6uYBdB029CnBfK2LijZgrRhIl4L8COg==",
+         "InspectionEndDate": "2025-10-14",
+         "InspectionId": 347799.0,
+         "InspectionType": "Investigation",
+         "ReportName": "KID013B"
+        }
+       ],
+       "OngoingProcessListUpdated": [],
+       "ServiceCostList": [
+        {
+         "AgeGroup": "Children under the age of 1",
+         "FullTimeCost": 26.0,
+         "PartTimeCost": 26.0
+        },
+        {
+         "AgeGroup": "Children 1 year of age",
+         "FullTimeCost": 25.0,
+         "PartTimeCost": 25.0
+        },
+        {
+         "AgeGroup": "Children 2 years of age",
+         "FullTimeCost": 24.0,
+         "PartTimeCost": 24.0
+        },
+        {
+         "AgeGroup": "Children 3 years of age",
+         "FullTimeCost": 22.0,
+         "PartTimeCost": 22.0
+        },
+        {
+         "AgeGroup": "Children 4 years of age",
+         "FullTimeCost": 22.0,
+         "PartTimeCost": 22.0
+        },
+        {
+         "AgeGroup": "Children 5 years of age",
+         "FullTimeCost": 22.0,
+         "PartTimeCost": 22.0
+        },
+        {
+         "AgeGroup": "Children ages 6 but under age 8",
+         "FullTimeCost": 20.0,
+         "PartTimeCost": 20.0
+        },
+        {
+         "AgeGroup": "Children ages 8 but under age 13",
+         "FullTimeCost": 20.0,
+         "PartTimeCost": 20.0
+        },
+        {
+         "AgeGroup": "Children ages 13 but under age 18",
+         "FullTimeCost": 20.0,
+         "PartTimeCost": 20.0
+        }
+       ]
+      },
+      "showKICCSCapacity": true
+     }
+    },
+    "cacheable": false
+   },
+   "error": []
+  }
+ ]
+}

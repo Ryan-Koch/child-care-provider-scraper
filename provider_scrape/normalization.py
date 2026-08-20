@@ -283,6 +283,8 @@ STATUS_BUCKETS = {
         # then 3,370/3,370 on a full harvest -- the public search appears to
         # expose only active providers).
         "A",
+        # Kentucky (kynect.ky.gov): the only status on an operating provider.
+        "APPROVED",
     ],
     "provisional": [
         "PROVISIONAL LICENSE", "Initial Permit", "Provisional 1",
@@ -405,6 +407,9 @@ FACILITY_CATEGORY_BUCKETS = {
         # center-based institutional care, matching the "Preschool Program" /
         # "Head Start Site" precedents already above.
         "Preschool", "Head Start Child Care Center",
+        # Kentucky (kynect.ky.gov): "Licensed" == a Licensed Child Care Center
+        # (licence numbers are L-prefixed).
+        "Licensed",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME", "Family Child Care Home", "Family Home", "FDC",
@@ -453,6 +458,9 @@ FACILITY_CATEGORY_BUCKETS = {
         "Registered Child Development Home C",
         "Registered Child Development Home C1",
         "Non-Registered Child Care Home",
+        # Kentucky: "Certified" == a Certified Family Child Care Home, care in
+        # the provider's residence (licence numbers are C-prefixed).
+        "Certified",
     ],
     "group_home": [
         "GFDC", "Group Home", "Group Home Child Care", "Group",

@@ -106,6 +106,13 @@ class InspectionItem(scrapy.Item):
     # "Description :" narrative pairs from OIDS_ViewFacilityFindings.aspx.
     ks_findings = scrapy.Field()              # [{regulation, description}]
 
+    # Kentucky specific inspection fields (kynect.ky.gov). Each row of the
+    # provider's KICCS inspection history; `ky_poc_id` is present only on the
+    # subset that produced a plan of correction.
+    ky_inspection_id = scrapy.Field()   # KICCS InspectionId
+    ky_report_name = scrapy.Field()     # form id, e.g. "KID013A"
+    ky_poc_id = scrapy.Field()          # Plan-of-Correction id
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
@@ -698,6 +705,22 @@ class ProviderItem(scrapy.Item):
     ks_facility_token = scrapy.Field()          # stable "SearchLink.<token>" id
     ks_listing_program_type = scrapy.Field()    # listing Program Type, only if != detail
     ks_address_suppressed = scrapy.Field()      # bool: owner opted out (~38% of rows)
+
+    # Kentucky specific fields (kynect.ky.gov Salesforce Aura API). The All
+    # STARS quality rating stays state-specific per the field-mapping playbook.
+    # `ky_provider_id` is the internal id and the detail-call join key (the
+    # public licence number is emitted as `license_number`).
+    ky_provider_id = scrapy.Field()             # ProviderId, e.g. 403
+    ky_stars_rating = scrapy.Field()            # All STARS 0-5; 0 = not rated
+    ky_prek_partnership = scrapy.Field()        # bool (state pre-K partnership)
+    ky_ongoing_process = scrapy.Field()         # bool: open licensing action
+    # Open regulatory actions, e.g. [{"process_type": "Adverse Action",
+    # "status": "On-going"}]. Present on ~1.5% of providers.
+    ky_ongoing_processes = scrapy.Field()       # [{process_type, status}]
+    ky_food_permit = scrapy.Field()             # bool; null in source -> unset
+    ky_accreditation_available = scrapy.Field()  # bool; null in source -> unset
+                                                 # (source typo'd "Acceditations")
+    ky_service_costs = scrapy.Field()           # [{age_group, full_time_cost, part_time_cost}]
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()

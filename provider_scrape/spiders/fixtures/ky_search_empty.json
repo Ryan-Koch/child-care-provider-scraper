@@ -1,0 +1,12 @@
+{
+ "actions": [
+  {
+   "id": "84;a",
+   "state": "SUCCESS",
+   "returnValue": {
+    "cacheable": false
+   },
+   "error": []
+  }
+ ]
+}
