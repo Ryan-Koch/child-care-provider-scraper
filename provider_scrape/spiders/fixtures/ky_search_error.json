@@ -1,0 +1,17 @@
+{
+ "actions": [
+  {
+   "id": "84;a",
+   "state": "ERROR",
+   "returnValue": null,
+   "error": [
+    {
+     "message": "An internal server error has occurred",
+     "stackTrace": "",
+     "exceptionType": "System.CalloutException",
+     "isUserDefinedException": false
+    }
+   ]
+  }
+ ]
+}
