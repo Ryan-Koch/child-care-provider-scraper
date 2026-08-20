@@ -554,11 +554,29 @@ def test_counties_arg_normalizes_case_and_whitespace():
     assert spider.counties == ["WAKE", "DURHAM"]
 
 
-def test_concurrency_arg_overrides_settings():
-    spider = NorthCarolinaSpider(concurrency=8)
-    assert spider.concurrency == 8
-    assert spider.custom_settings["CONCURRENT_REQUESTS"] == 8
-    assert spider.custom_settings["CONCURRENT_REQUESTS_PER_DOMAIN"] == 8
+@pytest.mark.parametrize("arg,expected", [(None, 4), (8, 8)])
+def test_concurrency_arg_reaches_the_crawler_settings(arg, expected):
+    """The `concurrency` arg must change the settings the ENGINE reads.
+
+    This assertion deliberately targets ``crawler.settings`` rather than the
+    spider's own ``custom_settings`` dict. The previous version of this test
+    checked the instance dict and passed for months while the argument did
+    nothing at all -- ``Crawler.__init__`` reads ``custom_settings`` off the
+    class, so the instance copy was never consulted and NC actually ran at
+    Scrapy's default of 16.
+    """
+    from scrapy.crawler import Crawler
+    from scrapy.utils.project import get_project_settings
+
+    crawler = Crawler(NorthCarolinaSpider, get_project_settings())
+    kwargs = {"counties": "WAKE"}
+    if arg is not None:
+        kwargs["concurrency"] = arg
+    spider = NorthCarolinaSpider.from_crawler(crawler, **kwargs)
+
+    assert spider.concurrency == expected
+    assert crawler.settings.getint("CONCURRENT_REQUESTS") == expected
+    assert crawler.settings.getint("CONCURRENT_REQUESTS_PER_DOMAIN") == expected
 
 
 def test_start_requests_emits_one_request_per_county():

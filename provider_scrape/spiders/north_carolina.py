@@ -545,11 +545,28 @@ class NorthCarolinaSpider(scrapy.Spider):
         else:
             self.counties = list(NC_COUNTIES)
 
-        # Override CONCURRENT_REQUESTS at spider-instance level so the
-        # `concurrency` arg actually changes parallelism.
-        self.custom_settings = dict(self.custom_settings)
-        self.custom_settings["CONCURRENT_REQUESTS"] = self.concurrency
-        self.custom_settings["CONCURRENT_REQUESTS_PER_DOMAIN"] = self.concurrency
+    @classmethod
+    def from_crawler(cls, crawler, *args, **kwargs):
+        """Apply the `concurrency` arg to the *crawler's* settings.
+
+        This used to assign to ``self.custom_settings`` from ``__init__``,
+        which is a silent no-op: ``Crawler.__init__`` reads ``custom_settings``
+        off the **class** before any instance exists, so the instance dict was
+        never looked at. Because ``custom_settings`` here never set
+        ``CONCURRENT_REQUESTS`` either, the spider fell through to Scrapy's
+        default and ran **16** parallel playwright contexts (8 per domain) --
+        four times the intended 4 -- while logging "concurrency=4".
+        Compare montana.py, which caps at 4 precisely because 16 headless
+        contexts against one host drove goto timeouts.
+
+        ``from_crawler`` is early enough: ``Crawler.crawl()`` runs
+        ``_create_spider()`` (this) before ``_apply_settings()`` freezes the
+        settings and before ``_create_engine()`` reads the concurrency.
+        """
+        spider = super().from_crawler(crawler, *args, **kwargs)
+        for key in ("CONCURRENT_REQUESTS", "CONCURRENT_REQUESTS_PER_DOMAIN"):
+            crawler.settings.set(key, spider.concurrency, priority="spider")
+        return spider
 
     def start_requests(self):
         self.logger.info(
