@@ -355,6 +355,30 @@ def test_facility_category_unmapped_is_other_and_logged(caplog):
     assert "unmapped provider_type" in caplog.text
 
 
+def test_facility_category_delaware_types():
+    # delaware_plan.md Sec 8: two of Delaware's three provider_type values
+    # were previously unmapped (falling to "other"); "Licensed Child Care
+    # Center" already matched the existing "center" bucket.
+    fc = normalization.facility_category_from_type
+    assert fc("Licensed Family Child Care") == "family_home"
+    assert fc("Licensed Large Family Child Care") == "group_home"
+    assert fc("Licensed Child Care Center") == "center"
+
+
+def test_canonical_status_delaware_enforcement_values():
+    # delaware_plan.md Sec 7.3/8: nine probation / intent-to-revoke stages,
+    # derived onto `status` by delaware.derive_status.
+    for raw in (
+        "Probation", "Probation Extension", "Warning of Probation",
+        "Warning of Probation Extension", "Intent to Revoke",
+        "Intent to Place on Probation",
+        "Intent to Place on Probation Extension",
+        "Intent to Place on Warning of Probation",
+        "Intent to Place on Warning of Probation Extension",
+    ):
+        assert normalization.canonical_status(raw) == "enforcement"
+
+
 def test_normalize_item_status_in_place_and_facility_category_additive():
     item = {"status": "LICENSED", "provider_type": "Child Care Center"}
     out = normalization.normalize_item(item, "alabama")

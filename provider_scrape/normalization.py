@@ -314,6 +314,16 @@ STATUS_BUCKETS = {
         # action, not a neutral closure -- matches the bare "Suspended" above.
         # Approved Ryan 2026-08-20.
         "License Suspended",
+        # Delaware (data.delaware.gov iuzd-3dbt): probation and
+        # intent-to-revoke stages, derived onto `status` by
+        # delaware.derive_status. `enforcement_action` values (an action
+        # already taken) and `intent_to_revoke` values (a notice of one
+        # pending) share this bucket -- see delaware_plan.md Sec 7.3/8.
+        "Probation", "Probation Extension", "Warning of Probation",
+        "Warning of Probation Extension", "Intent to Revoke",
+        "Intent to Place on Probation", "Intent to Place on Probation Extension",
+        "Intent to Place on Warning of Probation",
+        "Intent to Place on Warning of Probation Extension",
     ],
     "closed": [
         "CLOSED", "Closed", "INACTIVE", "NOT LICENSED", "Revoked",
@@ -473,6 +483,10 @@ FACILITY_CATEGORY_BUCKETS = {
         # Kentucky: "Certified" == a Certified Family Child Care Home, care in
         # the provider's residence (licence numbers are C-prefixed).
         "Certified",
+        # Delaware (data.delaware.gov iuzd-3dbt): care in a private
+        # residence -- matches the "Family Child Care Home" / "Family Day
+        # Home" precedents above.
+        "Licensed Family Child Care",
     ],
     "group_home": [
         "GFDC", "Group Home", "Group Home Child Care", "Group",
@@ -484,6 +498,10 @@ FACILITY_CATEGORY_BUCKETS = {
         # Alaska (AKCCIS): matches the north_dakota precedent -- a licensed
         # group operation in a residence -> group_home (not family_home).
         "Licensed Group Home",
+        # Delaware: DE's large-family tier (capacity ~12) is the group-home
+        # rung -- matches the "Group Child Care Home" / "CDX" precedents
+        # above.
+        "Licensed Large Family Child Care",
     ],
     "school_age": [
         "SACC", "SCHOOL AGE DAY CARE CENTER", "School-age Program",
