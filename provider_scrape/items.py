@@ -135,6 +135,26 @@ class InspectionItem(scrapy.Item):
     ct_violations = scrapy.Field()
     ct_documents = scrapy.Field()         # [{description, document_type, visited_on, link}]
 
+    # Delaware specific inspection fields (data.delaware.gov Socrata). Two
+    # discriminated kinds share the `inspections` list, told apart by `type`:
+    #   * a compliance visit (wb83-pkcv), `type` = facility_visit_type, e.g.
+    #     "Unannounced Full Compliance Review" -- one item per (license,
+    #     date), carrying every citation from that visit in de_violations.
+    #   * a complaint investigation (pnbd-85r6), `type` = investigation_type
+    #     ("OCCL Standards Complaint" / "IA Investigation"), with the result
+    #     in `original_status` and the narrative in
+    #     de_investigation_conclusion.
+    # NOTE: wb83-pkcv contains ONLY non-compliance rows -- a clean visit
+    # produces no row at all, so de_violation_count is >= 1 by construction
+    # and the visit list is not a complete inspection history
+    # (delaware_plan.md Sec 6.3).
+    de_violation_count = scrapy.Field()   # int, always >= 1
+    de_violations = scrapy.Field()        # [{regulation_code, description,
+                                          #   corrective_action, correction_status,
+                                          #   correction_due, corrected_date,
+                                          #   how_corrected}]
+    de_investigation_conclusion = scrapy.Field()  # complaint narrative; absent on IA Investigations
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
@@ -795,6 +815,28 @@ class ProviderItem(scrapy.Item):
     # true, `address` is left unset; `city`/`zip`/coordinates are still
     # published and are kept. Mirrors ks_address_suppressed.
     ct_address_suppressed = scrapy.Field()
+
+    # Delaware specific fields (data.delaware.gov iuzd-3dbt, published by
+    # DSCYF / Office of Child Care Licensing). Delaware publishes no license
+    # dates and no QRIS rating -- Delaware Stars is suspended pending a
+    # system redesign.
+    de_enforcement_action = scrapy.Field()   # "Suspended" / "Probation" / "Revoked" / ...
+    de_intent_to_revoke = scrapy.Field()     # notice of a pending action, e.g. "Intent to Revoke"
+    de_special_conditions = scrapy.Field()   # "Variance" / "High Nitrate Water" / "Foster Care" / ...
+    de_financial_arrangements = scrapy.Field()  # raw ";"-joined token string (see de_profit_status)
+    de_profit_status = scrapy.Field()        # "Nonprofit" / "Private" / "Profit" / "Publicly Operated"
+    # Multi-year injury/death narrative, e.g. "2024: 5 facility injuries. No
+    # facility deaths reported.; 2023: 1 facility injury. ...". 914 of 1,243
+    # read "No facility injuries reported. No facility deaths reported."
+    # Kept as the published sentence -- no run had any non-zero death count,
+    # so there is nothing to parse into md_fatalities-style counters.
+    de_injuries_report = scrapy.Field()
+    # True if the provider appears in education.delaware.gov's own facility
+    # table (890 of 1,243). The portal's filter is not reproducible from any
+    # published column and is lossy in both directions -- it omits 353
+    # records, 22 of which are newer than anything it lists. Treat as a
+    # display hint, never as a licensure signal. See delaware_plan.md Sec 4.
+    de_portal_listed = scrapy.Field()
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()

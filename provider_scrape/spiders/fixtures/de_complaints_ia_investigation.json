@@ -1,0 +1,20 @@
+[
+ {
+  "resource_id": "27514",
+  "investigation_type": "IA Investigation",
+  "investigation_completed": "2023-09-13T04:00:00.000",
+  "investigation_result": "Unsubstantiated with Concern"
+ },
+ {
+  "resource_id": "27726",
+  "investigation_type": "IA Investigation",
+  "investigation_completed": "2023-11-13T05:00:00.000",
+  "investigation_result": "Unsubstantiated with Concern"
+ },
+ {
+  "resource_id": "27767",
+  "investigation_type": "IA Investigation",
+  "investigation_completed": "2026-02-11T05:00:00.000",
+  "investigation_result": "Unsubstantiated with Concern"
+ }
+]

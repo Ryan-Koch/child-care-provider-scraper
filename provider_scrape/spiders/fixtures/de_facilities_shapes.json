@@ -1,0 +1,308 @@
+[
+ {
+  "resource_id": "27399",
+  "site_county": "New Castle",
+  "resource_name": "YMCA OF DELAWARE / CENTRAL BRANCH YMCA CHILDREN'S CORNER 1",
+  "resource_name_reversed": "YMCA OF DELAWARE / CENTRAL BRANCH YMCA CHILDREN'S CORNER 1",
+  "resource_type": "Licensed Child Care Center",
+  "site_street_address": "501 WEST 11TH STREET",
+  "site_city": "WILMINGTON",
+  "site_state": "DE",
+  "site_zip_code": "19801",
+  "phone_number": "(302) 778-9009",
+  "age_range": "6 weeks through 6 years.",
+  "age_group": "Infant through School-Age",
+  "capacity": "99",
+  "site_opens_at": "7:00 AM",
+  "site_closes_at": "6:00 PM",
+  "financial_arrangements": "Child Care Food Program;Nonprofit;Purchase of Care",
+  "geocoded_location": {
+   "type": "Point",
+   "coordinates": [
+    -75.551365,
+    39.747981
+   ]
+  },
+  "count": "1",
+  "injuries_report": "2024: 5 facility injuries. No facility deaths reported.; 2026: 1 facility injury. No facility deaths reported.; 2023: 1 facility injury. No facility deaths reported."
+ },
+ {
+  "resource_id": "28751",
+  "site_county": "New Castle",
+  "resource_name": "MERNA HAWKINS-SUBER",
+  "resource_name_reversed": "HAWKINS-SUBER, MERNA",
+  "resource_type": "Licensed Family Child Care",
+  "enforcement_action": "Suspended",
+  "site_street_address": "212 WEST 21ST STREET",
+  "site_city": "WILMINGTON",
+  "site_state": "DE",
+  "site_zip_code": "19802",
+  "phone_number": "(302) 275-4163",
+  "age_range": "3 months through 12 years.",
+  "age_group": "Infant through School-Age",
+  "capacity": "9",
+  "site_opens_at": "7:00 AM",
+  "site_closes_at": "10:00 PM",
+  "financial_arrangements": "Child Care Food Program;Purchase of Care",
+  "geocoded_location": {
+   "type": "Point",
+   "coordinates": [
+    -75.542634,
+    39.754001
+   ]
+  },
+  "count": "1",
+  "injuries_report": "No facility injuries reported. No facility deaths reported."
+ },
+ {
+  "resource_id": "641907",
+  "site_county": "New Castle",
+  "resource_name": "LJ'S PLAYPEN ACADEMY",
+  "resource_name_reversed": "LJ'S PLAYPEN ACADEMY",
+  "resource_type": "Licensed Child Care Center",
+  "intent_to_revoke": "Intent to Revoke",
+  "site_street_address": "2601 CARTER STREET",
+  "site_city": "WILMINGTON",
+  "site_state": "DE",
+  "site_zip_code": "19802",
+  "phone_number": "(302) 764-5853",
+  "age_range": "6 weeks through 12 years.",
+  "age_group": "Infant through School-Age",
+  "capacity": "115",
+  "site_opens_at": "6:30 AM",
+  "site_closes_at": "11:00 PM",
+  "financial_arrangements": "Child Care Food Program;Purchase of Care",
+  "geocoded_location": {
+   "type": "Point",
+   "coordinates": [
+    -75.534653,
+    39.753783
+   ]
+  },
+  "count": "1",
+  "injuries_report": "No facility injuries reported. No facility deaths reported."
+ },
+ {
+  "resource_id": "27615",
+  "site_county": "New Castle",
+  "resource_name": "ANNETTE MEDLEY",
+  "resource_name_reversed": "MEDLEY, ANNETTE",
+  "resource_type": "Licensed Family Child Care",
+  "site_street_address": "1127 WEST 4TH STREET",
+  "site_city": "WILMINGTON",
+  "site_state": "DE",
+  "site_zip_code": "19805",
+  "phone_number": "(302) 332-5236",
+  "age_range": "6 weeks through 12 years.",
+  "age_group": "Infant through School-Age",
+  "capacity": "9",
+  "site_opens_at": "6:30 AM",
+  "site_closes_at": "6:30 PM",
+  "special_conditions": "Foster Care;Agreement of Understanding",
+  "financial_arrangements": "Child Care Food Program;Purchase of Care",
+  "geocoded_location": {
+   "type": "Point",
+   "coordinates": [
+    -75.562375,
+    39.744783
+   ]
+  },
+  "count": "1",
+  "injuries_report": "No facility injuries reported. No facility deaths reported."
+ },
+ {
+  "resource_id": "27473",
+  "site_county": "Sussex",
+  "resource_name": "GAIL BROWN",
+  "resource_name_reversed": "BROWN, GAIL",
+  "resource_type": "Licensed Family Child Care",
+  "site_street_address": "16233 DIAMOND FARM ROAD",
+  "site_city": "MILTON",
+  "site_state": "DE",
+  "site_zip_code": "19968",
+  "phone_number": "(302) 684-3743 Site",
+  "age_range": "6 weeks through 12 years.",
+  "age_group": "Infant through School-Age",
+  "capacity": "9",
+  "site_opens_at": "7:30 AM",
+  "site_closes_at": "4:30 PM",
+  "financial_arrangements": "Child Care Food Program",
+  "count": "1",
+  "injuries_report": "No facility injuries reported. No facility deaths reported."
+ },
+ {
+  "resource_id": "27411",
+  "site_county": "New Castle",
+  "resource_name": "JANEL DEMONIA",
+  "resource_name_reversed": "DEMONIA, JANEL",
+  "resource_type": "Licensed Family Child Care",
+  "site_street_address": "1113 CADE ST",
+  "site_city": "WILMINGTON",
+  "site_state": "DE",
+  "site_zip_code": "19802",
+  "phone_number": "(302) 373-3804 Cell",
+  "age_range": "6 weeks through 12 years.",
+  "age_group": "Infant through School-Age",
+  "capacity": "9",
+  "site_opens_at": "3:00 PM",
+  "site_closes_at": "11:00 PM",
+  "geocoded_location": {
+   "type": "Point",
+   "coordinates": [
+    -75.53395,
+    39.74285
+   ]
+  },
+  "count": "1",
+  "injuries_report": "No facility injuries reported. No facility deaths reported."
+ },
+ {
+  "resource_id": "254719",
+  "site_county": "New Castle",
+  "resource_name": "SHARI COLEMAN",
+  "resource_name_reversed": "COLEMAN, SHARI",
+  "resource_type": "Licensed Family Child Care",
+  "site_street_address": "320 MEADOW VISTA DRIVE",
+  "site_city": "TOWNSEND",
+  "site_state": "DE",
+  "site_zip_code": "19734",
+  "age_range": "6 weeks through 12 years.",
+  "age_group": "Infant through School-Age",
+  "capacity": "0",
+  "site_opens_at": "7:00 AM",
+  "site_closes_at": "5:00 PM",
+  "geocoded_location": {
+   "type": "Point",
+   "coordinates": [
+    -75.724232,
+    39.381532
+   ]
+  },
+  "count": "1",
+  "injuries_report": "No facility injuries reported. No facility deaths reported."
+ },
+ {
+  "resource_id": "27454",
+  "site_county": "New Castle",
+  "resource_name": "DELIA VELAZQUEZ-RUIZ",
+  "resource_name_reversed": "VELAZQUEZ-RUIZ, DELIA",
+  "resource_type": "Licensed Family Child Care",
+  "site_street_address": "601 COLCHESTER CT",
+  "site_city": "MIDDLETOWN",
+  "site_state": "DE",
+  "site_zip_code": "19709",
+  "phone_number": "(302) 893-4688 Cell",
+  "age_range": "6 weeks through 5 years.",
+  "age_group": "Infant through Pre-School",
+  "capacity": "9",
+  "site_opens_at": "7:30 AM",
+  "site_closes_at": "5:00 PM",
+  "geocoded_location": {
+   "type": "Point",
+   "coordinates": [
+    -75.63107,
+    39.48367
+   ]
+  },
+  "count": "1",
+  "injuries_report": "No facility injuries reported. No facility deaths reported."
+ },
+ {
+  "resource_id": "29265",
+  "site_county": "New Castle",
+  "resource_name": "TYNEE TYKES DAY KARE",
+  "resource_name_reversed": "TYNEE TYKES DAY KARE",
+  "resource_type": "Licensed Large Family Child Care",
+  "site_street_address": "114 WHITEKIRK DRIVE",
+  "site_city": "WILMINGTON",
+  "site_state": "DE",
+  "site_zip_code": "19808",
+  "phone_number": "(302) 999-9796",
+  "age_range": "8 weeks through 5 years.",
+  "age_group": "Infant through Pre-School",
+  "capacity": "12",
+  "site_opens_at": "7:30 AM",
+  "site_closes_at": "4:30 PM",
+  "financial_arrangements": "Child Care Food Program",
+  "geocoded_location": {
+   "type": "Point",
+   "coordinates": [
+    -75.661558,
+    39.754016
+   ]
+  },
+  "count": "1",
+  "injuries_report": "No facility injuries reported. No facility deaths reported."
+ },
+ {
+  "resource_id": "1720470",
+  "site_county": "Sussex",
+  "resource_name": "THE NEXT STEP LEARNING CENTER AT GUMBORO",
+  "resource_name_reversed": "THE NEXT STEP LEARNING CENTER AT GUMBORO",
+  "resource_type": "Licensed Child Care Center",
+  "site_street_address": "36773 MILLSBORO HIGHWAY",
+  "site_city": "MILLSBORO",
+  "site_state": "DE",
+  "site_zip_code": "19966",
+  "phone_number": "(302) 238-7457",
+  "age_range": "6 weeks through 12 years.",
+  "age_group": "Infant through School-Age",
+  "capacity": "135",
+  "site_opens_at": "6:30 AM",
+  "site_closes_at": "6:00 PM",
+  "financial_arrangements": "Purchase of Care",
+  "count": "1",
+  "injuries_report": "2026: 1 facility injury. No facility deaths reported."
+ },
+ {
+  "resource_id": "27390",
+  "site_county": "Sussex",
+  "resource_name": "LISA STOECKEL",
+  "resource_name_reversed": "STOECKEL, LISA",
+  "resource_type": "Licensed Family Child Care",
+  "site_street_address": "22448 PETERKINS ROAD",
+  "site_city": "GEORGETOWN",
+  "site_state": "DE",
+  "site_zip_code": "19947",
+  "phone_number": "(302) 856-2651",
+  "age_range": "6 months through 12 years.",
+  "age_group": "Infant through School-Age",
+  "capacity": "9",
+  "site_opens_at": "7:30 AM",
+  "site_closes_at": "5:00 PM",
+  "financial_arrangements": "Child Care Food Program",
+  "geocoded_location": {
+   "type": "Point",
+   "coordinates": [
+    -75.312519,
+    38.679789
+   ]
+  },
+  "count": "1",
+  "injuries_report": "No facility injuries reported. No facility deaths reported."
+ },
+ {
+  "resource_id": "1606914",
+  "site_county": "Kent",
+  "resource_name": "PUBLIC SCHOOL/LAKE FOREST/LAKE FOREST SOUTH ELEMENTARY",
+  "resource_name_reversed": "PUBLIC SCHOOL/LAKE FOREST/LAKE FOREST SOUTH ELEMENTARY",
+  "resource_type": "Licensed Child Care Center",
+  "site_street_address": "301 DORMAN STREET",
+  "site_city": "HARRINGTON",
+  "site_state": "DE",
+  "site_zip_code": "19952",
+  "phone_number": "(302) 398-8945",
+  "age_range": "3 years through 5 years.",
+  "age_group": "Pre-School",
+  "capacity": "21",
+  "geocoded_location": {
+   "type": "Point",
+   "coordinates": [
+    -75.580918,
+    38.928344
+   ]
+  },
+  "count": "1",
+  "injuries_report": "No facility injuries reported. No facility deaths reported."
+ }
+]
