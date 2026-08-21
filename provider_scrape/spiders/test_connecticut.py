@@ -752,3 +752,77 @@ def test_report_url_unset_when_no_report_document():
     assert "report_url" not in insp
     # every link is still reachable
     assert len(insp["ct_documents"]) == 3
+
+
+# --- exception containment: one bad inspection must not cost the parent ---- #
+
+def _provider_with_two_inspections(spider):
+    """Put one provider into `pending` with two outstanding inspections."""
+    data = _load_fixture("ct_provider_center_rich.json")
+    data = dict(data, inspections=[
+        {"id": 901, "visited_on": "2025-01-02T00:00:00.000Z",
+         "visit_type": "UNANNOUNCED INSPECTION - FULL", "violations_count": 1,
+         "document_count": 1},
+        {"id": 902, "visited_on": "2025-03-04T00:00:00.000Z",
+         "visit_type": "Follow-Up Inspection", "violations_count": 0,
+         "document_count": 0},
+    ])
+    outputs = list(spider.parse_provider(provider_response(data, provider_id=772)))
+    # the two detail Requests go out; the ProviderItem is held back
+    assert [o for o in outputs if isinstance(o, ProviderItem)] == []
+    assert len(outputs) == 2
+    assert spider.pending[772]["outstanding"] == 2
+    return outputs
+
+
+def test_raising_inspection_merge_still_emits_parent(spider, monkeypatch):
+    """A parse exception costs that inspection's detail, never the provider."""
+    _provider_with_two_inspections(spider)
+
+    def boom(*_a, **_kw):
+        raise ValueError("simulated bad inspection payload")
+
+    monkeypatch.setattr(spider, "_merge_inspection_detail", boom)
+    emitted = []
+    emitted += list(spider.parse_inspection_detail(
+        inspection_response({"id": 901}, provider_id=772, inspection_id=901)))
+    assert emitted == []            # still one outstanding, nothing emitted
+    emitted += list(spider.parse_inspection_detail(
+        inspection_response({"id": 902}, provider_id=772, inspection_id=902)))
+
+    # the parent survived both exceptions
+    assert len(emitted) == 1
+    item = emitted[0]
+    assert item["ct_provider_id"] == 772
+    assert len(item["inspections"]) == 2      # summaries intact
+    assert spider.pending == {}               # nothing stranded
+    assert spider.inspection_detail_failures == 2
+
+
+def test_malformed_inspection_json_still_emits_parent(spider):
+    """A non-JSON detail body is contained the same way."""
+    _provider_with_two_inspections(spider)
+    from scrapy.http import Request, TextResponse
+    url = INSPECTION_URL.format(901)
+    bad = TextResponse(
+        url=url, body=b"<html>gateway error</html>", encoding="utf-8",
+        request=Request(url, meta={"provider_id": 772, "inspection_id": 901}),
+    )
+    assert list(spider.parse_inspection_detail(bad)) == []
+    emitted = list(spider.parse_inspection_detail(
+        inspection_response({"id": 902}, provider_id=772, inspection_id=902)))
+    assert len(emitted) == 1
+    assert spider.pending == {}
+    assert spider.inspection_detail_failures == 1
+
+
+def test_exception_is_logged_not_swallowed(spider, monkeypatch, caplog):
+    """Containment must stay visible -- a silent drop would be worse."""
+    _provider_with_two_inspections(spider)
+    monkeypatch.setattr(spider, "_merge_inspection_detail",
+                        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("x")))
+    with caplog.at_level(logging.ERROR):
+        list(spider.parse_inspection_detail(
+            inspection_response({"id": 901}, provider_id=772, inspection_id=901)))
+    assert any("keeping the provider" in r.message or "keeping the provider" in r.getMessage()
+               for r in caplog.records)

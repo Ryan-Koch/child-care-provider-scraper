@@ -717,14 +717,31 @@ class ConnecticutSpider(scrapy.Spider):
         provider_id = response.meta["provider_id"]
         inspection_id = response.meta["inspection_id"]
         self.inspection_fetch_count += 1
-        data = response.json()
-        if data is not None:
-            self._merge_inspection_detail(provider_id, inspection_id, data)
-        else:
+        # Everything from the JSON decode through the merge is guarded: this
+        # callback owns one inspection's *detail*, but the provider item is
+        # only released once every outstanding inspection has reported back
+        # (Sec 4.3). An escaping exception would therefore strand the whole
+        # provider forever -- losing a parent record over one bad inspection.
+        # Degrade instead: count it, log it, and always fall through to the
+        # decrement below so the parent still gets emitted (with that one
+        # inspection left at summary-only detail).
+        try:
+            data = response.json()
+            if data is not None:
+                self._merge_inspection_detail(provider_id, inspection_id, data)
+            else:
+                self.inspection_detail_failures += 1
+                self.logger.warning(
+                    "Connecticut: inspection %s (provider %s) returned a null "
+                    "detail body", inspection_id, provider_id,
+                )
+        except Exception:
             self.inspection_detail_failures += 1
-            self.logger.warning(
-                "Connecticut: inspection %s (provider %s) returned a null "
-                "detail body", inspection_id, provider_id,
+            self.logger.exception(
+                "Connecticut: inspection %s detail failed to parse for "
+                "provider %s -- keeping the provider, dropping this "
+                "inspection's violation/document detail",
+                inspection_id, provider_id,
             )
         yield from self._maybe_emit_pending(provider_id)
 
@@ -732,10 +749,15 @@ class ConnecticutSpider(scrapy.Spider):
         provider_id = failure.request.meta.get("provider_id")
         inspection_id = failure.request.meta.get("inspection_id")
         self.inspection_detail_failures += 1
-        self.logger.warning(
-            "Connecticut: inspection %s detail request failed for provider "
-            "%s (%s)", inspection_id, provider_id, failure.value,
-        )
+        # Same contract as parse_inspection_detail: the logging must never be
+        # what strands the parent, so the decrement stays outside the guard.
+        try:
+            self.logger.warning(
+                "Connecticut: inspection %s detail request failed for provider "
+                "%s (%s)", inspection_id, provider_id, failure.value,
+            )
+        except Exception:  # pragma: no cover -- defensive only
+            pass
         yield from self._maybe_emit_pending(provider_id)
 
     def _merge_inspection_detail(self, provider_id, inspection_id, data):
