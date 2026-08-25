@@ -19,7 +19,6 @@ class _MixinHost(PlaywrightErrbackMixin):
 
 
 class TestPlaywrightErrbackMixin(unittest.IsolatedAsyncioTestCase):
-
     def setUp(self):
         self.spider = _MixinHost()
 
@@ -55,8 +54,7 @@ class TestPlaywrightErrbackMixin(unittest.IsolatedAsyncioTestCase):
         """Once the retry budget is spent the request is dropped, not
         re-scheduled, so the crawl can drain and finish."""
         failure, request, page, _ = self._failure(
-            {"playwright_retry": True,
-             "playwright_retry_count": self.spider.playwright_max_retries}
+            {"playwright_retry": True, "playwright_retry_count": self.spider.playwright_max_retries}
         )
 
         results = [out async for out in self.spider.errback_close_page(failure)]

@@ -163,9 +163,7 @@ def test_format_fee():
 
 
 def test_parse_weekly_rates():
-    rates = parse_weekly_rates(
-        "Under 1 year - $110.00|1 year - $95.00|5 years & older - $85.00"
-    )
+    rates = parse_weekly_rates("Under 1 year - $110.00|1 year - $95.00|5 years & older - $85.00")
     assert rates == [
         {"age": "Under 1 year", "weekly_full_day": "$110.00"},
         {"age": "1 year", "weekly_full_day": "$95.00"},
@@ -176,9 +174,7 @@ def test_parse_weekly_rates():
 
 
 def test_build_mailing_address():
-    assert (
-        build_mailing_address(SEARCH_RECORD) == "PO Box 788, Sylvania, GA 30467"
-    )
+    assert build_mailing_address(SEARCH_RECORD) == "PO Box 788, Sylvania, GA 30467"
     assert build_mailing_address({}) is None
     assert build_mailing_address({"mlState": "GA"}) == "GA"
 
@@ -264,9 +260,7 @@ def test_parse_detail_enriches_and_requests_visits(spider):
     request = Request(url=SEARCH_URL)
     response = _json_response(SEARCH_URL, [SEARCH_RECORD], request=request)
 
-    results = list(
-        spider.parse_detail(response, item=item, provider_number="CCLC-38436")
-    )
+    results = list(spider.parse_detail(response, item=item, provider_number="CCLC-38436"))
     assert len(results) == 1
     visits_req = results[0]
     assert isinstance(visits_req, scrapy.Request)
@@ -293,9 +287,7 @@ def test_parse_detail_enriches_and_requests_visits(spider):
     assert enriched["ga_financial_info"] == "Multi-Child Discount; Scholarship"
     assert enriched["ga_special_hours"] == "Open school holidays; Open school breaks"
     assert "English" in enriched["languages"] and "Spanish" in enriched["languages"]
-    assert enriched["ages_served"] == (
-        "Infant (0 -12 months); Toddler (13 months - 2 years); School Age (5+)"
-    )
+    assert enriched["ages_served"] == ("Infant (0 -12 months); Toddler (13 months - 2 years); School Age (5+)")
     # API supplied an accreditation code -> overrides the CSV "N/A".
     assert enriched["ga_accreditation"] == "GAC"
     assert enriched["ga_mailing_address"] == "PO Box 788, Sylvania, GA 30467"
@@ -314,9 +306,7 @@ def test_parse_detail_keeps_csv_services_when_api_empty(spider):
     record = dict(SEARCH_RECORD, servicesProvided="", accreditations="")
     response = _json_response(SEARCH_URL, [record], request=Request(url=SEARCH_URL))
 
-    results = list(
-        spider.parse_detail(response, item=item, provider_number="CCLC-38436")
-    )
+    results = list(spider.parse_detail(response, item=item, provider_number="CCLC-38436"))
     enriched = results[0].cb_kwargs["item"]
     # Falls back to the CSV-derived values when the API field is blank.
     assert enriched["ga_services"] == "CAPS Enrolled; CACFP"
@@ -328,9 +318,7 @@ def test_parse_detail_no_record_yields_item(spider):
     item = _base_item()
     response = _json_response(SEARCH_URL, [], request=Request(url=SEARCH_URL))
 
-    results = list(
-        spider.parse_detail(response, item=item, provider_number="CCLC-38436")
-    )
+    results = list(spider.parse_detail(response, item=item, provider_number="CCLC-38436"))
     assert len(results) == 1
     assert isinstance(results[0], ProviderItem)
     assert results[0]["license_number"] == "CCLC-38436"
@@ -409,9 +397,7 @@ def test_parse_compliance_sets_status(spider):
 
 
 def test_build_inspections_skips_empty(spider):
-    inspections = spider._build_inspections(
-        [{"visitDate": None, "visitType": None, "visitStatus": None}, VISITS[0]]
-    )
+    inspections = spider._build_inspections([{"visitDate": None, "visitType": None, "visitStatus": None}, VISITS[0]])
     assert len(inspections) == 1
     assert inspections[0]["type"] == "Licensing Study"
 

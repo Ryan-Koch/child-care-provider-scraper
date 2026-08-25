@@ -3,6 +3,7 @@ from scrapy.http import TextResponse
 from provider_scrape.spiders.new_mexico import NewMexicoSpider
 from provider_scrape.items import ProviderItem
 
+
 class NewMexicoSpiderTest(unittest.TestCase):
     def setUp(self):
         self.spider = NewMexicoSpider()
@@ -47,7 +48,7 @@ class NewMexicoSpiderTest(unittest.TestCase):
             </div>
         </main>
         """
-        
+
         # Note: My XPath for administrator might need to be more precise based on the provided HTML
         # In my spider: //div[div/div/text()="Program Director"]//div[contains(@class, "text-lg")]/text()
         # User snippet:
@@ -55,7 +56,7 @@ class NewMexicoSpiderTest(unittest.TestCase):
         #   <div class="text-lg font-bold mb-1">Stephnora Ogbonna</div>
         #   <div class="uppercase font-bold text-gray-500 text-xs">Program Director</div>
         # </div>
-        
+
         # Let's adjust the mock HTML to match the user's snippet exactly for the administrator
         html = """
         <h1 id="listing-name">Little Saints Preschool</h1>
@@ -93,31 +94,34 @@ class NewMexicoSpiderTest(unittest.TestCase):
         </div>
         """
 
-        response = TextResponse(url='https://childcare.ececd.nm.gov/nm/alamogordo/little-saints-preschool-26613',
-                                body=html,
-                                encoding='utf-8')
-        
+        response = TextResponse(
+            url="https://childcare.ececd.nm.gov/nm/alamogordo/little-saints-preschool-26613",
+            body=html,
+            encoding="utf-8",
+        )
+
         results = list(self.spider.parse_detail(response))
         item = results[0]
-        
-        self.assertIsInstance(item, ProviderItem)
-        self.assertEqual(item['provider_name'], 'Little Saints Preschool')
-        self.assertEqual(item['administrator'], 'Stephnora Ogbonna')
-        self.assertEqual(item['provider_type'], 'Licensed Center')
-        self.assertEqual(item['license_number'], '4000715')
-        self.assertEqual(item['address'], '1000 E 8th St, Alamogordo, NM 88310')
-        self.assertEqual(item['latitude'], '32.8975773')
-        self.assertEqual(item['longitude'], '-105.9495625')
-        self.assertEqual(item['hours'], 'Monday - Friday, 6:30am - 6:00pm')
-        self.assertEqual(item['nm_star_level'], 'Star Level 2')
-        self.assertEqual(item['ages_served'], '3 years to 4 years')
-        self.assertEqual(item['nm_meals'], 'Lunch')
-        self.assertEqual(item['nm_snacks'], '2 per day')
-        self.assertEqual(item['nm_potty_training'], 'Required')
-        self.assertEqual(item['nm_schedule'], '1, 2, 3, 4 and 5 days per week')
-        self.assertEqual(item['languages'], 'English')
-        self.assertEqual(item['nm_pay_schedules'], 'Monthly')
-        self.assertEqual(item['scholarships_accepted'], 'Accepted')
 
-if __name__ == '__main__':
+        self.assertIsInstance(item, ProviderItem)
+        self.assertEqual(item["provider_name"], "Little Saints Preschool")
+        self.assertEqual(item["administrator"], "Stephnora Ogbonna")
+        self.assertEqual(item["provider_type"], "Licensed Center")
+        self.assertEqual(item["license_number"], "4000715")
+        self.assertEqual(item["address"], "1000 E 8th St, Alamogordo, NM 88310")
+        self.assertEqual(item["latitude"], "32.8975773")
+        self.assertEqual(item["longitude"], "-105.9495625")
+        self.assertEqual(item["hours"], "Monday - Friday, 6:30am - 6:00pm")
+        self.assertEqual(item["nm_star_level"], "Star Level 2")
+        self.assertEqual(item["ages_served"], "3 years to 4 years")
+        self.assertEqual(item["nm_meals"], "Lunch")
+        self.assertEqual(item["nm_snacks"], "2 per day")
+        self.assertEqual(item["nm_potty_training"], "Required")
+        self.assertEqual(item["nm_schedule"], "1, 2, 3, 4 and 5 days per week")
+        self.assertEqual(item["languages"], "English")
+        self.assertEqual(item["nm_pay_schedules"], "Monthly")
+        self.assertEqual(item["scholarships_accepted"], "Accepted")
+
+
+if __name__ == "__main__":
     unittest.main()

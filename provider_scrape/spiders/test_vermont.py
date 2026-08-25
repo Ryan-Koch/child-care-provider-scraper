@@ -30,7 +30,9 @@ def _detail_text():
 
 def _response(name, url):
     return HtmlResponse(
-        url=url, body=_read_bytes(name), encoding="latin-1",
+        url=url,
+        body=_read_bytes(name),
+        encoding="latin-1",
         request=Request(url),
     )
 
@@ -43,6 +45,7 @@ def spider():
 # --------------------------------------------------------------------------- #
 # Pure helpers
 # --------------------------------------------------------------------------- #
+
 
 def test_hidden_reads_input_values():
     text = _detail_text()
@@ -62,14 +65,13 @@ def test_content_after_reads_labelled_value():
 def test_content_after_joins_multiline_address():
     # <br>-separated lines become newline-separated text.
     addr = _content_after(_detail_text(), "field_addr3")
-    assert addr.split("\n") == ["1434 Route 30 North", "Castleton, VT 05732",
-                                "City: Bomoseen"]
+    assert addr.split("\n") == ["1434 Route 30 North", "Castleton, VT 05732", "City: Bomoseen"]
 
 
 def test_num_coerces_only_clean_integers():
     assert _num("10") == 10
     assert _num("4                 ".strip()) == 4
-    assert _num("") == ""      # caller strips; empty passes through
+    assert _num("") == ""  # caller strips; empty passes through
     assert _num(None) is None
     assert _num("6-12") == "6-12"
 
@@ -77,6 +79,7 @@ def test_num_coerces_only_clean_integers():
 # --------------------------------------------------------------------------- #
 # parse_detail
 # --------------------------------------------------------------------------- #
+
 
 @pytest.fixture
 def detail_item(spider):
@@ -144,14 +147,14 @@ def test_parse_detail_site_visits_become_inspections(detail_item):
 # parse_results (link harvesting + pagination)
 # --------------------------------------------------------------------------- #
 
+
 @pytest.fixture
 def results_response():
     # The captured search fixture is a subtable fragment; wrap it so xpath sees
     # a normal document, mirroring how the live results page serves it.
     frag = _read_bytes("vermont_search.html").decode("latin-1")
     html = f"<html><body><table>{frag}</table></body></html>"
-    return HtmlResponse(url=RESULTS_URL, body=html.encode("latin-1"),
-                        encoding="latin-1", request=Request(RESULTS_URL))
+    return HtmlResponse(url=RESULTS_URL, body=html.encode("latin-1"), encoding="latin-1", request=Request(RESULTS_URL))
 
 
 def test_parse_results_harvests_details_and_next(spider, results_response):
@@ -174,8 +177,7 @@ def test_parse_results_bounce_retries_the_search(spider):
         "<input type='submit' name='eventSubmit_doSearch' value='Search'>"
         "</form></body></html>"
     )
-    resp = HtmlResponse(url=RESULTS_URL, body=form.encode("latin-1"),
-                        encoding="latin-1", request=Request(RESULTS_URL))
+    resp = HtmlResponse(url=RESULTS_URL, body=form.encode("latin-1"), encoding="latin-1", request=Request(RESULTS_URL))
     resp.meta["search_attempt"] = 1
     reqs = list(spider.parse_results(resp))
     # Exactly one retry, carrying an incremented attempt counter.
@@ -190,8 +192,7 @@ def test_parse_results_bounce_gives_up_at_limit(spider):
         "<input type='submit' name='eventSubmit_doSearch' value='Search'>"
         "</form></body></html>"
     )
-    resp = HtmlResponse(url=RESULTS_URL, body=form.encode("latin-1"),
-                        encoding="latin-1", request=Request(RESULTS_URL))
+    resp = HtmlResponse(url=RESULTS_URL, body=form.encode("latin-1"), encoding="latin-1", request=Request(RESULTS_URL))
     resp.meta["search_attempt"] = VermontSpider.MAX_SEARCH_ATTEMPTS
     assert list(spider.parse_results(resp)) == []
 
@@ -200,17 +201,13 @@ def test_parse_results_bounce_gives_up_at_limit(spider):
 # Normalization integration (facility_category from VT license types)
 # --------------------------------------------------------------------------- #
 
+
 def test_facility_category_for_vt_license_types():
-    assert facility_category_from_type(
-        "Registered Family Child Care Home") == "family_home"
-    assert facility_category_from_type(
-        "Center Based Child Care and Preschool Program") == "center"
-    assert facility_category_from_type(
-        "Afterschool Child Care Program") == "school_age"
-    assert facility_category_from_type(
-        "Licensed Family Child Care Home") == "family_home"
-    assert facility_category_from_type(
-        "Center Based Child Care and Preschool Program - Non-Recurring") == "center"
+    assert facility_category_from_type("Registered Family Child Care Home") == "family_home"
+    assert facility_category_from_type("Center Based Child Care and Preschool Program") == "center"
+    assert facility_category_from_type("Afterschool Child Care Program") == "school_age"
+    assert facility_category_from_type("Licensed Family Child Care Home") == "family_home"
+    assert facility_category_from_type("Center Based Child Care and Preschool Program - Non-Recurring") == "center"
 
 
 def test_normalize_item_sets_family_home_category(spider):

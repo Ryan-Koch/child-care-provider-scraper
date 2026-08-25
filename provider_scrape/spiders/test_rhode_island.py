@@ -27,8 +27,7 @@ from provider_scrape.spiders.rhode_island import (
 # ---- Sample search summary (real shape from providerSearch response) ----
 
 CHILD_INC_SUMMARY = {
-    "accAddress": "849 Centerville Road, Warwick, Rhode Island 02886, "
-                  "United States",
+    "accAddress": "849 Centerville Road, Warwick, Rhode Island 02886, United States",
     "accCity": "Warwick",
     "accEmail": "sbowry@childincri.org",
     "accLicenseDecision": "Regular",
@@ -45,8 +44,7 @@ CHILD_INC_SUMMARY = {
 }
 
 QUEST_SUMMARY = {
-    "accAddress": "1150 Boston Neck Road, Narragansett, Rhode Island "
-                  "02882, United States",
+    "accAddress": "1150 Boston Neck Road, Narragansett, Rhode Island 02882, United States",
     "accEmail": "eandrews@questschool.org",
     "accLicenseDecision": "Regular",
     "accLicenseStatus": "Active",
@@ -68,61 +66,88 @@ CHILD_UNIVERSITY_DETAIL = {
     "scheduleOfOperationData": {
         "data": [
             {
-                "abbr": "Mon", "endTimeStr": "5:00 PM",
-                "isSecondShift": False, "isSelected": True,
-                "label": "Monday", "name": "Monday",
+                "abbr": "Mon",
+                "endTimeStr": "5:00 PM",
+                "isSecondShift": False,
+                "isSelected": True,
+                "label": "Monday",
+                "name": "Monday",
                 "startTimeStr": "7:30 AM",
             },
             {
-                "abbr": "Tue", "endTimeStr": "5:00 PM",
-                "isSecondShift": False, "isSelected": True,
-                "label": "Tuesday", "name": "Tuesday",
+                "abbr": "Tue",
+                "endTimeStr": "5:00 PM",
+                "isSecondShift": False,
+                "isSelected": True,
+                "label": "Tuesday",
+                "name": "Tuesday",
                 "startTimeStr": "7:30 AM",
             },
             {
-                "abbr": "Wed", "endTimeStr": "5:00 PM",
-                "isSecondShift": False, "isSelected": True,
-                "label": "Wednesday", "name": "Wednesday",
+                "abbr": "Wed",
+                "endTimeStr": "5:00 PM",
+                "isSecondShift": False,
+                "isSelected": True,
+                "label": "Wednesday",
+                "name": "Wednesday",
                 "startTimeStr": "7:30 AM",
             },
             {
-                "abbr": "Thu", "endTimeStr": "5:00 PM",
-                "isSecondShift": False, "isSelected": True,
-                "label": "Thursday", "name": "Thursday",
+                "abbr": "Thu",
+                "endTimeStr": "5:00 PM",
+                "isSecondShift": False,
+                "isSelected": True,
+                "label": "Thursday",
+                "name": "Thursday",
                 "startTimeStr": "7:30 AM",
             },
             {
-                "abbr": "Fri", "endTimeStr": "5:00 PM",
-                "isSecondShift": False, "isSelected": True,
-                "label": "Friday", "name": "Friday",
+                "abbr": "Fri",
+                "endTimeStr": "5:00 PM",
+                "isSecondShift": False,
+                "isSelected": True,
+                "label": "Friday",
+                "name": "Friday",
                 "startTimeStr": "7:30 AM",
             },
             {
-                "abbr": "Sat", "isSecondShift": False, "isSelected": False,
-                "label": "Saturday", "name": "Saturday",
+                "abbr": "Sat",
+                "isSecondShift": False,
+                "isSelected": False,
+                "label": "Saturday",
+                "name": "Saturday",
             },
             {
-                "abbr": "Sun", "isSecondShift": False, "isSelected": False,
-                "label": "Sunday", "name": "Sunday",
+                "abbr": "Sun",
+                "isSecondShift": False,
+                "isSelected": False,
+                "label": "Sunday",
+                "name": "Sunday",
             },
         ]
     },
     "ageGroupServedWrapper": [
         {
-            "name": "Infant (6 weeks up to 18 months)", "isSelected": True,
-            "numberOfClassRooms": 2, "totalCapacity": 13,
+            "name": "Infant (6 weeks up to 18 months)",
+            "isSelected": True,
+            "numberOfClassRooms": 2,
+            "totalCapacity": 13,
         },
         {
-            "name": "Toddler (18 months up to 36 months)", "isSelected": True,
-            "numberOfClassRooms": 1, "totalCapacity": 12,
+            "name": "Toddler (18 months up to 36 months)",
+            "isSelected": True,
+            "numberOfClassRooms": 1,
+            "totalCapacity": 12,
         },
         {
             "name": "Combined Infant/Toddler Classroom (6 weeks up to 36 months)",
             "isSelected": False,
         },
         {
-            "name": "Preschool (3 - 4 yrs)", "isSelected": True,
-            "numberOfClassRooms": 1, "totalCapacity": 18,
+            "name": "Preschool (3 - 4 yrs)",
+            "isSelected": True,
+            "numberOfClassRooms": 1,
+            "totalCapacity": 18,
         },
     ],
     "lstVisits": [
@@ -162,18 +187,15 @@ CHILD_UNIVERSITY_DETAIL = {
     ],
     "programDetailWrap": {
         "accWrap": {
-            "accAddress": "695 Park Avenue Cranston, Rhode Island 02910, "
-                          "United States",
+            "accAddress": "695 Park Avenue Cranston, Rhode Island 02910, United States",
             "accAvailability": [
                 {
                     "ageGroup": "Infant (6 weeks up to 18 months)",
-                    "slotInfo": "No slots available, contact program for "
-                                "waitlist information",
+                    "slotInfo": "No slots available, contact program for waitlist information",
                 },
                 {
                     "ageGroup": "Pre-K (4 - 5 yrs)",
-                    "slotInfo": "Slots available, contact program for "
-                                "enrollment",
+                    "slotInfo": "Slots available, contact program for enrollment",
                 },
             ],
             "accEmail": "kelli@achilduniversity.com",
@@ -205,17 +227,21 @@ CHILD_UNIVERSITY_DETAIL = {
 
 # ---- extract_search_results ----
 
+
 def test_extract_search_results_success():
     payload = {
-        "actions": [{
-            "id": "85;a", "state": "SUCCESS",
-            "returnValue": {
+        "actions": [
+            {
+                "id": "85;a",
+                "state": "SUCCESS",
                 "returnValue": {
-                    "responseWrap": {"isValid": True},
-                    "searchResults": [CHILD_INC_SUMMARY, QUEST_SUMMARY],
-                }
-            },
-        }]
+                    "returnValue": {
+                        "responseWrap": {"isValid": True},
+                        "searchResults": [CHILD_INC_SUMMARY, QUEST_SUMMARY],
+                    }
+                },
+            }
+        ]
     }
     results = extract_search_results(payload)
     assert len(results) == 2
@@ -243,12 +269,15 @@ def test_extract_search_results_missing_inner():
 
 # ---- extract_detail_payload ----
 
+
 def test_extract_detail_payload_success():
     payload = {
-        "actions": [{
-            "state": "SUCCESS",
-            "returnValue": {"returnValue": CHILD_UNIVERSITY_DETAIL},
-        }]
+        "actions": [
+            {
+                "state": "SUCCESS",
+                "returnValue": {"returnValue": CHILD_UNIVERSITY_DETAIL},
+            }
+        ]
     }
     detail = extract_detail_payload(payload)
     assert detail is CHILD_UNIVERSITY_DETAIL
@@ -265,28 +294,24 @@ def test_extract_detail_payload_no_actions():
 
 # ---- format_hours ----
 
+
 def test_format_hours_full_week():
     schedule = CHILD_UNIVERSITY_DETAIL["scheduleOfOperationData"]["data"]
     assert format_hours(schedule) == (
-        "Mon 7:30 AM-5:00 PM; Tue 7:30 AM-5:00 PM; Wed 7:30 AM-5:00 PM; "
-        "Thu 7:30 AM-5:00 PM; Fri 7:30 AM-5:00 PM"
+        "Mon 7:30 AM-5:00 PM; Tue 7:30 AM-5:00 PM; Wed 7:30 AM-5:00 PM; Thu 7:30 AM-5:00 PM; Fri 7:30 AM-5:00 PM"
     )
 
 
 def test_format_hours_skips_unselected_days():
     schedule = [
-        {"name": "Monday", "isSelected": True,
-         "startTimeStr": "8:00 AM", "endTimeStr": "4:00 PM"},
+        {"name": "Monday", "isSelected": True, "startTimeStr": "8:00 AM", "endTimeStr": "4:00 PM"},
         {"name": "Tuesday", "isSelected": False},
     ]
     assert format_hours(schedule) == "Mon 8:00 AM-4:00 PM"
 
 
 def test_format_hours_returns_none_when_no_days_selected():
-    schedule = [
-        {"name": d, "isSelected": False}
-        for d in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-    ]
+    schedule = [{"name": d, "isSelected": False} for d in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]]
     assert format_hours(schedule) is None
 
 
@@ -298,20 +323,17 @@ def test_format_hours_empty_input():
 def test_format_hours_drops_day_missing_times():
     # Selected but no start/end → drop
     schedule = [
-        {"name": "Monday", "isSelected": True,
-         "startTimeStr": None, "endTimeStr": None},
-        {"name": "Tuesday", "isSelected": True,
-         "startTimeStr": "9:00 AM", "endTimeStr": "3:00 PM"},
+        {"name": "Monday", "isSelected": True, "startTimeStr": None, "endTimeStr": None},
+        {"name": "Tuesday", "isSelected": True, "startTimeStr": "9:00 AM", "endTimeStr": "3:00 PM"},
     ]
     assert format_hours(schedule) == "Tue 9:00 AM-3:00 PM"
 
 
 # ---- format_age_group_capacity ----
 
+
 def test_format_age_group_capacity_only_selected():
-    rows = format_age_group_capacity(
-        CHILD_UNIVERSITY_DETAIL["ageGroupServedWrapper"]
-    )
+    rows = format_age_group_capacity(CHILD_UNIVERSITY_DETAIL["ageGroupServedWrapper"])
     # 3 selected entries (Infant, Toddler, Preschool); Combined is unselected
     assert len(rows) == 3
     assert rows[0] == {
@@ -327,10 +349,15 @@ def test_format_age_group_capacity_only_selected():
 
 
 def test_format_age_group_capacity_all_unselected_returns_none():
-    assert format_age_group_capacity([
-        {"name": "Infant", "isSelected": False},
-        {"name": "Toddler", "isSelected": False},
-    ]) is None
+    assert (
+        format_age_group_capacity(
+            [
+                {"name": "Infant", "isSelected": False},
+                {"name": "Toddler", "isSelected": False},
+            ]
+        )
+        is None
+    )
 
 
 def test_format_age_group_capacity_empty_input():
@@ -339,6 +366,7 @@ def test_format_age_group_capacity_empty_input():
 
 
 # ---- format_availability ----
+
 
 def test_format_availability_drops_empty_entries():
     avail = [
@@ -360,6 +388,7 @@ def test_format_availability_empty_input():
 
 # ---- format_ages_served ----
 
+
 def test_format_ages_served_returns_unique_names_in_order():
     avail = [
         {"ageGroup": "Infant (6 weeks up to 18 months)", "slotInfo": "x"},
@@ -378,9 +407,7 @@ def test_format_ages_served_drops_blank_age_groups():
         {"ageGroup": "", "slotInfo": "y"},
         {"ageGroup": "Toddler (18 months up to 36 months)", "slotInfo": None},
     ]
-    assert format_ages_served(avail) == [
-        "Toddler (18 months up to 36 months)"
-    ]
+    assert format_ages_served(avail) == ["Toddler (18 months up to 36 months)"]
 
 
 def test_format_ages_served_empty_input():
@@ -391,13 +418,16 @@ def test_format_ages_served_empty_input():
 
 # ---- _summarize_compliance ----
 
+
 def test_summarize_compliance_mixed_items():
     domains = [
-        {"items": [
-            {"isNonCompliant": False},
-            {"isNonCompliant": False},
-            {"isNonCompliant": True},
-        ]},
+        {
+            "items": [
+                {"isNonCompliant": False},
+                {"isNonCompliant": False},
+                {"isNonCompliant": True},
+            ]
+        },
         {"items": [{"isNonCompliant": False}]},
     ]
     assert _summarize_compliance(domains) == "3/4"
@@ -411,15 +441,14 @@ def test_summarize_compliance_empty_or_none():
 
 # ---- build_inspections ----
 
+
 def test_build_inspections_uses_visit_compliance_string_when_present():
     inspections = build_inspections(CHILD_UNIVERSITY_DETAIL["lstVisits"])
     assert len(inspections) == 2
     first = inspections[0]
     assert isinstance(first, InspectionItem)
     assert first["date"] == "03/05/2026"
-    assert first["type"] == (
-        "Child Care Center - All Age Groups-Unannounced Visit"
-    )
+    assert first["type"] == ("Child Care Center - All Age Groups-Unannounced Visit")
     assert first["report_url"] == "https://example.com/report1.pdf"
     # Visit's own compliance string should win over the recomputed one
     assert first["ri_compliance"] == "87/87"
@@ -435,18 +464,22 @@ def test_build_inspections_falls_back_to_dashes_compliance_to_none():
 
 
 def test_build_inspections_recomputes_compliance_from_domains():
-    visits = [{
-        "compliance": "--",
-        "domains": [
-            {"items": [
-                {"isNonCompliant": False},
-                {"isNonCompliant": True},
-            ]},
-        ],
-        "name": "Unannounced",
-        "visitDateFormatted": "01/01/2025",
-        "visitDownloadURL": None,
-    }]
+    visits = [
+        {
+            "compliance": "--",
+            "domains": [
+                {
+                    "items": [
+                        {"isNonCompliant": False},
+                        {"isNonCompliant": True},
+                    ]
+                },
+            ],
+            "name": "Unannounced",
+            "visitDateFormatted": "01/01/2025",
+            "visitDownloadURL": None,
+        }
+    ]
     inspections = build_inspections(visits)
     assert inspections[0]["ri_compliance"] == "1/2"
 
@@ -458,14 +491,13 @@ def test_build_inspections_empty_input():
 
 # ---- build_item ----
 
+
 def test_build_item_summary_only(spider_anyway=None):
     item = build_item(CHILD_INC_SUMMARY, None)
     assert isinstance(item, ProviderItem)
     assert item["source_state"] == "Rhode Island"
     assert item["provider_name"] == "Child Inc. - Centerville Road"
-    assert item["address"] == (
-        "849 Centerville Road, Warwick, Rhode Island 02886, United States"
-    )
+    assert item["address"] == ("849 Centerville Road, Warwick, Rhode Island 02886, United States")
     assert item["phone"] == "(401) 823-3777"
     assert item["email"] == "sbowry@childincri.org"
     assert item["provider_type"] == "Child Care Center"
@@ -478,9 +510,7 @@ def test_build_item_summary_only(spider_anyway=None):
     assert item["ri_is_lea"] is False
     assert item["inspections"] == []
     # provider_url contains the URL-encoded pid
-    assert item["provider_url"].startswith(
-        "https://earlylearningprograms.dhs.ri.gov/s/program-detail"
-    )
+    assert item["provider_url"].startswith("https://earlylearningprograms.dhs.ri.gov/s/program-detail")
     assert "pid=62AnBeAygTrdbiatR%2BF5AXZfVB2Q" in item["provider_url"]
 
 
@@ -498,9 +528,7 @@ def test_build_item_full_record_core_fields():
 
     # accWrap should override the summary values
     assert item["provider_name"] == "A Child's University"
-    assert item["address"] == (
-        "695 Park Avenue Cranston, Rhode Island 02910, United States"
-    )
+    assert item["address"] == ("695 Park Avenue Cranston, Rhode Island 02910, United States")
     assert item["phone"] == "(401) 461-1880"
     assert item["email"] == "kelli@achilduniversity.com"
     assert item["capacity"] == 81
@@ -510,8 +538,7 @@ def test_build_item_full_record_core_fields():
     assert item["license_expiration"] == "10/31/2026"
     assert item["provider_website"] == "achildsuniversity.com"
     assert item["hours"] == (
-        "Mon 7:30 AM-5:00 PM; Tue 7:30 AM-5:00 PM; Wed 7:30 AM-5:00 PM; "
-        "Thu 7:30 AM-5:00 PM; Fri 7:30 AM-5:00 PM"
+        "Mon 7:30 AM-5:00 PM; Tue 7:30 AM-5:00 PM; Wed 7:30 AM-5:00 PM; Thu 7:30 AM-5:00 PM; Fri 7:30 AM-5:00 PM"
     )
 
 
@@ -540,8 +567,7 @@ def test_build_item_full_record_ri_fields():
     assert avail == [
         {
             "age_group": "Infant (6 weeks up to 18 months)",
-            "slot_info": "No slots available, contact program for "
-                         "waitlist information",
+            "slot_info": "No slots available, contact program for waitlist information",
         },
         {
             "age_group": "Pre-K (4 - 5 yrs)",
@@ -640,13 +666,12 @@ def test_build_item_pid_missing_yields_none_provider_url():
 
 # ---- build_detail_message / build_detail_post_body ----
 
+
 def test_build_detail_message_round_trip():
     msg_str = build_detail_message("ABC+/=123")
     msg = json.loads(msg_str)
     action = msg["actions"][0]
-    assert action["params"]["classname"] == (
-        "RICS_ViewProgramDetailsController"
-    )
+    assert action["params"]["classname"] == ("RICS_ViewProgramDetailsController")
     assert action["params"]["method"] == "getProgramDetails"
     assert action["params"]["params"]["programId"] == "ABC+/=123"
     assert action["params"]["params"]["language"] == "English__c"
@@ -657,9 +682,7 @@ def test_build_detail_post_body_includes_all_required_fields():
 
     # Pull the message back out and confirm the pid round-trips
     msg = _extract_form_field(body, "message")
-    assert json.loads(msg)["actions"][0]["params"]["params"][
-        "programId"
-    ] == "ABC+/=123"
+    assert json.loads(msg)["actions"][0]["params"]["params"]["programId"] == "ABC+/=123"
 
     assert _extract_form_field(body, "aura.context") == "the-context-blob"
     assert _extract_form_field(body, "aura.token") == "null"
@@ -670,6 +693,7 @@ def test_build_detail_post_body_includes_all_required_fields():
 
 
 # ---- _extract_form_field ----
+
 
 def test_extract_form_field_basic():
     body = "a=1&b=hello%20world&c=foo"
@@ -695,6 +719,7 @@ def test_extract_form_field_unique_prefix_match():
 
 # ---- _empty_to_none ----
 
+
 @pytest.mark.parametrize("value", [None, "", "   ", [], "--", " -- "])
 def test_empty_to_none_collapses(value):
     """The source renders missing fields as '--' (e.g. ccapStatus for
@@ -712,10 +737,13 @@ def test_empty_to_none_preserves(value):
 
 # ---- parse_search_page (async) ----
 
+
 @pytest.fixture
 def spider():
     s = RhodeIslandSpider(
-        detail_delay_min=0, detail_delay_max=0, search_retries=2,
+        detail_delay_min=0,
+        detail_delay_max=0,
+        search_retries=2,
     )
     # The warm-up methods sleep for ~20s of wall time, which is fine in
     # production (they're there to satisfy reCAPTCHA v3 behavioral signals)
@@ -751,14 +779,18 @@ async def test_parse_search_page_full_flow(spider):
     page.close = AsyncMock()
 
     spider._tick_age_groups = AsyncMock()
-    spider._submit_search = AsyncMock(return_value=(
-        [CHILD_INC_SUMMARY, QUEST_SUMMARY],
-        "captured-aura-context",
-    ))
-    spider._fetch_detail = AsyncMock(side_effect=[
-        CHILD_UNIVERSITY_DETAIL,
-        None,
-    ])
+    spider._submit_search = AsyncMock(
+        return_value=(
+            [CHILD_INC_SUMMARY, QUEST_SUMMARY],
+            "captured-aura-context",
+        )
+    )
+    spider._fetch_detail = AsyncMock(
+        side_effect=[
+            CHILD_UNIVERSITY_DETAIL,
+            None,
+        ]
+    )
 
     response = _make_fake_response(page)
     items = await _collect(spider.parse_search_page(response))
@@ -799,9 +831,12 @@ async def test_parse_search_page_results_but_no_context_aborts(spider):
     page.close = AsyncMock()
 
     spider._tick_age_groups = AsyncMock()
-    spider._submit_search = AsyncMock(return_value=(
-        [CHILD_INC_SUMMARY], None,
-    ))
+    spider._submit_search = AsyncMock(
+        return_value=(
+            [CHILD_INC_SUMMARY],
+            None,
+        )
+    )
     spider._fetch_detail = AsyncMock()
 
     response = _make_fake_response(page)
@@ -818,9 +853,13 @@ async def test_parse_search_page_results_but_no_context_aborts(spider):
 @pytest.mark.asyncio
 async def test_submit_search_succeeds_on_first_attempt(spider):
     page = MagicMock()
-    spider._click_and_capture = AsyncMock(return_value=(
-        [CHILD_INC_SUMMARY], "ctx", False,
-    ))
+    spider._click_and_capture = AsyncMock(
+        return_value=(
+            [CHILD_INC_SUMMARY],
+            "ctx",
+            False,
+        )
+    )
 
     results, aura_context = await spider._submit_search(page)
 
@@ -833,11 +872,13 @@ async def test_submit_search_succeeds_on_first_attempt(spider):
 @pytest.mark.asyncio
 async def test_submit_search_retries_on_v3_failure_then_succeeds(spider):
     page = MagicMock()
-    spider._click_and_capture = AsyncMock(side_effect=[
-        ([], "ctx1", True),   # v3 failed
-        ([], "ctx2", True),   # v3 failed again
-        ([CHILD_INC_SUMMARY], "ctx3", False),  # success
-    ])
+    spider._click_and_capture = AsyncMock(
+        side_effect=[
+            ([], "ctx1", True),  # v3 failed
+            ([], "ctx2", True),  # v3 failed again
+            ([CHILD_INC_SUMMARY], "ctx3", False),  # success
+        ]
+    )
 
     results, aura_context = await spider._submit_search(page)
 
@@ -853,9 +894,13 @@ async def test_submit_search_does_not_retry_on_non_captcha_failure(spider):
     """A non-captcha empty response (shape change, network issue) shouldn't
     eat retries — those are reserved for transient v3 misses."""
     page = MagicMock()
-    spider._click_and_capture = AsyncMock(return_value=(
-        [], "ctx", False,
-    ))
+    spider._click_and_capture = AsyncMock(
+        return_value=(
+            [],
+            "ctx",
+            False,
+        )
+    )
 
     results, aura_context = await spider._submit_search(page)
 
@@ -868,9 +913,13 @@ async def test_submit_search_does_not_retry_on_non_captcha_failure(spider):
 @pytest.mark.asyncio
 async def test_submit_search_exhausts_retries_then_returns_empty(spider):
     page = MagicMock()
-    spider._click_and_capture = AsyncMock(return_value=(
-        [], "ctx", True,
-    ))
+    spider._click_and_capture = AsyncMock(
+        return_value=(
+            [],
+            "ctx",
+            True,
+        )
+    )
     # Spider was built with search_retries=2 → 3 total attempts.
 
     results, aura_context = await spider._submit_search(page)
@@ -887,12 +936,19 @@ async def test_submit_search_falls_through_to_manual_after_retries(spider):
     spider should wait for the v2 widget solve instead of giving up."""
     spider.manual_captcha = True
     page = MagicMock()
-    spider._click_and_capture = AsyncMock(return_value=(
-        [], "ctx", True,
-    ))
-    spider._wait_for_manual_search = AsyncMock(return_value=(
-        [QUEST_SUMMARY], "manual-ctx",
-    ))
+    spider._click_and_capture = AsyncMock(
+        return_value=(
+            [],
+            "ctx",
+            True,
+        )
+    )
+    spider._wait_for_manual_search = AsyncMock(
+        return_value=(
+            [QUEST_SUMMARY],
+            "manual-ctx",
+        )
+    )
 
     results, aura_context = await spider._submit_search(page)
 
@@ -906,9 +962,13 @@ async def test_submit_search_retries_zero_means_one_attempt(spider):
     """search_retries=0 → exactly one click attempt, no reload."""
     spider.search_retries = 0
     page = MagicMock()
-    spider._click_and_capture = AsyncMock(return_value=(
-        [], "ctx", True,
-    ))
+    spider._click_and_capture = AsyncMock(
+        return_value=(
+            [],
+            "ctx",
+            True,
+        )
+    )
 
     await spider._submit_search(page)
 
@@ -923,10 +983,12 @@ async def test_parse_search_page_max_providers_truncates(spider):
     page.close = AsyncMock()
 
     spider._tick_age_groups = AsyncMock()
-    spider._submit_search = AsyncMock(return_value=(
-        [CHILD_INC_SUMMARY, QUEST_SUMMARY],
-        "ctx",
-    ))
+    spider._submit_search = AsyncMock(
+        return_value=(
+            [CHILD_INC_SUMMARY, QUEST_SUMMARY],
+            "ctx",
+        )
+    )
     spider._fetch_detail = AsyncMock(return_value=CHILD_UNIVERSITY_DETAIL)
 
     response = _make_fake_response(page)
@@ -934,7 +996,6 @@ async def test_parse_search_page_max_providers_truncates(spider):
 
     assert len(items) == 1
     assert spider._fetch_detail.await_count == 1
-
 
 
 def test_spider_search_retries_default_bumped():

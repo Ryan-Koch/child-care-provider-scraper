@@ -16,6 +16,7 @@ therefore enumerate the whole state with an adaptive geographic grid:
 Each unique provider id is then fetched from ``/api/programs/{id}`` for the full
 record (capacity, ages, vacancies, license dates, ...).
 """
+
 import json
 import math
 
@@ -32,15 +33,26 @@ PROFILE_URL = "https://search.ec.hhs.nd.gov/search/(slide-full:{}/profile)"
 # The 20-key filter object the API expects; all null == an unfiltered search.
 # A ``location`` key is added per-request to switch on the distance search.
 FILTER_TEMPLATE = {
-    "name": None, "publicProgramType": None, "nonLicensedProgramTypes": None,
-    "qualityRating": None, "accreditedOnly": None,
-    "programAcceptsFinancialAssistance": None, "currentVacancies": None,
-    "ageGroupsWillingToServe": None, "programSchedulesOffered": None,
-    "supplementalCareTypes": None, "programEnrollmentDuringSummer": None,
-    "programEnrollmentDuringSchoolYear": None, "adaCompliant": None,
-    "wheelchairAccessible": None, "smokeFree": None,
-    "breastfeedingFriendly": None, "noPets": None,
-    "transportationProvided": None, "languages": None, "specialPopulations": None,
+    "name": None,
+    "publicProgramType": None,
+    "nonLicensedProgramTypes": None,
+    "qualityRating": None,
+    "accreditedOnly": None,
+    "programAcceptsFinancialAssistance": None,
+    "currentVacancies": None,
+    "ageGroupsWillingToServe": None,
+    "programSchedulesOffered": None,
+    "supplementalCareTypes": None,
+    "programEnrollmentDuringSummer": None,
+    "programEnrollmentDuringSchoolYear": None,
+    "adaCompliant": None,
+    "wheelchairAccessible": None,
+    "smokeFree": None,
+    "breastfeedingFriendly": None,
+    "noPets": None,
+    "transportationProvided": None,
+    "languages": None,
+    "specialPopulations": None,
 }
 
 # ND bounding box (padded slightly beyond the state borders).
@@ -60,9 +72,7 @@ EXPECTED_MIN_PROVIDERS = 1000
 AGE_GROUP_TO_FIELD = {1: "infant", 2: "toddler", 3: "preschool", 4: "school"}
 
 HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (X11; Linux x86_64; rv:152.0) Gecko/20100101 Firefox/152.0"
-    ),
+    "User-Agent": ("Mozilla/5.0 (X11; Linux x86_64; rv:152.0) Gecko/20100101 Firefox/152.0"),
     "Accept": "application/json, text/plain, */*",
 }
 
@@ -143,7 +153,8 @@ class NorthDakotaSpider(scrapy.Spider):
             lat += dlat
         self.logger.info(
             "North Dakota: seeding %d primary grid nodes at %.0f-mi spacing",
-            len(points), GRID_SPACING_MI,
+            len(points),
+            GRID_SPACING_MI,
         )
         for lat, lon in points:
             yield self._search_request(lat, lon, half, 0)
@@ -180,25 +191,36 @@ class NorthDakotaSpider(scrapy.Spider):
                 self.logger.info(
                     "North Dakota: SATURATED (%.4f,%.4f) depth=%d "
                     "radius=%.2fmi < corner=%.2fmi -> densify into 4 at %.1f-mi",
-                    lat, lon, depth, far, corner, child_half,
+                    lat,
+                    lon,
+                    depth,
+                    far,
+                    corner,
+                    child_half,
                 )
                 for si in (-1, 1):
                     for sj in (-1, 1):
                         yield self._search_request(
-                            lat + si * off_lat, lon + sj * off_lon,
-                            child_half, depth + 1,
+                            lat + si * off_lat,
+                            lon + sj * off_lon,
+                            child_half,
+                            depth + 1,
                         )
             elif far < corner:
                 self.logger.warning(
                     "North Dakota: (%.4f,%.4f) still saturated at depth cap "
                     "(radius=%.2fmi < corner=%.2fmi) -- providers may be missed",
-                    lat, lon, far, corner,
+                    lat,
+                    lon,
+                    far,
+                    corner,
                 )
 
         if self.node_count % 50 == 0:
             self.logger.info(
                 "North Dakota: %d search nodes processed, %d unique providers",
-                self.node_count, len(self.seen),
+                self.node_count,
+                len(self.seen),
             )
 
     # --- detail (per provider) ------------------------------------------ #
@@ -225,10 +247,7 @@ class NorthDakotaSpider(scrapy.Spider):
         put("provider_type", d.get("facilityTypeLabel"))
         item["status"] = "Closed" if d.get("deactivated") else "Active"
 
-        addr = ", ".join(
-            p.strip() for p in (d.get("address1"), d.get("address2"))
-            if p and p.strip()
-        )
+        addr = ", ".join(p.strip() for p in (d.get("address1"), d.get("address2")) if p and p.strip())
         put("address", addr)
         put("city", d.get("addressCity"))
         put("state", d.get("addressState"))
@@ -268,9 +287,7 @@ class NorthDakotaSpider(scrapy.Spider):
         if d.get("accreditations"):
             item["accreditation"] = d["accreditations"]
 
-        item["head_start"] = bool(d.get("headStartGranteeId")) or (
-            d.get("facilityTypeLabel") == "Head Start Site"
-        )
+        item["head_start"] = bool(d.get("headStartGranteeId")) or (d.get("facilityTypeLabel") == "Head Start Site")
         total_vac = d.get("totalVacancies")
         if total_vac is not None:
             item["accepting_new_children"] = total_vac > 0
@@ -282,9 +299,7 @@ class NorthDakotaSpider(scrapy.Spider):
         vba = d.get("vacanciesByAgeGroup") or []
         if vba:
             item["nd_vacancies_by_age"] = [
-                {"age_group": x.get("ageGroupLabel"),
-                 "vacancies": x.get("numberVacancies")}
-                for x in vba
+                {"age_group": x.get("ageGroupLabel"), "vacancies": x.get("numberVacancies")} for x in vba
             ]
         put("nd_vacancies_details", d.get("vacanciesDetails"))
         put("nd_vacancies_updated", iso_date(d.get("vacanciesTimestamp")))
@@ -293,10 +308,8 @@ class NorthDakotaSpider(scrapy.Spider):
         put("nd_enrollment_schedule", d.get("programEnrollmentScheduleLabel"))
         put("nd_special_populations", d.get("specialPopulationsLabels"))
         put("nd_supplemental_care", d.get("supplementalCareTypesLabels"))
-        put("nd_min_age",
-            age_range(d.get("minimumAge"), d.get("minimumAgeMeasurementLabel")))
-        put("nd_max_age",
-            age_range(d.get("maximumAge"), d.get("maximumAgeMeasurementLabel")))
+        put("nd_min_age", age_range(d.get("minimumAge"), d.get("minimumAgeMeasurementLabel")))
+        put("nd_max_age", age_range(d.get("maximumAge"), d.get("maximumAgeMeasurementLabel")))
         put("nd_program_id", pid)
         put("nd_org_id", d.get("orgId"))
         put("nd_philosophy", d.get("philosophyStatement"))
@@ -306,11 +319,13 @@ class NorthDakotaSpider(scrapy.Spider):
     def closed(self, reason):
         self.logger.info(
             "North Dakota: finished (%s) -- %d search nodes, %d unique providers",
-            reason, self.node_count, len(self.seen),
+            reason,
+            self.node_count,
+            len(self.seen),
         )
         if len(self.seen) < EXPECTED_MIN_PROVIDERS:
             self.logger.warning(
-                "North Dakota: only %d providers found (< %d baseline) -- "
-                "possible incomplete crawl",
-                len(self.seen), EXPECTED_MIN_PROVIDERS,
+                "North Dakota: only %d providers found (< %d baseline) -- possible incomplete crawl",
+                len(self.seen),
+                EXPECTED_MIN_PROVIDERS,
             )

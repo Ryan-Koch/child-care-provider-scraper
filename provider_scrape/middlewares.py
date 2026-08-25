@@ -140,11 +140,7 @@ class ProxyPoolMiddleware:
         self.logger = logging.getLogger(__name__)
         self.crawler = crawler
         self.stats = crawler.stats if crawler is not None else None
-        self.interval = (
-            crawler.settings.getfloat("PROXY_POOL_STATS_INTERVAL", 300.0)
-            if crawler is not None
-            else 300.0
-        )
+        self.interval = crawler.settings.getfloat("PROXY_POOL_STATS_INTERVAL", 300.0) if crawler is not None else 300.0
         # Per-proxy activity, keyed by proxy_id. Seeded at spider_opened from the
         # live pool so a proxy that goes silent (0 completions under throttle)
         # still shows in the report instead of vanishing. Buckets: req (sent),
@@ -228,9 +224,7 @@ class ProxyPoolMiddleware:
         return None
 
     def _bucket(self, proxy_id):
-        return self._counts.setdefault(
-            proxy_id, {"req": 0, "ok": 0, "blk": 0, "oth": 0, "err": 0}
-        )
+        return self._counts.setdefault(proxy_id, {"req": 0, "ok": 0, "blk": 0, "oth": 0, "err": 0})
 
     def _count(self, proxy_id, key):
         """Bump an in-memory per-proxy counter and mirror it into crawler stats.
@@ -296,8 +290,7 @@ class ProxyPoolMiddleware:
         self._err_types_last = dict(self._err_types)
         err_detail = f" [{', '.join(err_types)}]" if err_types else ""
         self.logger.info(
-            "[proxy-pool] last %ds per IP (ok/blocked/err): %s | totals: "
-            "%d ok of %d sent, %d blocked, %d err%s",
+            "[proxy-pool] last %ds per IP (ok/blocked/err): %s | totals: %d ok of %d sent, %d blocked, %d err%s",
             int(self.interval),
             ", ".join(parts),
             totals["ok"],
@@ -325,9 +318,7 @@ class ProxyPoolMiddleware:
         parts = []
         for pid in self._pool_ids:
             b = self._bucket(pid)
-            parts.append(
-                f"{pid} {b['ok']} ok/{b['blk']} blocked/{b['oth']} other/{b['err']} err"
-            )
+            parts.append(f"{pid} {b['ok']} ok/{b['blk']} blocked/{b['oth']} other/{b['err']} err")
         self.logger.info("[proxy-pool] final per-IP totals: %s", " | ".join(parts))
 
 
@@ -379,12 +370,8 @@ class RateLimitBackoffMiddleware:
         self.crawler = crawler
         s = crawler.settings
         self.enabled = s.getbool("RATELIMIT_BACKOFF_ENABLED", False)
-        self.codes = {
-            int(c) for c in s.getlist("RATELIMIT_BACKOFF_HTTP_CODES", [403])
-        }
-        self.domains = tuple(
-            d.lower() for d in s.getlist("RATELIMIT_BACKOFF_DOMAINS", [])
-        )
+        self.codes = {int(c) for c in s.getlist("RATELIMIT_BACKOFF_HTTP_CODES", [403])}
+        self.domains = tuple(d.lower() for d in s.getlist("RATELIMIT_BACKOFF_DOMAINS", []))
         self.cooldown = s.getfloat("RATELIMIT_BACKOFF_COOLDOWN", 60.0)
         self.max_retries = s.getint("RATELIMIT_BACKOFF_MAX_RETRIES", 8)
         # Timeout backoff: the same cooldown-and-retry, but triggered by a
@@ -396,12 +383,8 @@ class RateLimitBackoffMiddleware:
         # (congestion collapse). Pausing the slot instead sheds load so the origin
         # can drain, and the pool's other slots do the same as they trip — an
         # adaptive, per-slot concurrency cut. Bounded separately from the 403 path.
-        self.timeout_cooldown = s.getfloat(
-            "RATELIMIT_BACKOFF_TIMEOUT_COOLDOWN", 45.0
-        )
-        self.timeout_max_retries = s.getint(
-            "RATELIMIT_BACKOFF_TIMEOUT_MAX_RETRIES", 4
-        )
+        self.timeout_cooldown = s.getfloat("RATELIMIT_BACKOFF_TIMEOUT_COOLDOWN", 45.0)
+        self.timeout_max_retries = s.getint("RATELIMIT_BACKOFF_TIMEOUT_MAX_RETRIES", 4)
         # Matched by class name so we don't depend on which twisted timeout type
         # the handler happens to raise (TimeoutError, TCPTimedOutError, …).
         self.timeout_exceptions = frozenset(
@@ -422,11 +405,7 @@ class RateLimitBackoffMiddleware:
         return any(d in host for d in self.domains)
 
     def process_response(self, request, response, spider):
-        if (
-            not self.enabled
-            or response.status not in self.codes
-            or not self._domain_matches(request)
-        ):
+        if not self.enabled or response.status not in self.codes or not self._domain_matches(request):
             return response
 
         retries = request.meta.get("ratelimit_retries", 0)
@@ -478,8 +457,7 @@ class RateLimitBackoffMiddleware:
         retries = request.meta.get("timeout_retries", 0)
         if retries >= self.timeout_max_retries:
             spider.logger.warning(
-                "Timeout on %s: gave up after %d cooldown retries (origin "
-                "saturated).",
+                "Timeout on %s: gave up after %d cooldown retries (origin saturated).",
                 request.url,
                 retries,
             )
@@ -489,8 +467,7 @@ class RateLimitBackoffMiddleware:
 
         slot_key = self._pause_slot(request, self.timeout_cooldown)
         spider.logger.info(
-            "Timeout on %s — origin likely saturated; pausing slot %r for %.0fs, "
-            "then retry %d/%d.",
+            "Timeout on %s — origin likely saturated; pausing slot %r for %.0fs, then retry %d/%d.",
             request.url,
             slot_key,
             self.timeout_cooldown,
@@ -536,9 +513,7 @@ class RateLimitBackoffMiddleware:
         pending = getattr(slot, "_ratelimit_restore", None)
         if pending is not None and pending.active():
             pending.cancel()
-        slot._ratelimit_restore = reactor.callLater(
-            slot.delay, self._restore_slot, slot
-        )
+        slot._ratelimit_restore = reactor.callLater(slot.delay, self._restore_slot, slot)
         return slot_key
 
     @staticmethod

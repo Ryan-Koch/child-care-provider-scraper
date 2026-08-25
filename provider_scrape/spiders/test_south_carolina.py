@@ -343,38 +343,28 @@ def test_parse_search_page(spider):
 
     results = list(spider.parse_search_page(response))
 
-    detail_requests = [
-        r for r in results if "/provider/" in r.url and "?" not in r.url
-    ]
+    detail_requests = [r for r in results if "/provider/" in r.url and "?" not in r.url]
     assert len(detail_requests) == 3
 
     # Provider 24680 should have coords carried in meta
-    req_24680 = next(
-        r for r in detail_requests if "/provider/24680/" in r.url
-    )
+    req_24680 = next(r for r in detail_requests if "/provider/24680/" in r.url)
     assert req_24680.meta["sc_provider_id"] == "24680"
     assert req_24680.meta["latitude"] == "34.008744"
     assert req_24680.meta["longitude"] == "-81.040186"
 
     # Alphanumeric ID also captured
-    req_cc = next(
-        r for r in detail_requests if "/provider/CC045778/" in r.url
-    )
+    req_cc = next(r for r in detail_requests if "/provider/CC045778/" in r.url)
     assert req_cc.meta["sc_provider_id"] == "CC045778"
     assert req_cc.meta["latitude"] == "32.776475"
 
     # Provider 99999 has no coords but should still be requested
-    req_99999 = next(
-        r for r in detail_requests if "/provider/99999/" in r.url
-    )
+    req_99999 = next(r for r in detail_requests if "/provider/99999/" in r.url)
     assert req_99999.meta["sc_provider_id"] == "99999"
     assert req_99999.meta["latitude"] is None
     assert req_99999.meta["longitude"] is None
 
     # Pagination: "Next" link should yield another search request
-    pagination_requests = [
-        r for r in results if "provider-search" in r.url
-    ]
+    pagination_requests = [r for r in results if "provider-search" in r.url]
     assert len(pagination_requests) == 1
     assert "page=2" in pagination_requests[0].url
     assert pagination_requests[0].meta["page"] == 2
@@ -402,9 +392,7 @@ def test_parse_search_page_last_page(spider):
 
 
 def test_parse_detail_golden(spider):
-    request = Request(
-        url="https://www.scchildcare.org/provider/24680/bright-horizons/"
-    )
+    request = Request(url="https://www.scchildcare.org/provider/24680/bright-horizons/")
     request.meta["sc_provider_id"] = "24680"
     request.meta["latitude"] = "34.008744"
     request.meta["longitude"] = "-81.040186"
@@ -426,10 +414,7 @@ def test_parse_detail_golden(spider):
     assert item["latitude"] == "34.008744"
     assert item["longitude"] == "-81.040186"
 
-    assert (
-        item["provider_name"]
-        == "Bright Horizons at Columbia Federal Child Development Center"
-    )
+    assert item["provider_name"] == "Bright Horizons at Columbia Federal Child Development Center"
     assert item["provider_type"] == "Child Care Center"
     assert item["sc_abc_quality_rating"] == "A+"
     assert item["administrator"] == "Bright Horizons Family Solutions"
@@ -455,9 +440,7 @@ def test_parse_detail_golden(spider):
     first_insp = item["inspections"][0]
     assert first_insp["date"] == "10/15/2025"
     assert first_insp["type"] == "Routine"
-    assert first_insp["report_url"].endswith(
-        "/inspection-reports/30725-2025-10-15.pdf"
-    )
+    assert first_insp["report_url"].endswith("/inspection-reports/30725-2025-10-15.pdf")
     assert first_insp["sc_alert_count"] == 2
     assert first_insp["sc_alert_resolved_count"] == 1
 
@@ -483,9 +466,7 @@ def test_parse_detail_golden(spider):
 
 
 def test_parse_detail_exempt(spider):
-    request = Request(
-        url="https://www.scchildcare.org/provider/EX001/grandmas-house/"
-    )
+    request = Request(url="https://www.scchildcare.org/provider/EX001/grandmas-house/")
     request.meta["sc_provider_id"] = "EX001"
     request.meta["latitude"] = None
     request.meta["longitude"] = None

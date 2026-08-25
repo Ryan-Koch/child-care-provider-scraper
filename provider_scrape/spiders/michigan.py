@@ -20,20 +20,89 @@ PAGE_SIZE = 200
 # caps unfiltered searches at ~2200 records. We search per-county to stay
 # under this limit (the largest county, Wayne, has ~1900 providers).
 MICHIGAN_COUNTIES = [
-    "Alcona", "Alger", "Allegan", "Alpena", "Antrim", "Arenac", "Baraga",
-    "Barry", "Bay", "Benzie", "Berrien", "Branch", "Calhoun", "Cass",
-    "Charlevoix", "Cheboygan", "Chippewa", "Clare", "Clinton", "Crawford",
-    "Delta", "Dickinson", "Eaton", "Emmet", "Grand Traverse", "Genesee",
-    "Gladwin", "Gogebic", "Gratiot", "Hillsdale", "Houghton", "Huron",
-    "Ingham", "Ionia", "Iosco", "Iron", "Isabella", "Jackson", "Kalamazoo",
-    "Kalkaska", "Kent", "Keweenaw", "Lake", "Lapeer", "Leelanau", "Lenawee",
-    "Livingston", "Luce", "Mackinac", "Macomb", "Manistee", "Marquette",
-    "Mason", "Mecosta", "Menominee", "Midland", "Missaukee", "Monroe",
-    "Montcalm", "Montmorency", "Muskegon", "Newaygo", "Oakland", "Oceana",
-    "Ogemaw", "Ontonagon", "Osceola", "Oscoda", "Otsego", "Ottawa",
-    "Presque Isle", "Roscommon", "Saginaw", "Sanilac", "Schoolcraft",
-    "Shiawassee", "St Clair", "St Joseph", "Tuscola", "Van Buren",
-    "Washtenaw", "Wayne", "Wexford",
+    "Alcona",
+    "Alger",
+    "Allegan",
+    "Alpena",
+    "Antrim",
+    "Arenac",
+    "Baraga",
+    "Barry",
+    "Bay",
+    "Benzie",
+    "Berrien",
+    "Branch",
+    "Calhoun",
+    "Cass",
+    "Charlevoix",
+    "Cheboygan",
+    "Chippewa",
+    "Clare",
+    "Clinton",
+    "Crawford",
+    "Delta",
+    "Dickinson",
+    "Eaton",
+    "Emmet",
+    "Grand Traverse",
+    "Genesee",
+    "Gladwin",
+    "Gogebic",
+    "Gratiot",
+    "Hillsdale",
+    "Houghton",
+    "Huron",
+    "Ingham",
+    "Ionia",
+    "Iosco",
+    "Iron",
+    "Isabella",
+    "Jackson",
+    "Kalamazoo",
+    "Kalkaska",
+    "Kent",
+    "Keweenaw",
+    "Lake",
+    "Lapeer",
+    "Leelanau",
+    "Lenawee",
+    "Livingston",
+    "Luce",
+    "Mackinac",
+    "Macomb",
+    "Manistee",
+    "Marquette",
+    "Mason",
+    "Mecosta",
+    "Menominee",
+    "Midland",
+    "Missaukee",
+    "Monroe",
+    "Montcalm",
+    "Montmorency",
+    "Muskegon",
+    "Newaygo",
+    "Oakland",
+    "Oceana",
+    "Ogemaw",
+    "Ontonagon",
+    "Osceola",
+    "Oscoda",
+    "Otsego",
+    "Ottawa",
+    "Presque Isle",
+    "Roscommon",
+    "Saginaw",
+    "Sanilac",
+    "Schoolcraft",
+    "Shiawassee",
+    "St Clair",
+    "St Joseph",
+    "Tuscola",
+    "Van Buren",
+    "Washtenaw",
+    "Wayne",
+    "Wexford",
 ]
 
 # Aura descriptor for OmniStudio Apex action execution
@@ -153,14 +222,9 @@ class MichiganSpider(scrapy.Spider):
             self.logger.error("Could not extract fwuid from initial page")
             return
 
-        self.logger.info(
-            f"Extracted fwuid: {fwuid} — launching searches for "
-            f"{len(MICHIGAN_COUNTIES)} counties"
-        )
+        self.logger.info(f"Extracted fwuid: {fwuid} — launching searches for {len(MICHIGAN_COUNTIES)} counties")
         for county in MICHIGAN_COUNTIES:
-            yield self._build_search_request(
-                fwuid, page_number=1, county=county
-            )
+            yield self._build_search_request(fwuid, page_number=1, county=county)
 
     def parse_search(self, response):
         """Parse search results, yield detail requests, and handle pagination."""
@@ -181,17 +245,14 @@ class MichiganSpider(scrapy.Spider):
 
         # The returnValue is double-encoded: the outer returnValue contains
         # a "returnValue" key whose value is a JSON string
-        return_value = self._decode_return_value(
-            search_result.get("returnValue", {})
-        )
+        return_value = self._decode_return_value(search_result.get("returnValue", {}))
         results = return_value.get("results", [])
         total_records = return_value.get("totalRecords", 0)
         record_end = return_value.get("recordEnd", 0)
         current_page = response.meta["page_number"]
 
         self.logger.info(
-            f"[{county}] page {current_page}: got {len(results)} results, "
-            f"{record_end}/{total_records} total"
+            f"[{county}] page {current_page}: got {len(results)} results, {record_end}/{total_records} total"
         )
 
         # Yield batched detail requests for each provider
@@ -203,9 +264,7 @@ class MichiganSpider(scrapy.Spider):
         # Paginate if there are more records
         if record_end < total_records:
             next_page = current_page + 1
-            yield self._build_search_request(
-                fwuid, page_number=next_page, county=county
-            )
+            yield self._build_search_request(fwuid, page_number=next_page, county=county)
 
     def parse_detail(self, response):
         """Parse the batched detail response (4 API methods) into a ProviderItem."""
@@ -223,9 +282,7 @@ class MichiganSpider(scrapy.Spider):
         detail_raw = self._extract_decoded_return_value(data, action_index=0)
         operational_raw = self._extract_decoded_return_value(data, action_index=1)
         service_raw = self._extract_decoded_return_value(data, action_index=2)
-        docs_info = (
-            self._extract_decoded_return_value(data, action_index=3) or {}
-        )
+        docs_info = self._extract_decoded_return_value(data, action_index=3) or {}
 
         # getDetailInfo returns an array — take the first element
         if isinstance(detail_raw, list):
@@ -247,30 +304,15 @@ class MichiganSpider(scrapy.Spider):
 
         item = ProviderItem()
         item["source_state"] = "Michigan"
-        item["provider_url"] = (
-            f"https://cclb.michigan.gov/s/licensed-child-care-facility"
-            f"?id={provider_id}"
-        )
+        item["provider_url"] = f"https://cclb.michigan.gov/s/licensed-child-care-facility?id={provider_id}"
 
         # Basic fields from search data, overridden by detail when available.
         # Note: search data uses lowercase "name" while detail uses "Name".
-        item["provider_name"] = (
-            detail_info.get("Name")
-            or search_data.get("name")
-            or search_data.get("Name")
-        )
-        item["license_number"] = (
-            detail_info.get("LicenseNumber") or search_data.get("LicenseNumber")
-        )
-        item["provider_type"] = (
-            detail_info.get("Type") or search_data.get("LicenseType")
-        )
-        item["status"] = (
-            detail_info.get("Status") or search_data.get("Status")
-        )
-        item["mi_license_status"] = (
-            detail_info.get("LicenseStatus") or search_data.get("LicenseStatus")
-        )
+        item["provider_name"] = detail_info.get("Name") or search_data.get("name") or search_data.get("Name")
+        item["license_number"] = detail_info.get("LicenseNumber") or search_data.get("LicenseNumber")
+        item["provider_type"] = detail_info.get("Type") or search_data.get("LicenseType")
+        item["status"] = detail_info.get("Status") or search_data.get("Status")
+        item["mi_license_status"] = detail_info.get("LicenseStatus") or search_data.get("LicenseStatus")
 
         # Address - strip trailing "null"
         raw_address = detail_info.get("Address") or search_data.get("Address")
@@ -278,20 +320,14 @@ class MichiganSpider(scrapy.Spider):
 
         item["phone"] = detail_info.get("Phone")
         # The API field is named "Country" but actually contains the county
-        item["county"] = (
-            detail_info.get("Country") or search_data.get("BillingCountry")
-        )
+        item["county"] = detail_info.get("Country") or search_data.get("BillingCountry")
         item["capacity"] = detail_info.get("Capacity")
-        item["license_holder"] = (
-            detail_info.get("LicenseName") or search_data.get("LicenseName")
-        )
+        item["license_holder"] = detail_info.get("LicenseName") or search_data.get("LicenseName")
         item["license_begin_date"] = detail_info.get("EffectiveDate")
         item["license_expiration"] = detail_info.get("ExpirationDate")
 
         # Michigan-specific fields
-        item["mi_licensee_address"] = clean_address(
-            detail_info.get("LicenseeAddress")
-        )
+        item["mi_licensee_address"] = clean_address(detail_info.get("LicenseeAddress"))
 
         # Operational hours
         item["hours"] = format_hours(op_details)
@@ -463,13 +499,13 @@ class MichiganSpider(scrapy.Spider):
 
         # Pattern 2: URL-encoded fwuid in script src/data-src attributes
         # e.g., %22fwuid%22%3A%22TOKEN_VALUE%22
-        match = re.search(r'%22fwuid%22%3A%22([^%]+)%22', body)
+        match = re.search(r"%22fwuid%22%3A%22([^%]+)%22", body)
         if match:
             return match.group(1)
 
         # Pattern 3: fwuid in the auraFW JS URL path segment
         # e.g., /s/sfsites/auraFW/javascript/TOKEN_VALUE/aura_prod.js
-        match = re.search(r'/auraFW/javascript/([A-Za-z0-9_-]{20,})/', body)
+        match = re.search(r"/auraFW/javascript/([A-Za-z0-9_-]{20,})/", body)
         if match:
             return match.group(1)
 

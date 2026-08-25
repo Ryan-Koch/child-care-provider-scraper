@@ -3,6 +3,7 @@ from scrapy.http import TextResponse, Request
 from provider_scrape.spiders.alabama import AlabamaSpider
 from provider_scrape.items import ProviderItem
 
+
 class AlabamaSpiderTest(unittest.TestCase):
     def setUp(self):
         self.spider = AlabamaSpider()
@@ -32,20 +33,18 @@ class AlabamaSpiderTest(unittest.TestCase):
         </body>
         </html>
         """
-        response = TextResponse(url='https://apps.dhr.alabama.gov/daycare/daycare_search',
-                                body=html,
-                                encoding='utf-8')
-        
+        response = TextResponse(url="https://apps.dhr.alabama.gov/daycare/daycare_search", body=html, encoding="utf-8")
+
         results = list(self.spider.parse_results(response))
-        
+
         # Expect 1 Request for detail and 1 Request for next page
         self.assertEqual(len(results), 2)
-        
+
         # Check detail request
         req1 = results[0]
         self.assertIsInstance(req1, Request)
-        self.assertIn('daycare_results.aspx?ID=128', req1.url)
-        
+        self.assertIn("daycare_results.aspx?ID=128", req1.url)
+
         # Check pagination request
         req2 = results[1]
         self.assertIsInstance(req2, Request)
@@ -83,26 +82,27 @@ class AlabamaSpiderTest(unittest.TestCase):
         <table id="MainContent_GridView2"><tr><td>No Substantiated Complaints</td></tr></table>
         <table id="MainContent_GridView4"><tr><td>No Evaluation/Deficiency Reports</td></tr></table>
         """
-        
-        response = TextResponse(url='https://apps.dhr.alabama.gov/daycare/daycare_results?ID=589',
-                                body=html,
-                                encoding='utf-8')
-        
+
+        response = TextResponse(
+            url="https://apps.dhr.alabama.gov/daycare/daycare_results?ID=589", body=html, encoding="utf-8"
+        )
+
         results = list(self.spider.parse_detail(response))
         item = results[0]
-        
-        self.assertIsInstance(item, ProviderItem)
-        self.assertEqual(item['license_holder'], 'JOHNSON, DARRYL ')
-        self.assertEqual(item['provider_name'], 'GLAD TIDINGS DAY CARE')
-        self.assertEqual(item['status'], 'Licensed')
-        self.assertEqual(item['administrator'], 'JOHNSON, KATRINA M')
-        self.assertEqual(item['phone'], '(205) 798-1248')
-        self.assertEqual(item['al_quality_rating'], '1 Star')
-        self.assertEqual(item['hours'], '07:00 AM - 06:00 PM')
-        self.assertEqual(item['ages_served'], '2 Years To 14 Years')
-        self.assertIn('1400 BRISBANE AVENUE', item['al_mailing_address'])
-        self.assertIn('1400 BRISBANE AVENUE', item['address'])
-        self.assertEqual(item['al_accreditations'], [])
 
-if __name__ == '__main__':
+        self.assertIsInstance(item, ProviderItem)
+        self.assertEqual(item["license_holder"], "JOHNSON, DARRYL ")
+        self.assertEqual(item["provider_name"], "GLAD TIDINGS DAY CARE")
+        self.assertEqual(item["status"], "Licensed")
+        self.assertEqual(item["administrator"], "JOHNSON, KATRINA M")
+        self.assertEqual(item["phone"], "(205) 798-1248")
+        self.assertEqual(item["al_quality_rating"], "1 Star")
+        self.assertEqual(item["hours"], "07:00 AM - 06:00 PM")
+        self.assertEqual(item["ages_served"], "2 Years To 14 Years")
+        self.assertIn("1400 BRISBANE AVENUE", item["al_mailing_address"])
+        self.assertIn("1400 BRISBANE AVENUE", item["address"])
+        self.assertEqual(item["al_accreditations"], [])
+
+
+if __name__ == "__main__":
     unittest.main()

@@ -76,15 +76,9 @@ FL_PROVIDER_FULL = {
     },
     "vpk": {
         "accreditation": None,
-        "classRoom": [
-            {"classType": "540", "class": [{"classRoomCode": "AF24"}]}
-        ],
-        "curriculum": [
-            {"name": "The Creative Curriculum for Preschool (3 to K)"}
-        ],
-        "instructorCredential": [
-            {"name": "ClassAF24: Received a B.S. or a B.A"}
-        ],
+        "classRoom": [{"classType": "540", "class": [{"classRoomCode": "AF24"}]}],
+        "curriculum": [{"name": "The Creative Curriculum for Preschool (3 to K)"}],
+        "instructorCredential": [{"name": "ClassAF24: Received a B.S. or a B.A"}],
     },
     "service": [
         {"name": "Drop In"},
@@ -189,6 +183,7 @@ FL_PROVIDER_EXEMPT = {
 
 # ---- _num ----
 
+
 def test_num_unwraps_parsed_value():
     assert _num({"source": "5.0", "parsedValue": 5}) == 5
     assert _num({"source": "0.0", "parsedValue": 0}) == 0
@@ -207,6 +202,7 @@ def test_num_passes_through_unrelated_dicts():
 
 
 # ---- counties / URL builder ----
+
 
 def test_county_list_has_67_unique_entries():
     assert len(FL_COUNTIES) == 67
@@ -228,10 +224,7 @@ def test_build_county_url_encodes_spaces_as_percent_20():
 
 def test_build_spa_search_url_simple():
     url = build_spa_search_url("Miami-Dade")
-    assert url == (
-        "https://caressearch.myflfamilies.com/PublicSearch/Search"
-        "?term=Miami-Dade"
-    )
+    assert url == ("https://caressearch.myflfamilies.com/PublicSearch/Search?term=Miami-Dade")
 
 
 def test_build_spa_search_url_encodes_space():
@@ -242,55 +235,51 @@ def test_build_spa_search_url_encodes_space():
 
 # ---- response_matches_county ----
 
+
 def test_response_matches_county_plain():
-    api_url = (
-        "https://caresapi.myflfamilies.com/api/publicSearch/Search"
-        "?searchText=Miami-Dade&tag=Counties"
-    )
+    api_url = "https://caresapi.myflfamilies.com/api/publicSearch/Search?searchText=Miami-Dade&tag=Counties"
     assert response_matches_county(api_url, "Miami-Dade") is True
 
 
 def test_response_matches_county_encoded_space():
-    api_url = (
-        "https://caresapi.myflfamilies.com/api/publicSearch/Search"
-        "?searchText=Palm%20Beach&tag=Counties"
-    )
+    api_url = "https://caresapi.myflfamilies.com/api/publicSearch/Search?searchText=Palm%20Beach&tag=Counties"
     assert response_matches_county(api_url, "Palm Beach") is True
 
 
 def test_response_matches_county_case_insensitive():
-    api_url = (
-        "https://caresapi.myflfamilies.com/api/publicSearch/Search"
-        "?searchText=miami-dade&tag=Counties"
-    )
+    api_url = "https://caresapi.myflfamilies.com/api/publicSearch/Search?searchText=miami-dade&tag=Counties"
     assert response_matches_county(api_url, "Miami-Dade") is True
 
 
 def test_response_matches_county_wrong_county():
-    api_url = (
-        "https://caresapi.myflfamilies.com/api/publicSearch/Search"
-        "?searchText=Lake&tag=Counties"
-    )
+    api_url = "https://caresapi.myflfamilies.com/api/publicSearch/Search?searchText=Lake&tag=Counties"
     assert response_matches_county(api_url, "Liberty") is False
 
 
 def test_response_matches_county_non_api_url():
     # Resource on the SPA's domain — not the API call we care about
-    assert response_matches_county(
-        "https://caressearch.myflfamilies.com/PublicSearch/Search?term=Lake",
-        "Lake",
-    ) is False
+    assert (
+        response_matches_county(
+            "https://caressearch.myflfamilies.com/PublicSearch/Search?term=Lake",
+            "Lake",
+        )
+        is False
+    )
 
 
 def test_response_matches_county_missing_searchtext():
     # Some unrelated call to the same path without a searchText param
-    assert response_matches_county(
-        "https://caresapi.myflfamilies.com/api/publicSearch/Search?tag=Counties",
-        "Lake",
-    ) is False
+    assert (
+        response_matches_county(
+            "https://caresapi.myflfamilies.com/api/publicSearch/Search?tag=Counties",
+            "Lake",
+        )
+        is False
+    )
 
 
 # ---- parse_provider (full record) ----
+
 
 def test_parse_provider_core_fields(spider):
     item = spider.parse_provider(FL_PROVIDER_FULL, "Miami-Dade")
@@ -372,15 +361,9 @@ def test_parse_provider_infant_inferred_from_services(spider):
 
 def test_parse_provider_vpk_structure_kept_as_dict(spider):
     item = spider.parse_provider(FL_PROVIDER_FULL, "Miami-Dade")
-    assert item["fl_vpk_classrooms"] == [
-        {"classType": "540", "class": [{"classRoomCode": "AF24"}]}
-    ]
-    assert item["fl_vpk_curriculum"] == [
-        {"name": "The Creative Curriculum for Preschool (3 to K)"}
-    ]
-    assert item["fl_vpk_instructor_credentials"] == [
-        {"name": "ClassAF24: Received a B.S. or a B.A"}
-    ]
+    assert item["fl_vpk_classrooms"] == [{"classType": "540", "class": [{"classRoomCode": "AF24"}]}]
+    assert item["fl_vpk_curriculum"] == [{"name": "The Creative Curriculum for Preschool (3 to K)"}]
+    assert item["fl_vpk_instructor_credentials"] == [{"name": "ClassAF24: Received a B.S. or a B.A"}]
 
 
 def test_parse_provider_gold_seal_dict_preserved(spider):
@@ -393,6 +376,7 @@ def test_parse_provider_gold_seal_dict_preserved(spider):
 
 
 # ---- parse_provider (sparse record) ----
+
 
 def test_parse_provider_exempt_minimal_fields(spider):
     item = spider.parse_provider(FL_PROVIDER_EXEMPT, "Miami-Dade")
@@ -410,6 +394,7 @@ def test_parse_provider_exempt_minimal_fields(spider):
 
 
 # ---- parse_inspections ----
+
 
 def test_parse_inspections_flattens_year_buckets(spider):
     inspections = spider.parse_inspections(FL_PROVIDER_FULL["inspection"])

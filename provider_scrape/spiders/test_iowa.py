@@ -61,23 +61,20 @@ def titan_page():
 
 # --- response builders ------------------------------------------------- #
 
+
 def titan_response(payload, page=0):
     req = Request(TITAN_SEARCH_URL, meta={"page": page})
-    return TextResponse(url=titan_search_url(page), body=json.dumps(payload).encode(),
-                        encoding="utf-8", request=req)
+    return TextResponse(url=titan_search_url(page), body=json.dumps(payload).encode(), encoding="utf-8", request=req)
 
 
 def pins_response(payload):
     req = Request(PINS_URL, method="POST")
-    return TextResponse(url=PINS_URL, body=json.dumps(payload).encode(),
-                        encoding="utf-8", request=req)
+    return TextResponse(url=PINS_URL, body=json.dumps(payload).encode(), encoding="utf-8", request=req)
 
 
 def reports_response(payload, url, item, provider_id, expected_counts):
-    req = Request(url, meta={"item": item, "provider_id": provider_id,
-                              "expected_counts": expected_counts})
-    return TextResponse(url=url, body=json.dumps(payload).encode(),
-                        encoding="utf-8", request=req)
+    req = Request(url, meta={"item": item, "provider_id": provider_id, "expected_counts": expected_counts})
+    return TextResponse(url=url, body=json.dumps(payload).encode(), encoding="utf-8", request=req)
 
 
 def split_requests(outputs, expected_url):
@@ -88,6 +85,7 @@ def split_requests(outputs, expected_url):
 
 
 # --- pure helper unit tests --------------------------------------------- #
+
 
 def test_titan_search_url_builds_page_query():
     url = titan_search_url(5)
@@ -106,18 +104,18 @@ def test_reports_url_builds_provider_and_type_query():
 
 # --- agesServed -> booleans (case 2) ------------------------------------ #
 
+
 def test_ages_served_flags_full_vocabulary():
-    ages = ("Infant(0-12), Infant(13-23), Toddler(2yo), Preschool(3yo), "
-            "Preschool(4-5yo), Before&After School, School Age")
+    ages = (
+        "Infant(0-12), Infant(13-23), Toddler(2yo), Preschool(3yo), Preschool(4-5yo), Before&After School, School Age"
+    )
     flags = ages_served_flags(ages)
-    assert flags == {"infant": True, "toddler": True, "preschool": True,
-                      "school": True}
+    assert flags == {"infant": True, "toddler": True, "preschool": True, "school": True}
 
 
 def test_ages_served_flags_partial_list():
     # 6320's real agesServed: only preschool + school tokens present.
-    flags = ages_served_flags(
-        "Preschool(3yo), Preschool(4-5yo), Before&After School")
+    flags = ages_served_flags("Preschool(3yo), Preschool(4-5yo), Before&After School")
     assert flags == {"preschool": True, "school": True}
     assert "infant" not in flags
     assert "toddler" not in flags
@@ -137,18 +135,17 @@ def test_ages_served_flags_empty():
 
 # --- hours rendering (case 3) ------------------------------------------- #
 
+
 def test_format_hours_uniform_week_collapses(pins_sample):
     # 45047: identical hours every day of the week.
     pin = _pin(pins_sample, 45047)
-    assert format_hours(pin["formattedHoursOfOperation"]) == \
-        "Monday-Sunday 12:00 AM - 11:45 PM"
+    assert format_hours(pin["formattedHoursOfOperation"]) == "Monday-Sunday 12:00 AM - 11:45 PM"
 
 
 def test_format_hours_null_weekend_collapses_listed_days(pins_sample):
     # 6320: Mon-Thu share one time, Fri/Sat/Sun are null (closed).
     pin = _pin(pins_sample, 6320)
-    assert format_hours(pin["formattedHoursOfOperation"]) == \
-        "Monday-Thursday 7:45 AM - 3:15 PM"
+    assert format_hours(pin["formattedHoursOfOperation"]) == "Monday-Thursday 7:45 AM - 3:15 PM"
 
 
 def test_format_hours_mixed_days_lists_each(pins_sample):
@@ -170,13 +167,13 @@ def test_format_hours_all_null_is_none(pins_sample):
 
 # --- ia_openings_by_age (case 4) ---------------------------------------- #
 
+
 def test_openings_by_age_assembled_from_flat_keys(pins_sample):
     pin = _pin(pins_sample, 45047)
     bands = openings_by_age(pin)
     assert len(bands) == 7
     infant_band = bands[0]
-    assert infant_band == {"ageGroup": "Infant (0-12 mo.)", "fullTime": 1,
-                            "partTime": 2}
+    assert infant_band == {"ageGroup": "Infant (0-12 mo.)", "fullTime": 1, "partTime": 2}
 
 
 def test_openings_by_age_all_zero(pins_sample):
@@ -188,6 +185,7 @@ def test_openings_by_age_all_zero(pins_sample):
 
 
 # --- build_provider_item: golden path (case 1) --------------------------- #
+
 
 def test_build_provider_item_golden_joined(pins_sample, titan_page):
     c3 = _pin(pins_sample, 45047)
@@ -258,6 +256,7 @@ def test_zero_padded_license_id_join(pins_sample, titan_page):
 
 # --- missing-data path (case 5) ------------------------------------------ #
 
+
 def test_missing_data_path_no_bogus_fields(pins_sample, titan_page):
     # 52883: website null, iQ4KLevel null, totalOpenings 0 (present, not
     # missing) -> accepting_new_children must be an explicit False, not
@@ -273,6 +272,7 @@ def test_missing_data_path_no_bogus_fields(pins_sample, titan_page):
 
 
 # --- C3-only / Titan-only union paths (cases 6, 7) ----------------------- #
+
 
 def test_c3_only_row_omits_titan_fields(pins_sample):
     # 52674: confirmed live to have no Titan row (§11 C3-only id).
@@ -316,6 +316,7 @@ def test_titan_only_in_home_row(titan_page):
 
 # --- county suffix stripping (case 8) ------------------------------------ #
 
+
 def test_county_suffix_stripped_from_c3(pins_sample, titan_page):
     c3 = _pin(pins_sample, 45047)
     assert c3["county"] == "Polk County"
@@ -332,6 +333,7 @@ def test_titan_bare_county_unchanged(titan_page):
 
 # --- zipCode int -> string (case 9) -------------------------------------- #
 
+
 def test_zip_code_int_to_string(pins_sample):
     c3 = _pin(pins_sample, 45047)
     assert isinstance(c3["zipCode"], int)
@@ -341,6 +343,7 @@ def test_zip_code_int_to_string(pins_sample):
 
 
 # --- Titan pagination chain (case 10) ------------------------------------ #
+
 
 def test_parse_titan_first_page_schedules_next_page(spider, titan_page):
     outputs = list(spider.parse_titan(titan_response(titan_page, page=0)))
@@ -363,6 +366,7 @@ def test_parse_titan_last_page_schedules_pins_post(spider, titan_page):
 
 # --- short-harvest warning (case 11) -------------------------------------- #
 
+
 def test_parse_titan_short_harvest_logs_warning(spider, titan_page, caplog):
     # Only 6 rows are ever fed in (this fixture), but absoluteTotal is the
     # real 3,370 -- feeding it as the LAST page must trip the short-harvest
@@ -384,16 +388,20 @@ def test_parse_titan_exact_harvest_no_warning(spider, titan_page, caplog):
 
 # --- facility_category via the pipeline (case 12) ------------------------- #
 
-@pytest.mark.parametrize("provider_type,category", [
-    ("Licensed Center", "center"),
-    ("Registered Child Development Home A", "family_home"),
-    ("Registered Child Development Home B", "family_home"),
-    ("Registered Child Development Home C", "family_home"),
-    ("Registered Child Development Home C1", "family_home"),
-    ("Non-Registered Child Care Home", "family_home"),
-    ("Exempt from Licensing", "exempt"),
-    ("In-Home", "other"),
-])
+
+@pytest.mark.parametrize(
+    "provider_type,category",
+    [
+        ("Licensed Center", "center"),
+        ("Registered Child Development Home A", "family_home"),
+        ("Registered Child Development Home B", "family_home"),
+        ("Registered Child Development Home C", "family_home"),
+        ("Registered Child Development Home C1", "family_home"),
+        ("Non-Registered Child Care Home", "family_home"),
+        ("Exempt from Licensing", "exempt"),
+        ("In-Home", "other"),
+    ],
+)
 def test_iowa_facility_category_mapping(provider_type, category, caplog):
     with caplog.at_level("WARNING"):
         result = norm.facility_category_from_type(provider_type)
@@ -416,12 +424,15 @@ def test_iowa_center_facility_category_via_pipeline(pins_sample, titan_page):
 
 # --- inspections (case 14) ------------------------------------------------ #
 
+
 def test_parse_reports_golden_path(spider):
     reports = _load_fixture("ia_reports.json")
     c3_less_item = ProviderItem()
     c3_less_item["provider_name"] = "Heavenly Creations Childcare & Learning Center"
-    url = "https://secureapp.dhs.state.ia.us/dhs_titan_public/ChildCare/" \
-          "GetProviderComplaintAndComplicanceReportList?providerID=45047&TypeOfCareID=4"
+    url = (
+        "https://secureapp.dhs.state.ia.us/dhs_titan_public/ChildCare/"
+        "GetProviderComplaintAndComplicanceReportList?providerID=45047&TypeOfCareID=4"
+    )
     response = reports_response(reports, url, c3_less_item, 45047, (3, 0, 1))
 
     item = next(spider.parse_reports(response))
@@ -429,10 +440,11 @@ def test_parse_reports_golden_path(spider):
     assert all(isinstance(i, InspectionItem) for i in item["inspections"])
     # FormID:13 row sits in RegulationCheckListReportList but self-describes
     # via FileTypeDescription as "Compliance Report" -- that must win (§5.13).
-    checklist_derived = [i for i in item["inspections"]
-                         if i["report_url"].endswith("zJhZ0DNMZvk%3d"
-                                                       "&formID=pTlS6i6%2f1Nc%3d"
-                                                       "&createdDate=08/01/2025")]
+    checklist_derived = [
+        i
+        for i in item["inspections"]
+        if i["report_url"].endswith("zJhZ0DNMZvk%3d&formID=pTlS6i6%2f1Nc%3d&createdDate=08/01/2025")
+    ]
     assert checklist_derived and checklist_derived[0]["type"] == "Compliance Report"
     assert spider.item_count == 1
 
@@ -440,8 +452,10 @@ def test_parse_reports_golden_path(spider):
 def test_parse_reports_report_url_not_double_encoded(spider):
     reports = _load_fixture("ia_reports.json")
     item = ProviderItem()
-    url = "https://secureapp.dhs.state.ia.us/dhs_titan_public/ChildCare/" \
-          "GetProviderComplaintAndComplicanceReportList?providerID=45047&TypeOfCareID=4"
+    url = (
+        "https://secureapp.dhs.state.ia.us/dhs_titan_public/ChildCare/"
+        "GetProviderComplaintAndComplicanceReportList?providerID=45047&TypeOfCareID=4"
+    )
     response = reports_response(reports, url, item, 45047, (3, 0, 1))
     result = next(spider.parse_reports(response))
     urls = [i["report_url"] for i in result["inspections"]]
@@ -454,8 +468,10 @@ def test_parse_reports_report_url_not_double_encoded(spider):
 def test_parse_reports_date_conversion(spider):
     reports = _load_fixture("ia_reports.json")
     item = ProviderItem()
-    url = "https://secureapp.dhs.state.ia.us/dhs_titan_public/ChildCare/" \
-          "GetProviderComplaintAndComplicanceReportList?providerID=45047&TypeOfCareID=4"
+    url = (
+        "https://secureapp.dhs.state.ia.us/dhs_titan_public/ChildCare/"
+        "GetProviderComplaintAndComplicanceReportList?providerID=45047&TypeOfCareID=4"
+    )
     response = reports_response(reports, url, item, 45047, (3, 0, 1))
     result = next(spider.parse_reports(response))
     dates = sorted(i["date"] for i in result["inspections"])
@@ -484,14 +500,13 @@ def test_parse_reports_no_request_for_zero_counts(spider, pins_sample, titan_pag
     for row in titan_page["ComplianceList"]:
         spider.licensing[row["ProviderID"]] = row
     outputs = list(spider.parse_pins(pins_response(pins_sample)))
-    report_reqs = [r for r in outputs if isinstance(r, Request)
-                   and "GetProviderComplaintAndComplicanceReportList" in r.url]
-    zero_count_reqs = [r for r in report_reqs
-                       if r.meta.get("provider_id") == 52883]
+    report_reqs = [
+        r for r in outputs if isinstance(r, Request) and "GetProviderComplaintAndComplicanceReportList" in r.url
+    ]
+    zero_count_reqs = [r for r in report_reqs if r.meta.get("provider_id") == 52883]
     assert zero_count_reqs == []
     # 52883 is still emitted as a finished item (no inspections).
-    zero_count_items = [it for it in outputs if isinstance(it, ProviderItem)
-                        and it.get("license_number") == "52883"]
+    zero_count_items = [it for it in outputs if isinstance(it, ProviderItem) and it.get("license_number") == "52883"]
     assert len(zero_count_items) == 1
     assert "inspections" not in zero_count_items[0]
 
@@ -499,8 +514,10 @@ def test_parse_reports_no_request_for_zero_counts(spider, pins_sample, titan_pag
 def test_parse_reports_count_mismatch_logged(spider, caplog):
     reports = _load_fixture("ia_reports.json")
     item = ProviderItem()
-    url = "https://secureapp.dhs.state.ia.us/dhs_titan_public/ChildCare/" \
-          "GetProviderComplaintAndComplicanceReportList?providerID=45047&TypeOfCareID=4"
+    url = (
+        "https://secureapp.dhs.state.ia.us/dhs_titan_public/ChildCare/"
+        "GetProviderComplaintAndComplicanceReportList?providerID=45047&TypeOfCareID=4"
+    )
     # search row claimed 5 compliance reports; the fetched list only has 3.
     response = reports_response(reports, url, item, 45047, (5, 0, 1))
     with caplog.at_level("WARNING"):
@@ -511,9 +528,16 @@ def test_parse_reports_count_mismatch_logged(spider, caplog):
 
 # --- IsG360Report / IsLegacy branches (never seen live) ------------------- #
 
+
 def test_build_report_url_g360_branch_logs_warning(caplog):
-    rec = {"IsG360Report": True, "IsLegacy": False, "FileID": 999,
-           "CrypticID": "x", "CrypticFormID": "y", "CreatedDate": None}
+    rec = {
+        "IsG360Report": True,
+        "IsLegacy": False,
+        "FileID": 999,
+        "CrypticID": "x",
+        "CrypticFormID": "y",
+        "CreatedDate": None,
+    }
     with caplog.at_level("WARNING"):
         url = build_report_url(rec)
     assert url == (
@@ -525,9 +549,13 @@ def test_build_report_url_g360_branch_logs_warning(caplog):
 
 def test_build_report_url_legacy_branch_uses_version_time(caplog):
     # The legacy shape keys off VersionTime, not CreatedDate (§6.5).
-    rec = {"IsG360Report": False, "IsLegacy": True,
-           "CrypticID": "abc%3d", "VersionTime": "/Date(1784259000000)/",
-           "CreatedDate": "/Date(1)/"}
+    rec = {
+        "IsG360Report": False,
+        "IsLegacy": True,
+        "CrypticID": "abc%3d",
+        "VersionTime": "/Date(1784259000000)/",
+        "CreatedDate": "/Date(1)/",
+    }
     with caplog.at_level("WARNING"):
         url = build_report_url(rec)
     assert url == (
@@ -538,9 +566,13 @@ def test_build_report_url_legacy_branch_uses_version_time(caplog):
 
 
 def test_build_report_url_capricadocument_default_branch():
-    rec = {"IsG360Report": False, "IsLegacy": False,
-           "CrypticID": "jzxFNdvCTp4%3d", "CrypticFormID": "0%2fUKhC%2fQNWY%3d",
-           "CreatedDate": "/Date(1784259000000)/"}
+    rec = {
+        "IsG360Report": False,
+        "IsLegacy": False,
+        "CrypticID": "jzxFNdvCTp4%3d",
+        "CrypticFormID": "0%2fUKhC%2fQNWY%3d",
+        "CreatedDate": "/Date(1784259000000)/",
+    }
     url = build_report_url(rec)
     assert url == (
         "https://secureapp.dhs.state.ia.us/dhs_titan_public/DocumentRepository"
@@ -550,14 +582,20 @@ def test_build_report_url_capricadocument_default_branch():
 
 
 def test_build_inspection_type_from_list_name_fallback():
-    rec = {"FileTypeDescription": None, "CreatedDate": "/Date(1784259000000)/",
-           "IsG360Report": False, "IsLegacy": False,
-           "CrypticID": "a", "CrypticFormID": "b"}
+    rec = {
+        "FileTypeDescription": None,
+        "CreatedDate": "/Date(1784259000000)/",
+        "IsG360Report": False,
+        "IsLegacy": False,
+        "CrypticID": "a",
+        "CrypticFormID": "b",
+    }
     entry = build_inspection(rec, "ComplaintReportList")
     assert entry["type"] == "Complaint Report"
 
 
 # --- pagination / crawl-level logging (closed()) --------------------------- #
+
 
 def test_closed_logs_short_item_count_warning(spider, caplog):
     spider.both_count = 10

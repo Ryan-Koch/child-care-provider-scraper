@@ -67,6 +67,7 @@ detail: delaware_plan.md Sec 6):
   Sec 6.6 -- ``geocoded_location.coordinates`` is GeoJSON: longitude first,
              latitude second -- the opposite of this project's field order.
 """
+
 from collections import defaultdict
 from urllib.parse import urlencode
 
@@ -83,14 +84,12 @@ PORTAL_LIST_URL = "https://education.delaware.gov/wp-json/occl/v1/facilities"
 # as `provider_url` for humans. Resolves for every id, including the 353 the
 # portal's own table omits, because the page queries Socrata by resource_id.
 DETAIL_URL_TMPL = (
-    "https://education.delaware.gov/families/birth-age-5/child_care_search/"
-    "facility-details/?license_number={}"
+    "https://education.delaware.gov/families/birth-age-5/child_care_search/facility-details/?license_number={}"
 )
 
 HEADERS = {
     "User-Agent": (
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like "
-        "Gecko) Chrome/151.0.0.0 Safari/537.36"
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
     ),
     "Accept": "application/json",
 }
@@ -290,8 +289,8 @@ def build_visit_items(compliance_rows, logger=None):
         if not license_number or not visit_date_raw:
             if logger:
                 logger.warning(
-                    "Delaware: compliance row missing license_number/visit "
-                    "date, skipped: %r", row,
+                    "Delaware: compliance row missing license_number/visit date, skipped: %r",
+                    row,
                 )
             continue
         visit_date = visit_date_raw[:10]
@@ -329,8 +328,8 @@ def build_complaint_items(complaint_rows, logger=None):
         if not resource_id:
             if logger:
                 logger.warning(
-                    "Delaware: complaint row missing resource_id, skipped: "
-                    "%r", row,
+                    "Delaware: complaint row missing resource_id, skipped: %r",
+                    row,
                 )
             continue
         item = InspectionItem()
@@ -434,8 +433,10 @@ class DelawareSpider(scrapy.Spider):
         yield self._page_request("compliance", 0)
         yield self._page_request("complaints", 0)
         yield scrapy.Request(
-            PORTAL_LIST_URL, callback=self.parse_portal_list,
-            errback=self.portal_list_errback, headers=HEADERS,
+            PORTAL_LIST_URL,
+            callback=self.parse_portal_list,
+            errback=self.portal_list_errback,
+            headers=HEADERS,
             dont_filter=True,
         )
 
@@ -444,15 +445,16 @@ class DelawareSpider(scrapy.Spider):
         page_num = offset // PAGE_SIZE + 1
         url = _socrata_page_url(cfg["url"], cfg["order"], PAGE_SIZE, offset)
         return scrapy.Request(
-            url, callback=self.parse_page, errback=self.page_errback,
+            url,
+            callback=self.parse_page,
+            errback=self.page_errback,
             headers=HEADERS,
             meta={"phase": phase, "offset": offset, "page_num": page_num},
             dont_filter=True,
         )
 
     def _accumulator(self, phase):
-        return self.compliance_rows if phase == "compliance" \
-            else self.complaint_rows
+        return self.compliance_rows if phase == "compliance" else self.complaint_rows
 
     def parse_page(self, response):
         phase = response.meta["phase"]
@@ -464,14 +466,19 @@ class DelawareSpider(scrapy.Spider):
             rows = None
         if not isinstance(rows, list):
             self.logger.warning(
-                "Delaware: %s page %d (offset=%d) returned a non-list body "
-                "-- treating as empty", phase, page_num, offset,
+                "Delaware: %s page %d (offset=%d) returned a non-list body -- treating as empty",
+                phase,
+                page_num,
+                offset,
             )
             rows = []
 
         self.logger.info(
-            "Delaware: %s page %d (offset=%d) -- %d rows", phase, page_num,
-            offset, len(rows),
+            "Delaware: %s page %d (offset=%d) -- %d rows",
+            phase,
+            page_num,
+            offset,
+            len(rows),
         )
 
         if phase == "providers":
@@ -488,9 +495,10 @@ class DelawareSpider(scrapy.Spider):
             if next_page_num > MAX_PAGES:
                 self.page_cap_hit_phases.add(phase)
                 self.logger.warning(
-                    "Delaware: %s hit the MAX_PAGES=%d cap at page %d -- "
-                    "stopping early, data may be truncated", phase,
-                    MAX_PAGES, page_num,
+                    "Delaware: %s hit the MAX_PAGES=%d cap at page %d -- stopping early, data may be truncated",
+                    phase,
+                    MAX_PAGES,
+                    page_num,
                 )
                 yield from self._finish_phase(phase)
                 return
@@ -509,8 +517,9 @@ class DelawareSpider(scrapy.Spider):
         phase = failure.request.meta.get("phase")
         self.non_200_count += 1
         self.logger.warning(
-            "Delaware: %s page request failed after retries (%s) -- phase "
-            "may be incomplete", phase, failure.value,
+            "Delaware: %s page request failed after retries (%s) -- phase may be incomplete",
+            phase,
+            failure.value,
         )
         if phase == "providers":
             return
@@ -547,12 +556,14 @@ class DelawareSpider(scrapy.Spider):
         else:
             self.logger.info(
                 "Delaware: portal list loaded -- %d ids (baseline ~%d)",
-                len(self.portal_ids), PORTAL_BASELINE,
+                len(self.portal_ids),
+                PORTAL_BASELINE,
             )
             if abs(len(self.portal_ids) - PORTAL_BASELINE) > PORTAL_DRIFT_WARN:
                 self.logger.warning(
-                    "Delaware: portal list count %d has drifted far from "
-                    "the %d baseline", len(self.portal_ids), PORTAL_BASELINE,
+                    "Delaware: portal list count %d has drifted far from the %d baseline",
+                    len(self.portal_ids),
+                    PORTAL_BASELINE,
                 )
         self._portal_done = True
         yield from self._maybe_start_providers()
@@ -569,18 +580,20 @@ class DelawareSpider(scrapy.Spider):
         yield from self._maybe_start_providers()
 
     def _maybe_start_providers(self):
-        if not (self._compliance_done and self._complaints_done
-                and self._portal_done):
+        if not (self._compliance_done and self._complaints_done and self._portal_done):
             return
-        self.inspections_by_license, self.visit_item_count, \
-            self.complaint_item_count = build_inspection_index(
-                self.compliance_rows, self.complaint_rows, self.logger,
-            )
+        self.inspections_by_license, self.visit_item_count, self.complaint_item_count = build_inspection_index(
+            self.compliance_rows,
+            self.complaint_rows,
+            self.logger,
+        )
         self.logger.info(
             "Delaware: inspection index built -- %d visit items, %d "
             "complaint items, %d providers with history -- starting "
-            "provider enumeration", self.visit_item_count,
-            self.complaint_item_count, len(self.inspections_by_license),
+            "provider enumeration",
+            self.visit_item_count,
+            self.complaint_item_count,
+            len(self.inspections_by_license),
         )
         yield self._page_request("providers", 0)
 
@@ -612,10 +625,14 @@ class DelawareSpider(scrapy.Spider):
         put("provider_name", row.get("resource_name"))
         put("provider_type", row.get("resource_type"))
         put("county", row.get("site_county"))
-        put("address", compose_address(
-            row.get("site_street_address"), row.get("site_city"),
-            row.get("site_zip_code"),
-        ))
+        put(
+            "address",
+            compose_address(
+                row.get("site_street_address"),
+                row.get("site_city"),
+                row.get("site_zip_code"),
+            ),
+        )
         put("phone", row.get("phone_number"))
         put("capacity", row.get("capacity"))
 
@@ -627,16 +644,13 @@ class DelawareSpider(scrapy.Spider):
             item["longitude"] = str(coords[0])
             item["latitude"] = str(coords[1])
 
-        put("hours", compose_hours(
-            row.get("site_opens_at"), row.get("site_closes_at")))
+        put("hours", compose_hours(row.get("site_opens_at"), row.get("site_closes_at")))
         put("ages_served", strip_trailing_period(row.get("age_range")))
 
-        for field, value in age_flags_from_group(
-                row.get("age_group"), self.logger).items():
+        for field, value in age_flags_from_group(row.get("age_group"), self.logger).items():
             item[field] = value
 
-        item["status"] = derive_status(
-            row.get("enforcement_action"), row.get("intent_to_revoke"))
+        item["status"] = derive_status(row.get("enforcement_action"), row.get("intent_to_revoke"))
 
         put("de_enforcement_action", row.get("enforcement_action"))
         put("de_intent_to_revoke", row.get("intent_to_revoke"))
@@ -651,8 +665,7 @@ class DelawareSpider(scrapy.Spider):
         financial_raw = row.get("financial_arrangements")
         if financial_raw:
             put("de_financial_arrangements", financial_raw)
-            scholarships, meals, profit_status = split_financial_arrangements(
-                financial_raw, self.logger)
+            scholarships, meals, profit_status = split_financial_arrangements(financial_raw, self.logger)
             item["scholarships_accepted"] = scholarships
             if meals:
                 item["meals"] = FINANCIAL_TOKEN_MEALS
@@ -664,40 +677,43 @@ class DelawareSpider(scrapy.Spider):
         # Always set, even when empty (Sec 6.3: 613/1,243 providers
         # legitimately have zero inspection history -- that is not a scrape
         # failure and must not look like a missing field).
-        item["inspections"] = self.inspections_by_license.get(
-            resource_id, [])
+        item["inspections"] = self.inspections_by_license.get(resource_id, [])
 
         return item
 
     # --- shutdown ----------------------------------------------------------- #
 
     def closed(self, reason):
-        total_inspection_items = self.visit_item_count \
-            + self.complaint_item_count
+        total_inspection_items = self.visit_item_count + self.complaint_item_count
         self.logger.info(
             "Delaware: finished (%s) -- %d providers emitted; %d compliance "
             "rows -> %d visit items; %d complaint items; %d inspection "
             "items total; %d non-200 page responses; portal_failed=%s",
-            reason, self.providers_emitted, len(self.compliance_rows),
-            self.visit_item_count, self.complaint_item_count,
-            total_inspection_items, self.non_200_count, self.portal_failed,
+            reason,
+            self.providers_emitted,
+            len(self.compliance_rows),
+            self.visit_item_count,
+            self.complaint_item_count,
+            total_inspection_items,
+            self.non_200_count,
+            self.portal_failed,
         )
         if self.providers_emitted < EXPECTED_MIN_PROVIDERS:
             self.logger.warning(
-                "Delaware: only %d providers emitted (< %d baseline) -- "
-                "possible incomplete crawl", self.providers_emitted,
+                "Delaware: only %d providers emitted (< %d baseline) -- possible incomplete crawl",
+                self.providers_emitted,
                 EXPECTED_MIN_PROVIDERS,
             )
         if total_inspection_items < EXPECTED_MIN_INSPECTIONS:
             self.logger.warning(
-                "Delaware: only %d inspection items built (< %d baseline) "
-                "-- possible incomplete crawl", total_inspection_items,
+                "Delaware: only %d inspection items built (< %d baseline) -- possible incomplete crawl",
+                total_inspection_items,
                 EXPECTED_MIN_INSPECTIONS,
             )
         if self.non_200_count:
             self.logger.warning(
-                "Delaware: %d Socrata page request(s) failed during the "
-                "crawl", self.non_200_count,
+                "Delaware: %d Socrata page request(s) failed during the crawl",
+                self.non_200_count,
             )
         if self.portal_failed:
             self.logger.warning(
@@ -707,6 +723,6 @@ class DelawareSpider(scrapy.Spider):
             )
         if self.page_cap_hit_phases:
             self.logger.warning(
-                "Delaware: MAX_PAGES cap was hit for phase(s) %s -- data "
-                "may be truncated", sorted(self.page_cap_hit_phases),
+                "Delaware: MAX_PAGES cap was hit for phase(s) %s -- data may be truncated",
+                sorted(self.page_cap_hit_phases),
             )

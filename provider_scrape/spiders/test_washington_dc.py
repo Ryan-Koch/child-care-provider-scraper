@@ -28,20 +28,17 @@ def spider():
 def list_response(body=None):
     body = body if body is not None else _load("dc_list.html")
     req = Request(LIST_URL, method="POST")
-    return TextResponse(url=LIST_URL, body=body.encode(), encoding="utf-8",
-                        request=req)
+    return TextResponse(url=LIST_URL, body=body.encode(), encoding="utf-8", request=req)
 
 
 def detail_response(fixture, meta):
     req = Request(DETAIL_URL, method="POST", meta=meta)
-    return TextResponse(url=DETAIL_URL, body=_load(fixture).encode(),
-                        encoding="utf-8", request=req)
+    return TextResponse(url=DETAIL_URL, body=_load(fixture).encode(), encoding="utf-8", request=req)
 
 
 def raw_detail_response(body, meta):
     req = Request(DETAIL_URL, method="POST", meta=meta)
-    return TextResponse(url=DETAIL_URL, body=body.encode(), encoding="utf-8",
-                        request=req)
+    return TextResponse(url=DETAIL_URL, body=body.encode(), encoding="utf-8", request=req)
 
 
 # A minimal meta as parse_list would produce, for driving parse_detail directly.
@@ -60,6 +57,7 @@ def meta_for(fid, **over):
 
 
 # --- helper unit tests ------------------------------------------------- #
+
 
 def test_clean_collapses_whitespace():
     assert _clean("  a\n  b ") == "a b"
@@ -90,6 +88,7 @@ def test_age_field_maps_prefixes():
 
 # --- parse_list -------------------------------------------------------- #
 
+
 def test_parse_list_yields_a_detail_request_per_card(spider):
     reqs = list(spider.parse_list(list_response()))
     assert len(reqs) == 4
@@ -117,23 +116,23 @@ def test_parse_list_unescapes_entities_in_name(spider):
 
 # --- parse_detail: golden path (center with full enrollment) ----------- #
 
+
 def test_parse_detail_center_golden(spider):
     meta = meta_for(
         "2899",
         name="18th Street Early Learning Child Development Center",
         list_address="3414 18th ST, NE 20018",
         phone="(202) 921-9525",
-        latitude="38.9325512", longitude="-76.9798796",
-        badges={"Accepts Subsidies", "Capital Quality Participant",
-                "Participating in Pay Equity Fund"},
+        latitude="38.9325512",
+        longitude="-76.9798796",
+        badges={"Accepts Subsidies", "Capital Quality Participant", "Participating in Pay Equity Fund"},
     )
     item = next(spider.parse_detail(detail_response("dc_detail.html", meta)))
 
     assert item["source_state"] == "Washington DC"
     assert item["license_number"] == "2899"
     assert item["provider_url"].endswith("FacilityProfile?FacilityId=2899")
-    assert item["provider_name"] == \
-        "18th Street Early Learning Child Development Center"
+    assert item["provider_name"] == "18th Street Early Learning Child Development Center"
     assert item["phone"] == "(202) 921-9525"
     assert item["latitude"] == "38.9325512"
     assert item["longitude"] == "-76.9798796"
@@ -158,8 +157,10 @@ def test_parse_detail_center_golden(spider):
     enr = item["dc_enrollment"]
     assert len(enr) == 4
     assert enr[0] == {
-        "age_group": "Infant (0 - 12 Months)", "openings": "0",
-        "current_enrollment": "4", "desired_enrollment": "8",
+        "age_group": "Infant (0 - 12 Months)",
+        "openings": "0",
+        "current_enrollment": "4",
+        "desired_enrollment": "8",
         "monthly_tuition": "No Data Available",
     }
     # Age booleans derived from the enrollment rows.
@@ -179,9 +180,9 @@ def test_parse_detail_center_golden(spider):
 
 # --- parse_detail: home type (CDX) ------------------------------------- #
 
+
 def test_parse_detail_home_type(spider):
-    meta = meta_for("2980", name="A Place to Grow Child Development Home",
-                    badges=set())
+    meta = meta_for("2980", name="A Place to Grow Child Development Home", badges=set())
     item = next(spider.parse_detail(detail_response("dc_detail_home.html", meta)))
     assert item["provider_type"] == "CDX (Child Development Home Expanded)"
     assert item["administrator"] == "Sharde Bushrod"
@@ -191,10 +192,11 @@ def test_parse_detail_home_type(spider):
 
 # --- badge mapping to common fields ------------------------------------ #
 
+
 def test_food_and_montessori_badges_map_to_common_fields(spider):
-    meta = meta_for("2899", badges={"Child and Adult Care Food Program",
-                                     "Montessori", "Pre-K Enhancement",
-                                     "Nontraditional"})
+    meta = meta_for(
+        "2899", badges={"Child and Adult Care Food Program", "Montessori", "Pre-K Enhancement", "Nontraditional"}
+    )
     item = next(spider.parse_detail(detail_response("dc_detail.html", meta)))
     assert item["meals"] == "Child and Adult Care Food Program"
     assert item["curriculum"] == "Montessori"
@@ -214,8 +216,7 @@ SPARSE_DETAIL = """
 
 
 def test_parse_detail_missing_sections_are_none(spider):
-    meta = meta_for("9999", name="Sparse Facility",
-                    list_address="1 Nowhere RD, SE 20099")
+    meta = meta_for("9999", name="Sparse Facility", list_address="1 Nowhere RD, SE 20099")
     item = next(spider.parse_detail(raw_detail_response(SPARSE_DETAIL, meta)))
     # Present.
     assert item["provider_name"] == "Sparse Facility"
@@ -234,10 +235,14 @@ def test_parse_detail_missing_sections_are_none(spider):
 
 # --- normalization integration ----------------------------------------- #
 
-@pytest.mark.parametrize("ptype,expected", [
-    ("CDC (Child Development Center)", "center"),
-    ("CDH (Child Development Home)", "family_home"),
-    ("CDX (Child Development Home Expanded)", "group_home"),
-])
+
+@pytest.mark.parametrize(
+    "ptype,expected",
+    [
+        ("CDC (Child Development Center)", "center"),
+        ("CDH (Child Development Home)", "family_home"),
+        ("CDX (Child Development Home Expanded)", "group_home"),
+    ],
+)
 def test_facility_category_mapping(ptype, expected):
     assert norm.facility_category_from_type(ptype) == expected

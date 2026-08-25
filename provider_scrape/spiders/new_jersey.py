@@ -171,14 +171,10 @@ def _build_social_media(facility):
     """Collapse the four ProgramSocialMediaLink* fields into a dict, or
     return None if every field is blank."""
     social = {
-        "twitter": (facility.get("ProgramSocialMediaLinkTwitter") or "").strip()
-        or None,
-        "facebook": (facility.get("ProgramSocialMediaLinkFacebook") or "").strip()
-        or None,
-        "instagram": (facility.get("ProgramSocialMediaLinkInstagram") or "").strip()
-        or None,
-        "youtube": (facility.get("ProgramSocialMediaLinkYouTube") or "").strip()
-        or None,
+        "twitter": (facility.get("ProgramSocialMediaLinkTwitter") or "").strip() or None,
+        "facebook": (facility.get("ProgramSocialMediaLinkFacebook") or "").strip() or None,
+        "instagram": (facility.get("ProgramSocialMediaLinkInstagram") or "").strip() or None,
+        "youtube": (facility.get("ProgramSocialMediaLinkYouTube") or "").strip() or None,
     }
     if any(v for v in social.values()):
         return social
@@ -211,21 +207,13 @@ def build_item(facility):
     item["nj_accreditation"] = _empty_to_none(facility.get("Accreditation"))
     item["nj_yearly_schedule"] = facility.get("YearlySchedule")
     item["nj_doh_id"] = _empty_to_none(facility.get("DohID"))
-    item["nj_phone_extension"] = _empty_to_none(
-        facility.get("ProgramPhoneNumberExtension")
-    )
-    item["nj_participation_programs"] = _empty_to_none(
-        facility.get("ParticipationInLocalStateOrFederalPrograms")
-    )
+    item["nj_phone_extension"] = _empty_to_none(facility.get("ProgramPhoneNumberExtension"))
+    item["nj_participation_programs"] = _empty_to_none(facility.get("ParticipationInLocalStateOrFederalPrograms"))
     item["nj_curriculum"] = _empty_to_none(facility.get("CurriculumUsed"))
     item["nj_child_assessment"] = _empty_to_none(facility.get("ChildAssessmentUsed"))
-    item["nj_environmental_features"] = _empty_to_none(
-        facility.get("EnvironmentalFeatures")
-    )
+    item["nj_environmental_features"] = _empty_to_none(facility.get("EnvironmentalFeatures"))
     item["nj_meal_options"] = _empty_to_none(facility.get("MealOptions"))
-    item["nj_special_needs_training"] = _empty_to_none(
-        facility.get("TrainingAndExperienceToSupportSpecialNeeds")
-    )
+    item["nj_special_needs_training"] = _empty_to_none(facility.get("TrainingAndExperienceToSupportSpecialNeeds"))
     item["nj_transportation"] = _empty_to_none(facility.get("TransportationOptions"))
     item["nj_special_schedules"] = _empty_to_none(facility.get("SpecialSchedules"))
     item["nj_discounts"] = _empty_to_none(facility.get("DiscountsAvailable"))
@@ -235,9 +223,7 @@ def build_item(facility):
 
     for age_out, age_in in _TUITION_AGE_GROUPS:
         for cadence_out, cadence_in in _TUITION_CADENCES:
-            item[f"nj_tuition_{age_out}_{cadence_out}"] = facility.get(
-                f"Tuition{age_in}{cadence_in}"
-            )
+            item[f"nj_tuition_{age_out}_{cadence_out}"] = facility.get(f"Tuition{age_in}{cadence_in}")
 
     return item
 
@@ -260,8 +246,7 @@ class StealthContextMiddleware:
         handler = handlers.get("https")
         if not isinstance(handler, ScrapyPlaywrightDownloadHandler):
             spider.logger.warning(
-                "StealthContextMiddleware: scrapy-playwright handler not found; "
-                "stealth patches NOT applied."
+                "StealthContextMiddleware: scrapy-playwright handler not found; stealth patches NOT applied."
             )
             return
 
@@ -385,13 +370,9 @@ class NewJerseySpider(scrapy.Spider):
                 "playwright": True,
                 "playwright_include_page": True,
                 "playwright_page_methods": [
-                    PageMethod(
-                        "wait_for_load_state", "domcontentloaded", timeout=60000
-                    ),
+                    PageMethod("wait_for_load_state", "domcontentloaded", timeout=60000),
                     PageMethod("wait_for_timeout", 5000),
-                    PageMethod(
-                        "reload", wait_until="domcontentloaded", timeout=60000
-                    ),
+                    PageMethod("reload", wait_until="domcontentloaded", timeout=60000),
                     PageMethod("wait_for_timeout", 3000),
                 ],
             },
@@ -464,8 +445,7 @@ class NewJerseySpider(scrapy.Spider):
                     yield build_item(raw)
             else:
                 self.logger.warning(
-                    "Server capped pageSize: got %d of %d; "
-                    "switching to paginated fetch (pageSize=%d)",
+                    "Server capped pageSize: got %d of %d; switching to paginated fetch (pageSize=%d)",
                     len(facilities),
                     result_count,
                     self.fallback_page_size,

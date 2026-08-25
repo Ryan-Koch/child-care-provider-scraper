@@ -30,6 +30,7 @@ Three gotchas drive most of the design here:
    Phone Number" column instead (Phase 1), carried into the detail request
    via ``meta``.
 """
+
 import re
 from html import unescape
 from urllib.parse import urlencode
@@ -66,9 +67,7 @@ def _badges(text, form_id):
     ``showBadges('#form_id', 'a~*~b', 'css-class')``. Parse the second,
     ``~*~``-delimited argument -- never the spans themselves.
     """
-    m = re.search(
-        r"showBadges\('#%s',\s*'((?:[^'\\]|\\')*)'" % re.escape(form_id), text
-    )
+    m = re.search(r"showBadges\('#%s',\s*'((?:[^'\\]|\\')*)'" % re.escape(form_id), text)
     if not m:
         return []
     return [unescape(v).strip() for v in m.group(1).split("~*~") if v.strip()]
@@ -81,9 +80,7 @@ def _p_text(response, label):
     Capacity / Nationally Accredited -- fields whose value is a plain text
     node directly inside the ``<p>``, right after the ``<b>`` label.
     """
-    value = response.xpath(
-        '//p[b[contains(normalize-space(.), "%s")]]/text()' % label
-    ).get()
+    value = response.xpath('//p[b[contains(normalize-space(.), "%s")]]/text()' % label).get()
     value = value.strip() if value else None
     return value or None
 
@@ -96,9 +93,7 @@ def _p_span(response, label):
     use the site's own ``N/A`` placeholder for "no value", which we map to
     ``None``.
     """
-    value = response.xpath(
-        '//p[b[contains(normalize-space(.), "%s")]]/span/text()' % label
-    ).get()
+    value = response.xpath('//p[b[contains(normalize-space(.), "%s")]]/span/text()' % label).get()
     value = value.strip() if value else None
     if not value or value == "N/A":
         return None
@@ -157,9 +152,7 @@ class SouthDakotaSpider(Spider):
             if status:
                 params["status"] = status
             url = f"{BASE}?{urlencode(params)}"
-            yield Request(
-                url, callback=self.parse_results, meta={"raw_status": status}
-            )
+            yield Request(url, callback=self.parse_results, meta={"raw_status": status})
 
     def parse_results(self, response):
         """Harvest one status-facet (or unfiltered) results table.
@@ -187,9 +180,7 @@ class SouthDakotaSpider(Spider):
             rows.append((m.group(1), _clean_phone(phone_text)))
 
         self.facet_rows[status] = rows
-        self.logger.info(
-            "SD list phase: %s -> %d rows", status or "Unfiltered", len(rows)
-        )
+        self.logger.info("SD list phase: %s -> %d rows", status or "Unfiltered", len(rows))
 
         if len(self.facet_rows) == len(STATUS_FACETS):
             yield from self._dispatch_details()
@@ -212,9 +203,10 @@ class SouthDakotaSpider(Spider):
         unfiltered_total = len(self.facet_rows.get(None, []))
         stragglers = sum(1 for status, _ in merged.values() if status is None)
         self.logger.info(
-            "SD list phase complete: %d unique providers (unfiltered "
-            "total=%d, stragglers with no status facet=%d).",
-            len(merged), unfiltered_total, stragglers,
+            "SD list phase complete: %d unique providers (unfiltered total=%d, stragglers with no status facet=%d).",
+            len(merged),
+            unfiltered_total,
+            stragglers,
         )
 
         for provider_id, (status, phone) in merged.items():
@@ -284,9 +276,7 @@ class SouthDakotaSpider(Spider):
             href = anchor.attrib.get("href")
             if not href:
                 continue
-            block = anchor.xpath(
-                './ancestor::div[contains(@class,"list-group-item")][1]'
-            )
+            block = anchor.xpath('./ancestor::div[contains(@class,"list-group-item")][1]')
             subtitle = block.css("small::text").get(default="").strip()
             if " - " in subtitle:
                 doc_type, _, date = subtitle.rpartition(" - ")

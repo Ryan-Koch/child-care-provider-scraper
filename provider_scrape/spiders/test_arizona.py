@@ -31,10 +31,7 @@ AZ_PROVIDER_RECORD = {
     "phone": "602-840-2342",
     "website": "https://www.arcadiamontessori.com",
     "address": "2257 E Cedar Ave\nFlagstaff, AZ, 86004",
-    "location": {
-        "Latitude": "33.475900000000000",
-        "Longitude": "-111.971100000000000"
-    },
+    "location": {"Latitude": "33.475900000000000", "Longitude": "-111.971100000000000"},
     "operatinghourid": "0OHcs000002qQrhGAE",
     "affiliation": None,
     "regionalpartnership": "South Phoenix",
@@ -52,7 +49,7 @@ AZ_PROVIDER_RECORD = {
             "Decision_Correction__c": "Findings: Menu lacking components",
             "DateResolved__c": "2025-02-14",
             "CIVIL_PENALTY__c": None,
-            "Name": "D-424195"
+            "Name": "D-424195",
         },
         {
             "InspectionDate__c": "2021-10-28",
@@ -61,25 +58,29 @@ AZ_PROVIDER_RECORD = {
             "Decision_Correction__c": "LICENSEE AGREES TO PAY...",
             "DateResolved__c": None,
             "CIVIL_PENALTY__c": 100.0,
-            "Name": "D-436770"
-        }
-    ]
+            "Name": "D-436770",
+        },
+    ],
 }
 
 
 # ---- extract_form_field ----
 
+
 def test_extract_form_field_success():
     post_data = "message=xyz&aura.context=the_context_blob&aura.token=null"
     assert extract_form_field(post_data, "aura.context") == "the_context_blob"
+
 
 def test_extract_form_field_url_decodes():
     post_data = "aura.context=some%20encoded%2Bstring"
     assert extract_form_field(post_data, "aura.context") == "some encoded+string"
 
+
 def test_extract_form_field_missing():
     post_data = "message=xyz&aura.token=null"
     assert extract_form_field(post_data, "aura.context") is None
+
 
 def test_extract_form_field_empty():
     assert extract_form_field("", "aura.context") is None
@@ -87,6 +88,7 @@ def test_extract_form_field_empty():
 
 
 # ---- build_search_message / build_search_post_body ----
+
 
 def test_build_search_message_structure():
     msg_str = build_search_message(page_size=50, page_number=2)
@@ -102,6 +104,7 @@ def test_build_search_message_structure():
     assert params["pageSize"] == 50
     assert params["pageNumber"] == 2
 
+
 def test_build_search_post_body():
     body = build_search_post_body(page_size=50, page_number=2, aura_context="ctx_blob")
 
@@ -113,6 +116,7 @@ def test_build_search_post_body():
 
 
 # ---- parse_provider ----
+
 
 def test_parse_provider_full_record(spider):
     item = spider.parse_provider(AZ_PROVIDER_RECORD)
@@ -148,11 +152,13 @@ def test_parse_provider_full_record(spider):
     # Inspections
     assert len(item["inspections"]) == 2
 
+
 def test_parse_provider_empty_owner_to_none(spider):
     record = dict(AZ_PROVIDER_RECORD)
     record["owner"] = "   "
     item = spider.parse_provider(record)
     assert item["license_holder"] is None
+
 
 def test_parse_provider_rating_to_string(spider):
     record = dict(AZ_PROVIDER_RECORD)
@@ -162,6 +168,7 @@ def test_parse_provider_rating_to_string(spider):
 
 
 # ---- parse_inspections ----
+
 
 def test_parse_inspections(spider):
     inspections = spider.parse_inspections(AZ_PROVIDER_RECORD["dhsenforcements"])
@@ -183,6 +190,7 @@ def test_parse_inspections(spider):
     assert second["type"] == "Enforcement"
     assert second["az_regulation"] is None
     assert second["az_civil_penalty"] == 100.0
+
 
 def test_parse_inspections_empty(spider):
     assert spider.parse_inspections([]) == []

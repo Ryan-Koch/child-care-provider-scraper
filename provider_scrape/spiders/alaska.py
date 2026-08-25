@@ -17,6 +17,7 @@ publicly exposed by AKCCIS -- the visit-level ``compliance: "C"/"NC"`` is the
 finding-level signal we ship. See ``docs/alaska_field_mapping.md`` for the
 full field-mapping decision log.
 """
+
 import json
 from datetime import datetime
 
@@ -149,10 +150,10 @@ def _age_flags(start, end):
     if start is None or end is None or start > end:
         return {}
     return {
-        "infant":    _overlaps(start, end, 0, 11),
-        "toddler":   _overlaps(start, end, 12, 35),
+        "infant": _overlaps(start, end, 0, 11),
+        "toddler": _overlaps(start, end, 12, 35),
         "preschool": _overlaps(start, end, 36, 59),
-        "school":    end >= 60,
+        "school": end >= 60,
     }
 
 
@@ -193,6 +194,7 @@ def _build_address(street, street2, city, state, zip_code):
 # Spider
 # --------------------------------------------------------------------------- #
 
+
 class AlaskaSpider(scrapy.Spider):
     """Alaska child care providers via the AKCCIS public API."""
 
@@ -201,17 +203,12 @@ class AlaskaSpider(scrapy.Spider):
 
     SITE = "https://akccis.com"
     SEARCH_URL = f"{SITE}/server/api/Facility/Search"
-    INSPECTION_URL = (
-        f"{SITE}/server/api/Inspection/GetFacilityInspectionTasksPublicView"
-    )
+    INSPECTION_URL = f"{SITE}/server/api/Inspection/GetFacilityInspectionTasksPublicView"
     # Deep link into the AKCCIS map view for a single facility.
     PROFILE_URL = f"{SITE}/client/map?facilityGenId={{}}"
 
     HEADERS = {
-        "User-Agent": (
-            "Mozilla/5.0 (X11; Linux x86_64; rv:152.0) "
-            "Gecko/20100101 Firefox/152.0"
-        ),
+        "User-Agent": ("Mozilla/5.0 (X11; Linux x86_64; rv:152.0) Gecko/20100101 Firefox/152.0"),
         "Accept": "application/json, text/plain, */*",
         # The AKCCIS API server has returned 403 without a Referer in some
         # environments during testing -- always include it.
@@ -268,8 +265,8 @@ class AlaskaSpider(scrapy.Spider):
             facility_id = record.get("facilityGenId")
             if not facility_id:
                 self.logger.warning(
-                    "Alaska: roster row missing facilityGenId, skipping "
-                    "(facilityName=%r)", record.get("facilityName"))
+                    "Alaska: roster row missing facilityGenId, skipping (facilityName=%r)", record.get("facilityName")
+                )
                 continue
             yield scrapy.Request(
                 f"{self.INSPECTION_URL}?facilityGenId={facility_id}",
@@ -287,7 +284,9 @@ class AlaskaSpider(scrapy.Spider):
         if self._processed_inspections % 100 == 0:
             self.logger.info(
                 "Alaska: processed %d inspection responses (%d had visits)",
-                self._processed_inspections, self._with_inspections)
+                self._processed_inspections,
+                self._with_inspections,
+            )
         item = self.build_item(roster, events)
         self._items_emitted += 1
         yield item
@@ -297,9 +296,10 @@ class AlaskaSpider(scrapy.Spider):
         an empty inspection list rather than dropping it entirely."""
         roster = failure.request.cb_kwargs.get("roster", {})
         self.logger.warning(
-            "Alaska: inspection fetch failed for facilityGenId=%s: %r. "
-            "Emitting provider without inspections.",
-            roster.get("facilityGenId"), failure.value)
+            "Alaska: inspection fetch failed for facilityGenId=%s: %r. Emitting provider without inspections.",
+            roster.get("facilityGenId"),
+            failure.value,
+        )
         self._processed_inspections += 1
         item = self.build_item(roster, [])
         self._items_emitted += 1
@@ -310,11 +310,13 @@ class AlaskaSpider(scrapy.Spider):
             self.logger.warning(
                 "Alaska: only %d items emitted (expected >= %d) -- API may "
                 "be degraded or the search response was truncated",
-                self._items_emitted, self._MIN_EXPECTED_ITEMS)
+                self._items_emitted,
+                self._MIN_EXPECTED_ITEMS,
+            )
         else:
             self.logger.info(
-                "Alaska: emitted %d items (%d with inspections)",
-                self._items_emitted, self._with_inspections)
+                "Alaska: emitted %d items (%d with inspections)", self._items_emitted, self._with_inspections
+            )
 
     # --- item assembly -------------------------------------------------- #
 
@@ -349,8 +351,7 @@ class AlaskaSpider(scrapy.Spider):
 
         item["provider_type"] = _clean(roster.get("facilityType"))
         item["status"] = _clean(roster.get("providerStatus"))
-        item["status_date"] = _iso_date(
-            roster.get("providerStatusEffectiveDate"))
+        item["status_date"] = _iso_date(roster.get("providerStatusEffectiveDate"))
 
         # Current license period. futureLicense / expiredLicense are ignored
         # (no ProviderItem field exposes license history -- a project-wide
@@ -368,9 +369,7 @@ class AlaskaSpider(scrapy.Spider):
         # source rather than hard-coding.
         state = _clean(roster.get("stateDescAbbr"))
         zip_code = _clean(roster.get("zipCode"))
-        item["address"] = _build_address(
-            roster.get("address"), roster.get("address2"),
-            city, state, zip_code)
+        item["address"] = _build_address(roster.get("address"), roster.get("address2"), city, state, zip_code)
         if city:
             item["city"] = city
         if state:
@@ -394,14 +393,11 @@ class AlaskaSpider(scrapy.Spider):
         facility_number = roster.get("facilityNumber")
         if facility_number is not None:
             item["ak_facility_number"] = str(facility_number)
-        item["ak_legacy_license_number"] = _clean(
-            roster.get("legacyLicenseNumber"))
+        item["ak_legacy_license_number"] = _clean(roster.get("legacyLicenseNumber"))
         item["ak_vendor_id"] = _clean(roster.get("vendorId"))
-        item["ak_facility_subtype"] = _clean(
-            roster.get("facilityTypeSubTypeDescription"))
+        item["ak_facility_subtype"] = _clean(roster.get("facilityTypeSubTypeDescription"))
         item["ak_license_type"] = _clean(roster.get("licenseType"))
-        item["ak_licensing_specialist"] = _clean(
-            roster.get("facilityLicSpecialist"))
+        item["ak_licensing_specialist"] = _clean(roster.get("facilityLicSpecialist"))
 
         item["inspections"] = self.build_inspections(inspection_events)
         return item
@@ -425,8 +421,7 @@ class AlaskaSpider(scrapy.Spider):
             visit_type = _clean(event.get("visitType"))
             specialist = _clean(event.get("licensingSpecialist"))
 
-            fingerprint = (date, purpose, original_status, visit_type,
-                           specialist)
+            fingerprint = (date, purpose, original_status, visit_type, specialist)
             if fingerprint in seen:
                 continue
             seen.add(fingerprint)

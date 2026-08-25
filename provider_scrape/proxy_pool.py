@@ -21,6 +21,7 @@ Assignment has two modes:
 Proxy URLs carry credentials, so never log them; log the stable, cred-free slot
 id (``proxy_id``) instead.
 """
+
 import itertools
 import os
 import re
@@ -80,9 +81,7 @@ class ProxyPool:
         self._urls = list(proxy_urls)
         if not self._urls:
             raise ValueError("ProxyPool needs at least one proxy URL")
-        self._ids = list(proxy_ids) if proxy_ids else [
-            f"proxy-{i}" for i in range(len(self._urls))
-        ]
+        self._ids = list(proxy_ids) if proxy_ids else [f"proxy-{i}" for i in range(len(self._urls))]
         if len(self._ids) != len(self._urls):
             raise ValueError("proxy_ids must match proxy_urls in length")
         self._rotate = itertools.cycle(range(len(self._urls)))
@@ -124,10 +123,7 @@ def build_pool(endpoints, username=None, password=None, id_prefix="proxy"):
         if "://" in endpoint:
             url = endpoint
         elif username and password:
-            url = (
-                f"http://{quote(username, safe='')}:"
-                f"{quote(password, safe='')}@{endpoint}"
-            )
+            url = f"http://{quote(username, safe='')}:{quote(password, safe='')}@{endpoint}"
         else:
             url = f"http://{endpoint}"
         urls.append(url)
@@ -135,8 +131,7 @@ def build_pool(endpoints, username=None, password=None, id_prefix="proxy"):
     return ProxyPool(urls, ids) if urls else None
 
 
-def load_pool(env_path=None, endpoints=None, username=None, password=None,
-              id_prefix="proxy"):
+def load_pool(env_path=None, endpoints=None, username=None, password=None, id_prefix="proxy"):
     """Resolve pool config from an env file and/or explicit values.
 
     Explicit args win over env-file values. ``endpoints`` may be a raw string

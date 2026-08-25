@@ -8,6 +8,7 @@ existing dataset card.
 Run with the project virtualenv:
 ``.venv/bin/pytest scripts/test_upload_to_huggingface.py``.
 """
+
 import yaml
 
 import upload_to_huggingface as up
@@ -92,13 +93,7 @@ def test_render_readme_fresh_has_configs_and_default_body():
 
 
 def test_render_readme_preserves_body_and_other_keys():
-    existing = (
-        "---\n"
-        "license: mit\n"
-        "pretty_name: US Child Care Providers\n"
-        "---\n\n"
-        "# My hand-written card\n\nKeep me.\n"
-    )
+    existing = "---\nlicense: mit\npretty_name: US Child Care Providers\n---\n\n# My hand-written card\n\nKeep me.\n"
     configs = [{"config_name": "utah", "data_files": "utah.json"}]
     out = up.render_readme(existing, configs)
 
@@ -113,13 +108,7 @@ def test_render_readme_preserves_body_and_other_keys():
 
 
 def test_render_readme_replaces_existing_configs():
-    existing = (
-        "---\n"
-        "configs:\n"
-        "- config_name: stale\n"
-        "  data_files: stale.json\n"
-        "---\n\nbody\n"
-    )
+    existing = "---\nconfigs:\n- config_name: stale\n  data_files: stale.json\n---\n\nbody\n"
     configs = [{"config_name": "ohio", "data_files": "ohio.json"}]
     out = up.render_readme(existing, configs)
     fm = _frontmatter_of(out)
@@ -157,6 +146,5 @@ def test_build_extra_operations_applies_path_in_repo_prefix(tmp_path):
 def test_build_extra_operations_skips_missing_files(tmp_path):
     present = tmp_path / "SOURCES.md"
     present.write_text("# sources", encoding="utf-8")
-    ops = up.build_extra_operations(
-        [str(present), str(tmp_path / "nope.md")], "")
+    ops = up.build_extra_operations([str(present), str(tmp_path / "nope.md")], "")
     assert [o.path_in_repo for o in ops] == ["SOURCES.md"]

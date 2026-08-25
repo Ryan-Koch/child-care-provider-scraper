@@ -4,6 +4,7 @@ Fixtures are copied (unmodified) from tasks/delaware_story/captures/ into
 provider_scrape/spiders/fixtures/ with a de_ prefix, per delaware_plan.md
 Sec 9 -- no network is used in these tests.
 """
+
 import json
 import logging
 import os
@@ -59,28 +60,24 @@ class _Failure:
 
 def page_response(phase, rows, offset, page_num):
     cfg = delaware.DATASETS[phase]
-    url = delaware._socrata_page_url(
-        cfg["url"], cfg["order"], delaware.PAGE_SIZE, offset)
-    req = Request(url, meta={"phase": phase, "offset": offset,
-                             "page_num": page_num})
-    return TextResponse(url=url, body=json.dumps(rows).encode(),
-                        encoding="utf-8", request=req)
+    url = delaware._socrata_page_url(cfg["url"], cfg["order"], delaware.PAGE_SIZE, offset)
+    req = Request(url, meta={"phase": phase, "offset": offset, "page_num": page_num})
+    return TextResponse(url=url, body=json.dumps(rows).encode(), encoding="utf-8", request=req)
 
 
 def portal_response(payload):
     req = Request(PORTAL_LIST_URL)
     body = json.dumps(payload).encode()
-    return TextResponse(url=PORTAL_LIST_URL, body=body, encoding="utf-8",
-                        request=req)
+    return TextResponse(url=PORTAL_LIST_URL, body=body, encoding="utf-8", request=req)
 
 
 # --------------------------------------------------------------------------- #
 # Pure helper unit tests
 # --------------------------------------------------------------------------- #
 
+
 def test_socrata_page_url_params():
-    url = delaware._socrata_page_url(delaware.PROVIDERS_URL, "resource_id",
-                                     5000, 1000)
+    url = delaware._socrata_page_url(delaware.PROVIDERS_URL, "resource_id", 5000, 1000)
     qs = parse_qs(urlparse(url).query)
     assert qs["$limit"] == ["5000"]
     assert qs["$offset"] == ["1000"]
@@ -88,8 +85,9 @@ def test_socrata_page_url_params():
 
 
 def test_compose_address_full():
-    assert compose_address("501 WEST 11TH STREET", "WILMINGTON", "19801") \
-        == "501 WEST 11TH STREET, WILMINGTON, DE 19801"
+    assert (
+        compose_address("501 WEST 11TH STREET", "WILMINGTON", "19801") == "501 WEST 11TH STREET, WILMINGTON, DE 19801"
+    )
 
 
 def test_compose_address_missing_pieces():
@@ -108,26 +106,24 @@ def test_compose_hours_missing_one_or_both():
 
 
 def test_strip_trailing_period():
-    assert strip_trailing_period("6 weeks through 6 years.") == \
-        "6 weeks through 6 years"
-    assert strip_trailing_period("6 weeks through 6 years") == \
-        "6 weeks through 6 years"
+    assert strip_trailing_period("6 weeks through 6 years.") == "6 weeks through 6 years"
+    assert strip_trailing_period("6 weeks through 6 years") == "6 weeks through 6 years"
     assert strip_trailing_period(None) is None
 
 
-@pytest.mark.parametrize("age_group,expected", [
-    ("Infant through School-Age",
-     {"infant": True, "toddler": True, "preschool": True, "school": True}),
-    ("Toddler through School-Age",
-     {"toddler": True, "preschool": True, "school": True}),
-    ("School-Age", {"school": True}),
-    ("Infant through Pre-School",
-     {"infant": True, "toddler": True, "preschool": True}),
-    ("Toddler through Pre-School", {"toddler": True, "preschool": True}),
-    ("Pre-School", {"preschool": True}),
-    ("Pre-School through School-Age", {"preschool": True, "school": True}),
-    ("Infant through Toddler", {"infant": True, "toddler": True}),
-])
+@pytest.mark.parametrize(
+    "age_group,expected",
+    [
+        ("Infant through School-Age", {"infant": True, "toddler": True, "preschool": True, "school": True}),
+        ("Toddler through School-Age", {"toddler": True, "preschool": True, "school": True}),
+        ("School-Age", {"school": True}),
+        ("Infant through Pre-School", {"infant": True, "toddler": True, "preschool": True}),
+        ("Toddler through Pre-School", {"toddler": True, "preschool": True}),
+        ("Pre-School", {"preschool": True}),
+        ("Pre-School through School-Age", {"preschool": True, "school": True}),
+        ("Infant through Toddler", {"infant": True, "toddler": True}),
+    ],
+)
 def test_age_flags_from_group_all_eight_values(age_group, expected):
     assert age_flags_from_group(age_group) == expected
 
@@ -143,26 +139,26 @@ def test_age_flags_from_group_empty_is_no_flags():
     assert age_flags_from_group("") == {}
 
 
-@pytest.mark.parametrize("enforcement,intent,expected", [
-    (None, None, "Licensed"),
-    ("Suspended", None, "Suspended"),
-    (None, "Intent to Revoke", "Intent to Revoke"),
-    ("Probation Extension", "Intent to Place on Probation Extension",
-     "Probation Extension"),
-])
+@pytest.mark.parametrize(
+    "enforcement,intent,expected",
+    [
+        (None, None, "Licensed"),
+        ("Suspended", None, "Suspended"),
+        (None, "Intent to Revoke", "Intent to Revoke"),
+        ("Probation Extension", "Intent to Place on Probation Extension", "Probation Extension"),
+    ],
+)
 def test_derive_status_four_branches(enforcement, intent, expected):
     assert derive_status(enforcement, intent) == expected
 
 
 def test_split_financial_arrangements_three_tokens():
-    scholarships, meals, profit = split_financial_arrangements(
-        "Child Care Food Program;Nonprofit;Purchase of Care")
+    scholarships, meals, profit = split_financial_arrangements("Child Care Food Program;Nonprofit;Purchase of Care")
     assert (scholarships, meals, profit) == (True, True, "Nonprofit")
 
 
 def test_split_financial_arrangements_single_token():
-    scholarships, meals, profit = split_financial_arrangements(
-        "Child Care Food Program")
+    scholarships, meals, profit = split_financial_arrangements("Child Care Food Program")
     assert (scholarships, meals, profit) == (False, True, None)
 
 
@@ -210,6 +206,7 @@ def test_violation_from_row_missing_dates_are_none_not_empty_string():
 # Test 4/5/12/16 -- compliance grouping (build_visit_items)
 # --------------------------------------------------------------------------- #
 
+
 def test_build_visit_items_multi_visit_groups_by_license_and_date():
     rows = _load_fixture("de_compliance_multi_visit.json")
     by_license = build_visit_items(rows)
@@ -252,8 +249,7 @@ def test_build_visit_items_all_seven_visit_types_pass_through_unchanged():
 
 
 def test_build_visit_items_skips_rows_missing_license_or_date(caplog):
-    rows = [{"provider_action_date_of_visit": "2023-01-01T00:00:00.000"},
-            {"license_number": "123"}]
+    rows = [{"provider_action_date_of_visit": "2023-01-01T00:00:00.000"}, {"license_number": "123"}]
     with caplog.at_level("WARNING"):
         by_license = build_visit_items(rows, LOG)
     assert by_license == {}
@@ -263,6 +259,7 @@ def test_build_visit_items_skips_rows_missing_license_or_date(caplog):
 # --------------------------------------------------------------------------- #
 # Test 6/10/11 -- complaints (build_complaint_items)
 # --------------------------------------------------------------------------- #
+
 
 def test_build_complaint_items_all_kept_one_per_row():
     rows = _load_fixture("de_complaints_provider_mixed.json")
@@ -303,8 +300,7 @@ def test_build_complaint_items_ia_investigation_has_no_conclusion():
 
 def test_build_complaint_items_skips_rows_missing_resource_id(caplog):
     with caplog.at_level("WARNING"):
-        by_license = build_complaint_items(
-            [{"investigation_type": "OCCL Standards Complaint"}], LOG)
+        by_license = build_complaint_items([{"investigation_type": "OCCL Standards Complaint"}], LOG)
     assert by_license == {}
     assert "missing resource_id" in caplog.text
 
@@ -312,8 +308,7 @@ def test_build_complaint_items_skips_rows_missing_resource_id(caplog):
 def test_build_inspection_index_sorts_newest_first():
     rows = _load_fixture("de_compliance_multi_visit.json")
     index, visit_count, complaint_count = build_inspection_index(rows, [])
-    assert [i["date"] for i in index["651764"]] == \
-        ["2025-02-03", "2023-02-21"]
+    assert [i["date"] for i in index["651764"]] == ["2025-02-03", "2023-02-21"]
     assert visit_count == 2
     assert complaint_count == 0
 
@@ -321,6 +316,7 @@ def test_build_inspection_index_sorts_newest_first():
 # --------------------------------------------------------------------------- #
 # Test 8/15 -- the advisory portal list (parse_portal_ids)
 # --------------------------------------------------------------------------- #
+
 
 def test_parse_portal_ids_valid_response():
     data = [{"resource_id": str(i)} for i in range(600)]
@@ -341,14 +337,14 @@ def test_parse_portal_ids_non_list_is_none():
 # Test 1/2/3/7/9/13 -- full provider mapping (spider._build_provider_item)
 # --------------------------------------------------------------------------- #
 
+
 def test_full_provider_mapping_golden_path(spider):
     row = _by_id(_load_fixture("de_facilities_shapes.json"))["27399"]
     item = spider._build_provider_item(row)
 
     assert item["source_state"] == "Delaware"
     assert item["license_number"] == "27399"
-    assert item["provider_name"] == \
-        "YMCA OF DELAWARE / CENTRAL BRANCH YMCA CHILDREN'S CORNER 1"
+    assert item["provider_name"] == "YMCA OF DELAWARE / CENTRAL BRANCH YMCA CHILDREN'S CORNER 1"
     assert item["provider_type"] == "Licensed Child Care Center"
     assert item["county"] == "New Castle"
     assert item["address"] == "501 WEST 11TH STREET, WILMINGTON, DE 19801"
@@ -363,15 +359,13 @@ def test_full_provider_mapping_golden_path(spider):
     assert item["preschool"] is True
     assert item["school"] is True
     assert item["status"] == "Licensed"
-    assert item["de_financial_arrangements"] == \
-        "Child Care Food Program;Nonprofit;Purchase of Care"
+    assert item["de_financial_arrangements"] == "Child Care Food Program;Nonprofit;Purchase of Care"
     assert item["scholarships_accepted"] is True
     assert item["meals"] == "Child Care Food Program"
     assert item["de_profit_status"] == "Nonprofit"
     assert "2024: 5 facility injuries" in item["de_injuries_report"]
     assert item["provider_url"] == (
-        "https://education.delaware.gov/families/birth-age-5/"
-        "child_care_search/facility-details/?license_number=27399"
+        "https://education.delaware.gov/families/birth-age-5/child_care_search/facility-details/?license_number=27399"
     )
     assert item["inspections"] == []
 
@@ -394,8 +388,7 @@ def test_status_derivation_intent_to_revoke(spider):
 def test_special_conditions_and_large_family_type(spider):
     row = _by_id(_load_fixture("de_facilities_shapes.json"))["27615"]
     item = spider._build_provider_item(row)
-    assert item["de_special_conditions"] == \
-        "Foster Care;Agreement of Understanding"
+    assert item["de_special_conditions"] == "Foster Care;Agreement of Understanding"
     assert item["provider_type"] == "Licensed Family Child Care"
 
 
@@ -462,9 +455,9 @@ def test_de_portal_listed_unset_when_portal_ids_none(spider):
 
 def test_provider_item_carries_attached_inspections(spider):
     compliance_rows = _load_fixture("de_compliance_multi_visit.json")
-    spider.inspections_by_license, spider.visit_item_count, \
-        spider.complaint_item_count = build_inspection_index(
-            compliance_rows, [], spider.logger)
+    spider.inspections_by_license, spider.visit_item_count, spider.complaint_item_count = build_inspection_index(
+        compliance_rows, [], spider.logger
+    )
     row = _by_id(_load_fixture("de_facilities_shapes.json"))["27399"]
     row = dict(row)
     row["resource_id"] = "651764"  # reuse the golden row under the visit's license
@@ -477,27 +470,23 @@ def test_provider_item_carries_attached_inspections(spider):
 # Test 14 -- pagination (Socrata paging, default 1000/no-limit truncation trap)
 # --------------------------------------------------------------------------- #
 
+
 def test_pagination_full_page_requests_next_page(spider, monkeypatch):
     monkeypatch.setattr(delaware, "PAGE_SIZE", 3)
-    rows = [{"license_number": str(i),
-            "provider_action_date_of_visit": "2024-01-01T00:00:00.000"}
-            for i in range(3)]
+    rows = [{"license_number": str(i), "provider_action_date_of_visit": "2024-01-01T00:00:00.000"} for i in range(3)]
     resp = page_response("compliance", rows, offset=0, page_num=1)
     outputs = list(spider.parse_page(resp))
     requests = [o for o in outputs if isinstance(o, scrapy.Request)]
     assert len(requests) == 1
-    assert requests[0].meta == {"phase": "compliance", "offset": 3,
-                                "page_num": 2}
+    assert requests[0].meta == {"phase": "compliance", "offset": 3, "page_num": 2}
     assert len(spider.compliance_rows) == 3
 
 
-def test_pagination_short_page_stops_and_advances_to_next_phase(
-        spider, monkeypatch):
+def test_pagination_short_page_stops_and_advances_to_next_phase(spider, monkeypatch):
     monkeypatch.setattr(delaware, "PAGE_SIZE", 5)
     spider._complaints_done = True
     spider._portal_done = True
-    rows = [{"license_number": "1",
-            "provider_action_date_of_visit": "2024-01-01T00:00:00.000"}]
+    rows = [{"license_number": "1", "provider_action_date_of_visit": "2024-01-01T00:00:00.000"}]
     resp = page_response("compliance", rows, offset=0, page_num=1)
     outputs = list(spider.parse_page(resp))
     requests = [o for o in outputs if isinstance(o, scrapy.Request)]
@@ -546,8 +535,7 @@ def test_page_errback_counts_failure_and_finishes_phase(spider):
     assert requests[0].meta["phase"] == "providers"
 
 
-def test_page_errback_on_providers_phase_does_not_finish_a_review_phase(
-        spider):
+def test_page_errback_on_providers_phase_does_not_finish_a_review_phase(spider):
     req = Request(delaware.PROVIDERS_URL, meta={"phase": "providers"})
     failure = _Failure(req, TimeoutError("boom"))
     outputs = list(spider.page_errback(failure))
@@ -559,8 +547,8 @@ def test_page_errback_on_providers_phase_does_not_finish_a_review_phase(
 # Test 15 -- Phase 1 (portal list) resilience
 # --------------------------------------------------------------------------- #
 
-def test_parse_portal_list_malformed_response_does_not_abort_run(
-        spider, caplog):
+
+def test_parse_portal_list_malformed_response_does_not_abort_run(spider, caplog):
     spider._compliance_done = True
     spider._complaints_done = True
     resp = portal_response({"unexpected": "shape"})
@@ -589,6 +577,7 @@ def test_portal_list_errback_does_not_abort_run(spider):
 # --------------------------------------------------------------------------- #
 # closed() guardrail smoke tests
 # --------------------------------------------------------------------------- #
+
 
 def test_closed_warns_when_below_baselines(spider, caplog):
     spider.providers_emitted = 5

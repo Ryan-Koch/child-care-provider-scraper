@@ -2,10 +2,11 @@ import scrapy
 from provider_scrape.items import ProviderItem, InspectionItem
 import re
 
+
 class AlabamaSpider(scrapy.Spider):
-    name = 'alabama'
-    allowed_domains = ['apps.dhr.alabama.gov']
-    start_urls = ['https://apps.dhr.alabama.gov/daycare/daycare_search']
+    name = "alabama"
+    allowed_domains = ["apps.dhr.alabama.gov"]
+    start_urls = ["https://apps.dhr.alabama.gov/daycare/daycare_search"]
 
     def parse(self, response):
         """
@@ -14,13 +15,13 @@ class AlabamaSpider(scrapy.Spider):
         """
         # Prepare form data
         form_data = {
-            'ctl00$MainContent$CountySelect': 'ALL',
-            'ctl00$MainContent$Radiolist1': 'L', # Licensed
-            'ctl00$MainContent$Radiolist2': 'ALL', # Any Child Care
-            '__EVENTTARGET': 'ctl00$MainContent$LinkButton2',
-            '__EVENTARGUMENT': '',
-            'ctl00$MainContent$TextBox1': '',
-            'ctl00$MainContent$TextBox2': ''
+            "ctl00$MainContent$CountySelect": "ALL",
+            "ctl00$MainContent$Radiolist1": "L",  # Licensed
+            "ctl00$MainContent$Radiolist2": "ALL",  # Any Child Care
+            "__EVENTTARGET": "ctl00$MainContent$LinkButton2",
+            "__EVENTARGUMENT": "",
+            "ctl00$MainContent$TextBox1": "",
+            "ctl00$MainContent$TextBox2": "",
         }
 
         # Scrapy's FormRequest.from_response handles hidden fields (VIEWSTATE, etc.) automatically
@@ -28,7 +29,7 @@ class AlabamaSpider(scrapy.Spider):
             response,
             formdata=form_data,
             callback=self.parse_results,
-            dont_click=True # We specified the target explicitly
+            dont_click=True,  # We specified the target explicitly
         )
 
     def parse_results(self, response):
@@ -37,7 +38,7 @@ class AlabamaSpider(scrapy.Spider):
         """
         # Iterate over result rows
         # The table ID is MainContent_GridView1
-        rows = response.css('table#MainContent_GridView1 tr')
+        rows = response.css("table#MainContent_GridView1 tr")
 
         # Skip header row (first one) and possibly pager row (last one)
         # We can check if the row has data.
@@ -45,10 +46,10 @@ class AlabamaSpider(scrapy.Spider):
         for row in rows:
             # Check if it's a data row or a pager row
             # Data rows have 4 cells usually, pager row has 1 cell spanning multiple columns
-            cells = row.css('td')
+            cells = row.css("td")
             if len(cells) == 4:
                 # Extract link to details
-                link = row.css('td:nth-child(2) a::attr(href)').get()
+                link = row.css("td:nth-child(2) a::attr(href)").get()
                 if link:
                     yield response.follow(link, callback=self.parse_detail)
 
@@ -57,9 +58,9 @@ class AlabamaSpider(scrapy.Spider):
         # The current page is usually a number inside a span in the pager row
         # Pager row is inside the table, usually the last row, containing a nested table
 
-        pager_row = response.css('table#MainContent_GridView1 tr:last-child table')
+        pager_row = response.css("table#MainContent_GridView1 tr:last-child table")
         if pager_row:
-            current_page_span = pager_row.css('span::text').get()
+            current_page_span = pager_row.css("span::text").get()
             if current_page_span and current_page_span.isdigit():
                 current_page = int(current_page_span)
                 next_page = current_page + 1
@@ -75,11 +76,11 @@ class AlabamaSpider(scrapy.Spider):
                     yield scrapy.FormRequest.from_response(
                         response,
                         formdata={
-                            '__EVENTTARGET': 'ctl00$MainContent$GridView1',
-                            '__EVENTARGUMENT': f'Page${next_page}'
+                            "__EVENTTARGET": "ctl00$MainContent$GridView1",
+                            "__EVENTARGUMENT": f"Page${next_page}",
                         },
                         callback=self.parse_results,
-                        dont_click=True
+                        dont_click=True,
                     )
                 else:
                     # Check for "..." which might lead to next set of pages
@@ -95,14 +96,14 @@ class AlabamaSpider(scrapy.Spider):
         Parses the provider detail page.
         """
         item = ProviderItem()
-        item['source_state'] = 'Alabama'
-        item['provider_url'] = response.url
+        item["source_state"] = "Alabama"
+        item["provider_url"] = response.url
 
         # The main content is inside #MainContent_Label1
         # It's unstructured text with some <b> tags and spans.
         # We can use xpath to extract text following specific labels.
 
-        container = response.css('#MainContent_Label1')
+        container = response.css("#MainContent_Label1")
 
         def get_text_after_label(label_text):
             # XPath: Find b or span containing text, then get following text node
@@ -116,61 +117,71 @@ class AlabamaSpider(scrapy.Spider):
         # Let's extract all text and parse it or use strict XPaths
 
         # Licensee
-        item['license_holder'] = container.xpath('.//span[contains(text(), "Licensee:")]/../../div[2]/span/text()').get()
+        item["license_holder"] = container.xpath(
+            './/span[contains(text(), "Licensee:")]/../../div[2]/span/text()'
+        ).get()
 
         # Facility (Provider Name)
-        item['provider_name'] = container.xpath('.//span[contains(text(), "Facility:")]/../../div[2]/span/text()').get()
+        item["provider_name"] = container.xpath('.//span[contains(text(), "Facility:")]/../../div[2]/span/text()').get()
 
         # Status
         # "<b>Status:</b> Licensed<br>"
         # Find b with "Status:", get following sibling text
-        item['status'] = container.xpath('.//b[contains(text(), "Status:")]/following-sibling::text()[1]').get()
-        if item['status']:
-            item['status'] = item['status'].strip()
+        item["status"] = container.xpath('.//b[contains(text(), "Status:")]/following-sibling::text()[1]').get()
+        if item["status"]:
+            item["status"] = item["status"].strip()
 
         # Director
         # "<b>JOHNSON, KATRINA M - Director</b>"
         # This one doesn't have a label "Director:". It's just bold text ending in "- Director"
         director_text = container.xpath('.//b[contains(text(), "- Director")]/text()').get()
         if director_text:
-            item['administrator'] = director_text.replace('- Director', '').strip()
+            item["administrator"] = director_text.replace("- Director", "").strip()
 
         # Phone
-        item['phone'] = container.xpath('.//b[contains(text(), "Phone:")]/following-sibling::text()[1]').get()
-        if item['phone']:
-            item['phone'] = item['phone'].strip()
+        item["phone"] = container.xpath('.//b[contains(text(), "Phone:")]/following-sibling::text()[1]').get()
+        if item["phone"]:
+            item["phone"] = item["phone"].strip()
 
         # Quality Star Rating
         # <span style='...'>Alabama Quality Star Rating:   </span><span style='...'> &nbsp;&nbsp; 1 Star</span>
-        item['al_quality_rating'] = container.xpath('.//span[contains(text(), "Quality Star Rating:")]/following-sibling::span[1]/text()').get()
-        if item['al_quality_rating']:
-            item['al_quality_rating'] = item['al_quality_rating'].strip()
+        item["al_quality_rating"] = container.xpath(
+            './/span[contains(text(), "Quality Star Rating:")]/following-sibling::span[1]/text()'
+        ).get()
+        if item["al_quality_rating"]:
+            item["al_quality_rating"] = item["al_quality_rating"].strip()
 
         # Rating Expiration
-        item['al_rating_expiration'] = container.xpath('.//span[contains(text(), "Rating Expiration Date:")]/following-sibling::span[1]/text()').get()
-        if item['al_rating_expiration']:
-            item['al_rating_expiration'] = item['al_rating_expiration'].strip()
+        item["al_rating_expiration"] = container.xpath(
+            './/span[contains(text(), "Rating Expiration Date:")]/following-sibling::span[1]/text()'
+        ).get()
+        if item["al_rating_expiration"]:
+            item["al_rating_expiration"] = item["al_rating_expiration"].strip()
 
         # Hours & Ages table
         # There's a nested table for this.
         # Daytime Hours
-        item['hours'] = container.xpath('.//b[contains(text(), "Daytime Hours:")]/following-sibling::text()').get()
-        if item['hours']:
-            item['hours'] = item['hours'].strip()
+        item["hours"] = container.xpath('.//b[contains(text(), "Daytime Hours:")]/following-sibling::text()').get()
+        if item["hours"]:
+            item["hours"] = item["hours"].strip()
 
         # Nighttime Hours
-        item['al_nighttime_hours'] = container.xpath('.//b[contains(text(), "Nighttime Hours:")]/following-sibling::text()').get()
-        if item['al_nighttime_hours']:
-            item['al_nighttime_hours'] = item['al_nighttime_hours'].strip()
+        item["al_nighttime_hours"] = container.xpath(
+            './/b[contains(text(), "Nighttime Hours:")]/following-sibling::text()'
+        ).get()
+        if item["al_nighttime_hours"]:
+            item["al_nighttime_hours"] = item["al_nighttime_hours"].strip()
 
         # Ages
-        item['ages_served'] = container.xpath('.//b[contains(text(), "Daytime Ages:")]/following-sibling::text()').get()
-        if item['ages_served']:
-            item['ages_served'] = item['ages_served'].strip()
+        item["ages_served"] = container.xpath('.//b[contains(text(), "Daytime Ages:")]/following-sibling::text()').get()
+        if item["ages_served"]:
+            item["ages_served"] = item["ages_served"].strip()
 
-        item['al_nighttime_ages'] = container.xpath('.//b[contains(text(), "Nighttime Ages:")]/following-sibling::text()').get()
-        if item['al_nighttime_ages']:
-            item['al_nighttime_ages'] = item['al_nighttime_ages'].strip()
+        item["al_nighttime_ages"] = container.xpath(
+            './/b[contains(text(), "Nighttime Ages:")]/following-sibling::text()'
+        ).get()
+        if item["al_nighttime_ages"]:
+            item["al_nighttime_ages"] = item["al_nighttime_ages"].strip()
 
         # Addresses
         # Mailing Address
@@ -199,67 +210,69 @@ class AlabamaSpider(scrapy.Spider):
             # Get the following siblings that are spans or text, stop at "Street Address:"
             # This is getting complicated.
             # Alternative: Get the full text of the container and parse with Regex.
-            full_text = "".join(container.xpath('.//text()').getall())
+            full_text = "".join(container.xpath(".//text()").getall())
 
             # Normalize whitespace
-            full_text = re.sub(r'\s+', ' ', full_text)
+            full_text = re.sub(r"\s+", " ", full_text)
 
             # Regex for Mailing Address
             # Mailing Address: (.*?) Street Address:
-            mailing_match = re.search(r'Mailing Address:(.*?)Street Address:', full_text)
+            mailing_match = re.search(r"Mailing Address:(.*?)Street Address:", full_text)
             if mailing_match:
-                item['al_mailing_address'] = mailing_match.group(1).strip()
+                item["al_mailing_address"] = mailing_match.group(1).strip()
 
             # Regex for Street Address
             # Street Address: (.*?) Click for Interactive Map
             # Or just end of string (but there is map link after)
-            street_match = re.search(r'Street Address:(.*?)Click for Interactive Map', full_text)
+            street_match = re.search(r"Street Address:(.*?)Click for Interactive Map", full_text)
             if not street_match:
-                street_match = re.search(r'Street Address:(.*)$', full_text)
+                street_match = re.search(r"Street Address:(.*)$", full_text)
 
             if street_match:
-                item['address'] = street_match.group(1).strip()
+                item["address"] = street_match.group(1).strip()
 
         # Tables extraction
         # Accreditations
         accreditations = []
-        acc_rows = response.css('#MainContent_GridView1 tr:not(:first-child)') # Skip header (if any? "No Accreditations" is a row)
+        acc_rows = response.css(
+            "#MainContent_GridView1 tr:not(:first-child)"
+        )  # Skip header (if any? "No Accreditations" is a row)
         for row in acc_rows:
-            text = "".join(row.css('::text').getall()).strip()
+            text = "".join(row.css("::text").getall()).strip()
             if text and "No Accreditations" not in text:
                 accreditations.append(text)
-        item['al_accreditations'] = accreditations
+        item["al_accreditations"] = accreditations
 
         # Adverse Actions
         adverse = []
-        adv_rows = response.css('#MainContent_GridView3 tr:not(:first-child)')
+        adv_rows = response.css("#MainContent_GridView3 tr:not(:first-child)")
         for row in adv_rows:
-            text = "".join(row.css('::text').getall()).strip()
+            text = "".join(row.css("::text").getall()).strip()
             if text and "No Adverse Actions" not in text:
-                adverse.append(text) # Or structured dict if columns known
-        item['al_adverse_actions'] = adverse
+                adverse.append(text)  # Or structured dict if columns known
+        item["al_adverse_actions"] = adverse
 
         # Substantiated Complaints
         complaints = []
-        comp_rows = response.css('#MainContent_GridView2 tr:not(:first-child)')
+        comp_rows = response.css("#MainContent_GridView2 tr:not(:first-child)")
         for row in comp_rows:
-            text = "".join(row.css('::text').getall()).strip()
+            text = "".join(row.css("::text").getall()).strip()
             if text and "No Substantiated Complaints" not in text:
                 complaints.append(text)
-        item['al_substantiated_complaints'] = complaints
+        item["al_substantiated_complaints"] = complaints
 
         # Deficiencies
         # Try to map to InspectionItem if possible, otherwise list of strings
         deficiencies = []
         inspections = []
-        def_rows = response.css('#MainContent_GridView4 tr:not(:first-child)')
+        def_rows = response.css("#MainContent_GridView4 tr:not(:first-child)")
         for row in def_rows:
-            text = "".join(row.css('::text').getall()).strip()
+            text = "".join(row.css("::text").getall()).strip()
             if text and "No Evaluation/Deficiency Reports" not in text:
                 deficiencies.append(text)
                 # If we could parse dates, we would create InspectionItem
                 # Since we don't have example data, just storing raw text for now
-        item['al_deficiency_reports'] = deficiencies
-        item['inspections'] = inspections
+        item["al_deficiency_reports"] = deficiencies
+        item["inspections"] = inspections
 
         yield item

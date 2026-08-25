@@ -46,9 +46,7 @@ class IllinoisSpider(scrapy.Spider):
         self.logger.info(f"Successfully loaded initial page: {response.url}")
 
         viewstate = response.css("input#__VIEWSTATE::attr(value)").get()
-        viewstate_generator = response.css(
-            "input#__VIEWSTATEGENERATOR::attr(value)"
-        ).get()
+        viewstate_generator = response.css("input#__VIEWSTATEGENERATOR::attr(value)").get()
         event_validation = response.css("input#__EVENTVALIDATION::attr(value)").get()
         event_target = "ctl00$ContentPlaceHolderContent$ASPxButtonExport"
 
@@ -76,9 +74,7 @@ class IllinoisSpider(scrapy.Spider):
         """
         content_disposition = response.headers.get("Content-Disposition", b"").decode()
         if "attachment" not in content_disposition:
-            self.logger.error(
-                "Failed to download CSV. The response was not a file attachment."
-            )
+            self.logger.error("Failed to download CSV. The response was not a file attachment.")
             return
 
         self.logger.info("Successfully received CSV data. Parsing now.")
@@ -104,9 +100,7 @@ class IllinoisSpider(scrapy.Spider):
             provider["source_state"] = "Illinois"
             provider["il_provider_id"] = row.get("ProviderID")
             provider["provider_name"] = row.get("DoingBusinessAs")
-            provider["address"] = (
-                f"{row.get('Street')}, {row.get('City')}, CA {row.get('Zip')}"
-            )
+            provider["address"] = f"{row.get('Street')}, {row.get('City')}, CA {row.get('Zip')}"
             provider["county"] = row.get("County")
             provider["phone"] = row.get("Phone")
             provider["il_facility_type"] = row.get("FacilityType")

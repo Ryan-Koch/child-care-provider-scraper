@@ -24,6 +24,7 @@ notes. The crawl has three phases:
    is independent — no server-side session serialization). Everything we emit is
    on the detail page.
 """
+
 import re
 from html import unescape
 
@@ -55,8 +56,7 @@ def _content_after(text, key):
     m = re.search(r'<label for="%s"[^>]*>.*?</label>' % re.escape(key), text, re.S)
     if not m:
         return None
-    v = re.search(r'<span class="content1">(.*?)</span>',
-                  text[m.end():m.end() + 600], re.S)
+    v = re.search(r'<span class="content1">(.*?)</span>', text[m.end() : m.end() + 600], re.S)
     if not v:
         return None
     raw = re.sub(r"<br\s*/?>", "\n", v.group(1))
@@ -125,13 +125,9 @@ class VermontSpider(Spider):
         yield Request(home, callback=self.parse_home)
 
     def parse_home(self, response):
-        adv = response.xpath(
-            '//a[contains(normalize-space(.), "advanced search")]/@href'
-        ).get()
+        adv = response.xpath('//a[contains(normalize-space(.), "advanced search")]/@href').get()
         if not adv:
-            self.logger.error(
-                "VT: no 'advanced search' link on the Home page; aborting."
-            )
+            self.logger.error("VT: no 'advanced search' link on the Home page; aborting.")
             return
         yield response.follow(adv, callback=self.parse_search_form)
 
@@ -149,9 +145,7 @@ class VermontSpider(Spider):
         )
 
     def parse_results(self, response):
-        details = response.xpath(
-            '//a[normalize-space(text())="Details"]/@href'
-        ).getall()
+        details = response.xpath('//a[normalize-space(text())="Details"]/@href').getall()
 
         if not details:
             attempt = response.meta.get("search_attempt", 1)
@@ -160,8 +154,9 @@ class VermontSpider(Spider):
             if "eventSubmit_doSearch" in response.text:
                 if attempt < self.MAX_SEARCH_ATTEMPTS:
                     self.logger.warning(
-                        "VT empty search bounced to the form (attempt %d/%d); "
-                        "retrying.", attempt, self.MAX_SEARCH_ATTEMPTS,
+                        "VT empty search bounced to the form (attempt %d/%d); retrying.",
+                        attempt,
+                        self.MAX_SEARCH_ATTEMPTS,
                     )
                     yield FormRequest.from_response(
                         response,
@@ -177,9 +172,7 @@ class VermontSpider(Spider):
                         self.MAX_SEARCH_ATTEMPTS,
                     )
             else:
-                self.logger.warning(
-                    "VT: results page with no Details links at %s", response.url
-                )
+                self.logger.warning("VT: results page with no Details links at %s", response.url)
             return
 
         # Log the declared total once, from the first results page.
@@ -196,9 +189,7 @@ class VermontSpider(Spider):
                 meta={"dont_merge_cookies": True},
             )
 
-        next_href = response.xpath(
-            '//a[normalize-space(.)="next>"]/@href'
-        ).get()
+        next_href = response.xpath('//a[normalize-space(.)="next>"]/@href').get()
         if next_href:
             yield response.follow(next_href, callback=self.parse_results)
 
@@ -220,9 +211,7 @@ class VermontSpider(Spider):
         # The directory only lists actively licensed/registered providers; derive
         # a status from the license type (both normalize to "active").
         if provider_type:
-            item["status"] = (
-                "Registered" if "registered" in provider_type.lower() else "Licensed"
-            )
+            item["status"] = "Registered" if "registered" in provider_type.lower() else "Licensed"
 
         # Site Address block: "street | Town, VT ZIP | City: <postal city>".
         # Keep the street + municipal line (geocodable); drop the postal "City:".
@@ -291,7 +280,7 @@ class VermontSpider(Spider):
         if start == -1:
             return []
         end = text.find("Return to Search Results", start)
-        section = text[start:end if end != -1 else len(text)]
+        section = text[start : end if end != -1 else len(text)]
         inspections = []
         seen = set()
         for date in re.findall(r">\s*(\d{2}/\d{2}/\d{4})\s*<", section):

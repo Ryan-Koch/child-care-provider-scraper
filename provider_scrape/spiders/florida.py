@@ -15,17 +15,73 @@ SPA_SEARCH_URL = "https://caressearch.myflfamilies.com/PublicSearch/Search"
 # Florida's 67 counties. Names match what the public-search API expects;
 # Miami-Dade is hyphenated and the St. counties keep the period.
 FL_COUNTIES = [
-    "Alachua", "Baker", "Bay", "Bradford", "Brevard", "Broward", "Calhoun",
-    "Charlotte", "Citrus", "Clay", "Collier", "Columbia", "DeSoto", "Dixie",
-    "Duval", "Escambia", "Flagler", "Franklin", "Gadsden", "Gilchrist",
-    "Glades", "Gulf", "Hamilton", "Hardee", "Hendry", "Hernando", "Highlands",
-    "Hillsborough", "Holmes", "Indian River", "Jackson", "Jefferson",
-    "Lafayette", "Lake", "Lee", "Leon", "Levy", "Liberty", "Madison",
-    "Manatee", "Marion", "Martin", "Miami-Dade", "Monroe", "Nassau",
-    "Okaloosa", "Okeechobee", "Orange", "Osceola", "Palm Beach", "Pasco",
-    "Pinellas", "Polk", "Putnam", "Santa Rosa", "Sarasota", "Seminole",
-    "St. Johns", "St. Lucie", "Sumter", "Suwannee", "Taylor", "Union",
-    "Volusia", "Wakulla", "Walton", "Washington",
+    "Alachua",
+    "Baker",
+    "Bay",
+    "Bradford",
+    "Brevard",
+    "Broward",
+    "Calhoun",
+    "Charlotte",
+    "Citrus",
+    "Clay",
+    "Collier",
+    "Columbia",
+    "DeSoto",
+    "Dixie",
+    "Duval",
+    "Escambia",
+    "Flagler",
+    "Franklin",
+    "Gadsden",
+    "Gilchrist",
+    "Glades",
+    "Gulf",
+    "Hamilton",
+    "Hardee",
+    "Hendry",
+    "Hernando",
+    "Highlands",
+    "Hillsborough",
+    "Holmes",
+    "Indian River",
+    "Jackson",
+    "Jefferson",
+    "Lafayette",
+    "Lake",
+    "Lee",
+    "Leon",
+    "Levy",
+    "Liberty",
+    "Madison",
+    "Manatee",
+    "Marion",
+    "Martin",
+    "Miami-Dade",
+    "Monroe",
+    "Nassau",
+    "Okaloosa",
+    "Okeechobee",
+    "Orange",
+    "Osceola",
+    "Palm Beach",
+    "Pasco",
+    "Pinellas",
+    "Polk",
+    "Putnam",
+    "Santa Rosa",
+    "Sarasota",
+    "Seminole",
+    "St. Johns",
+    "St. Lucie",
+    "Sumter",
+    "Suwannee",
+    "Taylor",
+    "Union",
+    "Volusia",
+    "Wakulla",
+    "Walton",
+    "Washington",
 ]
 
 
@@ -110,9 +166,7 @@ class FloridaSpider(scrapy.Spider):
             total = len(FL_COUNTIES)
             successes = 0
             for index, county in enumerate(FL_COUNTIES, start=1):
-                self.logger.info(
-                    f"[{index}/{total}] navigating SPA for {county}"
-                )
+                self.logger.info(f"[{index}/{total}] navigating SPA for {county}")
 
                 api_resp = await self._fetch_county_via_spa(page, county)
                 if api_resp is None:
@@ -120,30 +174,21 @@ class FloridaSpider(scrapy.Spider):
                 status, body = api_resp
 
                 if status != 200:
-                    self.logger.error(
-                        f"[{index}/{total}] {county}: HTTP {status} "
-                        f"— first 200 chars: {body[:200]}"
-                    )
+                    self.logger.error(f"[{index}/{total}] {county}: HTTP {status} — first 200 chars: {body[:200]}")
                     continue
 
                 try:
                     data = json.loads(body)
                 except json.JSONDecodeError as exc:
-                    self.logger.error(
-                        f"[{index}/{total}] {county}: bad JSON: {exc}"
-                    )
+                    self.logger.error(f"[{index}/{total}] {county}: bad JSON: {exc}")
                     continue
 
                 if not isinstance(data, list) or not data:
-                    self.logger.warning(
-                        f"[{index}/{total}] {county}: empty/unexpected payload"
-                    )
+                    self.logger.warning(f"[{index}/{total}] {county}: empty/unexpected payload")
                     continue
 
                 records = data[0].get("publicSearches") or []
-                self.logger.info(
-                    f"[{index}/{total}] {county}: {len(records)} providers"
-                )
+                self.logger.info(f"[{index}/{total}] {county}: {len(records)} providers")
                 successes += 1
 
                 for record in records:
@@ -151,9 +196,7 @@ class FloridaSpider(scrapy.Spider):
 
                 await asyncio.sleep(self.BETWEEN_COUNTY_SLEEP_S)
 
-            self.logger.info(
-                f"Finished: {successes}/{total} counties returned data"
-            )
+            self.logger.info(f"Finished: {successes}/{total} counties returned data")
         finally:
             await page.close()
 
@@ -167,9 +210,7 @@ class FloridaSpider(scrapy.Spider):
             return response_matches_county(resp.url, county)
 
         try:
-            async with page.expect_response(
-                matcher, timeout=self.RESPONSE_TIMEOUT_MS
-            ) as resp_info:
+            async with page.expect_response(matcher, timeout=self.RESPONSE_TIMEOUT_MS) as resp_info:
                 await page.goto(
                     search_url,
                     wait_until="domcontentloaded",
@@ -177,18 +218,14 @@ class FloridaSpider(scrapy.Spider):
                 )
             api_resp = await resp_info.value
         except Exception as exc:
-            self.logger.error(
-                f"{county}: failed waiting for API response: {exc}"
-            )
+            self.logger.error(f"{county}: failed waiting for API response: {exc}")
             return None
 
         try:
             status = api_resp.status
             body = await api_resp.text()
         except Exception as exc:
-            self.logger.error(
-                f"{county}: failed reading API response body: {exc}"
-            )
+            self.logger.error(f"{county}: failed reading API response body: {exc}")
             return None
 
         return status, body
@@ -221,8 +258,13 @@ class FloridaSpider(scrapy.Spider):
         item["hours"] = {
             day: data.get(f"{day}Hours")
             for day in (
-                "monday", "tuesday", "wednesday",
-                "thursday", "friday", "saturday", "sunday",
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
             )
         }
 
@@ -240,18 +282,10 @@ class FloridaSpider(scrapy.Spider):
 
         item["fl_vpk_composite_score"] = _num(data.get("compositesScore"))
         item["fl_wels_rating_date"] = data.get("welsRatingDate")
-        item["fl_vpk_school_year_composite_score"] = _num(
-            data.get("vpkSchoolYearCompositeScore")
-        )
-        item["fl_vpk_school_year_wels_rating_date"] = data.get(
-            "vpkSchoolYearWelsRatingDate"
-        )
-        item["fl_vpk_summer_composite_score"] = _num(
-            data.get("vpkSummerCompositeScore")
-        )
-        item["fl_vpk_summer_wels_rating_date"] = data.get(
-            "vpkSummerWelsRatingDate"
-        )
+        item["fl_vpk_school_year_composite_score"] = _num(data.get("vpkSchoolYearCompositeScore"))
+        item["fl_vpk_school_year_wels_rating_date"] = data.get("vpkSchoolYearWelsRatingDate")
+        item["fl_vpk_summer_composite_score"] = _num(data.get("vpkSummerCompositeScore"))
+        item["fl_vpk_summer_wels_rating_date"] = data.get("vpkSummerWelsRatingDate")
 
         item["fl_is_trauma_badge"] = data.get("isTraumaBadge")
         item["fl_is_inclusion_badge"] = data.get("isInclusionBadge")

@@ -19,6 +19,7 @@ Decisions honored (see ``data_cleanup_implementation_plan.md`` §3):
 Later tasks (03–08) fill in the individual steps; for now the orchestrators are
 no-ops so the pipeline can be wired in with zero behavior change.
 """
+
 import logging
 import re
 from datetime import datetime
@@ -37,8 +38,22 @@ NAME_FIELDS = ("provider_name", "license_holder", "administrator")
 # Tokens kept uppercase when title-casing a name: corporate suffixes and the
 # common Roman numerals seen in personal names (e.g. "John Smith III").
 NAME_PRESERVE_UPPER = {
-    "LLC", "LLP", "LLLP", "LP", "INC", "PLLC", "PC", "LTD", "USA",
-    "II", "III", "IV", "VI", "VII", "VIII", "IX",
+    "LLC",
+    "LLP",
+    "LLLP",
+    "LP",
+    "INC",
+    "PLLC",
+    "PC",
+    "LTD",
+    "USA",
+    "II",
+    "III",
+    "IV",
+    "VI",
+    "VII",
+    "VIII",
+    "IX",
 }
 
 # Whitespace characters (incl. non-breaking space) collapsed to a normal space.
@@ -112,8 +127,7 @@ DATE_FIELDS = ("status_date", "license_begin_date", "license_expiration")
 # Inspection-level date fields. ``status_updated`` and ``az_date_resolved`` are
 # the other confirmed dates inside an inspection entry; ``in_correction_date`` is
 # Indiana's non-compliance correction date.
-INSPECTION_DATE_FIELDS = ("date", "status_updated", "az_date_resolved",
-                          "in_correction_date")
+INSPECTION_DATE_FIELDS = ("date", "status_updated", "az_date_resolved", "in_correction_date")
 
 # strptime patterns tried in order for purely numeric dates.
 _NUMERIC_DATE_PATTERNS = ("%Y-%m-%d", "%m/%d/%Y", "%m-%d-%Y", "%Y/%m/%d")
@@ -122,18 +136,30 @@ _NUMERIC_DATE_PATTERNS = ("%Y-%m-%d", "%m/%d/%Y", "%m-%d-%Y", "%Y/%m/%d")
 # AP-style "Sept." (4 letters, with period) seen in inspection dates. Keyed by
 # the lower-cased token with any trailing period removed.
 _MONTH_NUMBERS = {
-    "jan": 1, "january": 1,
-    "feb": 2, "february": 2,
-    "mar": 3, "march": 3,
-    "apr": 4, "april": 4,
+    "jan": 1,
+    "january": 1,
+    "feb": 2,
+    "february": 2,
+    "mar": 3,
+    "march": 3,
+    "apr": 4,
+    "april": 4,
     "may": 5,
-    "jun": 6, "june": 6,
-    "jul": 7, "july": 7,
-    "aug": 8, "august": 8,
-    "sep": 9, "sept": 9, "september": 9,
-    "oct": 10, "october": 10,
-    "nov": 11, "november": 11,
-    "dec": 12, "december": 12,
+    "jun": 6,
+    "june": 6,
+    "jul": 7,
+    "july": 7,
+    "aug": 8,
+    "august": 8,
+    "sep": 9,
+    "sept": 9,
+    "september": 9,
+    "oct": 10,
+    "october": 10,
+    "nov": 11,
+    "november": 11,
+    "dec": 12,
+    "december": 12,
 }
 
 # "Sept. 23, 2025" / "January 5, 2024" / "Dec 1, 2025".
@@ -176,9 +202,7 @@ def normalize_date(value):
     # Drop a trailing clock time (e.g. "05/07/2026 08:42 AM" or "... 14:30:00")
     # so a date+time timestamp normalizes to its date. Month-name dates
     # ("Sept. 23, 2025") have no trailing clock time and are left untouched.
-    candidate = re.sub(
-        r"\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?$", "", candidate
-    ).strip()
+    candidate = re.sub(r"\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?$", "", candidate).strip()
     for pattern in _NUMERIC_DATE_PATTERNS:
         try:
             return datetime.strptime(candidate, pattern).strftime("%Y-%m-%d")
@@ -187,8 +211,7 @@ def normalize_date(value):
     parsed = _parse_month_name_date(candidate)
     if parsed is not None:
         return parsed.strftime("%Y-%m-%d")
-    logger.warning("normalize_date: could not parse date %r (left unchanged)",
-                   value)
+    logger.warning("normalize_date: could not parse date %r (left unchanged)", value)
     return value
 
 
@@ -220,9 +243,7 @@ def normalize_capacity(value):
         stripped = value.strip()
         if _INTEGER_RE.fullmatch(stripped):
             return int(stripped)
-        logger.warning(
-            "normalize_capacity: non-integer capacity %r (left unchanged)",
-            value)
+        logger.warning("normalize_capacity: non-integer capacity %r (left unchanged)", value)
         return value
     return value
 
@@ -268,17 +289,34 @@ def normalize_coordinate(value):
 # from this, keyed by the trimmed, lower-cased raw value (plan §5.4).
 STATUS_BUCKETS = {
     "active": [
-        "LICENSED", "License", "Licensed", "Open", "Active", "Operational",
-        "Regular", "Registration", "Registered", "Listed", "Full Permit",
-        "CONTINUOUS LICENSE", "License issued (IL)", "Certified", "CERTIFIED",
-        "Open - Certified", "Open - Payment Only", "Compliance Certificate",
-        "Original", "Amended permit (AP)", "Continuing - Full",
+        "LICENSED",
+        "License",
+        "Licensed",
+        "Open",
+        "Active",
+        "Operational",
+        "Regular",
+        "Registration",
+        "Registered",
+        "Listed",
+        "Full Permit",
+        "CONTINUOUS LICENSE",
+        "License issued (IL)",
+        "Certified",
+        "CERTIFIED",
+        "Open - Certified",
+        "Open - Payment Only",
+        "Compliance Certificate",
+        "Original",
+        "Amended permit (AP)",
+        "Continuing - Full",
         # Alaska (AKCCIS): providerStatus values from Facility/Search. "Exempt"
         # here is a *status* meaning "operating under an exemption" (i.e.
         # actively open); the exempt facility_category is derived separately
         # from provider_type. The project's status vocab has no `exempt`
         # bucket, so `active` is the operationally-correct home.
-        "Active/Open", "Exempt",
+        "Active/Open",
+        "Exempt",
         # Iowa (Titan StatusCode): "A" is the only value observed (170/170,
         # then 3,370/3,370 on a full harvest -- the public search appears to
         # expose only active providers).
@@ -287,29 +325,45 @@ STATUS_BUCKETS = {
         "APPROVED",
     ],
     "provisional": [
-        "PROVISIONAL LICENSE", "Initial Permit", "Provisional 1",
-        "Provisional 2", "Provisional 3", "Permit issued (IP)",
-        "Renewed Initial", "Initial - Full", "Provisional",
+        "PROVISIONAL LICENSE",
+        "Initial Permit",
+        "Provisional 1",
+        "Provisional 2",
+        "Provisional 3",
+        "Permit issued (IP)",
+        "Renewed Initial",
+        "Initial - Full",
+        "Provisional",
     ],
     "pending": [
-        "Pending renewal application (RN)", "PENDING", "Pending",
-        "Pending address change application (AD)", "Pending/Re-license",
+        "Pending renewal application (RN)",
+        "PENDING",
+        "Pending",
+        "Pending address change application (AD)",
+        "Pending/Re-license",
         "Pending - Certified",
     ],
     "enforcement": [
-        "Pending Revocation", "ON PROBATION", "ENFORCEMENT",
-        "Pending Revocation and Denial", "Suspended",
-        "Pending revocation (PR)", "Suspended - Emergency",
+        "Pending Revocation",
+        "ON PROBATION",
+        "ENFORCEMENT",
+        "Pending Revocation and Denial",
+        "Suspended",
+        "Pending revocation (PR)",
+        "Suspended - Emergency",
         # NB: en-dash (–), exactly as emitted by the source.
-        "Open – Pending Legal Action Outcome", "RevocationPending",
-        "Refuse to Renew (RR)", "Revoke License (RL)",
+        "Open – Pending Legal Action Outcome",
+        "RevocationPending",
+        "Refuse to Renew (RR)",
+        "Revoke License (RL)",
         # Indiana (secure.in.gov): open but with a pending enforcement action
         # (hyphen, exactly as emitted).
         "Open - Enforcement Pending",
         # Alaska (AKCCIS): Denied and App Withdrawn are regulatory blocks
         # (not neutral closures), so they live with enforcement rather than
         # closed.
-        "Denied", "App Withdrawn",
+        "Denied",
+        "App Withdrawn",
         # Kansas (khap.kdhe.ks.gov OIDS): a suspended licence is a regulatory
         # action, not a neutral closure -- matches the bare "Suspended" above.
         # Approved Ryan 2026-08-20.
@@ -319,15 +373,24 @@ STATUS_BUCKETS = {
         # delaware.derive_status. `enforcement_action` values (an action
         # already taken) and `intent_to_revoke` values (a notice of one
         # pending) share this bucket -- see delaware_plan.md Sec 7.3/8.
-        "Probation", "Probation Extension", "Warning of Probation",
-        "Warning of Probation Extension", "Intent to Revoke",
-        "Intent to Place on Probation", "Intent to Place on Probation Extension",
+        "Probation",
+        "Probation Extension",
+        "Warning of Probation",
+        "Warning of Probation Extension",
+        "Intent to Revoke",
+        "Intent to Place on Probation",
+        "Intent to Place on Probation Extension",
         "Intent to Place on Warning of Probation",
         "Intent to Place on Warning of Probation Extension",
     ],
     "closed": [
-        "CLOSED", "Closed", "INACTIVE", "NOT LICENSED", "Revoked",
-        "Surrendered under Investigation (SI)", "Surrendered with Cause (SC)",
+        "CLOSED",
+        "Closed",
+        "INACTIVE",
+        "NOT LICENSED",
+        "Revoked",
+        "Surrendered under Investigation (SI)",
+        "Surrendered with Cause (SC)",
         "Temporary Closure",
         # Alaska (AKCCIS): Closed / Temporary Closure / Suspended are already
         # covered by the generic entries above; Revoked/Not Renewed is the
@@ -347,11 +410,7 @@ STATUS_BUCKETS = {
 }
 
 # Runtime lookup: trimmed+lower-cased raw value -> canonical bucket.
-STATUS_MAP = {
-    raw.strip().lower(): canonical
-    for canonical, raws in STATUS_BUCKETS.items()
-    for raw in raws
-}
+STATUS_MAP = {raw.strip().lower(): canonical for canonical, raws in STATUS_BUCKETS.items() for raw in raws}
 
 
 def canonical_status(value):
@@ -365,8 +424,7 @@ def canonical_status(value):
         return value
     canonical = STATUS_MAP.get(value.strip().lower())
     if canonical is None:
-        logger.warning("canonical_status: unmapped status %r -> 'unknown'",
-                       value)
+        logger.warning("canonical_status: unmapped status %r -> 'unknown'", value)
         return "unknown"
     return canonical
 
@@ -381,26 +439,48 @@ def canonical_status(value):
 # placement agencies, FFN/nanny informal care, and youth orgs -> ``other``.
 FACILITY_CATEGORY_BUCKETS = {
     "center": [
-        "DAY CARE CENTER", "Child Care Center", "Licensed Center", "Center",
-        "Child Care Facility", "Child Care Learning Center", "INFANT CENTER",
-        "Child Day Center", "SINGLE LICENSED CHILD CARE CENTER", "DCC",
-        "Preschool Center", "Preschool Program", "Public School",
-        "Local School System", "Child Care Registered Center Based Program",
-        "Infant and Toddler Center", "Certified Pre-School",
-        "Child Care Commercial Preschool", "Short Term Child Day Center",
-        "Outdoor Nature Based Program", "GA Head Start", "GA Early Head Start",
-        "Small Employer Based Child Care", "Department of Defense",
-        "DAY CARE CENTER - ILL CENTER", "University", "SDCC",
+        "DAY CARE CENTER",
+        "Child Care Center",
+        "Licensed Center",
+        "Center",
+        "Child Care Facility",
+        "Child Care Learning Center",
+        "INFANT CENTER",
+        "Child Day Center",
+        "SINGLE LICENSED CHILD CARE CENTER",
+        "DCC",
+        "Preschool Center",
+        "Preschool Program",
+        "Public School",
+        "Local School System",
+        "Child Care Registered Center Based Program",
+        "Infant and Toddler Center",
+        "Certified Pre-School",
+        "Child Care Commercial Preschool",
+        "Short Term Child Day Center",
+        "Outdoor Nature Based Program",
+        "GA Head Start",
+        "GA Early Head Start",
+        "Small Employer Based Child Care",
+        "Department of Defense",
+        "DAY CARE CENTER - ILL CENTER",
+        "University",
+        "SDCC",
         "Child Care Hourly Center",
         # Maryland (checkccmd.org) codes: CTR = center, LOC = a center-based
         # program operating under a Letter of Compliance.
-        "CTR", "LOC",
+        "CTR",
+        "LOC",
         # Ohio (childcaresearch.ohio.gov) program types.
-        "Licensed Child Care Center", "Licensed School-Based Preschool",
+        "Licensed Child Care Center",
+        "Licensed School-Based Preschool",
         # North Dakota (search.ec.hhs.nd.gov) facilityType labels. Facility- and
         # school-based institutional care -> center.
-        "HHS-Licensed Child Care Center", "HHS-Licensed Group Child Care Facility",
-        "HHS-Licensed Preschool", "HHS Four-Year Old Program", "Head Start Site",
+        "HHS-Licensed Child Care Center",
+        "HHS-Licensed Group Child Care Facility",
+        "HHS-Licensed Preschool",
+        "HHS Four-Year Old Program",
+        "Head Start Site",
         # Washington DC (mychildcare.dc.gov): CDC = center.
         "CDC (Child Development Center)",
         # Wisconsin (childcarefinder.wisconsin.gov) Regulation Type: a licensed
@@ -414,7 +494,8 @@ FACILITY_CATEGORY_BUCKETS = {
         "Center Based Child Care and Preschool Program",
         "Center Based Child Care and Preschool Program - Non-Recurring",
         # Tennessee (onedhs.tn.gov): coarse provider_type.
-        "Child Care", "DOE",
+        "Child Care",
+        "DOE",
         # Iowa (Titan TypeOfCareDesc) "Licensed Center" reuses the exact
         # "Licensed Center" string already listed above for Indiana -- no
         # new entry needed.
@@ -423,7 +504,8 @@ FACILITY_CATEGORY_BUCKETS = {
         # A bare "Preschool" and a facility-based Head Start center are both
         # center-based institutional care, matching the "Preschool Program" /
         # "Head Start Site" precedents already above.
-        "Preschool", "Head Start Child Care Center",
+        "Preschool",
+        "Head Start Child Care Center",
         # Kentucky (kynect.ky.gov): "Licensed" == a Licensed Child Care Center
         # (licence numbers are L-prefixed).
         "Licensed",
@@ -434,16 +516,29 @@ FACILITY_CATEGORY_BUCKETS = {
         "Nursery School",
     ],
     "family_home": [
-        "FAMILY DAY CARE HOME", "Family Child Care Home", "Family Home", "FDC",
-        "Registered Child-Care Home", "Licensed Child-Care Home",
-        "Listed Family Home", "Family Day Home", "Family Day Care Home",
-        "Family Child Care Learning Home", "Family Child Care",
-        "Registered Home", "Child Care Licensed Family", "Family",
-        "Licensed Family Home", "Family Home Child Care",
-        "Large Family Child Care Home", "Unlicensed/Unregistered FDH",
-        "System Approved FDH", "Child Care Residential Certificate",
+        "FAMILY DAY CARE HOME",
+        "Family Child Care Home",
+        "Family Home",
+        "FDC",
+        "Registered Child-Care Home",
+        "Licensed Child-Care Home",
+        "Listed Family Home",
+        "Family Day Home",
+        "Family Day Care Home",
+        "Family Child Care Learning Home",
+        "Family Child Care",
+        "Registered Home",
+        "Child Care Licensed Family",
+        "Family",
+        "Licensed Family Home",
+        "Family Home Child Care",
+        "Large Family Child Care Home",
+        "Unlicensed/Unregistered FDH",
+        "System Approved FDH",
+        "Child Care Residential Certificate",
         # Maryland codes: FCCH = family child care home, LFCCH = large FCCH.
-        "FCCH", "LFCCH",
+        "FCCH",
+        "LFCCH",
         # Ohio program types: Type A/B are family child care homes.
         "Licensed Type A Family Child Care Home",
         "Licensed Type B Family Child Care Home",
@@ -459,10 +554,13 @@ FACILITY_CATEGORY_BUCKETS = {
         # list labels certified providers "Certified Family"). The
         # "(Probational)" status variants are handled by the suffix strip in
         # facility_category_from_type.
-        "Licensed Family", "Regular Certified", "Provisional Certified",
+        "Licensed Family",
+        "Regular Certified",
+        "Provisional Certified",
         # Vermont (brightfutures.dcf.state.vt.us) detail "License Type": the
         # registered and licensed home-based options.
-        "Registered Family Child Care Home", "Licensed Family Child Care Home",
+        "Registered Family Child Care Home",
+        "Licensed Family Child Care Home",
         # South Dakota (olapublic.sd.gov) Program Category: registered care
         # provided in the provider's own residence.
         "Family Day Care",
@@ -489,7 +587,10 @@ FACILITY_CATEGORY_BUCKETS = {
         "Licensed Family Child Care",
     ],
     "group_home": [
-        "GFDC", "Group Home", "Group Home Child Care", "Group",
+        "GFDC",
+        "Group Home",
+        "Group Home Child Care",
+        "Group",
         "Group Child Care Home",
         # North Dakota: group child care operated in a home.
         "HHS-Licensed Group Child Care Home",
@@ -504,8 +605,11 @@ FACILITY_CATEGORY_BUCKETS = {
         "Licensed Large Family Child Care",
     ],
     "school_age": [
-        "SACC", "SCHOOL AGE DAY CARE CENTER", "School-age Program",
-        "School Age Program", "School-age Center",
+        "SACC",
+        "SCHOOL AGE DAY CARE CENTER",
+        "School-age Program",
+        "School Age Program",
+        "School-age Center",
         "Child Care Out of School Time Program",
         # Ohio program type.
         "Licensed School-Age Child Care",
@@ -519,9 +623,12 @@ FACILITY_CATEGORY_BUCKETS = {
         "Youth Development Program",
     ],
     "exempt": [
-        "Exempt Only", "Religious Exempt Child Day Center",
-        "Exempt Child Care Center", "DWS Approved, Exempt Center",
-        "DWS Approved, Exempt School Age Program", "Child Care Exempt Program",
+        "Exempt Only",
+        "Religious Exempt Child Day Center",
+        "Exempt Child Care Center",
+        "DWS Approved, Exempt Center",
+        "DWS Approved, Exempt School Age Program",
+        "Child Care Exempt Program",
         "Voluntary Registration",
         # North Dakota: license-exempt self-declared programs.
         "Self-Declared Provider",
@@ -538,21 +645,27 @@ FACILITY_CATEGORY_BUCKETS = {
         # Alaska (AKCCIS): every subtype of exempt care rolls up to the
         # coarse facilityType "License Exempt"; CCAP-accredited providers
         # participate in the subsidy program without being state-licensed.
-        "License Exempt", "CCAP Certified/Accredited",
+        "License Exempt",
+        "CCAP Certified/Accredited",
         "Exempt",
         # Iowa (Titan TypeOfCareDesc).
         "Exempt from Licensing",
     ],
     "other": [
-        "Other", "Resident Camp", "Summer Day Camp",
+        "Other",
+        "Resident Camp",
+        "Summer Day Camp",
         "Substitute Placement Agency",
         "Family, Friends & Neighbor (FFN) Providers",
-        "Neighborhood Youth Organization", "(FCC)Nanny Individual",
+        "Neighborhood Youth Organization",
+        "(FCC)Nanny Individual",
         # Ohio: camps -> other; in-home aide is informal in-home care -> other.
-        "Registered Day Camp or Approved Day Camp", "Certified In Home Aide",
+        "Registered Day Camp or Approved Day Camp",
+        "Certified In Home Aide",
         # North Dakota: a provider holding multiple license types (ambiguous
         # category) and tribal subsidy recipients (informal/subsidy).
-        "HHS-Licensed Multiple License", "Tribal Subsidy Recipient",
+        "HHS-Licensed Multiple License",
+        "Tribal Subsidy Recipient",
         # Alaska (AKCCIS): state-flagged operations without a license --
         # not legitimate exempt care, kept separate from `exempt`.
         "Illegally Unlicensed",
@@ -564,7 +677,8 @@ FACILITY_CATEGORY_BUCKETS = {
         # the field-mapping playbook, not a licensed home/center category.
         # Iowa's Titan "In-Home" type is the same concept (care in the
         # child's own home) and maps here too.
-        "Informal", "In-Home",
+        "Informal",
+        "In-Home",
         # Kansas (khap.kdhe.ks.gov OIDS): outdoor/day camp program -- matches
         # the "Resident Camp" / "Summer Day Camp" / "Licensed Camp" precedents
         # above.
@@ -578,9 +692,7 @@ FACILITY_CATEGORY_BUCKETS = {
 
 # Runtime lookup: trimmed+lower-cased provider_type -> canonical category.
 FACILITY_CATEGORY_MAP = {
-    raw.strip().lower(): canonical
-    for canonical, raws in FACILITY_CATEGORY_BUCKETS.items()
-    for raw in raws
+    raw.strip().lower(): canonical for canonical, raws in FACILITY_CATEGORY_BUCKETS.items() for raw in raws
 }
 
 
@@ -598,14 +710,10 @@ def facility_category_from_type(provider_type):
     """
     if not isinstance(provider_type, str):
         return None
-    key = re.sub(
-        r"\s*\(probation(?:al|ary)?\)$", "", provider_type.strip().lower()
-    )
+    key = re.sub(r"\s*\(probation(?:al|ary)?\)$", "", provider_type.strip().lower())
     category = FACILITY_CATEGORY_MAP.get(key)
     if category is None:
-        logger.warning(
-            "facility_category_from_type: unmapped provider_type %r -> 'other'",
-            provider_type)
+        logger.warning("facility_category_from_type: unmapped provider_type %r -> 'other'", provider_type)
         return "other"
     return category
 
@@ -622,35 +730,61 @@ def facility_category_from_type(provider_type):
 # curriculum (fl_vpk_curriculum) OUT of these lists.
 FIELD_COLLAPSE_MAP = {
     "license_type": [
-        "va_license_type", "mt_license_type", "ut_license_type",
-        "co_license_type", "az_license_type", "nc_license_type",
-        "nj_license_type", "wv_license_type", "wa_license_type",
-        "hi_license_type", "ak_license_type", "ct_license_type",
+        "va_license_type",
+        "mt_license_type",
+        "ut_license_type",
+        "co_license_type",
+        "az_license_type",
+        "nc_license_type",
+        "nj_license_type",
+        "wv_license_type",
+        "wa_license_type",
+        "hi_license_type",
+        "ak_license_type",
+        "ct_license_type",
     ],
     "school_district": [
-        "co_school_district", "ny_school_district_name", "pa_school_district",
-        "ut_school_district", "wa_school_district", "ct_school_districts",
+        "co_school_district",
+        "ny_school_district_name",
+        "pa_school_district",
+        "ut_school_district",
+        "wa_school_district",
+        "ct_school_districts",
     ],
     "mailing_address": [
-        "al_mailing_address", "ga_mailing_address", "hi_mailing_address",
+        "al_mailing_address",
+        "ga_mailing_address",
+        "hi_mailing_address",
     ],
     "accreditation": [
-        "al_accreditations", "ga_accreditation", "hi_accreditations",
-        "nj_accreditation", "md_accreditation", "ct_accreditations",
+        "al_accreditations",
+        "ga_accreditation",
+        "hi_accreditations",
+        "nj_accreditation",
+        "md_accreditation",
+        "ct_accreditations",
     ],
     "meals": [
-        "ut_meals", "ga_meals", "hi_meals", "nm_meals", "nj_meal_options",
+        "ut_meals",
+        "ga_meals",
+        "hi_meals",
+        "nm_meals",
+        "nj_meal_options",
         "pa_meal_options",
     ],
     "accepting_new_children": [
-        "co_accepting_new_children", "ga_accepting_new_children",
+        "co_accepting_new_children",
+        "ga_accepting_new_children",
         "ct_accepting_referrals",
     ],
-    "transportation": ["ga_transportation", "nj_transportation",
-                       "ct_transportation"],
+    "transportation": ["ga_transportation", "nj_transportation", "ct_transportation"],
     "head_start": [
-        "co_head_start", "az_headstart", "wa_head_start", "ri_head_start",
-        "fl_is_head_start", "ct_head_start",
+        "co_head_start",
+        "az_headstart",
+        "wa_head_start",
+        "ri_head_start",
+        "fl_is_head_start",
+        "ct_head_start",
     ],
     "curriculum": ["ga_curriculum", "nj_curriculum"],
 }
@@ -659,8 +793,7 @@ FIELD_COLLAPSE_MAP = {
 _BOOLEAN_COLLAPSE_FIELDS = {"head_start"}
 
 _AFFIRMATIVE = {"yes", "y", "true", "t", "1"}
-_NEGATIVE = {"no", "n", "false", "f", "0", "none", "n/a", "na",
-             "not applicable"}
+_NEGATIVE = {"no", "n", "false", "f", "0", "none", "n/a", "na", "not applicable"}
 
 
 def _is_present(value):
@@ -715,39 +848,119 @@ def collapse_state_fields(item: dict) -> dict:
 
 # Valid USPS 2-letter codes (50 states + DC), used to validate a parsed state.
 US_STATE_CODES = {
-    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID",
-    "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS",
-    "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK",
-    "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV",
-    "WI", "WY", "DC",
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+    "DC",
 }
 
 # Spelled-out state name -> USPS code. Matched longest-first so "West Virginia"
 # wins over "Virginia".
 SPELLED_STATE_TO_USPS = {
-    "alabama": "AL", "alaska": "AK", "arizona": "AZ", "arkansas": "AR",
-    "california": "CA", "colorado": "CO", "connecticut": "CT",
-    "delaware": "DE", "florida": "FL", "georgia": "GA", "hawaii": "HI",
-    "idaho": "ID", "illinois": "IL", "indiana": "IN", "iowa": "IA",
-    "kansas": "KS", "kentucky": "KY", "louisiana": "LA", "maine": "ME",
-    "maryland": "MD", "massachusetts": "MA", "michigan": "MI",
-    "minnesota": "MN", "mississippi": "MS", "missouri": "MO", "montana": "MT",
-    "nebraska": "NE", "nevada": "NV", "new hampshire": "NH",
-    "new jersey": "NJ", "new mexico": "NM", "new york": "NY",
-    "north carolina": "NC", "north dakota": "ND", "ohio": "OH",
-    "oklahoma": "OK", "oregon": "OR", "pennsylvania": "PA",
-    "rhode island": "RI", "south carolina": "SC", "south dakota": "SD",
-    "tennessee": "TN", "texas": "TX", "utah": "UT", "vermont": "VT",
-    "virginia": "VA", "washington": "WA", "west virginia": "WV",
-    "wisconsin": "WI", "wyoming": "WY", "district of columbia": "DC",
+    "alabama": "AL",
+    "alaska": "AK",
+    "arizona": "AZ",
+    "arkansas": "AR",
+    "california": "CA",
+    "colorado": "CO",
+    "connecticut": "CT",
+    "delaware": "DE",
+    "florida": "FL",
+    "georgia": "GA",
+    "hawaii": "HI",
+    "idaho": "ID",
+    "illinois": "IL",
+    "indiana": "IN",
+    "iowa": "IA",
+    "kansas": "KS",
+    "kentucky": "KY",
+    "louisiana": "LA",
+    "maine": "ME",
+    "maryland": "MD",
+    "massachusetts": "MA",
+    "michigan": "MI",
+    "minnesota": "MN",
+    "mississippi": "MS",
+    "missouri": "MO",
+    "montana": "MT",
+    "nebraska": "NE",
+    "nevada": "NV",
+    "new hampshire": "NH",
+    "new jersey": "NJ",
+    "new mexico": "NM",
+    "new york": "NY",
+    "north carolina": "NC",
+    "north dakota": "ND",
+    "ohio": "OH",
+    "oklahoma": "OK",
+    "oregon": "OR",
+    "pennsylvania": "PA",
+    "rhode island": "RI",
+    "south carolina": "SC",
+    "south dakota": "SD",
+    "tennessee": "TN",
+    "texas": "TX",
+    "utah": "UT",
+    "vermont": "VT",
+    "virginia": "VA",
+    "washington": "WA",
+    "west virginia": "WV",
+    "wisconsin": "WI",
+    "wyoming": "WY",
+    "district of columbia": "DC",
 }
 
 # Spelled state names sorted longest-first for greedy, correct matching.
-_SPELLED_STATES_BY_LEN = sorted(
-    SPELLED_STATE_TO_USPS.items(), key=lambda kv: len(kv[0]), reverse=True)
+_SPELLED_STATES_BY_LEN = sorted(SPELLED_STATE_TO_USPS.items(), key=lambda kv: len(kv[0]), reverse=True)
 
-_COUNTRY_SUFFIX_RE = re.compile(
-    r",?\s*(United States(?: of America)?|U\.?S\.?A\.?)\s*$", re.IGNORECASE)
+_COUNTRY_SUFFIX_RE = re.compile(r",?\s*(United States(?: of America)?|U\.?S\.?A\.?)\s*$", re.IGNORECASE)
 _ZIP_RE = re.compile(r"(\d{5})(?:-?\d{4})?\s*$")
 _TWO_LETTER_STATE_RE = re.compile(r"[,\s]([A-Za-z]{2})\s*$")
 
@@ -782,7 +995,7 @@ def _extract_state(before_zip: str):
     if match:
         code = match.group(1).upper()
         if code in US_STATE_CODES:
-            prefix = before_zip[:match.start()].strip().rstrip(",").strip()
+            prefix = before_zip[: match.start()].strip().rstrip(",").strip()
             return code, prefix
     return None, before_zip
 
@@ -811,16 +1024,13 @@ def parse_address_components(value):
     text = value.strip()
     zip_match = _ZIP_RE.search(text)
     if not zip_match:
-        logger.warning("parse_address_components: no ZIP in %r (unparsed)",
-                       value)
+        logger.warning("parse_address_components: no ZIP in %r (unparsed)", value)
         return (None, None, None)
     zip_code = zip_match.group(1)
-    before_zip = text[:zip_match.start()].strip().rstrip(",").strip()
+    before_zip = text[: zip_match.start()].strip().rstrip(",").strip()
     state, prefix = _extract_state(before_zip)
     if state is None:
-        logger.warning(
-            "parse_address_components: no recognizable state in %r (unparsed)",
-            value)
+        logger.warning("parse_address_components: no recognizable state in %r (unparsed)", value)
         return (None, None, None)
     city = _extract_city(prefix)
     return (city, state, zip_code)
@@ -866,8 +1076,7 @@ def normalize_item(item: dict, state: str) -> dict:
     if item.get(CAPACITY_FIELD) is not None:
         item[CAPACITY_FIELD] = normalize_capacity(item[CAPACITY_FIELD])
     if item.get(AGES_SERVED_FIELD) is not None:
-        item[AGES_SERVED_FIELD] = normalize_ages_served(
-            item[AGES_SERVED_FIELD])
+        item[AGES_SERVED_FIELD] = normalize_ages_served(item[AGES_SERVED_FIELD])
     for coord in COORDINATE_FIELDS:
         if item.get(coord) is not None:
             item[coord] = normalize_coordinate(item[coord])
@@ -878,8 +1087,7 @@ def normalize_item(item: dict, state: str) -> dict:
     if item.get("status") is not None:
         item["status"] = canonical_status(item["status"])
     if item.get("provider_type") is not None:
-        item["facility_category"] = facility_category_from_type(
-            item["provider_type"])
+        item["facility_category"] = facility_category_from_type(item["provider_type"])
 
     # 6. address cleanup (in place, D1) + best-effort component parse (additive,
     #    D2). Components are only set when clearly parsed and not already set.
@@ -889,13 +1097,10 @@ def normalize_item(item: dict, state: str) -> dict:
     #    `address`.
     if item.get("address") is not None:
         item["address"] = clean_address(item["address"])
-        already_have_components = all(
-            _is_present(item.get(key)) for key in ("city", "state", "zip"))
+        already_have_components = all(_is_present(item.get(key)) for key in ("city", "state", "zip"))
         if item.get("address") and not already_have_components:
-            city, parsed_state, zip_code = parse_address_components(
-                item["address"])
-            for key, parsed in (("city", city), ("state", parsed_state),
-                                ("zip", zip_code)):
+            city, parsed_state, zip_code = parse_address_components(item["address"])
+            for key, parsed in (("city", city), ("state", parsed_state), ("zip", zip_code)):
                 if parsed is not None and not _is_present(item.get(key)):
                     item[key] = parsed
 

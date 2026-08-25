@@ -102,9 +102,7 @@ def test_load_env_file_missing_returns_empty():
 def test_load_pool_from_env_file(tmp_path):
     p = tmp_path / "webshare.env"
     p.write_text(
-        "webshare_proxy_username=u\n"
-        "webshare_proxy_password=p\n"
-        "webshare_proxy_endpoints=1.1.1.1:80, 2.2.2.2:81\n"
+        "webshare_proxy_username=u\nwebshare_proxy_password=p\nwebshare_proxy_endpoints=1.1.1.1:80, 2.2.2.2:81\n"
     )
     pool = load_pool(env_path=str(p), id_prefix="webshare")
     assert len(pool) == 2
@@ -113,11 +111,7 @@ def test_load_pool_from_env_file(tmp_path):
 
 def test_load_pool_explicit_endpoints_override_env(tmp_path):
     p = tmp_path / "webshare.env"
-    p.write_text(
-        "webshare_proxy_username=u\n"
-        "webshare_proxy_password=p\n"
-        "webshare_proxy_endpoints=1.1.1.1:80\n"
-    )
+    p.write_text("webshare_proxy_username=u\nwebshare_proxy_password=p\nwebshare_proxy_endpoints=1.1.1.1:80\n")
     # Inline endpoints win; creds still resolve from the env file.
     pool = load_pool(env_path=str(p), endpoints="9.9.9.9:9000")
     assert len(pool) == 1

@@ -1,0 +1,31 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+exclude = [
+    ".venv",
+    "__pycache__",
+    "scratch",
+    "analysis",
+    "state_output",
+    "state_output_normal_run",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "RUF",  # ruff-specific rules
+]
+allowed-confusables = ["–", "’", "×", "≈"]
+
+[tool.ruff.lint.per-file-ignores]
+"provider_scrape/spiders/*.py" = ["RUF012"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["provider_scrape"]

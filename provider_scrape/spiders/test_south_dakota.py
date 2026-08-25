@@ -11,22 +11,17 @@ from provider_scrape.spiders.south_dakota import (
     _clean_phone,
 )
 
-FIXTURES = os.path.join(
-    os.path.dirname(__file__), "fixtures", "south_dakota"
-)
+FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures", "south_dakota")
 
 LIST_PENDING_URL = (
-    "https://olapublic.sd.gov/child-care-provider-search/"
-    "?search=true&providerType=Child+Care&status=Pending"
+    "https://olapublic.sd.gov/child-care-provider-search/?search=true&providerType=Child+Care&status=Pending"
 )
 
 
 def _response(name, url):
     with open(os.path.join(FIXTURES, name), "rb") as fh:
         body = fh.read()
-    return HtmlResponse(
-        url=url, body=body, encoding="utf-8", request=Request(url)
-    )
+    return HtmlResponse(url=url, body=body, encoding="utf-8", request=Request(url))
 
 
 @pytest.fixture
@@ -37,6 +32,7 @@ def spider():
 # --------------------------------------------------------------------------- #
 # Pure helpers
 # --------------------------------------------------------------------------- #
+
 
 def test_badges_reads_script_arg_not_spans():
     text = open(os.path.join(FIXTURES, "detail_center.html")).read()
@@ -76,6 +72,7 @@ def test_clean_phone_drops_digitless_placeholder():
 # Case 1: List parse
 # --------------------------------------------------------------------------- #
 
+
 def test_parse_results_yields_detail_requests_with_facet_status(spider):
     resp = _response("list_pending.html", LIST_PENDING_URL)
     resp.meta["raw_status"] = "Pending"
@@ -93,9 +90,7 @@ def test_parse_results_yields_detail_requests_with_facet_status(spider):
         assert req.callback == spider.parse_detail
         assert req.meta["raw_status"] == "Pending"
         assert "?phone=" not in req.url
-        assert req.url.startswith(
-            "https://olapublic.sd.gov/child-care-program-profile/"
-        )
+        assert req.url.startswith("https://olapublic.sd.gov/child-care-program-profile/")
         assert req.url.rsplit("/", 1)[1].isdigit()
 
 
@@ -112,6 +107,7 @@ def test_parse_results_waits_for_all_four_facets(spider):
 # --------------------------------------------------------------------------- #
 # Case 2: Detail golden path
 # --------------------------------------------------------------------------- #
+
 
 @pytest.fixture
 def center_item(spider):
@@ -159,9 +155,7 @@ def test_parse_detail_inspections_non_empty_with_working_urls(center_item):
     for insp in inspections:
         assert insp["date"]
         assert insp["type"]
-        assert insp["report_url"].startswith(
-            "https://olapublic.sd.gov/api/mcase/attachments/"
-        )
+        assert insp["report_url"].startswith("https://olapublic.sd.gov/api/mcase/attachments/")
     # The Program Certificate entry: bare-date subtitle -> synthetic type.
     certs = [i for i in inspections if i["type"] == "Program Certificate"]
     assert len(certs) == 1
@@ -174,6 +168,7 @@ def test_parse_detail_inspections_non_empty_with_working_urls(center_item):
 # --------------------------------------------------------------------------- #
 # Case 3: Badges come from the showBadges script, not the visible spans
 # --------------------------------------------------------------------------- #
+
 
 def test_inactive_badge_absent_despite_span_present(center_item):
     # "Drop-in" has a visible <span> badge on this fixture (all options are
@@ -188,6 +183,7 @@ def test_inactive_badge_absent_despite_span_present(center_item):
 # --------------------------------------------------------------------------- #
 # Case 4: Status comes from the facet meta, never the detail page
 # --------------------------------------------------------------------------- #
+
 
 def test_status_from_meta_not_page_text(spider):
     # detail_center.html's own "Status" field says "Operational" (see the
@@ -216,6 +212,7 @@ def test_status_straggler_is_none(spider):
 # --------------------------------------------------------------------------- #
 # Case 5: Missing / sparse fields
 # --------------------------------------------------------------------------- #
+
 
 @pytest.fixture
 def informal_item(spider):

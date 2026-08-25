@@ -23,6 +23,7 @@ adaptive geographic grid is needed (contrast north_dakota.py).
 Each unique provider is then fetched from ``search/id`` for the full record
 (license dates, capacity by age, hours, inspections, ...).
 """
+
 import json
 import math
 
@@ -30,10 +31,8 @@ import scrapy
 
 from provider_scrape.items import InspectionItem, ProviderItem
 
-SEARCH_URL = ("https://secure.in.gov/apps/fssa/providersearch/api/providers/"
-              "childCareSearch")
-DETAIL_URL = ("https://secure.in.gov/apps/fssa/providersearch/api/providers/"
-              "search/id")
+SEARCH_URL = "https://secure.in.gov/apps/fssa/providersearch/api/providers/childCareSearch"
+DETAIL_URL = "https://secure.in.gov/apps/fssa/providersearch/api/providers/search/id"
 # The map is an SPA with a POST-only detail; there is no per-provider GET URL.
 # Emit the map base as `provider_url`; the real identity is `in_provider_id` /
 # `in_location_id` (DC POST-only precedent).
@@ -54,9 +53,7 @@ PAGE_SIZE = 250  # the app's page size; larger works but 5000 -> HTTP 500.
 EXPECTED_MIN_PROVIDERS = 3500
 
 HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (X11; Linux x86_64; rv:153.0) Gecko/20100101 Firefox/153.0"
-    ),
+    "User-Agent": ("Mozilla/5.0 (X11; Linux x86_64; rv:153.0) Gecko/20100101 Firefox/153.0"),
     "Accept": "application/json, text/plain, */*",
 }
 POST_HEADERS = {
@@ -69,11 +66,25 @@ POST_HEADERS = {
 # Age-band label words -> approximate age in years. Indiana expresses licensed
 # ages as ordinal words (Infant, Toddler, Two ... Eighteen) plus "30 Months".
 AGE_WORD_TO_YEARS = {
-    "infant": 0, "toddler": 1,
-    "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
-    "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12,
-    "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16,
-    "seventeen": 17, "eighteen": 18,
+    "infant": 0,
+    "toddler": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+    "eleven": 11,
+    "twelve": 12,
+    "thirteen": 13,
+    "fourteen": 14,
+    "fifteen": 15,
+    "sixteen": 16,
+    "seventeen": 17,
+    "eighteen": 18,
     "30 months": 2.5,
 }
 
@@ -111,8 +122,7 @@ def ages_from_bands(licensed_ages):
     if not licensed_ages:
         return None, {}
     labels = []
-    flags = {"infant": False, "toddler": False, "preschool": False,
-             "school": False}
+    flags = {"infant": False, "toddler": False, "preschool": False, "school": False}
     for band in licensed_ages:
         start_label = band.get("startAge")
         end_label = band.get("endAge")
@@ -145,8 +155,7 @@ def format_schedule(schedule):
     """
     if not schedule:
         return None
-    rows = [(s.get("dayOfWeek"), s.get("openTime"), s.get("closeTime"))
-            for s in schedule if s.get("dayOfWeek")]
+    rows = [(s.get("dayOfWeek"), s.get("openTime"), s.get("closeTime")) for s in schedule if s.get("dayOfWeek")]
     if not rows:
         return None
     times = {(o, c) for _, o, c in rows}
@@ -212,8 +221,11 @@ class IndianaSpider(scrapy.Spider):
             total = data.get("totalResults") or 0
             num_pages = math.ceil(total / PAGE_SIZE) if total else 0
             self.logger.info(
-                "Indiana: totalResults=%d -> %d pages of %d; fanning out "
-                "pages 2..%d", total, num_pages, PAGE_SIZE, num_pages,
+                "Indiana: totalResults=%d -> %d pages of %d; fanning out pages 2..%d",
+                total,
+                num_pages,
+                PAGE_SIZE,
+                num_pages,
             )
             for p in range(2, num_pages + 1):
                 yield self._search_request(p)
@@ -228,12 +240,13 @@ class IndianaSpider(scrapy.Spider):
             yield scrapy.Request(
                 DETAIL_URL,
                 method="POST",
-                body=json.dumps({
-                    "providerId": pid,
-                    "locationId": loc.get("id"),
-                    "coordinates": {"LAT": coords.get("lat"),
-                                    "LNG": coords.get("lng")},
-                }),
+                body=json.dumps(
+                    {
+                        "providerId": pid,
+                        "locationId": loc.get("id"),
+                        "coordinates": {"LAT": coords.get("lat"), "LNG": coords.get("lng")},
+                    }
+                ),
                 headers=POST_HEADERS,
                 callback=self.parse_detail,
                 meta={"provider_id": pid, "location_id": loc.get("id")},
@@ -241,8 +254,10 @@ class IndianaSpider(scrapy.Spider):
             )
 
         self.logger.info(
-            "Indiana: search page %d parsed (%d providers); %d unique providers "
-            "so far", page, len(providers), len(self.seen),
+            "Indiana: search page %d parsed (%d providers); %d unique providers so far",
+            page,
+            len(providers),
+            len(self.seen),
         )
 
     # --- detail (per provider) ------------------------------------------ #
@@ -267,7 +282,7 @@ class IndianaSpider(scrapy.Spider):
 
         # --- identity ---
         put("provider_name", prov.get("name"))
-        put("license_number", pid)   # Indiana has no license number
+        put("license_number", pid)  # Indiana has no license number
         put("in_provider_id", pid)
         put("in_location_id", lid)
         put("license_holder", join_names(loc.get("applicants")))
@@ -278,8 +293,7 @@ class IndianaSpider(scrapy.Spider):
         if loc.get("isTemporarilyClosed"):
             item["status"] = "Temporary Closure"
             item["in_is_temporarily_closed"] = True
-            put("in_temporarily_closed_message",
-                loc.get("temporarilyClosedMessage"))
+            put("in_temporarily_closed_message", loc.get("temporarilyClosedMessage"))
         else:
             put("status", loc.get("status"))  # "Open"
 
@@ -311,8 +325,7 @@ class IndianaSpider(scrapy.Spider):
             if total_cap:
                 item["capacity"] = total_cap
             item["in_licensed_ages"] = [
-                {"start_age": b.get("startAge"), "end_age": b.get("endAge"),
-                 "quantity": b.get("quantity")}
+                {"start_age": b.get("startAge"), "end_age": b.get("endAge"), "quantity": b.get("quantity")}
                 for b in licensed_ages
             ]
         ages_served, age_flags = ages_from_bands(licensed_ages)
@@ -323,18 +336,15 @@ class IndianaSpider(scrapy.Spider):
         # --- programs / subsidy / quality-adjacent ---
         item["scholarships_accepted"] = bool(loc.get("isCcdf"))
         item["in_is_ccdf"] = bool(loc.get("isCcdf"))
-        programs = [p.get("programDescription") for p in (loc.get("programs")
-                    or []) if p.get("programDescription")]
+        programs = [p.get("programDescription") for p in (loc.get("programs") or []) if p.get("programDescription")]
         put("in_programs", programs)
-        put("accreditation", [a.get("name") for a in
-                              (loc.get("accreditations") or []) if a.get("name")])
+        put("accreditation", [a.get("name") for a in (loc.get("accreditations") or []) if a.get("name")])
 
         # --- schedule / hours ---
         put("hours", format_schedule(loc.get("schedule")))
         if loc.get("schedule"):
             item["in_schedule"] = [
-                {"day": s.get("dayOfWeek"), "open": s.get("openTime"),
-                 "close": s.get("closeTime")}
+                {"day": s.get("dayOfWeek"), "open": s.get("openTime"), "close": s.get("closeTime")}
                 for s in loc["schedule"]
             ]
 
@@ -344,8 +354,7 @@ class IndianaSpider(scrapy.Spider):
         complaints = loc.get("complaints") or []
         if complaints:
             item["in_complaints"] = [
-                {"complaint_date": c.get("complaintDate"),
-                 "issue": c.get("issue"), "closed_date": c.get("closedDate")}
+                {"complaint_date": c.get("complaintDate"), "issue": c.get("issue"), "closed_date": c.get("closedDate")}
                 for c in complaints
             ]
 
@@ -382,10 +391,13 @@ class IndianaSpider(scrapy.Spider):
     def closed(self, reason):
         self.logger.info(
             "Indiana: finished (%s) -- %d search pages, %d unique providers",
-            reason, self.page_count, len(self.seen),
+            reason,
+            self.page_count,
+            len(self.seen),
         )
         if len(self.seen) < EXPECTED_MIN_PROVIDERS:
             self.logger.warning(
-                "Indiana: only %d providers found (< %d baseline) -- possible "
-                "incomplete crawl", len(self.seen), EXPECTED_MIN_PROVIDERS,
+                "Indiana: only %d providers found (< %d baseline) -- possible incomplete crawl",
+                len(self.seen),
+                EXPECTED_MIN_PROVIDERS,
             )

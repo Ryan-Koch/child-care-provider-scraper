@@ -6,11 +6,11 @@ updated ``SOURCES.md``. If a newly added spider has no source, give it
 ``allowed_domains``/``start_urls`` or add it to ``SOURCE_OVERRIDES`` in
 ``scripts/generate_sources.py``.
 """
+
 import importlib.util
 import os
 
-REPO_ROOT = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 GENERATOR = os.path.join(REPO_ROOT, "scripts", "generate_sources.py")
 COMMITTED_DOC = os.path.join(REPO_ROOT, "SOURCES.md")
 
@@ -28,8 +28,7 @@ def test_committed_doc_matches_fresh_generation():
     with open(COMMITTED_DOC, "r", encoding="utf-8") as handle:
         committed = handle.read()
     assert fresh == committed, (
-        "SOURCES.md is out of date. Regenerate it with "
-        "`.venv/bin/python scripts/generate_sources.py` and commit."
+        "SOURCES.md is out of date. Regenerate it with `.venv/bin/python scripts/generate_sources.py` and commit."
     )
 
 
@@ -43,6 +42,5 @@ def test_every_spider_has_a_source():
     missing = [label for label, hosts in generator.collect_rows() if not hosts]
     assert not missing, (
         "These spiders resolve to no source host: %s. Add allowed_domains/"
-        "start_urls or a SOURCE_OVERRIDES entry in generate_sources.py."
-        % ", ".join(missing)
+        "start_urls or a SOURCE_OVERRIDES entry in generate_sources.py." % ", ".join(missing)
     )

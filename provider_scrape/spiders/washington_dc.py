@@ -25,6 +25,7 @@ use it, though it remains the canonical public per-facility URL we emit as
 DC exposes no license number, license dates, status, or inspection data; it is
 a directory/quality portal, not a licensing/enforcement one.
 """
+
 import re
 
 import scrapy
@@ -93,19 +94,15 @@ class WashingtonDcSpider(scrapy.Spider):
             fid = card.xpath("@id").get()
             if not fid:
                 continue
-            badges = set(card.xpath(".//@title").getall()) | set(
-                card.xpath(".//@alt").getall())
-            address = _clean(
-                card.xpath(f'.//span[@id="addr_{fid}"]//text()').get())
+            badges = set(card.xpath(".//@title").getall()) | set(card.xpath(".//@alt").getall())
+            address = _clean(card.xpath(f'.//span[@id="addr_{fid}"]//text()').get())
             if address:
                 address = address.rstrip(", ").strip()
             meta = {
                 "fid": fid,
-                "name": _clean(
-                    card.xpath(f'.//a[@id="name_{fid}"]//text()').get()),
+                "name": _clean(card.xpath(f'.//a[@id="name_{fid}"]//text()').get()),
                 "list_address": address,
-                "phone": _clean(
-                    card.xpath(f'.//span[@id="phone_{fid}"]//text()').get()),
+                "phone": _clean(card.xpath(f'.//span[@id="phone_{fid}"]//text()').get()),
                 "latitude": card.xpath("@lat").get(),
                 "longitude": card.xpath("@lng").get(),
                 "badges": badges,
@@ -153,8 +150,7 @@ class WashingtonDcSpider(scrapy.Spider):
         item["email"] = self._header_email(response)
 
         # Two-up label/value grid.
-        item["dc_capital_quality_designation"] = self._grid_value(
-            response, "Capital Quality")
+        item["dc_capital_quality_designation"] = self._grid_value(response, "Capital Quality")
         item["ages_served"] = self._grid_value(response, "Ages")
         item["capacity"] = self._grid_value(response, "Facility")
         subsidies = self._grid_value(response, "Accepts Subsidies")
@@ -171,15 +167,13 @@ class WashingtonDcSpider(scrapy.Spider):
                 field = self._age_field(row["age_group"])
                 if field:
                     item[field] = any(
-                        _has_value(row[k]) for k in
-                        ("openings", "current_enrollment",
-                         "desired_enrollment", "monthly_tuition"))
+                        _has_value(row[k])
+                        for k in ("openings", "current_enrollment", "desired_enrollment", "monthly_tuition")
+                    )
 
         # Program badges from the roster card.
-        item["dc_capital_quality_participant"] = (
-            "Capital Quality Participant" in badges)
-        item["dc_pay_equity_fund"] = (
-            "Participating in Pay Equity Fund" in badges)
+        item["dc_capital_quality_participant"] = "Capital Quality Participant" in badges
+        item["dc_pay_equity_fund"] = "Participating in Pay Equity Fund" in badges
         item["dc_prek_enhancement"] = "Pre-K Enhancement" in badges
         item["dc_nontraditional_hours"] = "Nontraditional" in badges
         if "Child and Adult Care Food Program" in badges:
@@ -196,7 +190,7 @@ class WashingtonDcSpider(scrapy.Spider):
     def _detail_address(response):
         """The address span in the detail header, cleaned (" , DC" -> ", DC")."""
         # The header shows name, then the address, in the first two spans.
-        for text in response.xpath('//span/text()').getall():
+        for text in response.xpath("//span/text()").getall():
             text = _clean(text)
             if text and re.search(r",\s*DC\s+\d{5}", text):
                 return re.sub(r"\s+,", ",", text)
@@ -289,8 +283,7 @@ class WashingtonDcSpider(scrapy.Spider):
     @staticmethod
     def _enrollment(response):
         """The enrollment/openings/tuition table as a list of per-age dicts."""
-        header = response.xpath(
-            '//*[contains(text(), "Enrollment and Openings")]')
+        header = response.xpath('//*[contains(text(), "Enrollment and Openings")]')
         if not header:
             return None
         table = header[0].xpath("ancestor::table[1]")
@@ -298,23 +291,22 @@ class WashingtonDcSpider(scrapy.Spider):
             return None
         rows = []
         for tr in table[0].xpath(".//tr"):
-            cells = [
-                _clean(" ".join(td.xpath(".//text()").getall()))
-                for td in tr.xpath("td")
-            ]
+            cells = [_clean(" ".join(td.xpath(".//text()").getall())) for td in tr.xpath("td")]
             cells = [cell for cell in cells if cell is not None]
             if not cells:
                 continue
             if not cells[0].startswith(ENROLLMENT_AGE_GROUPS):
                 continue
             cells = (cells + [None] * 5)[:5]
-            rows.append({
-                "age_group": cells[0],
-                "openings": cells[1],
-                "current_enrollment": cells[2],
-                "desired_enrollment": cells[3],
-                "monthly_tuition": cells[4],
-            })
+            rows.append(
+                {
+                    "age_group": cells[0],
+                    "openings": cells[1],
+                    "current_enrollment": cells[2],
+                    "desired_enrollment": cells[3],
+                    "monthly_tuition": cells[4],
+                }
+            )
         return rows or None
 
     @staticmethod

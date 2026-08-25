@@ -62,11 +62,7 @@ def _results_url(county_id, county_name):
     return every provider in MN. Both are sent to match the form the site
     itself builds when you submit the Search page.
     """
-    return (
-        f"{_RESULTS_BASE}"
-        f"&con={quote(county_name, safe='')}"
-        f"&co={county_id}"
-    )
+    return f"{_RESULTS_BASE}&con={quote(county_name, safe='')}&co={county_id}"
 
 
 # Minnesota counties from the Search.aspx `ddlCounty` dropdown. Order matches
@@ -180,9 +176,7 @@ _STEALTH_SCRIPT = Stealth(
     webgl_renderer_override="Intel Iris OpenGL Engine",
 ).script_payload
 
-assert "webdriver" in _STEALTH_SCRIPT, (
-    "playwright-stealth script_payload missing webdriver patch — check version"
-)
+assert "webdriver" in _STEALTH_SCRIPT, "playwright-stealth script_payload missing webdriver patch — check version"
 
 
 # Columns in the TSV returned by the csvdownload POST, in order.
@@ -220,10 +214,7 @@ def _human_delay(lo=800, hi=2000):
 
 def _compose_address(row):
     """Join the split address columns from the TSV into a single string."""
-    street_parts = [
-        (row.get(k) or "").strip()
-        for k in ("AddressLine1", "AddressLine2", "AddressLine3")
-    ]
+    street_parts = [(row.get(k) or "").strip() for k in ("AddressLine1", "AddressLine2", "AddressLine3")]
     street = ", ".join(p for p in street_parts if p)
 
     city = (row.get("City") or "").strip()
@@ -253,16 +244,10 @@ def _row_to_item(row):
     item["mn_type_of_license"] = (row.get("Type Of License") or "").strip() or None
     item["mn_restrictions"] = (row.get("Restrictions") or "").strip() or None
     item["mn_licensed_to_provide"] = (row.get("Services") or "").strip() or None
-    item["license_begin_date"] = (
-        row.get("Initial Effective Date") or ""
-    ).strip() or None
-    item["mn_last_renewed_date"] = (
-        row.get("Current Effective Date") or ""
-    ).strip() or None
+    item["license_begin_date"] = (row.get("Initial Effective Date") or "").strip() or None
+    item["mn_last_renewed_date"] = (row.get("Current Effective Date") or "").strip() or None
     item["license_expiration"] = (row.get("Expiration Date") or "").strip() or None
-    item["mn_license_holder_onsite"] = (
-        row.get("License Holder Lives Onsite") or ""
-    ).strip() or None
+    item["mn_license_holder_onsite"] = (row.get("License Holder Lives Onsite") or "").strip() or None
     item["email"] = (row.get("EmailAddress") or "").strip() or None
     return item
 
@@ -386,10 +371,7 @@ class StealthContextMiddleware:
             return wrapper
 
         handler._create_browser_context = patched_create_context
-        spider.logger.info(
-            "StealthContextMiddleware: patched _create_browser_context on "
-            "scrapy-playwright handler."
-        )
+        spider.logger.info("StealthContextMiddleware: patched _create_browser_context on scrapy-playwright handler.")
 
 
 class MinnesotaSpider(scrapy.Spider):
@@ -434,9 +416,7 @@ class MinnesotaSpider(scrapy.Spider):
         self.county_delay = float(county_delay)
         if counties:
             wanted = {int(c) for c in str(counties).split(",")}
-            self._debug_counties = [
-                (cid, name) for (cid, name) in COUNTIES if cid in wanted
-            ]
+            self._debug_counties = [(cid, name) for (cid, name) in COUNTIES if cid in wanted]
         else:
             self._debug_counties = None
 
@@ -505,8 +485,7 @@ class MinnesotaSpider(scrapy.Spider):
 
             post_url = page.url
             self.logger.info(
-                "[county %s/%s] Firing csvdownload postback via in-page "
-                "fetch (url=%s)",
+                "[county %s/%s] Firing csvdownload postback via in-page fetch (url=%s)",
                 county_id,
                 county_name,
                 post_url,
@@ -519,8 +498,7 @@ class MinnesotaSpider(scrapy.Spider):
 
             if result.get("error"):
                 self.logger.warning(
-                    "[county %s/%s] cannot submit postback: error=%s "
-                    "detail=%s",
+                    "[county %s/%s] cannot submit postback: error=%s detail=%s",
                     county_id,
                     county_name,
                     result.get("error"),

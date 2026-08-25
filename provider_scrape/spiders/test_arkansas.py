@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, AsyncMock
 from provider_scrape.spiders.arkansas import ArkansasSpider
 from provider_scrape.items import ProviderItem, InspectionItem
 
-class TestArkansasSpider(unittest.IsolatedAsyncioTestCase):
 
+class TestArkansasSpider(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.spider = ArkansasSpider()
 
@@ -69,7 +69,7 @@ class TestArkansasSpider(unittest.IsolatedAsyncioTestCase):
         mock_page.content = AsyncMock(return_value=html)
         mock_page.wait_for_selector = AsyncMock()
         mock_page.close = AsyncMock()
-        
+
         # Mock locator for facility visits (return empty to skip logic)
         mock_visits_locator = MagicMock()
         mock_visits_locator.count = AsyncMock(return_value=0)
@@ -87,7 +87,7 @@ class TestArkansasSpider(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(len(results), 1)
         item = results[0]
-        
+
         self.assertIsInstance(item, ProviderItem)
         self.assertEqual(item["provider_name"], "Salesforce Child Care")
         self.assertEqual(item["address"], "123 SF Street")
@@ -129,7 +129,7 @@ class TestArkansasSpider(unittest.IsolatedAsyncioTestCase):
         mock_page.content = AsyncMock(return_value=html)
         mock_page.wait_for_selector = AsyncMock()
         mock_page.close = AsyncMock()
-        
+
         mock_visits_locator = MagicMock()
         mock_visits_locator.count = AsyncMock(return_value=0)
         mock_page.locator = MagicMock(return_value=mock_visits_locator)
@@ -144,7 +144,7 @@ class TestArkansasSpider(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(len(results), 1)
         item = results[0]
-        
+
         self.assertEqual(item["provider_name"], "LWC Child Care")
         self.assertEqual(item["address"], "456 LWC Lane")
         self.assertEqual(item["phone"], "555-5678")
@@ -169,7 +169,7 @@ class TestArkansasSpider(unittest.IsolatedAsyncioTestCase):
         mock_page.content = AsyncMock(return_value=html)
         mock_page.wait_for_selector = AsyncMock()
         mock_page.close = AsyncMock()
-        
+
         mock_visits_locator = MagicMock()
         mock_visits_locator.count = AsyncMock(return_value=0)
         mock_page.locator = MagicMock(return_value=mock_visits_locator)
@@ -184,7 +184,7 @@ class TestArkansasSpider(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(len(results), 1)
         item = results[0]
-        
+
         self.assertEqual(item["provider_name"], "Minimal Provider")
         self.assertIsNone(item.get("phone"))
         self.assertIsNone(item.get("capacity"))
@@ -202,7 +202,7 @@ class TestArkansasSpider(unittest.IsolatedAsyncioTestCase):
             </body>
         </html>
         """
-        
+
         html_visits = """
         <html>
             <body>
@@ -224,19 +224,19 @@ class TestArkansasSpider(unittest.IsolatedAsyncioTestCase):
         mock_page.close = AsyncMock()
         mock_page.wait_for_load_state = AsyncMock()
         mock_page.wait_for_timeout = AsyncMock()
-        
+
         # First call to content() is for main page, second is for visits
         mock_page.content = AsyncMock(side_effect=[html_main, html_visits])
-        
+
         # Mock locator for "View Facility Visits" finding something
         mock_visits_link = MagicMock()
         mock_visits_link.count = AsyncMock(return_value=1)
-        
+
         # Configure .first.click to be an AsyncMock so it can be awaited
         mock_first = MagicMock()
         mock_first.click = AsyncMock()
         mock_visits_link.first = mock_first
-        
+
         # When page.locator is called, return our link mock
         mock_page.locator = MagicMock(return_value=mock_visits_link)
 
@@ -251,10 +251,10 @@ class TestArkansasSpider(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(len(results), 1)
         item = results[0]
-        
+
         # Check that we attempted to click
         mock_first.click.assert_called()
-        
+
         # Check inspections extraction
         self.assertEqual(len(item["inspections"]), 1)
         insp = item["inspections"][0]
@@ -262,5 +262,6 @@ class TestArkansasSpider(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(insp["type"], "Routine")
         self.assertEqual(insp["report_url"], "http://example.com/report1.pdf")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

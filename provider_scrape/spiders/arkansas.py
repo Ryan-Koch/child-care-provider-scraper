@@ -3,10 +3,13 @@ from provider_scrape.items import ProviderItem, InspectionItem
 from provider_scrape.playwright_utils import PlaywrightErrbackMixin
 import re
 
+
 class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
     name = "arkansas"
     allowed_domains = ["ardhslicensing.my.site.com"]
-    start_urls = ["https://ardhslicensing.my.site.com/elicensing/s/search-provider/find-provider-cc?language=en_US&tab=CC"]
+    start_urls = [
+        "https://ardhslicensing.my.site.com/elicensing/s/search-provider/find-provider-cc?language=en_US&tab=CC"
+    ]
 
     custom_settings = {
         "DOWNLOAD_HANDLERS": {
@@ -45,11 +48,11 @@ class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
             except:
                 self.logger.warning("Network idle timeout, proceeding...")
 
-            await page.wait_for_timeout(5000) # Give it a moment to render
+            await page.wait_for_timeout(5000)  # Give it a moment to render
 
             # DEBUG: Log the text content of the page to understand what we are seeing
             content_text = await page.inner_text("body")
-            self.logger.info(f"VISIBLE TEXT ON PAGE:\n{content_text[:2000]}...") # Log first 2000 chars
+            self.logger.info(f"VISIBLE TEXT ON PAGE:\n{content_text[:2000]}...")  # Log first 2000 chars
 
             # 1. Search Logic
             # User instruction: "go to the star level and select 'all levels'"
@@ -107,17 +110,17 @@ class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
             # Now try to find the Search button and wait for it to be enabled
             search_btn = page.locator("button:has-text('Search')").first
             if await search_btn.count() > 0:
-                 self.logger.info("Attempting to click Search button...")
-                 # Log if it's disabled
-                 if not await search_btn.is_enabled():
-                     self.logger.warning("Search button appears disabled. Attempting force click...")
+                self.logger.info("Attempting to click Search button...")
+                # Log if it's disabled
+                if not await search_btn.is_enabled():
+                    self.logger.warning("Search button appears disabled. Attempting force click...")
 
-                 try:
-                     await search_btn.click(force=True, timeout=5000)
-                     self.logger.info("Search button clicked (forced or normal).")
-                     await page.wait_for_timeout(5000) # Wait for results load
-                 except Exception as e:
-                     self.logger.warning(f"Search click failed: {e}")
+                try:
+                    await search_btn.click(force=True, timeout=5000)
+                    self.logger.info("Search button clicked (forced or normal).")
+                    await page.wait_for_timeout(5000)  # Wait for results load
+                except Exception as e:
+                    self.logger.warning(f"Search click failed: {e}")
 
             # Switch to List View
             # We want to ensure we are in list view.
@@ -176,9 +179,7 @@ class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
                             # Return from goto once the DOM is parsed rather
                             # than waiting on every subresource ("load"); the
                             # callback still waits for the fields it needs.
-                            "playwright_page_goto_kwargs": {
-                                "wait_until": "domcontentloaded"
-                            },
+                            "playwright_page_goto_kwargs": {"wait_until": "domcontentloaded"},
                         },
                         callback=self.parse_detail,
                         errback=self.errback_close_page,
@@ -203,7 +204,7 @@ class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
                     if not is_disabled:
                         self.logger.info("Clicking Next page (.next-link button)...")
                         await next_button.click()
-                        await page.wait_for_timeout(5000) # Wait for page reload
+                        await page.wait_for_timeout(5000)  # Wait for page reload
                     else:
                         self.logger.info("Next button found but is disabled. Pagination complete.")
                         break
@@ -241,22 +242,30 @@ class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
 
             # Basic extraction
             # Try multiple selectors for title
-            item["provider_name"] = sel.css(".forceHighlightsPanel .slds-page-header__title::text").get(default="").strip()
+            item["provider_name"] = (
+                sel.css(".forceHighlightsPanel .slds-page-header__title::text").get(default="").strip()
+            )
             if not item["provider_name"]:
-                 # Fallback to h2
-                 item["provider_name"] = sel.xpath("//h2[contains(@class, 'slds-align-middle')]/text()").get(default="").strip()
+                # Fallback to h2
+                item["provider_name"] = (
+                    sel.xpath("//h2[contains(@class, 'slds-align-middle')]/text()").get(default="").strip()
+                )
 
             # Helper to extract by label
             def get_field_by_label(label):
                 # Strategy 1: Standard Salesforce View (test-id)
-                val = sel.xpath(f"//span[contains(@class, 'test-id__field-label') and contains(text(), '{label}')]/../../div[contains(@class, 'test-id__field-value')]//text()").getall()
-                if val: return val
+                val = sel.xpath(
+                    f"//span[contains(@class, 'test-id__field-label') and contains(text(), '{label}')]/../../div[contains(@class, 'test-id__field-value')]//text()"
+                ).getall()
+                if val:
+                    return val
 
                 # Strategy 2: LWC structure (Label div followed by Value component/div)
                 # Matches: <div>Label</div> <lightning-formatted-rich-text>...</lightning-formatted-rich-text>
                 # Also handles cases where label is in a bold div
                 val = sel.xpath(f"//div[contains(text(), '{label}')]/following-sibling::*[1]//text()").getall()
-                if val: return val
+                if val:
+                    return val
 
                 return []
 
@@ -274,7 +283,7 @@ class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
                 combined_text = " ".join(full_parts)
 
                 # Extract emails
-                email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+                email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
                 found_emails = re.findall(email_pattern, combined_text)
 
                 # Remove emails from address text
@@ -287,7 +296,7 @@ class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
                     clean_address = clean_address.replace(website_url, "")
 
                 # Cleanup whitespace
-                clean_address = re.sub(r'\s+', ' ', clean_address).strip()
+                clean_address = re.sub(r"\s+", " ", clean_address).strip()
 
                 item["address"] = clean_address
                 if found_emails:
@@ -303,12 +312,18 @@ class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
             item["capacity"] = capacity[0].strip() if capacity else None
             item["ar_total_capacity"] = item["capacity"]
 
-            rating = get_field_by_label("Quality Rating") or get_field_by_label("Star Level") or get_field_by_label("Better Beginnings")
+            rating = (
+                get_field_by_label("Quality Rating")
+                or get_field_by_label("Star Level")
+                or get_field_by_label("Better Beginnings")
+            )
             if rating:
                 item["ar_quality_rating"] = rating[0].strip()
             else:
                 # Try counting stars
-                rating_imgs = sel.xpath("//div[contains(@class, 'font-bold')][contains(text(), 'Better Beginnings')]/following-sibling::*[1]//img[@alt='star']")
+                rating_imgs = sel.xpath(
+                    "//div[contains(@class, 'font-bold')][contains(text(), 'Better Beginnings')]/following-sibling::*[1]//img[@alt='star']"
+                )
                 if rating_imgs:
                     item["ar_quality_rating"] = str(len(rating_imgs))
                 else:

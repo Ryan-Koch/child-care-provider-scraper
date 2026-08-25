@@ -11,14 +11,9 @@ from scrapy_playwright.page import PageMethod
 
 from provider_scrape.items import InspectionItem, ProviderItem
 
-SEARCH_PAGE_URL = (
-    "https://earlylearningprograms.dhs.ri.gov/s/?language=en_US"
-)
+SEARCH_PAGE_URL = "https://earlylearningprograms.dhs.ri.gov/s/?language=en_US"
 AURA_ENDPOINT_PATH = "/s/sfsites/aura?r=1&aura.ApexAction.execute=1"
-DETAIL_PAGE_URL_TEMPLATE = (
-    "https://earlylearningprograms.dhs.ri.gov/s/program-detail"
-    "?language=en_US&pid={pid}&lang=en"
-)
+DETAIL_PAGE_URL_TEMPLATE = "https://earlylearningprograms.dhs.ri.gov/s/program-detail?language=en_US&pid={pid}&lang=en"
 
 # Search pre-filters: ticking every age group satisfies the "at least one
 # criteria" requirement and matches the form's behavior of returning the
@@ -32,8 +27,7 @@ AGE_GROUPS = [
 ]
 
 # Day order used when collapsing scheduleOfOperationData into a string.
-_DAY_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
-              "Saturday", "Sunday"]
+_DAY_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 _DAY_ABBR = {
     "Monday": "Mon",
     "Tuesday": "Tue",
@@ -84,10 +78,7 @@ _NAV_PLATFORM = _NAV_PLATFORM_BY_OS.get(platform.system(), "Linux x86_64")
 # reports. Same "ANGLE (...)" shape as the SwiftShader string we're hiding,
 # so the masked value stays structurally consistent with a genuine Chrome.
 _WEBGL_VENDOR_LINUX = "Google Inc. (Intel)"
-_WEBGL_RENDERER_LINUX = (
-    "ANGLE (Intel, Mesa Intel(R) UHD Graphics 630 (CFL GT2), "
-    "OpenGL 4.6 (Core Profile) Mesa 23.2.1)"
-)
+_WEBGL_RENDERER_LINUX = "ANGLE (Intel, Mesa Intel(R) UHD Graphics 630 (CFL GT2), OpenGL 4.6 (Core Profile) Mesa 23.2.1)"
 
 _stealth_kwargs = dict(
     navigator_platform_override=_NAV_PLATFORM,
@@ -219,11 +210,13 @@ def format_age_group_capacity(age_group_wrapper):
     for entry in age_group_wrapper:
         if not entry.get("isSelected"):
             continue
-        rows.append({
-            "age_group": entry.get("name"),
-            "classrooms": entry.get("numberOfClassRooms"),
-            "capacity": entry.get("totalCapacity"),
-        })
+        rows.append(
+            {
+                "age_group": entry.get("name"),
+                "classrooms": entry.get("numberOfClassRooms"),
+                "capacity": entry.get("totalCapacity"),
+            }
+        )
     return rows or None
 
 
@@ -332,10 +325,7 @@ def build_item(summary, detail):
     # Detail URL (decoded URL the page would link to). Use the same form
     # the site itself produces so this is reproducible from a captured pid.
     pid = summary.get("id")
-    item["provider_url"] = (
-        DETAIL_PAGE_URL_TEMPLATE.format(pid=quote(pid, safe=""))
-        if pid else None
-    )
+    item["provider_url"] = DETAIL_PAGE_URL_TEMPLATE.format(pid=quote(pid, safe="")) if pid else None
 
     # Summary-derived fields
     item["provider_name"] = _empty_to_none(summary.get("accName"))
@@ -349,9 +339,7 @@ def build_item(summary, detail):
     item["scholarships_accepted"] = _empty_to_none(summary.get("isCCAPType"))
 
     item["ri_brightstars_rating"] = summary.get("programRating")
-    item["ri_license_decision"] = _empty_to_none(
-        summary.get("accLicenseDecision")
-    )
+    item["ri_license_decision"] = _empty_to_none(summary.get("accLicenseDecision"))
     item["ri_is_lea"] = summary.get("isLea")
 
     if detail is None:
@@ -365,70 +353,39 @@ def build_item(summary, detail):
 
     # accWrap usually carries a richer / more-canonical version of the
     # summary fields. Prefer it when present.
-    item["provider_name"] = (
-        _empty_to_none(acc_wrap.get("accName")) or item["provider_name"]
-    )
-    item["address"] = (
-        _empty_to_none(acc_wrap.get("accAddress")) or item["address"]
-    )
+    item["provider_name"] = _empty_to_none(acc_wrap.get("accName")) or item["provider_name"]
+    item["address"] = _empty_to_none(acc_wrap.get("accAddress")) or item["address"]
     item["phone"] = _empty_to_none(acc_wrap.get("accPhone")) or item["phone"]
     item["email"] = _empty_to_none(acc_wrap.get("accEmail")) or item["email"]
-    item["provider_type"] = (
-        _empty_to_none(acc_wrap.get("accType")) or item["provider_type"]
-    )
-    item["status"] = (
-        _empty_to_none(acc_wrap.get("accLicenseStatus")) or item["status"]
-    )
+    item["provider_type"] = _empty_to_none(acc_wrap.get("accType")) or item["provider_type"]
+    item["status"] = _empty_to_none(acc_wrap.get("accLicenseStatus")) or item["status"]
 
     item["capacity"] = acc_wrap.get("capacity")
     item["languages"] = _empty_to_none(acc_wrap.get("languageSpoken"))
     item["administrator"] = _empty_to_none(acc_wrap.get("contactPerson"))
-    item["license_begin_date"] = _empty_to_none(
-        acc_wrap.get("originalLicenseStartDate")
-    )
-    item["license_expiration"] = _empty_to_none(
-        acc_wrap.get("licenseExpirationDate")
-    )
+    item["license_begin_date"] = _empty_to_none(acc_wrap.get("originalLicenseStartDate"))
+    item["license_expiration"] = _empty_to_none(acc_wrap.get("licenseExpirationDate"))
     item["provider_website"] = _empty_to_none(acc_wrap.get("website"))
     item["hours"] = format_hours(schedule)
-    item["ages_served"] = format_ages_served(
-        acc_wrap.get("accAvailability")
-    )
+    item["ages_served"] = format_ages_served(acc_wrap.get("accAvailability"))
 
     # RI-specific
-    item["ri_most_recently_renewed"] = _empty_to_none(
-        acc_wrap.get("currentLicenseStartDate")
-    )
+    item["ri_most_recently_renewed"] = _empty_to_none(acc_wrap.get("currentLicenseStartDate"))
     item["ri_ccap_status"] = _empty_to_none(acc_wrap.get("ccapStatus"))
-    item["ri_ccap_expiration_date"] = _empty_to_none(
-        acc_wrap.get("ccapExpirationDate")
-    )
+    item["ri_ccap_expiration_date"] = _empty_to_none(acc_wrap.get("ccapExpirationDate"))
     item["ri_head_start"] = _empty_to_none(acc_wrap.get("headStart"))
     item["ri_state_prek"] = _empty_to_none(acc_wrap.get("riStatePreK"))
-    item["ri_provider_contact_name"] = _empty_to_none(
-        acc_wrap.get("providerContactName")
-    )
+    item["ri_provider_contact_name"] = _empty_to_none(acc_wrap.get("providerContactName"))
     item["ri_provider_email"] = _empty_to_none(acc_wrap.get("providerEmail"))
-    item["ri_services_offered"] = _empty_to_none(
-        acc_wrap.get("servicesOffered")
-    )
-    item["ri_age_group_capacity"] = format_age_group_capacity(
-        age_group_wrapper
-    )
-    item["ri_availability"] = format_availability(
-        acc_wrap.get("accAvailability")
-    )
+    item["ri_services_offered"] = _empty_to_none(acc_wrap.get("servicesOffered"))
+    item["ri_age_group_capacity"] = format_age_group_capacity(age_group_wrapper)
+    item["ri_availability"] = format_availability(acc_wrap.get("accAvailability"))
     # accWrap.programRating is the canonical value when present; fall back
     # to the search summary if missing.
     item["ri_brightstars_rating"] = (
-        acc_wrap.get("programRating")
-        if acc_wrap.get("programRating") is not None
-        else item["ri_brightstars_rating"]
+        acc_wrap.get("programRating") if acc_wrap.get("programRating") is not None else item["ri_brightstars_rating"]
     )
-    item["ri_license_decision"] = (
-        _empty_to_none(acc_wrap.get("accLicenseDecision"))
-        or item["ri_license_decision"]
-    )
+    item["ri_license_decision"] = _empty_to_none(acc_wrap.get("accLicenseDecision")) or item["ri_license_decision"]
 
     item["inspections"] = build_inspections(visits)
     return item
@@ -446,9 +403,7 @@ def build_detail_message(pid):
         "actions": [
             {
                 "id": "1;a",
-                "descriptor": (
-                    "aura://ApexActionController/ACTION$execute"
-                ),
+                "descriptor": ("aura://ApexActionController/ACTION$execute"),
                 "callingDescriptor": "UNKNOWN",
                 "params": {
                     "namespace": "",
@@ -474,16 +429,15 @@ def build_detail_post_body(pid, aura_context):
     request — it carries the framework UID (fwuid) which the server uses to
     validate the request belongs to the currently deployed app version.
     """
-    page_uri = (
-        f"/s/program-detail?language=en_US&pid={quote(pid, safe='')}"
-        f"&lang=en"
+    page_uri = f"/s/program-detail?language=en_US&pid={quote(pid, safe='')}&lang=en"
+    return urlencode(
+        {
+            "message": build_detail_message(pid),
+            "aura.context": aura_context,
+            "aura.pageURI": page_uri,
+            "aura.token": "null",
+        }
     )
-    return urlencode({
-        "message": build_detail_message(pid),
-        "aura.context": aura_context,
-        "aura.pageURI": page_uri,
-        "aura.token": "null",
-    })
 
 
 class StealthContextMiddleware:
@@ -493,9 +447,7 @@ class StealthContextMiddleware:
     @classmethod
     def from_crawler(cls, crawler):
         mw = cls()
-        crawler.signals.connect(
-            mw.spider_opened, signal=scrapy.signals.spider_opened
-        )
+        crawler.signals.connect(mw.spider_opened, signal=scrapy.signals.spider_opened)
         return mw
 
     def spider_opened(self, spider):
@@ -505,8 +457,7 @@ class StealthContextMiddleware:
         handler = handlers.get("https")
         if not isinstance(handler, ScrapyPlaywrightDownloadHandler):
             spider.logger.warning(
-                "StealthContextMiddleware: scrapy-playwright handler not "
-                "found; stealth patches NOT applied."
+                "StealthContextMiddleware: scrapy-playwright handler not found; stealth patches NOT applied."
             )
             return
 
@@ -518,15 +469,12 @@ class StealthContextMiddleware:
         log_spider = spider
 
         async def patched_create_context(name, context_kwargs=None, spider=None):
-            wrapper = await original(
-                name, context_kwargs=context_kwargs, spider=spider
-            )
+            wrapper = await original(name, context_kwargs=context_kwargs, spider=spider)
             await wrapper.context.add_init_script(_STEALTH_SCRIPT)
             await wrapper.context.add_init_script(_CANVAS_PATCH)
             await wrapper.context.add_init_script(_HW_PATCH)
             log_spider.logger.info(
-                "StealthContextMiddleware: stealth patches applied to "
-                "context '%s'",
+                "StealthContextMiddleware: stealth patches applied to context '%s'",
                 name,
             )
             return wrapper
@@ -595,15 +543,14 @@ class RhodeIslandSpider(scrapy.Spider):
             #     `--ozone-platform=x11` is meaningless on macOS (Chrome
             #     uses Cocoa) and can interfere with later arg parsing,
             #     so it's left off.
-            "args": (
-                ["--ozone-platform=x11", "--enable-unsafe-swiftshader"]
-                if platform.system() == "Linux" else []
-            ) + (
+            "args": (["--ozone-platform=x11", "--enable-unsafe-swiftshader"] if platform.system() == "Linux" else [])
+            + (
                 [
                     "--window-size=1440,900",
                     "--force-device-scale-factor=2",
                 ]
-                if platform.system() == "Darwin" else []
+                if platform.system() == "Darwin"
+                else []
             ),
             "timeout": 30 * 1000,
         },
@@ -648,14 +595,22 @@ class RhodeIslandSpider(scrapy.Spider):
         # as enabling manual captcha mode.
         if isinstance(manual_captcha, str):
             self.manual_captcha = manual_captcha.strip().lower() not in (
-                "", "0", "false", "no", "off",
+                "",
+                "0",
+                "false",
+                "no",
+                "off",
             )
         else:
             self.manual_captcha = bool(manual_captcha)
         self.manual_timeout = int(manual_timeout)
         if isinstance(audit, str):
             self.audit = audit.strip().lower() not in (
-                "", "0", "false", "no", "off",
+                "",
+                "0",
+                "false",
+                "no",
+                "off",
             )
         else:
             self.audit = bool(audit)
@@ -670,7 +625,8 @@ class RhodeIslandSpider(scrapy.Spider):
                 "playwright_include_page": True,
                 "playwright_page_methods": [
                     PageMethod(
-                        "wait_for_load_state", "domcontentloaded",
+                        "wait_for_load_state",
+                        "domcontentloaded",
                         timeout=60000,
                     ),
                     # Give the LWC + reCAPTCHA v3 script time to settle so
@@ -695,14 +651,12 @@ class RhodeIslandSpider(scrapy.Spider):
 
             if not search_results:
                 self.logger.error(
-                    "RI search returned no results — possible reCAPTCHA "
-                    "block or response shape change. Aborting."
+                    "RI search returned no results — possible reCAPTCHA block or response shape change. Aborting."
                 )
                 return
             if not aura_context:
                 self.logger.error(
-                    "RI search captured but aura.context could not be "
-                    "extracted — cannot fetch detail pages."
+                    "RI search captured but aura.context could not be extracted — cannot fetch detail pages."
                 )
                 return
 
@@ -718,20 +672,15 @@ class RhodeIslandSpider(scrapy.Spider):
 
             self.logger.info("RI search succeeded: %d providers", total)
 
-            detail_url = (
-                "https://earlylearningprograms.dhs.ri.gov" + AURA_ENDPOINT_PATH
-            )
+            detail_url = "https://earlylearningprograms.dhs.ri.gov" + AURA_ENDPOINT_PATH
             for idx, summary in enumerate(search_results, start=1):
                 pid = summary.get("id")
                 detail = None
                 if pid:
-                    detail = await self._fetch_detail(
-                        page, detail_url, pid, aura_context
-                    )
+                    detail = await self._fetch_detail(page, detail_url, pid, aura_context)
                 else:
                     self.logger.warning(
-                        "Search result missing id; yielding summary-only "
-                        "item: %r",
+                        "Search result missing id; yielding summary-only item: %r",
                         summary.get("accName"),
                     )
 
@@ -742,11 +691,7 @@ class RhodeIslandSpider(scrapy.Spider):
 
                 # Stay polite between detail calls.
                 if idx < total:
-                    await asyncio.sleep(
-                        random.uniform(
-                            self.detail_delay_min, self.detail_delay_max
-                        )
-                    )
+                    await asyncio.sleep(random.uniform(self.detail_delay_min, self.detail_delay_max))
         finally:
             await page.close()
 
@@ -864,7 +809,9 @@ class RhodeIslandSpider(scrapy.Spider):
             y = random.randint(150, 900)
             try:
                 await page.mouse.move(
-                    x, y, steps=random.randint(15, 35),
+                    x,
+                    y,
+                    steps=random.randint(15, 35),
                 )
             except Exception as e:
                 self.logger.debug("warmup mouse.move failed: %s", e)
@@ -918,9 +865,7 @@ class RhodeIslandSpider(scrapy.Spider):
         state" error. So we look up each input's id and click its
         `label[for=...]` instead.
         """
-        await page.wait_for_selector(
-            'input[name="ageGroup"]', timeout=30000
-        )
+        await page.wait_for_selector('input[name="ageGroup"]', timeout=30000)
         checkboxes = page.locator('input[name="ageGroup"]')
         count = await checkboxes.count()
         if count != len(AGE_GROUPS):
@@ -934,15 +879,12 @@ class RhodeIslandSpider(scrapy.Spider):
             cb = checkboxes.nth(i)
             cb_id = await cb.get_attribute("id")
             if not cb_id:
-                self.logger.warning(
-                    "ageGroup checkbox %d missing id; skipping", i
-                )
+                self.logger.warning("ageGroup checkbox %d missing id; skipping", i)
                 continue
             await page.locator(f'label[for="{cb_id}"]').click()
             if not await cb.is_checked():
                 self.logger.warning(
-                    "ageGroup checkbox %d (id=%s) did not toggle on after "
-                    "label click",
+                    "ageGroup checkbox %d (id=%s) did not toggle on after label click",
                     i,
                     cb_id,
                 )
@@ -951,8 +893,7 @@ class RhodeIslandSpider(scrapy.Spider):
         self.logger.info("RI: ticked %d/%d age-group checkboxes", ticked, count)
         if ticked == 0:
             raise RuntimeError(
-                "Could not tick any ageGroup checkboxes — search would "
-                "fail the 'at least one criteria' validation."
+                "Could not tick any ageGroup checkboxes — search would fail the 'at least one criteria' validation."
             )
 
     async def _submit_search(self, page):
@@ -975,9 +916,7 @@ class RhodeIslandSpider(scrapy.Spider):
         v3_failed = False
         max_attempts = self.search_retries + 1
         for attempt in range(1, max_attempts + 1):
-            results, aura_context, v3_failed = await self._click_and_capture(
-                page
-            )
+            results, aura_context, v3_failed = await self._click_and_capture(page)
             if results:
                 if attempt > 1:
                     self.logger.info(
@@ -992,8 +931,7 @@ class RhodeIslandSpider(scrapy.Spider):
             if attempt >= max_attempts:
                 break
             self.logger.warning(
-                "RI search v3 failed (attempt %d/%d); reloading page and "
-                "retrying with fresh warm-up",
+                "RI search v3 failed (attempt %d/%d); reloading page and retrying with fresh warm-up",
                 attempt,
                 max_attempts,
             )
@@ -1022,7 +960,8 @@ class RhodeIslandSpider(scrapy.Spider):
         """
         try:
             await page.reload(
-                wait_until="domcontentloaded", timeout=60000,
+                wait_until="domcontentloaded",
+                timeout=60000,
             )
         except Exception as e:
             self.logger.warning("Page reload failed during retry: %s", e)
@@ -1074,12 +1013,11 @@ class RhodeIslandSpider(scrapy.Spider):
         results, aura_context, _ = await self._parse_search_response(resp)
         if results:
             self.logger.info(
-                "Manual captcha solve succeeded; %d results", len(results),
+                "Manual captcha solve succeeded; %d results",
+                len(results),
             )
         else:
-            self.logger.error(
-                "Manual captcha solve still produced no results — giving up."
-            )
+            self.logger.error("Manual captcha solve still produced no results — giving up.")
         return results, aura_context
 
     async def _parse_search_response(self, resp):
@@ -1098,9 +1036,7 @@ class RhodeIslandSpider(scrapy.Spider):
         try:
             payload = json.loads(body)
         except json.JSONDecodeError as e:
-            self.logger.error(
-                "RI search response not JSON: %s; head=%r", e, body[:500]
-            )
+            self.logger.error("RI search response not JSON: %s; head=%r", e, body[:500])
             return [], aura_context, False
 
         results = extract_search_results(payload)
@@ -1118,14 +1054,11 @@ class RhodeIslandSpider(scrapy.Spider):
             a = actions[0]
             state = a.get("state")
             errors = a.get("error") or []
-            inner = (
-                (a.get("returnValue") or {}).get("returnValue") or {}
-            )
+            inner = (a.get("returnValue") or {}).get("returnValue") or {}
             response_wrap = inner.get("responseWrap") or {}
             v3_failed = bool(response_wrap.get("isV3Failed"))
             self.logger.error(
-                "RI search returned no rows: state=%s "
-                "responseWrap=%r errors=%r body_head=%r",
+                "RI search returned no rows: state=%s responseWrap=%r errors=%r body_head=%r",
                 state,
                 response_wrap,
                 errors,
@@ -1141,9 +1074,7 @@ class RhodeIslandSpider(scrapy.Spider):
                 {"url": url, "body": body},
             )
         except Exception as e:
-            self.logger.warning(
-                "Detail fetch threw for pid=%s: %s", pid, e
-            )
+            self.logger.warning("Detail fetch threw for pid=%s: %s", pid, e)
             return None
 
         if result.get("error"):
@@ -1167,9 +1098,7 @@ class RhodeIslandSpider(scrapy.Spider):
         try:
             data = json.loads(result["body"])
         except json.JSONDecodeError as e:
-            self.logger.warning(
-                "Detail JSON parse failed for pid=%s: %s", pid, e
-            )
+            self.logger.warning("Detail JSON parse failed for pid=%s: %s", pid, e)
             return None
 
         return extract_detail_payload(data)
@@ -1200,5 +1129,6 @@ def _extract_form_field(post_data, field):
     for piece in pieces:
         if piece.startswith(needle):
             from urllib.parse import unquote
-            return unquote(piece[len(needle):])
+
+            return unquote(piece[len(needle) :])
     return None
