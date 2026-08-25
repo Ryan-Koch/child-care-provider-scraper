@@ -40,6 +40,7 @@ Three phases:
 See ``tasks/iowa_epic/iowa_plan.md`` for the full research writeup this
 spider implements.
 """
+
 import logging
 import re
 from datetime import datetime
@@ -53,19 +54,13 @@ from provider_scrape.items import InspectionItem, ProviderItem
 logger = logging.getLogger(__name__)
 
 PINS_URL = "https://search.iachildcareconnect.org/Map/pins"
-TITAN_SEARCH_URL = (
-    "https://secureapp.dhs.state.ia.us/dhs_titan_public/ChildCare/"
-    "GetProviderComplianceReports"
-)
+TITAN_SEARCH_URL = "https://secureapp.dhs.state.ia.us/dhs_titan_public/ChildCare/GetProviderComplianceReports"
 TITAN_REPORTS_URL = (
-    "https://secureapp.dhs.state.ia.us/dhs_titan_public/ChildCare/"
-    "GetProviderComplaintAndComplicanceReportList"
+    "https://secureapp.dhs.state.ia.us/dhs_titan_public/ChildCare/GetProviderComplaintAndComplicanceReportList"
 )
 # Mirrors DownloadG360CAPRICAReport in the site's own
 # Scripts/Childcare/ComplianceReport.js (plan §6.5).
-DOCUMENT_BASE_URL = (
-    "https://secureapp.dhs.state.ia.us/dhs_titan_public/DocumentRepository"
-)
+DOCUMENT_BASE_URL = "https://secureapp.dhs.state.ia.us/dhs_titan_public/DocumentRepository"
 # C3 is an SPA with a POST-only pins endpoint -- there is no per-provider
 # page. Emit the map base as `provider_url` (the Indiana / Washington DC
 # POST-only precedent); the real identity is `license_number`.
@@ -74,9 +69,7 @@ MAP_URL = "https://search.iachildcareconnect.org/Map"
 CENTRAL = ZoneInfo("America/Chicago")
 
 HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (X11; Linux x86_64; rv:153.0) Gecko/20100101 Firefox/153.0"
-    ),
+    "User-Agent": ("Mozilla/5.0 (X11; Linux x86_64; rv:153.0) Gecko/20100101 Firefox/153.0"),
     "Accept": "application/json, text/plain, */*",
 }
 
@@ -111,10 +104,16 @@ OPENINGS_AGE_BANDS = [
     ("schoolAgeFullTime", "School Age Full Time"),
 ]
 
-DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
-              "Saturday", "Sunday"]
-DAY_KEYS = ["mondayHours", "tuesdayHours", "wednesdayHours", "thursdayHours",
-            "fridayHours", "saturdayHours", "sundayHours"]
+DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+DAY_KEYS = [
+    "mondayHours",
+    "tuesdayHours",
+    "wednesdayHours",
+    "thursdayHours",
+    "fridayHours",
+    "saturdayHours",
+    "sundayHours",
+]
 
 # Titan report list -> InspectionItem.type when FileTypeDescription is null
 # (§5.13: FileTypeDescription is authoritative and usually present; this is
@@ -135,15 +134,13 @@ def titan_search_url(page):
     All filters blank == every provider; ``pageSize`` is fixed server-side at
     50 regardless of what is requested (plan §2.2).
     """
-    params = {"ProviderID": "", "ProviderName": "", "City": "", "County": "",
-              "PageIndex": page, "TypeOfCare": ""}
+    params = {"ProviderID": "", "ProviderName": "", "City": "", "County": "", "PageIndex": page, "TypeOfCare": ""}
     return f"{TITAN_SEARCH_URL}?{urlencode(params)}"
 
 
 def reports_url(provider_id, type_of_care_id):
     """Build a ``GetProviderComplaintAndComplicanceReportList`` URL."""
-    return (f"{TITAN_REPORTS_URL}?providerID={provider_id}"
-            f"&TypeOfCareID={type_of_care_id}")
+    return f"{TITAN_REPORTS_URL}?providerID={provider_id}&TypeOfCareID={type_of_care_id}"
 
 
 def ages_served_flags(ages_served):
@@ -176,9 +173,11 @@ def openings_by_age(pin):
     is uniform across records.
     """
     return [
-        {"ageGroup": label,
-         "fullTime": pin.get(f"{prefix}FtOpenings") or 0,
-         "partTime": pin.get(f"{prefix}PtOpenings") or 0}
+        {
+            "ageGroup": label,
+            "fullTime": pin.get(f"{prefix}FtOpenings") or 0,
+            "partTime": pin.get(f"{prefix}PtOpenings") or 0,
+        }
         for prefix, label in OPENINGS_AGE_BANDS
     ]
 
@@ -194,8 +193,7 @@ def format_hours(formatted):
     """
     if not formatted:
         return None
-    rows = [(day, formatted.get(key)) for day, key in zip(DAY_LABELS, DAY_KEYS)
-            if formatted.get(key)]
+    rows = [(day, formatted.get(key)) for day, key in zip(DAY_LABELS, DAY_KEYS, strict=True) if formatted.get(key)]
     if not rows:
         return None
     times = {t for _, t in rows}
@@ -255,24 +253,27 @@ def build_report_url(rec):
     """
     if rec.get("IsG360Report"):
         logger.warning(
-            "Iowa: IsG360Report report encountered (undocumented live) -- "
-            "FileID=%r", rec.get("FileID"),
+            "Iowa: IsG360Report report encountered (undocumented live) -- FileID=%r",
+            rec.get("FileID"),
         )
         return f"{DOCUMENT_BASE_URL}/ViewComplianceDocument/?CrypticFileID={rec.get('FileID')}"
     if rec.get("IsLegacy"):
         logger.warning(
-            "Iowa: IsLegacy report encountered (undocumented live) -- "
-            "CrypticID=%r", rec.get("CrypticID"),
+            "Iowa: IsLegacy report encountered (undocumented live) -- CrypticID=%r",
+            rec.get("CrypticID"),
         )
         # NB: the legacy shape keys off VersionTime, not CreatedDate -- that
         # asymmetry is in the site's own JS, not a typo (plan §6.5).
         created = titan_mdy_date(rec.get("VersionTime"))
-        return (f"{DOCUMENT_BASE_URL}/ProviderLegacyDocumentReport/"
-                f"?providerID={rec.get('CrypticID')}&createdDate={created}")
+        return (
+            f"{DOCUMENT_BASE_URL}/ProviderLegacyDocumentReport/?providerID={rec.get('CrypticID')}&createdDate={created}"
+        )
     created = titan_mdy_date(rec.get("CreatedDate"))
-    return (f"{DOCUMENT_BASE_URL}/ViewCAPRICADocument/"
-            f"?Id={rec.get('CrypticID')}&formID={rec.get('CrypticFormID')}"
-            f"&createdDate={created}")
+    return (
+        f"{DOCUMENT_BASE_URL}/ViewCAPRICADocument/"
+        f"?Id={rec.get('CrypticID')}&formID={rec.get('CrypticFormID')}"
+        f"&createdDate={created}"
+    )
 
 
 def build_inspection(rec, list_name):
@@ -387,8 +388,7 @@ def build_provider_item(c3, titan):
 
 class IowaSpider(scrapy.Spider):
     name = "iowa"
-    allowed_domains = ["search.iachildcareconnect.org",
-                        "secureapp.dhs.state.ia.us"]
+    allowed_domains = ["search.iachildcareconnect.org", "secureapp.dhs.state.ia.us"]
 
     custom_settings = {
         # 8 is for the Phase-3 report-list fan-out (verified safe at 8
@@ -445,7 +445,10 @@ class IowaSpider(scrapy.Spider):
 
         self.logger.info(
             "Iowa: Titan page %d/%d -> %d rows (running total %d)",
-            page + 1, total_pages, len(rows), len(self.licensing),
+            page + 1,
+            total_pages,
+            len(rows),
+            len(self.licensing),
         )
 
         next_page = page + 1
@@ -462,16 +465,22 @@ class IowaSpider(scrapy.Spider):
                 "Iowa: Titan SHORT HARVEST -- collected %d unique providers "
                 "across %d pages, but absoluteTotal is %d. provider_type / "
                 "status will be missing on the difference.",
-                len(self.licensing), self.titan_pages, absolute_total,
+                len(self.licensing),
+                self.titan_pages,
+                absolute_total,
             )
         self.logger.info(
             "Iowa: Titan paging complete -- %d unique providers across %d "
             "pages; fetching the C3 pins (whole-state POST)",
-            len(self.licensing), self.titan_pages,
+            len(self.licensing),
+            self.titan_pages,
         )
         yield scrapy.Request(
-            PINS_URL, method="POST", headers=HEADERS,
-            callback=self.parse_pins, dont_filter=True,
+            PINS_URL,
+            method="POST",
+            headers=HEADERS,
+            callback=self.parse_pins,
+            dont_filter=True,
         )
 
     # --- Phase 1: C3 pins + join ----------------------------------------- #
@@ -505,7 +514,9 @@ class IowaSpider(scrapy.Spider):
         self.logger.info(
             "Iowa: join complete -- %d both, %d C3-only, %d Titan-only "
             "(%d union); dispatching report-list requests (Phase 3)",
-            self.both_count, self.c3_only_count, self.titan_only_count,
+            self.both_count,
+            self.c3_only_count,
+            self.titan_only_count,
             self.both_count + self.c3_only_count + self.titan_only_count,
         )
 
@@ -519,9 +530,11 @@ class IowaSpider(scrapy.Spider):
             self.item_count += 1
             yield item
             return
-        counts = (titan_row.get("ComplianceCount") or 0,
-                  titan_row.get("ComplaintCount") or 0,
-                  titan_row.get("RegulationCheckListCount") or 0)
+        counts = (
+            titan_row.get("ComplianceCount") or 0,
+            titan_row.get("ComplaintCount") or 0,
+            titan_row.get("RegulationCheckListCount") or 0,
+        )
         if not any(counts):
             self.item_count += 1
             yield item
@@ -531,8 +544,7 @@ class IowaSpider(scrapy.Spider):
             reports_url(titan_row["ProviderID"], titan_row.get("TypeOfCareID")),
             headers=HEADERS,
             callback=self.parse_reports,
-            meta={"item": item, "provider_id": titan_row["ProviderID"],
-                  "expected_counts": counts},
+            meta={"item": item, "provider_id": titan_row["ProviderID"], "expected_counts": counts},
             dont_filter=True,
         )
 
@@ -545,28 +557,32 @@ class IowaSpider(scrapy.Spider):
         expected_counts = response.meta["expected_counts"]
 
         lists = {
-            name: data.get(name) or [] for name in (
-                "ComplianceReportList", "ComplaintReportList",
+            name: data.get(name) or []
+            for name in (
+                "ComplianceReportList",
+                "ComplaintReportList",
                 "RegulationCheckListReportList",
             )
         }
-        actual_counts = tuple(len(lists[name]) for name in (
-            "ComplianceReportList", "ComplaintReportList",
-            "RegulationCheckListReportList",
-        ))
+        actual_counts = tuple(
+            len(lists[name])
+            for name in (
+                "ComplianceReportList",
+                "ComplaintReportList",
+                "RegulationCheckListReportList",
+            )
+        )
         if actual_counts != expected_counts:
             self.logger.warning(
                 "Iowa: report count mismatch for provider %s -- search row "
                 "said (compliance=%d, complaint=%d, checklist=%d), fetched "
                 "(%d, %d, %d)",
-                pid, *expected_counts, *actual_counts,
+                pid,
+                *expected_counts,
+                *actual_counts,
             )
 
-        inspections = [
-            build_inspection(rec, name)
-            for name, records in lists.items()
-            for rec in records
-        ]
+        inspections = [build_inspection(rec, name) for name, records in lists.items() for rec in records]
         if inspections:
             item["inspections"] = inspections
 
@@ -578,16 +594,22 @@ class IowaSpider(scrapy.Spider):
         self.logger.info(
             "Iowa: finished (%s) -- %d items emitted (%d both, %d C3-only, "
             "%d Titan-only), %d report-list requests dispatched",
-            reason, self.item_count, self.both_count, self.c3_only_count,
-            self.titan_only_count, self.report_request_count,
+            reason,
+            self.item_count,
+            self.both_count,
+            self.c3_only_count,
+            self.titan_only_count,
+            self.report_request_count,
         )
         if self.item_count < expected:
             self.logger.warning(
-                "Iowa: only %d items emitted but the join produced %d -- "
-                "possible dropped items", self.item_count, expected,
+                "Iowa: only %d items emitted but the join produced %d -- possible dropped items",
+                self.item_count,
+                expected,
             )
         if self.item_count < EXPECTED_MIN_PROVIDERS:
             self.logger.warning(
-                "Iowa: only %d items emitted (< %d baseline) -- possible "
-                "incomplete crawl", self.item_count, EXPECTED_MIN_PROVIDERS,
+                "Iowa: only %d items emitted (< %d baseline) -- possible incomplete crawl",
+                self.item_count,
+                EXPECTED_MIN_PROVIDERS,
             )

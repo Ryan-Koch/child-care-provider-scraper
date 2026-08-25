@@ -2,13 +2,11 @@
 
 from unittest.mock import patch
 
-import pytest
 from scrapy import Spider
 from scrapy.http import Request, Response
 from scrapy.settings import Settings
 
 from provider_scrape.middlewares import RateLimitBackoffMiddleware
-
 
 spider = Spider(name="maryland")
 

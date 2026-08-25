@@ -245,9 +245,7 @@ def test_timeout_backoff_gives_up_and_stops_further_retries():
 
 def test_pause_slot_never_dips_below_base_delay():
     slot = SimpleNamespace(delay=33.0, randomize_delay=False)
-    downloader = SimpleNamespace(
-        get_slot_key=lambda r: "webshare-0", slots={"webshare-0": slot}
-    )
+    downloader = SimpleNamespace(get_slot_key=lambda r: "webshare-0", slots={"webshare-0": slot})
     mw = _backoff_mw(engine=SimpleNamespace(downloader=downloader))
     req = Request(DETAIL, meta={"download_slot": "webshare-0"})
     try:

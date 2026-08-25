@@ -1,6 +1,6 @@
 import logging
 import unittest
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 from provider_scrape.playwright_utils import PlaywrightErrbackMixin
 
@@ -19,7 +19,6 @@ class _MixinHost(PlaywrightErrbackMixin):
 
 
 class TestPlaywrightErrbackMixin(unittest.IsolatedAsyncioTestCase):
-
     def setUp(self):
         self.spider = _MixinHost()
 
@@ -55,8 +54,7 @@ class TestPlaywrightErrbackMixin(unittest.IsolatedAsyncioTestCase):
         """Once the retry budget is spent the request is dropped, not
         re-scheduled, so the crawl can drain and finish."""
         failure, request, page, _ = self._failure(
-            {"playwright_retry": True,
-             "playwright_retry_count": self.spider.playwright_max_retries}
+            {"playwright_retry": True, "playwright_retry_count": self.spider.playwright_max_retries}
         )
 
         results = [out async for out in self.spider.errback_close_page(failure)]
@@ -78,7 +76,7 @@ class TestPlaywrightErrbackMixin(unittest.IsolatedAsyncioTestCase):
 
     async def test_skips_close_when_page_already_closed(self):
         """Guard against double-closing a page that Playwright already closed."""
-        failure, request, page, _ = self._failure({})
+        failure, _request, page, _ = self._failure({})
         page.is_closed = MagicMock(return_value=True)
 
         results = [out async for out in self.spider.errback_close_page(failure)]

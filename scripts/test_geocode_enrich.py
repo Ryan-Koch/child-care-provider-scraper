@@ -7,13 +7,13 @@ Census HTTP call stubbed out. The pure geocoding decisions are covered by
 
 Run with the project virtualenv: ``.venv/bin/pytest scripts/test_geocode_enrich.py``.
 """
+
 import csv
 import json
 
+import geocode_enrich
 import pytest
 import requests
-
-import geocode_enrich
 
 
 # --------------------------------------------------------------------------- #
@@ -28,17 +28,13 @@ def test_is_csv_by_extension():
 def test_read_csv_returns_string_records_and_header(tmp_path):
     path = tmp_path / "in.csv"
     path.write_text(
-        "provider_name,address,latitude,longitude\n"
-        "Acme,123 Main St,,\n"
-        "Bright Kids,,40.1,-81.5\n",
-        encoding="utf-8")
+        "provider_name,address,latitude,longitude\nAcme,123 Main St,,\nBright Kids,,40.1,-81.5\n", encoding="utf-8"
+    )
 
     records, fieldnames = geocode_enrich._read_records(str(path))
 
     assert fieldnames == ["provider_name", "address", "latitude", "longitude"]
-    assert records[0] == {
-        "provider_name": "Acme", "address": "123 Main St",
-        "latitude": "", "longitude": ""}
+    assert records[0] == {"provider_name": "Acme", "address": "123 Main St", "latitude": "", "longitude": ""}
     # An empty cell reads back as "" so has_coordinates() treats it as missing.
     assert records[1]["latitude"] == "40.1"
 
@@ -56,12 +52,15 @@ def test_read_json_returns_records_and_no_header(tmp_path):
 def test_csv_fieldnames_appends_new_keys_after_header():
     records = [
         {"provider_name": "A", "geocode_source": "state"},
-        {"provider_name": "B", "geocode_source": "census",
-         "geocode_confidence": "exact"},
+        {"provider_name": "B", "geocode_source": "census", "geocode_confidence": "exact"},
     ]
     base = ["provider_name", "address"]
     assert geocode_enrich._csv_fieldnames(records, base) == [
-        "provider_name", "address", "geocode_source", "geocode_confidence"]
+        "provider_name",
+        "address",
+        "geocode_source",
+        "geocode_confidence",
+    ]
 
 
 def test_write_csv_preserves_header_order_and_fills_missing(tmp_path):
@@ -92,20 +91,19 @@ def test_enrich_file_csv_end_to_end(tmp_path, monkeypatch):
     path = tmp_path / "ohio.csv"
     path.write_text(
         "provider_name,address,city,state,zip,latitude,longitude\n"
-        "Has Coords,1 A St,Columbus,OH,43004,40.0,-82.0\n"          # -> state
-        "Needs Geocode,123 Main St,Springfield,IL,62704,,\n"       # -> census
-        "No Address,,,,,,\n",                                       # -> skipped
-        encoding="utf-8")
+        "Has Coords,1 A St,Columbus,OH,43004,40.0,-82.0\n"  # -> state
+        "Needs Geocode,123 Main St,Springfield,IL,62704,,\n"  # -> census
+        "No Address,,,,,,\n",  # -> skipped
+        encoding="utf-8",
+    )
 
     # The single candidate is query position "0"; return a canned Census match.
     def fake_post(chunk, *rest):
-        return [["0", "in", "Match", "Exact", "123 MAIN ST",
-                 "-89.6501,39.7817", "id", "L"]]
+        return [["0", "in", "Match", "Exact", "123 MAIN ST", "-89.6501,39.7817", "id", "L"]]
 
     monkeypatch.setattr(geocode_enrich, "_post_batch", fake_post)
 
-    counters = geocode_enrich.enrich_file(
-        str(path), geocode_enrich.NullCache(), _args())
+    counters = geocode_enrich.enrich_file(str(path), geocode_enrich.NullCache(), _args())
 
     assert counters["state"] == 1
     assert counters["skipped_no_address"] == 1
@@ -130,12 +128,10 @@ def test_enrich_file_csv_to_json_conversion(tmp_path, monkeypatch):
     # -o with a different extension converts format; no network needed here
     # because the only record already has coordinates.
     src = tmp_path / "in.csv"
-    src.write_text(
-        "provider_name,latitude,longitude\nAcme,40.0,-82.0\n", encoding="utf-8")
+    src.write_text("provider_name,latitude,longitude\nAcme,40.0,-82.0\n", encoding="utf-8")
     dst = tmp_path / "out.json"
 
-    geocode_enrich.enrich_file(
-        str(src), geocode_enrich.NullCache(), _args(output=str(dst)))
+    geocode_enrich.enrich_file(str(src), geocode_enrich.NullCache(), _args(output=str(dst)))
 
     written = json.loads(dst.read_text(encoding="utf-8"))
     assert written[0]["geocode_source"] == "state"
@@ -151,7 +147,7 @@ class _FakeResponse:
 
     def raise_for_status(self):
         if self.status_code >= 400:
-            raise requests.HTTPError("status %s" % self.status_code)
+            raise requests.HTTPError(f"status {self.status_code}")
 
 
 _WAF_HTML = (
@@ -165,22 +161,18 @@ def test_post_batch_raises_on_waf_html(monkeypatch):
     """A 200 response whose body is a WAF 'Request Rejected' HTML page must
     raise (so it's retried/reported), not be parsed as CSV -- otherwise every
     address is silently marked no_match and cached as a false negative."""
-    monkeypatch.setattr(
-        geocode_enrich.requests, "post",
-        lambda *a, **k: _FakeResponse(_WAF_HTML))
+    monkeypatch.setattr(geocode_enrich.requests, "post", lambda *a, **k: _FakeResponse(_WAF_HTML))
     with pytest.raises(requests.RequestException):
         geocode_enrich._post_batch(
-            [["0", "1 Main St", "Madison", "WI", "53719"]],
-            "Public_AR_Current", timeout=5, max_retries=1)
+            [["0", "1 Main St", "Madison", "WI", "53719"]], "Public_AR_Current", timeout=5, max_retries=1
+        )
 
 
 def test_post_batch_parses_valid_csv(monkeypatch):
     """A normal CSV body is parsed into rows."""
     body = '"0","1 Main St, Madison, WI, 53719","Match","Exact","..."\n'
-    monkeypatch.setattr(
-        geocode_enrich.requests, "post",
-        lambda *a, **k: _FakeResponse(body))
+    monkeypatch.setattr(geocode_enrich.requests, "post", lambda *a, **k: _FakeResponse(body))
     rows = geocode_enrich._post_batch(
-        [["0", "1 Main St", "Madison", "WI", "53719"]],
-        "Public_AR_Current", timeout=5, max_retries=1)
+        [["0", "1 Main St", "Madison", "WI", "53719"]], "Public_AR_Current", timeout=5, max_retries=1
+    )
     assert rows and rows[0][0] == "0" and rows[0][2] == "Match"

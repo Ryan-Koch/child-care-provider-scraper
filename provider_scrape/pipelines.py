@@ -27,8 +27,7 @@ class NormalizationPipeline:
         self.enabled = spider.settings.getbool("NORMALIZE_ENABLED", True)
         if not self.enabled:
             spider.logger.info(
-                "NormalizationPipeline disabled (NORMALIZE_ENABLED=False); "
-                "items pass through untouched."
+                "NormalizationPipeline disabled (NORMALIZE_ENABLED=False); items pass through untouched."
             )
 
     def process_item(self, item, spider):
@@ -38,10 +37,7 @@ class NormalizationPipeline:
         data = adapter.asdict()
         data = normalization.normalize_item(data, spider.name)
         if data.get("inspections"):
-            data["inspections"] = [
-                normalization.normalize_inspection(i, spider.name)
-                for i in data["inspections"]
-            ]
+            data["inspections"] = [normalization.normalize_inspection(i, spider.name) for i in data["inspections"]]
         for key, value in data.items():
             adapter[key] = value
         return item

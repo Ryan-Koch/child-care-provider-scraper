@@ -5,8 +5,8 @@ from scrapy.http import HtmlResponse, Request, TextResponse
 
 from provider_scrape.items import InspectionItem, ProviderItem
 from provider_scrape.spiders.michigan import (
-    AURA_DESCRIPTOR,
     APEX_CLASSNAME,
+    AURA_DESCRIPTOR,
     MICHIGAN_COUNTIES,
     MichiganSpider,
     clean_address,
@@ -60,7 +60,6 @@ def test_parse_initial_page_yields_county_searches(spider):
         encoding="utf-8",
     )
     results = list(spider.parse_initial_page(response))
-    from provider_scrape.spiders.michigan import MICHIGAN_COUNTIES
 
     assert len(results) == len(MICHIGAN_COUNTIES)
     req = results[0]
@@ -86,9 +85,7 @@ def test_parse_initial_page_no_fwuid(spider):
 # ---- Search result parsing tests ----
 
 
-def _make_search_response(
-    search_result_payload, page_number=1, fwuid="test-fwuid", county="TestCounty"
-):
+def _make_search_response(search_result_payload, page_number=1, fwuid="test-fwuid", county="TestCounty"):
     """Helper to create a mock search API response.
 
     Mimics the double-encoded format: the outer returnValue contains a
@@ -162,9 +159,7 @@ def test_parse_search_pagination(spider):
         "totalRecords": 500,
         "recordStart": 1,
         "recordEnd": 200,
-        "results": [
-            {"id": f"id_{i}", "Name": f"Provider {i}"} for i in range(200)
-        ],
+        "results": [{"id": f"id_{i}", "Name": f"Provider {i}"} for i in range(200)],
     }
     response = _make_search_response(payload, page_number=1)
     results = list(spider.parse_search(response))
@@ -181,9 +176,7 @@ def test_parse_search_no_pagination_on_last_page(spider):
         "totalRecords": 50,
         "recordStart": 1,
         "recordEnd": 50,
-        "results": [
-            {"id": f"id_{i}", "Name": f"Provider {i}"} for i in range(50)
-        ],
+        "results": [{"id": f"id_{i}", "Name": f"Provider {i}"} for i in range(50)],
     }
     response = _make_search_response(payload, page_number=1)
     results = list(spider.parse_search(response))
@@ -591,9 +584,7 @@ def test_build_search_request_structure(spider):
     from urllib.parse import unquote_plus
 
     body_str = req.body.decode("utf-8") if isinstance(req.body, bytes) else req.body
-    body_params = dict(
-        pair.split("=", 1) for pair in body_str.split("&") if "=" in pair
-    )
+    body_params = dict(pair.split("=", 1) for pair in body_str.split("&") if "=" in pair)
     message = json.loads(unquote_plus(body_params["message"]))
     assert len(message["actions"]) == 1
     action = message["actions"][0]
@@ -607,17 +598,13 @@ def test_build_search_request_structure(spider):
 
 def test_build_detail_request_batches_four_actions(spider):
     """Test that detail request batches all 4 API methods."""
-    req = spider._build_detail_request(
-        "test-fwuid", "001ABC", {"Name": "Test"}
-    )
+    req = spider._build_detail_request("test-fwuid", "001ABC", {"Name": "Test"})
     assert req.method == "POST"
 
     from urllib.parse import unquote_plus
 
     body_str = req.body.decode("utf-8") if isinstance(req.body, bytes) else req.body
-    body_params = dict(
-        pair.split("=", 1) for pair in body_str.split("&") if "=" in pair
-    )
+    body_params = dict(pair.split("=", 1) for pair in body_str.split("&") if "=" in pair)
     message = json.loads(unquote_plus(body_params["message"]))
     actions = message["actions"]
     assert len(actions) == 4

@@ -56,35 +56,89 @@ SEARCH_URL = "https://childcarefinder.wisconsin.gov/"
 # The value is the id the Blazor form binds; the label is the dropdown text.
 # Tribal nations use ids 84-95 (there is no id 90). Value 0 (blank) is skipped.
 COUNTIES = [
-    (1, "Adams County"), (2, "Ashland County"), (3, "Barron County"),
-    (4, "Bayfield County"), (5, "Brown County"), (6, "Buffalo County"),
-    (7, "Burnett County"), (8, "Calumet County"), (9, "Chippewa County"),
-    (10, "Clark County"), (11, "Columbia County"), (12, "Crawford County"),
-    (13, "Dane County"), (14, "Dodge County"), (15, "Door County"),
-    (16, "Douglas County"), (17, "Dunn County"), (18, "Eau Claire County"),
-    (19, "Florence County"), (20, "Fond Du Lac County"), (21, "Forest County"),
-    (22, "Grant County"), (23, "Green County"), (24, "Green Lake County"),
-    (25, "Iowa County"), (26, "Iron County"), (27, "Jackson County"),
-    (28, "Jefferson County"), (29, "Juneau County"), (30, "Kenosha County"),
-    (31, "Kewaunee County"), (32, "La Crosse County"), (33, "Lafayette County"),
-    (34, "Langlade County"), (35, "Lincoln County"), (36, "Manitowoc County"),
-    (37, "Marathon County"), (38, "Marinette County"), (39, "Marquette County"),
-    (40, "Milwaukee County"), (41, "Monroe County"), (42, "Oconto County"),
-    (43, "Oneida County"), (44, "Outagamie County"), (45, "Ozaukee County"),
-    (46, "Pepin County"), (47, "Pierce County"), (48, "Polk County"),
-    (49, "Portage County"), (50, "Price County"), (51, "Racine County"),
-    (52, "Richland County"), (53, "Rock County"), (54, "Rusk County"),
-    (55, "St. Croix County"), (56, "Sauk County"), (57, "Sawyer County"),
-    (58, "Shawano County"), (59, "Sheboygan County"), (60, "Taylor County"),
-    (61, "Trempealeau County"), (62, "Vernon County"), (63, "Vilas County"),
-    (64, "Walworth County"), (65, "Washburn County"), (66, "Washington County"),
-    (67, "Waukesha County"), (68, "Waupaca County"), (69, "Waushara County"),
-    (70, "Winnebago County"), (71, "Wood County"), (72, "Menominee County"),
-    (84, "Menominee Tribe"), (85, "Red Cliff Tribe"),
-    (86, "Stockbridge-Munsee Tribe"), (87, "Potawatomi Tribe"),
-    (88, "Lac Du Flambeau Tribe"), (89, "Bad River Tribe"),
-    (91, "Sokaogon Tribe"), (92, "Oneida Nation"), (93, "Ho Chunk Nation"),
-    (94, "Lac Courte Oreilles Tribe"), (95, "St. Croix Tribe"),
+    (1, "Adams County"),
+    (2, "Ashland County"),
+    (3, "Barron County"),
+    (4, "Bayfield County"),
+    (5, "Brown County"),
+    (6, "Buffalo County"),
+    (7, "Burnett County"),
+    (8, "Calumet County"),
+    (9, "Chippewa County"),
+    (10, "Clark County"),
+    (11, "Columbia County"),
+    (12, "Crawford County"),
+    (13, "Dane County"),
+    (14, "Dodge County"),
+    (15, "Door County"),
+    (16, "Douglas County"),
+    (17, "Dunn County"),
+    (18, "Eau Claire County"),
+    (19, "Florence County"),
+    (20, "Fond Du Lac County"),
+    (21, "Forest County"),
+    (22, "Grant County"),
+    (23, "Green County"),
+    (24, "Green Lake County"),
+    (25, "Iowa County"),
+    (26, "Iron County"),
+    (27, "Jackson County"),
+    (28, "Jefferson County"),
+    (29, "Juneau County"),
+    (30, "Kenosha County"),
+    (31, "Kewaunee County"),
+    (32, "La Crosse County"),
+    (33, "Lafayette County"),
+    (34, "Langlade County"),
+    (35, "Lincoln County"),
+    (36, "Manitowoc County"),
+    (37, "Marathon County"),
+    (38, "Marinette County"),
+    (39, "Marquette County"),
+    (40, "Milwaukee County"),
+    (41, "Monroe County"),
+    (42, "Oconto County"),
+    (43, "Oneida County"),
+    (44, "Outagamie County"),
+    (45, "Ozaukee County"),
+    (46, "Pepin County"),
+    (47, "Pierce County"),
+    (48, "Polk County"),
+    (49, "Portage County"),
+    (50, "Price County"),
+    (51, "Racine County"),
+    (52, "Richland County"),
+    (53, "Rock County"),
+    (54, "Rusk County"),
+    (55, "St. Croix County"),
+    (56, "Sauk County"),
+    (57, "Sawyer County"),
+    (58, "Shawano County"),
+    (59, "Sheboygan County"),
+    (60, "Taylor County"),
+    (61, "Trempealeau County"),
+    (62, "Vernon County"),
+    (63, "Vilas County"),
+    (64, "Walworth County"),
+    (65, "Washburn County"),
+    (66, "Washington County"),
+    (67, "Waukesha County"),
+    (68, "Waupaca County"),
+    (69, "Waushara County"),
+    (70, "Winnebago County"),
+    (71, "Wood County"),
+    (72, "Menominee County"),
+    (84, "Menominee Tribe"),
+    (85, "Red Cliff Tribe"),
+    (86, "Stockbridge-Munsee Tribe"),
+    (87, "Potawatomi Tribe"),
+    (88, "Lac Du Flambeau Tribe"),
+    (89, "Bad River Tribe"),
+    (91, "Sokaogon Tribe"),
+    (92, "Oneida Nation"),
+    (93, "Ho Chunk Nation"),
+    (94, "Lac Courte Oreilles Tribe"),
+    (95, "St. Croix Tribe"),
 ]
 
 # Provider-type toggles in the "Your Child Care Needs" section. Ticking all
@@ -120,10 +174,7 @@ Object.defineProperty(navigator, 'deviceMemory', {get: () => 8});
 # "Google Inc. (Intel)" software-GL string; on a dev Mac we leave stealth's
 # default off so the native Metal renderer flows through unchanged.
 _WEBGL_VENDOR_LINUX = "Google Inc. (Intel)"
-_WEBGL_RENDERER_LINUX = (
-    "ANGLE (Intel, Intel(R) UHD Graphics 630 (0x00003E9B) Direct3D11 "
-    "vs_5_0 ps_5_0, D3D11)"
-)
+_WEBGL_RENDERER_LINUX = "ANGLE (Intel, Intel(R) UHD Graphics 630 (0x00003E9B) Direct3D11 vs_5_0 ps_5_0, D3D11)"
 
 _stealth_kwargs = dict(
     navigator_languages_override=("en-US", "en"),
@@ -138,9 +189,7 @@ if platform.system() == "Linux":
 
 _STEALTH_SCRIPT = Stealth(**_stealth_kwargs).script_payload
 
-assert "webdriver" in _STEALTH_SCRIPT, (
-    "playwright-stealth script_payload missing webdriver patch — check version"
-)
+assert "webdriver" in _STEALTH_SCRIPT, "playwright-stealth script_payload missing webdriver patch — check version"
 
 _CITY_STATE_ZIP = re.compile(r"^(.*?)\s+([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$")
 
@@ -183,8 +232,7 @@ def _labeled(root, label):
     ``<div class="col-* Bold">Label</div><div class="col-*">Value</div>``.
     """
     parts = root.xpath(
-        ".//div[contains(@class,'Bold')][normalize-space(.)=$l]"
-        "/following-sibling::div[1]//text()",
+        ".//div[contains(@class,'Bold')][normalize-space(.)=$l]/following-sibling::div[1]//text()",
         l=label,
     ).getall()
     return _clean(" ".join(parts))
@@ -232,17 +280,17 @@ def _rows_from_selector(selector, base_url, county):
         cells = row.xpath("./td")
         provider_type = _clean(cells[1].css("div::text").get()) if len(cells) > 1 else None
         rating = row.css("td div.text-nowrap::attr(title)").get()
-        address = ", ".join(
-            p for p in (_clean(t) for t in row.css("address::text").getall()) if p
+        address = ", ".join(p for p in (_clean(t) for t in row.css("address::text").getall()) if p)
+        stubs.append(
+            {
+                "detail_url": _absolute(base_url, href),
+                "provider_name": _clean(anchor.xpath("string(.)").get()),
+                "provider_type": provider_type,
+                "wi_youngstar_rating": _clean(rating),
+                "address": address or None,
+                "county": county,
+            }
         )
-        stubs.append({
-            "detail_url": _absolute(base_url, href),
-            "provider_name": _clean(anchor.xpath("string(.)").get()),
-            "provider_type": provider_type,
-            "wi_youngstar_rating": _clean(rating),
-            "address": address or None,
-            "county": county,
-        })
     return stubs
 
 
@@ -259,9 +307,7 @@ class StealthContextMiddleware:
     @classmethod
     def from_crawler(cls, crawler):
         mw = cls()
-        crawler.signals.connect(
-            mw.spider_opened, signal=scrapy.signals.spider_opened
-        )
+        crawler.signals.connect(mw.spider_opened, signal=scrapy.signals.spider_opened)
         return mw
 
     def spider_opened(self, spider):
@@ -271,8 +317,7 @@ class StealthContextMiddleware:
         handler = handlers.get("https")
         if not isinstance(handler, ScrapyPlaywrightDownloadHandler):
             spider.logger.warning(
-                "StealthContextMiddleware: scrapy-playwright handler not "
-                "found; stealth patches NOT applied."
+                "StealthContextMiddleware: scrapy-playwright handler not found; stealth patches NOT applied."
             )
             return
 
@@ -285,24 +330,19 @@ class StealthContextMiddleware:
         log_spider = spider
 
         async def patched_create_context(name, context_kwargs=None, spider=None):
-            wrapper = await original(
-                name, context_kwargs=context_kwargs, spider=spider
-            )
+            wrapper = await original(name, context_kwargs=context_kwargs, spider=spider)
             await wrapper.context.add_init_script(_STEALTH_SCRIPT)
             await wrapper.context.add_init_script(_CANVAS_PATCH)
             await wrapper.context.add_init_script(_HW_PATCH)
             log_spider.logger.info(
-                "StealthContextMiddleware: stealth patches applied to "
-                "context '%s' (browser %s)",
+                "StealthContextMiddleware: stealth patches applied to context '%s' (browser %s)",
                 name,
                 wrapper.context.browser.version,
             )
             return wrapper
 
         handler._create_browser_context = patched_create_context
-        spider.logger.info(
-            "StealthContextMiddleware: patched _create_browser_context."
-        )
+        spider.logger.info("StealthContextMiddleware: patched _create_browser_context.")
 
 
 class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
@@ -323,13 +363,8 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
         "PLAYWRIGHT_LAUNCH_OPTIONS": {
             "headless": False,
             "channel": "chrome",
-            "args": (
-                ["--ozone-platform=x11", "--enable-unsafe-swiftshader"]
-                if platform.system() == "Linux" else []
-            ) + (
-                ["--window-size=1440,900", "--force-device-scale-factor=2"]
-                if platform.system() == "Darwin" else []
-            ),
+            "args": (["--ozone-platform=x11", "--enable-unsafe-swiftshader"] if platform.system() == "Linux" else [])
+            + (["--window-size=1440,900", "--force-device-scale-factor=2"] if platform.system() == "Darwin" else []),
             "timeout": 30 * 1000,
         },
         # IMPORTANT: scrapy-playwright reads PLAYWRIGHT_CONTEXTS (plural). There
@@ -392,7 +427,8 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
                     "playwright_retry": True,
                     "playwright_page_methods": [
                         PageMethod(
-                            "wait_for_load_state", "domcontentloaded",
+                            "wait_for_load_state",
+                            "domcontentloaded",
                             timeout=60000,
                         ),
                         # Let the Blazor circuit + reCAPTCHA v3 script settle so
@@ -426,8 +462,10 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
                 showing = _showing(selector)
                 self.logger.info(
                     "[%s] results page %d: %d providers (%s)",
-                    county_name, page_num, len(stubs),
-                    "showing %d-%d of %d" % showing if showing else "no count",
+                    county_name,
+                    page_num,
+                    len(stubs),
+                    f"showing {showing[0]}-{showing[1]} of {showing[2]}" if showing else "no count",
                 )
                 for stub in stubs:
                     if self.max_providers and self._provider_count >= self.max_providers:
@@ -447,7 +485,9 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
                     break
             self.logger.info(
                 "[%s] done: %d pages, %d providers",
-                county_name, page_num, total_rows,
+                county_name,
+                page_num,
+                total_rows,
             )
         finally:
             await page.close()
@@ -460,9 +500,7 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
         ``SearchResults?County=<id>&...``. (Whether the advanced
         Licensed/Certified toggles further widen coverage is still open.)
         """
-        await page.select_option(
-            "select[name='IndexModel.County']", value=str(county_id)
-        )
+        await page.select_option("select[name='IndexModel.County']", value=str(county_id))
         for toggle in PROVIDER_TYPE_TOGGLES:
             locator = page.locator(toggle)
             if await locator.count():
@@ -472,9 +510,7 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
         # The reCAPTCHA v3 execute + Blazor submit navigates to SearchResults.
         await page.wait_for_url("**/SearchResults*", timeout=90000)
         try:
-            await page.wait_for_selector(
-                "a[href*='ProviderDetails']", timeout=self.results_timeout_ms
-            )
+            await page.wait_for_selector("a[href*='ProviderDetails']", timeout=self.results_timeout_ms)
         except PlaywrightTimeoutError:
             # Empty counties/tribes render a SearchResults page with no rows and
             # no "no results" text -- there is nothing row-shaped to wait for.
@@ -483,13 +519,12 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
             # present on both empty and populated pages) so we can tell a
             # genuinely empty county from a stalled render, then let parse_county
             # read zero rows and finish this county cleanly.
-            rendered = bool(
-                await page.locator("button.childcaresearch-button").count()
-            )
+            rendered = bool(await page.locator("button.childcaresearch-button").count())
             self.logger.warning(
-                "[%s] no provider rows within %ds (results rendered=%s) — "
-                "treating as 0 providers",
-                county_name, self.results_timeout_ms // 1000, rendered,
+                "[%s] no provider rows within %ds (results rendered=%s) — treating as 0 providers",
+                county_name,
+                self.results_timeout_ms // 1000,
+                rendered,
             )
 
     async def _go_to_next_page(self, page, county_name, page_num):
@@ -503,9 +538,7 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
         next_button = page.locator("button", has_text="Next").first
         if not await next_button.count():
             return False
-        first_href = await page.locator(
-            "a[href*='ProviderDetails']"
-        ).first.get_attribute("href")
+        first_href = await page.locator("a[href*='ProviderDetails']").first.get_attribute("href")
         await next_button.click()
         try:
             # Wait until the first provider link changes (page turned over the
@@ -521,7 +554,8 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
         except Exception:
             self.logger.warning(
                 "[%s] next-page wait timed out after page %d; stopping.",
-                county_name, page_num,
+                county_name,
+                page_num,
             )
             return False
         return True
@@ -558,10 +592,7 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
 
         # Name / street / city-state-zip / contact live in the left column.
         left = pd.css(".col-md-3")
-        item["provider_name"] = (
-            _clean(left.css(".col-12.Bold::text").get())
-            or stub.get("provider_name")
-        )
+        item["provider_name"] = _clean(left.css(".col-12.Bold::text").get()) or stub.get("provider_name")
         col12 = [_clean(t) for t in left.css(".col-12::text").getall()]
         col12 = [t for t in col12 if t]
         street = None
@@ -580,8 +611,7 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
         item["state"] = state or "WI"
         item["zip"] = zip_code
         item["phone"] = _clean(left.css("a[href^='tel:']::text").get())
-        item["administrator"] = _next_row_value(left, "Contact Information") \
-            or _labeled(left, "Contact Information")
+        item["administrator"] = _next_row_value(left, "Contact Information") or _labeled(left, "Contact Information")
 
         # Identifiers + regulation.
         item["license_number"] = _labeled(pd, "Provider #")
@@ -611,18 +641,13 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
 
         # YoungStar quality rating (state-specific per the field playbook).
         ys = response.css("#youngstarDetailsCollapsible")
-        item["wi_youngstar_rating"] = (
-            _clean(ys.css("div.text-nowrap::attr(title)").get())
-            or stub.get("wi_youngstar_rating")
+        item["wi_youngstar_rating"] = _clean(ys.css("div.text-nowrap::attr(title)").get()) or stub.get(
+            "wi_youngstar_rating"
         )
-        item["wi_unique_services"] = [
-            t for t in (_clean(x) for x in ys.css("table td::text").getall()) if t
-        ] or None
+        item["wi_unique_services"] = [t for t in (_clean(x) for x in ys.css("table td::text").getall()) if t] or None
 
         # Accreditation (common field).
-        item["accreditation"] = _clean(
-            response.css("#FacilityHeader_Accreditation .card-text::text").get()
-        )
+        item["accreditation"] = _clean(response.css("#FacilityHeader_Accreditation .card-text::text").get())
 
         self._parse_provider_reported(response, item)
 
@@ -664,8 +689,7 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
         if not prd:
             return
         item["wi_special_care_types"] = [
-            t for t in (_clean(x) for x in prd.css("#typesOfCare td::text").getall())
-            if t
+            t for t in (_clean(x) for x in prd.css("#typesOfCare td::text").getall()) if t
         ] or None
         item["wi_program_philosophy"] = self._text_after_h3(prd, "Program Philosophy")
         item["wi_vacancies"] = self._text_after_h3(prd, "Vacancies")
@@ -685,7 +709,7 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
         if not full:
             return None
         if full.startswith(title):
-            full = full[len(title):]
+            full = full[len(title) :]
         return _clean(full)
 
     def _parse_inspections(self, response):
@@ -704,9 +728,7 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
         a ``.d-md-none`` mobile accordion. We take the desktop table only so
         rows aren't double-counted.
         """
-        return response.css(
-            f"#{section_id} .d-md-block table.Grid"
-        ).xpath(".//tr[td]")
+        return response.css(f"#{section_id} .d-md-block table.Grid").xpath(".//tr[td]")
 
     def _parse_enforcement(self, response):
         out = []
@@ -737,9 +759,7 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
             summary = cells[3].css("a::attr(href)").get()
             correction = cells[4].css("a::attr(href)").get()
             insp["report_url"] = _absolute(response.url, summary) if summary else None
-            insp["wi_correction_plan_url"] = (
-                _absolute(response.url, correction) if correction else None
-            )
+            insp["wi_correction_plan_url"] = _absolute(response.url, correction) if correction else None
             out.append(dict(insp))
         return out
 

@@ -1,8 +1,11 @@
 import unittest
 from urllib.parse import parse_qs
-from scrapy.http import TextResponse, Request, FormRequest
-from provider_scrape.spiders.colorado import ColoradoSpider
+
+from scrapy.http import FormRequest, Request, TextResponse
+
 from provider_scrape.items import ProviderItem
+from provider_scrape.spiders.colorado import ColoradoSpider
+
 
 class ColoradoSpiderTest(unittest.TestCase):
     def setUp(self):
@@ -44,46 +47,44 @@ class ColoradoSpiderTest(unittest.TestCase):
         </body>
         </html>
         """
-        response = TextResponse(url='https://www.coloradoshines.com/search?program=a',
-                                body=html,
-                                encoding='utf-8')
-        
+        response = TextResponse(url="https://www.coloradoshines.com/search?program=a", body=html, encoding="utf-8")
+
         results = list(self.spider.parse(response))
-        
+
         # Expect 1 Request for detail and 1 FormRequest for next page
         self.assertEqual(len(results), 2)
-        
+
         # Check Detail Request
         req = results[0]
         self.assertIsInstance(req, Request)
-        self.assertEqual(req.url, 'https://www.coloradoshines.com/program_details?id=123')
-        
+        self.assertEqual(req.url, "https://www.coloradoshines.com/program_details?id=123")
+
         # Check Item in Meta
-        item = req.meta['item']
-        self.assertEqual(item['provider_name'], 'Thorne Nature Experience')
-        self.assertEqual(item['co_quality_rating'], 'Licensed Program')
-        self.assertEqual(item['address'], '1241 Ceres Drive Lafayette, CO 80026')
-        self.assertEqual(item['county'], 'Boulder')
-        self.assertEqual(item['phone'], '(303) 499-3647')
-        self.assertEqual(item['provider_type'], 'School Age Program')
-        self.assertIn('Preschool', item['ages_served'])
-        self.assertIn('English', item['languages'])
-        self.assertEqual(item['scholarships_accepted'], 'Yes')
-        self.assertEqual(item['co_preschool_openings'], '5')
-        self.assertEqual(item['co_school_age_openings'], '80')
+        item = req.meta["item"]
+        self.assertEqual(item["provider_name"], "Thorne Nature Experience")
+        self.assertEqual(item["co_quality_rating"], "Licensed Program")
+        self.assertEqual(item["address"], "1241 Ceres Drive Lafayette, CO 80026")
+        self.assertEqual(item["county"], "Boulder")
+        self.assertEqual(item["phone"], "(303) 499-3647")
+        self.assertEqual(item["provider_type"], "School Age Program")
+        self.assertIn("Preschool", item["ages_served"])
+        self.assertIn("English", item["languages"])
+        self.assertEqual(item["scholarships_accepted"], "Yes")
+        self.assertEqual(item["co_preschool_openings"], "5")
+        self.assertEqual(item["co_school_age_openings"], "80")
 
         # Check Pagination Request
         form_req = results[1]
         self.assertIsInstance(form_req, FormRequest)
-        self.assertEqual(form_req.method, 'POST')
-        self.assertEqual(form_req.url, 'https://www.coloradoshines.com/search?program=a')
-        
+        self.assertEqual(form_req.method, "POST")
+        self.assertEqual(form_req.url, "https://www.coloradoshines.com/search?program=a")
+
         # Verify body content
-        body_params = parse_qs(form_req.body.decode('utf-8'))
-        self.assertEqual(body_params['page:searchForm:j_id169'][0], 'page:searchForm:j_id169')
-        self.assertEqual(body_params['com.salesforce.visualforce.ViewState'][0], 'mock_viewstate')
-        self.assertEqual(body_params['com.salesforce.visualforce.ViewStateVersion'][0], 'mock_version')
-        self.assertEqual(body_params['com.salesforce.visualforce.ViewStateMAC'][0], 'mock_mac')
+        body_params = parse_qs(form_req.body.decode("utf-8"))
+        self.assertEqual(body_params["page:searchForm:j_id169"][0], "page:searchForm:j_id169")
+        self.assertEqual(body_params["com.salesforce.visualforce.ViewState"][0], "mock_viewstate")
+        self.assertEqual(body_params["com.salesforce.visualforce.ViewStateVersion"][0], "mock_version")
+        self.assertEqual(body_params["com.salesforce.visualforce.ViewStateMAC"][0], "mock_mac")
 
     def test_parse_detail(self):
         # Mock HTML for detail page
@@ -102,26 +103,29 @@ class ColoradoSpiderTest(unittest.TestCase):
         </body>
         </html>
         """
-        
+
         item = ProviderItem()
-        response = TextResponse(url='https://www.coloradoshines.com/program_details?id=123',
-                                body=html,
-                                encoding='utf-8',
-                                request=Request('http://example.com', meta={'item': item}))
-        
+        response = TextResponse(
+            url="https://www.coloradoshines.com/program_details?id=123",
+            body=html,
+            encoding="utf-8",
+            request=Request("http://example.com", meta={"item": item}),
+        )
+
         results = list(self.spider.parse_detail(response))
         self.assertEqual(len(results), 1)
-        
-        final_item = results[0]
-        self.assertEqual(final_item['license_number'], '1694465')
-        self.assertEqual(final_item['provider_website'], 'http://www.thornenature.org')
-        self.assertEqual(final_item['co_accepting_new_children'], 'Yes')
-        self.assertEqual(final_item['capacity'], '80')
-        self.assertEqual(final_item['co_head_start'], 'No')
-        self.assertEqual(final_item['co_licensed_to_serve'], 'Day Camp – Building Program')
-        self.assertIn('Diabetes', final_item['co_special_needs'])
-        self.assertEqual(final_item['co_license_type'], 'Permanent')
-        self.assertEqual(final_item['co_license_issue_date'], '5/15/2024')
 
-if __name__ == '__main__':
+        final_item = results[0]
+        self.assertEqual(final_item["license_number"], "1694465")
+        self.assertEqual(final_item["provider_website"], "http://www.thornenature.org")
+        self.assertEqual(final_item["co_accepting_new_children"], "Yes")
+        self.assertEqual(final_item["capacity"], "80")
+        self.assertEqual(final_item["co_head_start"], "No")
+        self.assertEqual(final_item["co_licensed_to_serve"], "Day Camp – Building Program")
+        self.assertIn("Diabetes", final_item["co_special_needs"])
+        self.assertEqual(final_item["co_license_type"], "Permanent")
+        self.assertEqual(final_item["co_license_issue_date"], "5/15/2024")
+
+
+if __name__ == "__main__":
     unittest.main()

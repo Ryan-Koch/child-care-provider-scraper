@@ -233,9 +233,7 @@ class GeorgiaSpider(scrapy.Spider):
         The live export is UTF-8 with a BOM; older responses used UTF-16. We try
         the header-declared charset first, then the common encodings.
         """
-        content_type = response.headers.get("Content-Type", b"").decode(
-            "utf-8", "ignore"
-        )
+        content_type = response.headers.get("Content-Type", b"").decode("utf-8", "ignore")
         charset = None
         if "charset=" in content_type.lower():
             charset = content_type.lower().split("charset=")[-1].split(";")[0].strip()
@@ -266,9 +264,7 @@ class GeorgiaSpider(scrapy.Spider):
             )
 
         if not record:
-            self.logger.warning(
-                f"No search record for {provider_number}; emitting CSV-only item."
-            )
+            self.logger.warning(f"No search record for {provider_number}; emitting CSV-only item.")
             yield item
             return
 
@@ -333,11 +329,7 @@ class GeorgiaSpider(scrapy.Spider):
             return record.get(key)
 
         # Administrator (two separate labels on the old detail page).
-        admin = " ".join(
-            p
-            for p in (_clean(r("adminFirstName")), _clean(r("adminLastName")))
-            if p
-        )
+        admin = " ".join(p for p in (_clean(r("adminFirstName")), _clean(r("adminLastName"))) if p)
         if admin:
             item["administrator"] = admin
 
@@ -353,12 +345,8 @@ class GeorgiaSpider(scrapy.Spider):
 
         # Pipe-delimited multi-value fields. For services/transportation the CSV
         # already derives a value from boolean flags; keep it if the API is empty.
-        item["ga_services"] = _split_multi(r("servicesProvided")) or item.get(
-            "ga_services"
-        )
-        item["ga_transportation"] = _split_multi(r("transportation")) or item.get(
-            "ga_transportation"
-        )
+        item["ga_services"] = _split_multi(r("servicesProvided")) or item.get("ga_services")
+        item["ga_transportation"] = _split_multi(r("transportation")) or item.get("ga_transportation")
         item["ga_meals"] = _split_multi(r("mealInfo"))
         item["ga_environment"] = _split_multi(r("environmentInfo"))
         item["ga_summer_camp"] = _split_multi(r("campCareInfo"))
@@ -395,9 +383,7 @@ class GeorgiaSpider(scrapy.Spider):
 
         # Notes fields the new API rarely populates, mapped defensively.
         item["ga_transportation_notes"] = _clean(r("transportToFromSchool"))
-        item["ga_school_break_notes"] = _clean(
-            r("schoolCareBreakAdditionalSchedulingInfo")
-        )
+        item["ga_school_break_notes"] = _clean(r("schoolCareBreakAdditionalSchedulingInfo"))
 
     @staticmethod
     def _build_inspections(visits):
@@ -470,7 +456,9 @@ class GeorgiaSpider(scrapy.Spider):
             mail_state = mail_parts[2]
             mail_zip = mail_parts[3]
             if mail_street and mail_city:
-                item["ga_mailing_address"] = f"{mail_street}, {mail_city}, {mail_state or 'GA'} {mail_zip or ''}".strip()
+                item["ga_mailing_address"] = (
+                    f"{mail_street}, {mail_city}, {mail_state or 'GA'} {mail_zip or ''}".strip()
+                )
             else:
                 item["ga_mailing_address"] = ", ".join(p for p in mail_parts if p)
 

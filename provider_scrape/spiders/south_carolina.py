@@ -6,7 +6,6 @@ import scrapy
 
 from provider_scrape.items import InspectionItem, ProviderItem
 
-
 BASE_URL = "https://www.scchildcare.org"
 LISTING_URL = f"{BASE_URL}/provider-search/?all=1"
 
@@ -22,9 +21,7 @@ ABC_RATING_MAP = {
 
 # Inline facCoords JS entries look like:
 #   '24680':{'latlng':new google.maps.LatLng(34.008744,-81.040186),...}
-FAC_COORDS_RE = re.compile(
-    r"'([^']+)':\{'latlng':new google\.maps\.LatLng\(([-\d.]+),([-\d.]+)\)"
-)
+FAC_COORDS_RE = re.compile(r"'([^']+)':\{'latlng':new google\.maps\.LatLng\(([-\d.]+),([-\d.]+)\)")
 
 ABC_IMG_RE = re.compile(r"/abc-([a-z-]+)\.png")
 
@@ -56,8 +53,7 @@ def extract_attribute(selector, label):
     present under this selector.
     """
     parts = selector.xpath(
-        './/p[@class="attribute-title" and normalize-space(.)=$label]'
-        "/following-sibling::p[1]//text()",
+        './/p[@class="attribute-title" and normalize-space(.)=$label]/following-sibling::p[1]//text()',
         label=label,
     ).getall()
     text = " ".join(p.strip() for p in parts if p and p.strip())
@@ -98,9 +94,7 @@ class SouthCarolinaSpider(scrapy.Spider):
     def parse_search_page(self, response):
         page = response.meta.get("page", 1)
 
-        total_count_text = response.css(
-            "div.results-details span.number::text"
-        ).get()
+        total_count_text = response.css("div.results-details span.number::text").get()
         total_count = None
         total_pages = None
         if total_count_text and total_count_text.strip().isdigit():
@@ -147,9 +141,7 @@ class SouthCarolinaSpider(scrapy.Spider):
                 },
             )
 
-        next_href = response.css(
-            'ul.pagination a.page-link[aria-label="Next"]::attr(href)'
-        ).get()
+        next_href = response.css('ul.pagination a.page-link[aria-label="Next"]::attr(href)').get()
         if next_href:
             next_url = urljoin(response.url, next_href)
             m = re.search(r"[?&]page=(\d+)", next_url)
@@ -182,8 +174,7 @@ class SouthCarolinaSpider(scrapy.Spider):
 
         # First icon-detail beneath the h1 carries the facility type.
         ptype = info.xpath(
-            './/h1/following-sibling::div[contains(@class,"row")]'
-            '[1]//div[contains(@class,"icon-detail")]//p/text()'
+            './/h1/following-sibling::div[contains(@class,"row")][1]//div[contains(@class,"icon-detail")]//p/text()'
         ).get()
         if ptype and ptype.strip():
             item["provider_type"] = ptype.strip()
@@ -281,15 +272,11 @@ class SouthCarolinaSpider(scrapy.Spider):
             return
 
         first = blocks[0]
-        addr_lines = [
-            t.strip() for t in first.css("p::text").getall() if t and t.strip()
-        ]
+        addr_lines = [t.strip() for t in first.css("p::text").getall() if t and t.strip()]
         if addr_lines:
             last = addr_lines[-1]
             if last.lower().endswith("county"):
-                item["county"] = re.sub(
-                    r"\s*County\s*$", "", last, flags=re.IGNORECASE
-                ).strip()
+                item["county"] = re.sub(r"\s*County\s*$", "", last, flags=re.IGNORECASE).strip()
                 addr_lines = addr_lines[:-1]
             if addr_lines:
                 item["address"] = ", ".join(addr_lines)
@@ -304,9 +291,7 @@ class SouthCarolinaSpider(scrapy.Spider):
     def _parse_inspections(self, response):
         """Parse every .inspection-row in the Inspection History section."""
         inspections = []
-        for row in response.css(
-            "section.location-inspections div.inspection-row"
-        ):
+        for row in response.css("section.location-inspections div.inspection-row"):
             insp = InspectionItem()
 
             date = row.css("div.date p::text").get()
@@ -321,11 +306,7 @@ class SouthCarolinaSpider(scrapy.Spider):
             if report and report.strip():
                 insp["report_url"] = report.strip()
 
-            alert_text = " ".join(
-                t.strip()
-                for t in row.css("div.alerts p::text").getall()
-                if t and t.strip()
-            )
+            alert_text = " ".join(t.strip() for t in row.css("div.alerts p::text").getall() if t and t.strip())
             if alert_text:
                 m = re.search(r"(\d+)\s+Alert", alert_text)
                 if m:
@@ -372,17 +353,15 @@ class SouthCarolinaSpider(scrapy.Spider):
     def _parse_abc_history(self, response):
         """Parse the 'ABC Facility Review' date/rating table."""
         history = []
-        for row in response.css(
-            "section.location-inspections table.data-table.deficiencies tbody tr"
-        ):
+        for row in response.css("section.location-inspections table.data-table.deficiencies tbody tr"):
             date = row.xpath('.//td[@data-title="Date"]/text()').get()
-            rating_src = row.xpath(
-                './/td[@data-title="Rating"]//img/@src'
-            ).get()
+            rating_src = row.xpath('.//td[@data-title="Rating"]//img/@src').get()
             if not date and not rating_src:
                 continue
-            history.append({
-                "date": date.strip() if date and date.strip() else None,
-                "rating": parse_abc_rating(rating_src),
-            })
+            history.append(
+                {
+                    "date": date.strip() if date and date.strip() else None,
+                    "rating": parse_abc_rating(rating_src),
+                }
+            )
         return history

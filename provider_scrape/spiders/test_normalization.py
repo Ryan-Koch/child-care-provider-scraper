@@ -5,12 +5,13 @@ Run with the project virtualenv: ``.venv/bin/pytest``.
 These tests use small inline dict fixtures (not full state files) and a tiny
 fake spider, so they are fast and framework-light.
 """
+
 import copy
 import logging
 
 from provider_scrape import normalization
-from provider_scrape.pipelines import NormalizationPipeline
 from provider_scrape.items import ProviderItem
+from provider_scrape.pipelines import NormalizationPipeline
 
 
 class FakeSettings:
@@ -27,7 +28,7 @@ class FakeSpider:
     def __init__(self, name="test_state", settings_values=None):
         self.name = name
         self.settings = FakeSettings(settings_values)
-        self.logger = logging.getLogger("fake.%s" % name)
+        self.logger = logging.getLogger(f"fake.{name}")
 
 
 # --------------------------------------------------------------------------- #
@@ -104,24 +105,20 @@ def test_clean_whitespace_leaves_non_strings_alone():
 
 
 def test_title_case_name_basic_allcaps():
-    assert normalization.title_case_name("  A CHILD'S WORLD ".strip()) \
-        == "A Child's World"
+    assert normalization.title_case_name("  A CHILD'S WORLD ".strip()) == "A Child's World"
 
 
 def test_title_case_name_preserves_llc_and_roman_numerals():
-    assert normalization.title_case_name("SMITH FAMILY DAYCARE LLC") \
-        == "Smith Family Daycare LLC"
+    assert normalization.title_case_name("SMITH FAMILY DAYCARE LLC") == "Smith Family Daycare LLC"
     assert normalization.title_case_name("JOHN SMITH III") == "John Smith III"
 
 
 def test_title_case_name_leaves_mixed_case_alone():
-    assert normalization.title_case_name("Bright Beginnings LLC") \
-        == "Bright Beginnings LLC"
+    assert normalization.title_case_name("Bright Beginnings LLC") == "Bright Beginnings LLC"
 
 
 def test_title_case_name_handles_hyphenated_token():
-    assert normalization.title_case_name("WELL-BEING CENTER") \
-        == "Well-Being Center"
+    assert normalization.title_case_name("WELL-BEING CENTER") == "Well-Being Center"
 
 
 def test_normalize_item_cleans_and_titlecases_name_fields():
@@ -161,8 +158,7 @@ def test_normalize_date_iso_passthrough():
 
 
 def test_normalize_date_iso_with_time_drops_time():
-    assert normalization.normalize_date("2025-10-01T06:00:00.000Z") \
-        == "2025-10-01"
+    assert normalization.normalize_date("2025-10-01T06:00:00.000Z") == "2025-10-01"
 
 
 def test_normalize_date_drops_trailing_clock_time():
@@ -233,13 +229,11 @@ def test_normalize_capacity_range_unchanged_and_logged(caplog):
 
 
 def test_normalize_ages_served_list_to_string():
-    assert normalization.normalize_ages_served(["Pre-K (4 - 5 yrs)"]) \
-        == "Pre-K (4 - 5 yrs)"
+    assert normalization.normalize_ages_served(["Pre-K (4 - 5 yrs)"]) == "Pre-K (4 - 5 yrs)"
 
 
 def test_normalize_ages_served_joins_multiple():
-    assert normalization.normalize_ages_served(["Infant", "Toddler"]) \
-        == "Infant, Toddler"
+    assert normalization.normalize_ages_served(["Infant", "Toddler"]) == "Infant, Toddler"
 
 
 def test_normalize_ages_served_string_passthrough():
@@ -283,8 +277,7 @@ def test_canonical_status_active_variants():
 def test_canonical_status_closed_and_enforcement():
     assert normalization.canonical_status("CLOSED") == "closed"
     assert normalization.canonical_status("INACTIVE") == "closed"
-    assert normalization.canonical_status("Refuse to Renew (RR)") \
-        == "enforcement"
+    assert normalization.canonical_status("Refuse to Renew (RR)") == "enforcement"
 
 
 def test_canonical_status_case_and_whitespace_tolerant():
@@ -298,10 +291,8 @@ def test_canonical_status_unmapped_is_unknown_and_logged(caplog):
 
 
 def test_facility_category_mappings():
-    assert normalization.facility_category_from_type("FAMILY DAY CARE HOME") \
-        == "family_home"
-    assert normalization.facility_category_from_type("Child Care Center") \
-        == "center"
+    assert normalization.facility_category_from_type("FAMILY DAY CARE HOME") == "family_home"
+    assert normalization.facility_category_from_type("Child Care Center") == "center"
     assert normalization.facility_category_from_type("GFDC") == "group_home"
     assert normalization.facility_category_from_type("SACC") == "school_age"
     assert normalization.facility_category_from_type("Exempt Only") == "exempt"
@@ -311,8 +302,7 @@ def test_canonical_status_maryland_values():
     assert normalization.canonical_status("Continuing - Full") == "active"
     assert normalization.canonical_status("Initial - Full") == "provisional"
     assert normalization.canonical_status("Provisional") == "provisional"
-    assert normalization.canonical_status("Suspended - Emergency") \
-        == "enforcement"
+    assert normalization.canonical_status("Suspended - Emergency") == "enforcement"
     assert normalization.canonical_status("Closed") == "closed"
     assert normalization.canonical_status("Revoked") == "closed"
 
@@ -350,8 +340,7 @@ def test_facility_category_wisconsin_regulation_types():
 
 def test_facility_category_unmapped_is_other_and_logged(caplog):
     with caplog.at_level("WARNING"):
-        assert normalization.facility_category_from_type("Spaceship Care") \
-            == "other"
+        assert normalization.facility_category_from_type("Spaceship Care") == "other"
     assert "unmapped provider_type" in caplog.text
 
 
@@ -369,8 +358,11 @@ def test_canonical_status_delaware_enforcement_values():
     # delaware_plan.md Sec 7.3/8: nine probation / intent-to-revoke stages,
     # derived onto `status` by delaware.derive_status.
     for raw in (
-        "Probation", "Probation Extension", "Warning of Probation",
-        "Warning of Probation Extension", "Intent to Revoke",
+        "Probation",
+        "Probation Extension",
+        "Warning of Probation",
+        "Warning of Probation Extension",
+        "Intent to Revoke",
         "Intent to Place on Probation",
         "Intent to Place on Probation Extension",
         "Intent to Place on Warning of Probation",
@@ -382,7 +374,7 @@ def test_canonical_status_delaware_enforcement_values():
 def test_normalize_item_status_in_place_and_facility_category_additive():
     item = {"status": "LICENSED", "provider_type": "Child Care Center"}
     out = normalization.normalize_item(item, "alabama")
-    assert out["status"] == "active"            # replaced in place (D4)
+    assert out["status"] == "active"  # replaced in place (D4)
     assert out["facility_category"] == "center"  # new additive facet (D2)
     assert out["provider_type"] == "Child Care Center"  # raw value preserved
 
@@ -418,15 +410,11 @@ def test_collapse_curriculum_excludes_vpk_curriculum():
 
 
 def test_collapse_head_start_to_boolean():
-    assert normalization.collapse_state_fields(
-        {"fl_is_head_start": True})["head_start"] is True
-    assert normalization.collapse_state_fields(
-        {"co_head_start": "Yes"})["head_start"] is True
-    assert normalization.collapse_state_fields(
-        {"co_head_start": "No"})["head_start"] is False
+    assert normalization.collapse_state_fields({"fl_is_head_start": True})["head_start"] is True
+    assert normalization.collapse_state_fields({"co_head_start": "Yes"})["head_start"] is True
+    assert normalization.collapse_state_fields({"co_head_start": "No"})["head_start"] is False
     # A descriptive program name reads as affirmative presence.
-    assert normalization.collapse_state_fields(
-        {"wa_head_start": "Region X Head Start"})["head_start"] is True
+    assert normalization.collapse_state_fields({"wa_head_start": "Region X Head Start"})["head_start"] is True
 
 
 def test_collapse_head_start_false_source_is_preserved_as_false():
@@ -457,9 +445,10 @@ def test_collapse_mailing_address_excludes_owner_and_licensee():
 # Task 08 — address cleanup + component parse
 # --------------------------------------------------------------------------- #
 def test_clean_address_strips_trailing_country():
-    assert normalization.clean_address(
-        "849 Centerville Road Warwick, Rhode Island 02886, United States") \
+    assert (
+        normalization.clean_address("849 Centerville Road Warwick, Rhode Island 02886, United States")
         == "849 Centerville Road Warwick, Rhode Island 02886"
+    )
 
 
 def test_clean_address_normalizes_comma_spacing():
@@ -468,14 +457,12 @@ def test_clean_address_normalizes_comma_spacing():
 
 
 def test_parse_components_clean_full_address():
-    city, state, zip_code = normalization.parse_address_components(
-        "460 A County Rd 27, Continental Divide, NM 87312")
+    city, state, zip_code = normalization.parse_address_components("460 A County Rd 27, Continental Divide, NM 87312")
     assert (city, state, zip_code) == ("Continental Divide", "NM", "87312")
 
 
 def test_parse_components_spelled_out_state_to_usps():
-    city, state, zip_code = normalization.parse_address_components(
-        "849 Centerville Road Warwick, Rhode Island 02886")
+    city, state, zip_code = normalization.parse_address_components("849 Centerville Road Warwick, Rhode Island 02886")
     assert state == "RI"
     assert zip_code == "02886"
     # City is mashed into the street field here -> not guessed.
@@ -483,28 +470,24 @@ def test_parse_components_spelled_out_state_to_usps():
 
 
 def test_parse_components_west_virginia_not_mismatched_to_virginia():
-    _, state, _ = normalization.parse_address_components(
-        "100 Main St, Charleston, West Virginia 25301")
+    _, state, _ = normalization.parse_address_components("100 Main St, Charleston, West Virginia 25301")
     assert state == "WV"
 
 
 def test_parse_components_ambiguous_address_left_none_and_logged(caplog):
     with caplog.at_level("WARNING"):
-        result = normalization.parse_address_components(
-            "Lewis and Clark, Helena, 59602")
+        result = normalization.parse_address_components("Lewis and Clark, Helena, 59602")
     assert result == (None, None, None)
     assert "no recognizable state" in caplog.text
 
 
 def test_parse_components_no_zip_left_none():
-    assert normalization.parse_address_components("Somewhere, USA") \
-        == (None, None, None)
+    assert normalization.parse_address_components("Somewhere, USA") == (None, None, None)
 
 
 def test_normalize_item_address_cleanup_and_components():
     item = {
-        "address": "849 Centerville Road Warwick, Rhode Island 02886, "
-                   "United States",
+        "address": "849 Centerville Road Warwick, Rhode Island 02886, United States",
     }
     out = normalization.normalize_item(item, "rhode_island")
     assert out["address"] == "849 Centerville Road Warwick, Rhode Island 02886"
@@ -526,8 +509,7 @@ def test_normalize_item_skips_parse_when_components_present(caplog):
     # Scraper supplied a street-only address plus structured city/state/zip;
     # the component parse should be skipped (no spurious "no ZIP" warning) and
     # the pre-set components left intact.
-    item = {"address": "303 1st Ave W", "city": "Carson",
-            "state": "ND", "zip": "58529"}
+    item = {"address": "303 1st Ave W", "city": "Carson", "state": "ND", "zip": "58529"}
     with caplog.at_level("WARNING"):
         out = normalization.normalize_item(item, "north_dakota")
     assert out["city"] == "Carson"
@@ -538,7 +520,6 @@ def test_normalize_item_skips_parse_when_components_present(caplog):
 
 def test_normalize_item_still_parses_when_a_component_missing():
     # Only city/state present (no zip) -> the parse still runs and fills zip.
-    item = {"address": "849 Centerville Road Warwick, RI 02886",
-            "city": "Warwick", "state": "RI"}
+    item = {"address": "849 Centerville Road Warwick, RI 02886", "city": "Warwick", "state": "RI"}
     out = normalization.normalize_item(item, "rhode_island")
     assert out["zip"] == "02886"

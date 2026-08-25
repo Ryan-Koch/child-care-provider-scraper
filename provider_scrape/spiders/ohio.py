@@ -1,7 +1,6 @@
 import re
 
 from scrapy import FormRequest, Request, Spider
-from scrapy.utils.trackref import print_live_refs
 
 from ..items import InspectionItem, ProviderItem
 
@@ -27,13 +26,9 @@ class OhdcySpider(Spider):
     def after_submit(self, response):
         # Process the response after the form submission
         # This could involve extracting data, following redirects, etc.
-        self.logger.info(
-            "Visiting results page and getting list of facilities' links..."
-        )
+        self.logger.info("Visiting results page and getting list of facilities' links...")
 
-        max_pages = response.xpath(
-            '//a[@id="ContentPlaceHolder1_pagerPrograms_ctl00_PagingFieldForDataPager_lnkLast"]'
-        )
+        max_pages = response.xpath('//a[@id="ContentPlaceHolder1_pagerPrograms_ctl00_PagingFieldForDataPager_lnkLast"]')
         max_pages_num = 0
         if max_pages:
             max_pages_href = max_pages.xpath("@href").get()
@@ -47,28 +42,22 @@ class OhdcySpider(Spider):
         if max_pages_num != 0:
             for i in range(max_pages_num):
                 self.logger.info(f"Visiting page {i + 1} of {max_pages_num}")
-                yield Request(
-                    url=f"{self.start_urls[0]}&p={i}", callback=self.parse_page_list
-                )
+                yield Request(url=f"{self.start_urls[0]}&p={i}", callback=self.parse_page_list)
 
     def parse_page_list(self, response):
         # Process the response after visiting each page
         # This could involve extracting data, following redirects, etc.
         self.logger.info(f"Parsing links for page at {response.url}")
 
-        links = response.xpath(
-            '//div[@class="resultsList"]/div[@class="resultsListRow"]//a/@href'
-        ).getall()
+        links = response.xpath('//div[@class="resultsList"]/div[@class="resultsListRow"]//a/@href').getall()
         self.logger.info(links)
 
         if len(links) > 0:
             self.logger.info(f"Found {len(links)} links on page")
             self.logger.info("Extracting data from links...")
-            for i, link in enumerate(links):
+            for _i, link in enumerate(links):
                 self.logger.info(link)
-                yield Request(
-                    url=f"{self.base_url}{link}", callback=self.parse_provider_page
-                )
+                yield Request(url=f"{self.base_url}{link}", callback=self.parse_provider_page)
 
     def parse_provider_page(self, response):
         # Process the response after visiting each provider page
@@ -79,9 +68,7 @@ class OhdcySpider(Spider):
 
         # The program name lives in the detailHeader div, a sibling of the
         # detailGroupContainer in the detail view.
-        provider_name = response.xpath(
-            '//div[@class="detailHeader"]/text()'
-        ).get()
+        provider_name = response.xpath('//div[@class="detailHeader"]/text()').get()
         if provider_name:
             provider["provider_name"] = provider_name.strip()
 
@@ -89,7 +76,6 @@ class OhdcySpider(Spider):
             './/div[@class="detailGroupContainer"]/div[@class="detailGroup"]/div[@class="detailRow"]'
         )
 
-        data = {}
         for row in detail_rows:
             label = row.xpath('.//span[@class="detailLabel"]/text()').get()
             info_selector = row.xpath('.//span[@class="detailInfo"]')
@@ -147,9 +133,7 @@ class OhdcySpider(Spider):
                         # (street, then "CITY, ST ZIP"). Join them into one line
                         # so the normalization pipeline can parse city/state/zip.
                         address_parts = [
-                            part.strip()
-                            for part in info_selector.xpath("./text()").getall()
-                            if part.strip()
+                            part.strip() for part in info_selector.xpath("./text()").getall() if part.strip()
                         ]
                         if address_parts:
                             provider["address"] = ", ".join(address_parts)
@@ -178,25 +162,13 @@ class OhdcySpider(Spider):
 
                 # Extract data from the columns and remove unwanted characters
                 inspection["date"] = (
-                    columns[0]
-                    .xpath("./span/following-sibling::text()")
-                    .get()
-                    .strip()
-                    .replace("\r\n", " ")
+                    columns[0].xpath("./span/following-sibling::text()").get().strip().replace("\r\n", " ")
                 )
                 inspection["type"] = (
-                    columns[1]
-                    .xpath("./span/following-sibling::text()")
-                    .get()
-                    .strip()
-                    .replace("\r\n", " ")
+                    columns[1].xpath("./span/following-sibling::text()").get().strip().replace("\r\n", " ")
                 )
                 inspection["original_status"] = (
-                    columns[2]
-                    .xpath("./span[not(span)]/text()")
-                    .get(default="")
-                    .strip()
-                    .replace("\r\n", " ")
+                    columns[2].xpath("./span[not(span)]/text()").get(default="").strip().replace("\r\n", " ")
                 )
                 inspection["corrective_status"] = (
                     columns[3]
@@ -206,15 +178,9 @@ class OhdcySpider(Spider):
                     .replace("\r\n", " ")
                 )
                 inspection["status_updated"] = (
-                    columns[4]
-                    .xpath("./span/following-sibling::text()")
-                    .get()
-                    .strip()
-                    .replace("\r\n", " ")
+                    columns[4].xpath("./span/following-sibling::text()").get().strip().replace("\r\n", " ")
                 )
-                inspection["report_url"] = (
-                    columns[5].xpath(".//a/@href").get()
-                )  # Get report link
+                inspection["report_url"] = columns[5].xpath(".//a/@href").get()  # Get report link
 
                 inspections.append(inspection)
 

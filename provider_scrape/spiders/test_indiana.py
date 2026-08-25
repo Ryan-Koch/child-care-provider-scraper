@@ -32,17 +32,15 @@ def spider():
 
 # --- response builders ------------------------------------------------- #
 
+
 def detail_response(payload, pid="x", lid="y"):
-    req = Request(DETAIL_URL, method="POST",
-                  meta={"provider_id": pid, "location_id": lid})
-    return TextResponse(url=DETAIL_URL, body=json.dumps(payload).encode(),
-                        encoding="utf-8", request=req)
+    req = Request(DETAIL_URL, method="POST", meta={"provider_id": pid, "location_id": lid})
+    return TextResponse(url=DETAIL_URL, body=json.dumps(payload).encode(), encoding="utf-8", request=req)
 
 
 def search_response(payload, page=1):
     req = Request(SEARCH_URL, method="POST", meta={"page": page})
-    return TextResponse(url=SEARCH_URL, body=json.dumps(payload).encode(),
-                        encoding="utf-8", request=req)
+    return TextResponse(url=SEARCH_URL, body=json.dumps(payload).encode(), encoding="utf-8", request=req)
 
 
 def split_requests(outputs):
@@ -54,9 +52,9 @@ def split_requests(outputs):
 
 # --- helper unit tests ------------------------------------------------- #
 
+
 def test_join_names():
-    assert join_names([{"name": "Erica Ryan"}, {"name": "Sam Lee"}]) == \
-        "Erica Ryan, Sam Lee"
+    assert join_names([{"name": "Erica Ryan"}, {"name": "Sam Lee"}]) == "Erica Ryan, Sam Lee"
     assert join_names([]) is None
     assert join_names(None) is None
 
@@ -88,19 +86,23 @@ def test_format_schedule_lists_mixed_days():
     assert format_schedule([]) is None
 
 
-@pytest.mark.parametrize("bands,expected_flags,expected_ages", [
-    # single infant-only band
-    ([{"startAge": "Infant", "endAge": None, "quantity": 8}],
-     {"infant"}, "Infant"),
-    # infant through six -> all four groups
-    ([{"startAge": "Infant", "endAge": "Six", "quantity": 12}],
-     {"infant", "toddler", "preschool", "school"}, "Infant-Six"),
-    # two through twelve -> preschool + school (no infant/toddler)
-    ([{"startAge": "Two", "endAge": "Twelve", "quantity": 40}],
-     {"preschool", "school"}, "Two-Twelve"),
-    # None / empty -> nothing
-    (None, set(), None),
-])
+@pytest.mark.parametrize(
+    "bands,expected_flags,expected_ages",
+    [
+        # single infant-only band
+        ([{"startAge": "Infant", "endAge": None, "quantity": 8}], {"infant"}, "Infant"),
+        # infant through six -> all four groups
+        (
+            [{"startAge": "Infant", "endAge": "Six", "quantity": 12}],
+            {"infant", "toddler", "preschool", "school"},
+            "Infant-Six",
+        ),
+        # two through twelve -> preschool + school (no infant/toddler)
+        ([{"startAge": "Two", "endAge": "Twelve", "quantity": 40}], {"preschool", "school"}, "Two-Twelve"),
+        # None / empty -> nothing
+        (None, set(), None),
+    ],
+)
 def test_ages_from_bands(bands, expected_flags, expected_ages):
     ages, flags = ages_from_bands(bands)
     assert set(flags) == expected_flags
@@ -110,10 +112,10 @@ def test_ages_from_bands(bands, expected_flags, expected_ages):
 
 # --- parse_search: pagination + fan-out -------------------------------- #
 
+
 def test_parse_search_page1_fans_out_pages_and_details(spider):
     page = _load_fixture("in_search_page.json")  # totalResults 3978, 3 providers
-    details, searches = split_requests(list(spider.parse_search(
-        search_response(page, page=1))))
+    details, searches = split_requests(list(spider.parse_search(search_response(page, page=1))))
     # 3978 / 250 = 16 pages -> pages 2..16 == 15 follow-up search requests.
     assert len(searches) == 15
     assert {r.meta["page"] for r in searches} == set(range(2, 17))
@@ -131,8 +133,7 @@ def test_parse_search_page1_fans_out_pages_and_details(spider):
 
 def test_parse_search_later_page_only_details(spider):
     page = _load_fixture("in_search_page.json")
-    _, searches = split_requests(list(spider.parse_search(
-        search_response(page, page=2))))
+    _, searches = split_requests(list(spider.parse_search(search_response(page, page=2))))
     assert len(searches) == 0  # no re-fan-out off a non-first page
 
 
@@ -141,8 +142,7 @@ def test_parse_search_dedupes(spider):
     list(spider.parse_search(search_response(page, page=1)))
     seen_after_first = len(spider.seen)
     # feeding the same providers again yields no new detail requests.
-    details, _ = split_requests(list(spider.parse_search(
-        search_response(page, page=3))))
+    details, _ = split_requests(list(spider.parse_search(search_response(page, page=3))))
     assert details == []
     assert len(spider.seen) == seen_after_first
 
@@ -150,14 +150,15 @@ def test_parse_search_dedupes(spider):
 def test_pagesize_constant_matches_fanout():
     # Guards the arithmetic in test_parse_search_* against a PAGE_SIZE change.
     import math
+
     assert math.ceil(3978 / PAGE_SIZE) == 16
 
 
 # --- parse_detail: golden path (rich center) --------------------------- #
 
+
 def test_parse_detail_center_golden(spider):
-    item = next(spider.parse_detail(detail_response(
-        _load_fixture("in_detail_center.json"))))
+    item = next(spider.parse_detail(detail_response(_load_fixture("in_detail_center.json"))))
     assert isinstance(item, ProviderItem)
     assert item["source_state"] == "Indiana"
     assert item["provider_name"] == "Abacus Childcare Center"
@@ -175,13 +176,12 @@ def test_parse_detail_center_golden(spider):
     assert item["in_ptq_level"] == "4"
     # capacity is the SUM of the licensedAges quantities.
     expected_cap = sum(
-        b["quantity"] for b in
-        _load_fixture("in_detail_center.json")["provider"]["location"]["licensedAges"])
+        b["quantity"] for b in _load_fixture("in_detail_center.json")["provider"]["location"]["licensedAges"]
+    )
     assert item["capacity"] == expected_cap
     assert isinstance(item["in_licensed_ages"], list)
     # inspections -> InspectionItem list; at least one carries a rule citation.
-    assert item["inspections"] and all(
-        isinstance(i, InspectionItem) for i in item["inspections"])
+    assert item["inspections"] and all(isinstance(i, InspectionItem) for i in item["inspections"])
     assert any(i.get("in_rule_code") for i in item["inspections"])
     assert any(i.get("in_correction_date") for i in item["inspections"])
     # complaints captured separately from inspections.
@@ -189,23 +189,21 @@ def test_parse_detail_center_golden(spider):
 
 
 def test_center_facility_category_via_pipeline(spider):
-    item = next(spider.parse_detail(detail_response(
-        _load_fixture("in_detail_center.json"))))
+    item = next(spider.parse_detail(detail_response(_load_fixture("in_detail_center.json"))))
     norm.normalize_item(dict(item), "indiana")  # smoke: no raise
     assert norm.facility_category_from_type(item["provider_type"]) == "center"
 
 
 def test_golden_item_has_no_undefined_fields(spider):
-    item = next(spider.parse_detail(detail_response(
-        _load_fixture("in_detail_center.json"))))
+    item = next(spider.parse_detail(detail_response(_load_fixture("in_detail_center.json"))))
     assert dict(item)  # constructing/serializing raises on an undefined field
 
 
 # --- parse_detail: sparse home (address suppressed) -------------------- #
 
+
 def test_parse_detail_home_suppressed_address(spider):
-    item = next(spider.parse_detail(detail_response(
-        _load_fixture("in_detail_home.json"))))
+    item = next(spider.parse_detail(detail_response(_load_fixture("in_detail_home.json"))))
     assert item["provider_type"] == "Licensed Home"
     assert norm.facility_category_from_type(item["provider_type"]) == "family_home"
     # homes omit line1/city/state -> address/city absent; zip/county/coords kept.
@@ -222,9 +220,9 @@ def test_parse_detail_home_suppressed_address(spider):
 
 # --- parse_detail: ministry (licensedAges null, org applicant) --------- #
 
+
 def test_parse_detail_ministry_null_ages(spider):
-    item = next(spider.parse_detail(detail_response(
-        _load_fixture("in_detail_ministry.json"))))
+    item = next(spider.parse_detail(detail_response(_load_fixture("in_detail_ministry.json"))))
     assert item["provider_type"] == "Unlicensed Registered Ministry"
     assert norm.facility_category_from_type(item["provider_type"]) == "exempt"
     # licensedAges is null -> no capacity, no age flags, no ages_served.
@@ -233,19 +231,28 @@ def test_parse_detail_ministry_null_ages(spider):
     for f in ("infant", "toddler", "preschool", "school"):
         assert f not in item
     # organization applicant flows into license_holder.
-    assert item["license_holder"] == \
-        "Anglican Cathedral Church of the Resurrection"
+    assert item["license_holder"] == "Anglican Cathedral Church of the Resurrection"
     assert item["license_type"] == "Registration"
 
 
 # --- parse_detail: temporarily closed --------------------------------- #
 
+
 def test_parse_detail_temporarily_closed(spider):
-    payload = {"provider": {"id": "1", "name": "Closed Place", "location": {
-        "id": "2", "providerType": "Licensed Center", "status": "Open",
-        "isTemporarilyClosed": True,
-        "temporarilyClosedMessage": "Closed for the season.",
-        "coordinates": {"lat": 39.0, "lng": -86.0}}}}
+    payload = {
+        "provider": {
+            "id": "1",
+            "name": "Closed Place",
+            "location": {
+                "id": "2",
+                "providerType": "Licensed Center",
+                "status": "Open",
+                "isTemporarilyClosed": True,
+                "temporarilyClosedMessage": "Closed for the season.",
+                "coordinates": {"lat": 39.0, "lng": -86.0},
+            },
+        }
+    }
     item = next(spider.parse_detail(detail_response(payload)))
     assert item["status"] == "Temporary Closure"
     assert item["in_is_temporarily_closed"] is True
@@ -256,21 +263,36 @@ def test_parse_detail_temporarily_closed(spider):
 
 # --- parse_detail: minimal / missing data ------------------------------ #
 
+
 def test_parse_detail_minimal(spider):
-    item = next(spider.parse_detail(detail_response(
-        {"provider": {"id": "abc", "name": "Bare Home",
-                      "location": {"id": "loc1"}}})))
+    item = next(
+        spider.parse_detail(
+            detail_response({"provider": {"id": "abc", "name": "Bare Home", "location": {"id": "loc1"}}})
+        )
+    )
     assert item["provider_name"] == "Bare Home"
     assert item["license_number"] == "abc"
     assert item["state"] == "IN"
     assert item["scholarships_accepted"] is False  # isCcdf falsy
-    for absent in ("phone", "address", "city", "zip", "county", "capacity",
-                   "ages_served", "license_type", "in_ptq_level", "inspections",
-                   "in_complaints", "hours"):
+    for absent in (
+        "phone",
+        "address",
+        "city",
+        "zip",
+        "county",
+        "capacity",
+        "ages_served",
+        "license_type",
+        "in_ptq_level",
+        "inspections",
+        "in_complaints",
+        "hours",
+    ):
         assert absent not in item
 
 
 # --- facility_category mapping (all 5 IN types) ------------------------ #
+
 
 def test_indiana_status_mapping():
     # "Open" -> active; the enforcement-pending variant -> enforcement.
@@ -278,12 +300,15 @@ def test_indiana_status_mapping():
     assert norm.canonical_status("Open - Enforcement Pending") == "enforcement"
 
 
-@pytest.mark.parametrize("provider_type,category", [
-    ("Licensed Center", "center"),
-    ("Licensed Home", "family_home"),
-    ("Unlicensed CCDF Certified Center/School", "exempt"),
-    ("Unlicensed Registered Ministry", "exempt"),
-    ("Unlicensed CCDF Certified Home", "exempt"),
-])
+@pytest.mark.parametrize(
+    "provider_type,category",
+    [
+        ("Licensed Center", "center"),
+        ("Licensed Home", "family_home"),
+        ("Unlicensed CCDF Certified Center/School", "exempt"),
+        ("Unlicensed Registered Ministry", "exempt"),
+        ("Unlicensed CCDF Certified Home", "exempt"),
+    ],
+)
 def test_indiana_facility_category_mapping(provider_type, category):
     assert norm.facility_category_from_type(provider_type) == category

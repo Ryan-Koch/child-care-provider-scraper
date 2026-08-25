@@ -1,3 +1,4 @@
+import contextlib
 import re
 
 import scrapy
@@ -10,23 +11,105 @@ SEARCH_URL = "https://ncchildcare.ncdhhs.gov/childcaresearch"
 
 # 100 NC counties, exactly as they appear in the search-page Telerik combobox.
 NC_COUNTIES = [
-    "ALAMANCE", "ALEXANDER", "ALLEGHANY", "ANSON", "ASHE", "AVERY",
-    "BEAUFORT", "BERTIE", "BLADEN", "BRUNSWICK", "BUNCOMBE", "BURKE",
-    "CABARRUS", "CALDWELL", "CAMDEN", "CARTERET", "CASWELL", "CATAWBA",
-    "CHATHAM", "CHEROKEE", "CHOWAN", "CLAY", "CLEVELAND", "COLUMBUS",
-    "CRAVEN", "CUMBERLAND", "CURRITUCK", "DARE", "DAVIDSON", "DAVIE",
-    "DUPLIN", "DURHAM", "EDGECOMBE", "FORSYTH", "FRANKLIN", "GASTON",
-    "GATES", "GRAHAM", "GRANVILLE", "GREENE", "GUILFORD", "HALIFAX",
-    "HARNETT", "HAYWOOD", "HENDERSON", "HERTFORD", "HOKE", "HYDE",
-    "IREDELL", "JACKSON", "JOHNSTON", "JONES", "LEE", "LENOIR",
-    "LINCOLN", "MACON", "MADISON", "MARTIN", "MCDOWELL", "MECKLENBURG",
-    "MITCHELL", "MONTGOMERY", "MOORE", "NASH", "NEW HANOVER",
-    "NORTHAMPTON", "ONSLOW", "ORANGE", "PAMLICO", "PASQUOTANK",
-    "PENDER", "PERQUIMANS", "PERSON", "PITT", "POLK", "RANDOLPH",
-    "RICHMOND", "ROBESON", "ROCKINGHAM", "ROWAN", "RUTHERFORD",
-    "SAMPSON", "SCOTLAND", "STANLY", "STOKES", "SURRY", "SWAIN",
-    "TRANSYLVANIA", "TYRRELL", "UNION", "VANCE", "WAKE", "WARREN",
-    "WASHINGTON", "WATAUGA", "WAYNE", "WILKES", "WILSON", "YADKIN",
+    "ALAMANCE",
+    "ALEXANDER",
+    "ALLEGHANY",
+    "ANSON",
+    "ASHE",
+    "AVERY",
+    "BEAUFORT",
+    "BERTIE",
+    "BLADEN",
+    "BRUNSWICK",
+    "BUNCOMBE",
+    "BURKE",
+    "CABARRUS",
+    "CALDWELL",
+    "CAMDEN",
+    "CARTERET",
+    "CASWELL",
+    "CATAWBA",
+    "CHATHAM",
+    "CHEROKEE",
+    "CHOWAN",
+    "CLAY",
+    "CLEVELAND",
+    "COLUMBUS",
+    "CRAVEN",
+    "CUMBERLAND",
+    "CURRITUCK",
+    "DARE",
+    "DAVIDSON",
+    "DAVIE",
+    "DUPLIN",
+    "DURHAM",
+    "EDGECOMBE",
+    "FORSYTH",
+    "FRANKLIN",
+    "GASTON",
+    "GATES",
+    "GRAHAM",
+    "GRANVILLE",
+    "GREENE",
+    "GUILFORD",
+    "HALIFAX",
+    "HARNETT",
+    "HAYWOOD",
+    "HENDERSON",
+    "HERTFORD",
+    "HOKE",
+    "HYDE",
+    "IREDELL",
+    "JACKSON",
+    "JOHNSTON",
+    "JONES",
+    "LEE",
+    "LENOIR",
+    "LINCOLN",
+    "MACON",
+    "MADISON",
+    "MARTIN",
+    "MCDOWELL",
+    "MECKLENBURG",
+    "MITCHELL",
+    "MONTGOMERY",
+    "MOORE",
+    "NASH",
+    "NEW HANOVER",
+    "NORTHAMPTON",
+    "ONSLOW",
+    "ORANGE",
+    "PAMLICO",
+    "PASQUOTANK",
+    "PENDER",
+    "PERQUIMANS",
+    "PERSON",
+    "PITT",
+    "POLK",
+    "RANDOLPH",
+    "RICHMOND",
+    "ROBESON",
+    "ROCKINGHAM",
+    "ROWAN",
+    "RUTHERFORD",
+    "SAMPSON",
+    "SCOTLAND",
+    "STANLY",
+    "STOKES",
+    "SURRY",
+    "SWAIN",
+    "TRANSYLVANIA",
+    "TYRRELL",
+    "UNION",
+    "VANCE",
+    "WAKE",
+    "WARREN",
+    "WASHINGTON",
+    "WATAUGA",
+    "WAYNE",
+    "WILKES",
+    "WILSON",
+    "YADKIN",
     "YANCEY",
 ]
 
@@ -45,9 +128,7 @@ NEXT_PAGE_SEL = "#dnn_ctr1464_View_rgSearchResults_ctl00 .rgPageNext"
 # page-supplied function isn't reliably exposed on `window` even after
 # `domcontentloaded` (works fine in vanilla playwright). We install our own
 # postback shim instead.
-_CLIENT_READY_FN = (
-    "() => typeof window.$find === 'function' && !!window.$find('%s')"
-) % COUNTY_COMBO_ID
+_CLIENT_READY_FN = f"() => typeof window.$find === 'function' && !!window.$find('{COUNTY_COMBO_ID}')"
 
 # Shim that ensures `window.__doPostBack` exists. Mirrors ASP.NET's inline
 # WebForms script: write to the hidden __EVENTTARGET/__EVENTARGUMENT inputs
@@ -82,16 +163,16 @@ DETAIL_OWNER_PREFIX = "dnn_ctr1464_View_FacilityDetail_"
 # Telerik selects the county client-side. Find the matching item by text and
 # call .select(); this both updates the hidden ClientState input and fires the
 # change handlers the postback expects.
-_SELECT_COUNTY_SCRIPT = """
-(countyName) => {
-    const combo = window.$find && window.$find('%s');
-    if (!combo) { return false; }
+_SELECT_COUNTY_SCRIPT = f"""
+(countyName) => {{
+    const combo = window.$find && window.$find('{COUNTY_COMBO_ID}');
+    if (!combo) {{ return false; }}
     const item = combo.findItemByText(countyName);
-    if (!item) { return false; }
+    if (!item) {{ return false; }}
     item.select();
     return true;
-}
-""" % COUNTY_COMBO_ID
+}}
+"""
 
 
 # ---- Parsing helpers ---------------------------------------------------------
@@ -124,7 +205,7 @@ def _read_obfuscated_email(sel, span_id):
     raw = sel.css(f"#{span_id}").get()
     if not raw:
         return None
-    with_at = re.sub(r'<i\b[^>]*\bfa-at\b[^>]*></i>', "@", raw)
+    with_at = re.sub(r"<i\b[^>]*\bfa-at\b[^>]*></i>", "@", raw)
     text = "".join(Selector(text=with_at).css("::text").getall())
     text = re.sub(r"\s+", "", text)
     return text if text and "@" in text else None
@@ -178,18 +259,10 @@ def parse_basic(sel):
         "provider_website": _span_text(sel, pfx + "WebsiteLabel_0"),
         "provider_type": _span_text(sel, pfx + "FacilityTypeLabel_0"),
         "phone": _span_text(sel, pfx + "PhoneLabel_0"),
-        "scholarships_accepted": _yes_no_to_bool(
-            _span_text(sel, pfx + "SubsidyLabel_0")
-        ),
-        "nc_sanitation_inspection_date": _span_text(
-            sel, pfx + "InspectionDateLabel_0"
-        ),
-        "nc_sanitation_classification": _span_text(
-            sel, pfx + "ClassDescriptionLabel_0"
-        ),
-        "nc_sanitation_score": _to_int(
-            _span_text(sel, pfx + "SanitationScoreLabel_0")
-        ),
+        "scholarships_accepted": _yes_no_to_bool(_span_text(sel, pfx + "SubsidyLabel_0")),
+        "nc_sanitation_inspection_date": _span_text(sel, pfx + "InspectionDateLabel_0"),
+        "nc_sanitation_classification": _span_text(sel, pfx + "ClassDescriptionLabel_0"),
+        "nc_sanitation_score": _to_int(_span_text(sel, pfx + "SanitationScoreLabel_0")),
     }
 
 
@@ -202,34 +275,22 @@ def _parse_one_license(sel, idx):
 
     restrictions = []
     for r_idx in range(0, 25):
-        rule = _span_text(
-            sel, f"{pfx}rptRestrictions_{idx}_lblRestriction_{r_idx}"
-        )
+        rule = _span_text(sel, f"{pfx}rptRestrictions_{idx}_lblRestriction_{r_idx}")
         if rule is None:
             break
         restrictions.append(rule)
 
-    program_pts = _to_int(
-        _span_text(sel, f"{pfx}rptScores_{idx}_lblProgramStandardsPoints_0")
-    )
-    program_max = _to_int(
-        _span_text(sel, f"{pfx}rptScores_{idx}_lblProgramStandardsMaxPoints_0")
-    )
-    educational_pts = _to_int(
-        _span_text(sel, f"{pfx}rptScores_{idx}_lblEducationalStandardsPoints_0")
-    )
-    educational_max = _to_int(
-        _span_text(sel, f"{pfx}rptScores_{idx}_lblEducationalStandardsMaxPoints_0")
-    )
+    program_pts = _to_int(_span_text(sel, f"{pfx}rptScores_{idx}_lblProgramStandardsPoints_0"))
+    program_max = _to_int(_span_text(sel, f"{pfx}rptScores_{idx}_lblProgramStandardsMaxPoints_0"))
+    educational_pts = _to_int(_span_text(sel, f"{pfx}rptScores_{idx}_lblEducationalStandardsPoints_0"))
+    educational_max = _to_int(_span_text(sel, f"{pfx}rptScores_{idx}_lblEducationalStandardsMaxPoints_0"))
     total_pts = _to_int(_span_text(sel, f"{pfx}rptScores_{idx}_lblTotalScore_0"))
 
     # The "out of N" trailing the total-points span is plain text in the
     # parent col-md-6, so reach for the parent's full text content.
     total_max = None
     if total_pts is not None:
-        parent = sel.xpath(
-            f"//*[@id='{pfx}rptScores_{idx}_lblTotalScore_0']/.."
-        )
+        parent = sel.xpath(f"//*[@id='{pfx}rptScores_{idx}_lblTotalScore_0']/..")
         if parent:
             joined = " ".join(parent.css("::text").getall())
             m = re.search(r"out of\s+(\d+)", joined)
@@ -240,15 +301,9 @@ def _parse_one_license(sel, idx):
         "license_type": license_type,
         "effective_date": _span_text(sel, f"{pfx}lblFromDate_{idx}"),
         "age_range": _span_text(sel, f"{pfx}lblAgeRange_{idx}"),
-        "capacity_first_shift": _to_int(
-            _span_text(sel, f"{pfx}lblFirstShiftCapacity_{idx}")
-        ),
-        "capacity_second_shift": _to_int(
-            _span_text(sel, f"{pfx}lblSecondShiftCapacity_{idx}")
-        ),
-        "capacity_third_shift": _to_int(
-            _span_text(sel, f"{pfx}lblThirdShiftCapacity_{idx}")
-        ),
+        "capacity_first_shift": _to_int(_span_text(sel, f"{pfx}lblFirstShiftCapacity_{idx}")),
+        "capacity_second_shift": _to_int(_span_text(sel, f"{pfx}lblSecondShiftCapacity_{idx}")),
+        "capacity_third_shift": _to_int(_span_text(sel, f"{pfx}lblThirdShiftCapacity_{idx}")),
         "license_restrictions": restrictions or None,
         "program_standards_points": program_pts,
         "program_standards_max_points": program_max,
@@ -300,10 +355,7 @@ def parse_special_features(sel):
                 services.append(txt)
 
     ratios = {}
-    ratios_subheading = section.xpath(
-        ".//div[contains(@class,'subheading-grey') and "
-        "contains(., 'Staff/Child Ratio')]"
-    )
+    ratios_subheading = section.xpath(".//div[contains(@class,'subheading-grey') and contains(., 'Staff/Child Ratio')]")
     if ratios_subheading:
         # The ratio rows are siblings of the subheading row, sharing a parent
         # `content` div. Walk forward from the subheading until we exit it.
@@ -334,8 +386,7 @@ def parse_owner(sel):
 def parse_visits(sel):
     """Pull DCDEE Visits as a list of InspectionItem."""
     section = sel.xpath(
-        "//div[@class='accordionHeader' and "
-        "normalize-space(text())='DCDEE Visits']/following-sibling::div[1]"
+        "//div[@class='accordionHeader' and normalize-space(text())='DCDEE Visits']/following-sibling::div[1]"
     )
     if not section:
         return []
@@ -389,9 +440,7 @@ def build_item(html, county_hint=None):
     item["provider_name"] = basic["provider_name"]
     item["license_number"] = basic["license_number"]
     item["address"] = basic["address"]
-    item["county"] = basic["county"] or (
-        county_hint.title() if county_hint else None
-    )
+    item["county"] = basic["county"] or (county_hint.title() if county_hint else None)
     item["email"] = basic["email"]
     item["provider_website"] = basic["provider_website"]
     item["provider_type"] = basic["provider_type"]
@@ -403,8 +452,7 @@ def build_item(html, county_hint=None):
 
     current = licenses[0] if licenses else None
     history = [
-        {k: entry[k] for k in entry if k != "license_type" or entry["license_type"]}
-        for entry in licenses[1:]
+        {k: entry[k] for k in entry if k != "license_type" or entry["license_type"]} for entry in licenses[1:]
     ] or None
 
     if current:
@@ -417,11 +465,13 @@ def build_item(html, county_hint=None):
         item["nc_license_restrictions"] = current["license_restrictions"]
 
         shift_total = sum(
-            s for s in [
+            s
+            for s in [
                 current["capacity_first_shift"],
                 current["capacity_second_shift"],
                 current["capacity_third_shift"],
-            ] if s
+            ]
+            if s
         )
         item["capacity"] = shift_total or None
 
@@ -478,9 +528,7 @@ def parse_pagination_total(html):
     """
     sel = Selector(text=html)
     record_count = _to_int(_span_text(sel, "dnn_ctr1464_View_lblRecordCount"))
-    pager_text = " ".join(
-        sel.css("#dnn_ctr1464_View_rgSearchResults_ctl00 .rgInfoPart ::text").getall()
-    )
+    pager_text = " ".join(sel.css("#dnn_ctr1464_View_rgSearchResults_ctl00 .rgInfoPart ::text").getall())
     pages_match = re.search(r"in\s+(\d+)\s+pages?", pager_text)
     items_match = re.search(r"(\d+)\s+items?", pager_text)
     total_pages = int(pages_match.group(1)) if pages_match else None
@@ -525,8 +573,7 @@ class NorthCarolinaSpider(scrapy.Spider):
         # present a normal browser UA. The same UA also propagates to the
         # playwright context via PLAYWRIGHT_CONTEXT_ARGS below.
         "USER_AGENT": (
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-            "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
         ),
     }
 
@@ -539,9 +586,7 @@ class NorthCarolinaSpider(scrapy.Spider):
             self.counties = [c for c in requested if c in NC_COUNTIES]
             unknown = [c for c in requested if c not in NC_COUNTIES]
             if unknown:
-                self.logger.warning(
-                    "Ignoring unknown counties: %s", ", ".join(unknown)
-                )
+                self.logger.warning("Ignoring unknown counties: %s", ", ".join(unknown))
         else:
             self.counties = list(NC_COUNTIES)
 
@@ -592,12 +637,8 @@ class NorthCarolinaSpider(scrapy.Spider):
                         ),
                     },
                     "playwright_page_methods": [
-                        PageMethod(
-                            "wait_for_load_state", "domcontentloaded", timeout=60000
-                        ),
-                        PageMethod(
-                            "wait_for_selector", f"#{COUNTY_COMBO_ID}", timeout=60000
-                        ),
+                        PageMethod("wait_for_load_state", "domcontentloaded", timeout=60000),
+                        PageMethod("wait_for_selector", f"#{COUNTY_COMBO_ID}", timeout=60000),
                     ],
                     "county": county,
                 },
@@ -611,27 +652,19 @@ class NorthCarolinaSpider(scrapy.Spider):
             async for item in self._crawl_county(page, county):
                 yield_count += 1
                 yield item
-            self.logger.info(
-                "NC[%s]: county complete, yielded %d providers", county, yield_count
-            )
+            self.logger.info("NC[%s]: county complete, yielded %d providers", county, yield_count)
         finally:
-            try:
+            with contextlib.suppress(Exception):
                 await page.close()
-            except Exception:
-                pass
-            try:
+            with contextlib.suppress(Exception):
                 await page.context.close()
-            except Exception:
-                pass
 
     async def _crawl_county(self, page, county):
         # Wait for Telerik to register the combobox client object.
         try:
             await page.wait_for_function(_CLIENT_READY_FN, timeout=60000)
         except Exception as e:
-            self.logger.error(
-                "NC[%s]: Telerik combobox never ready (%s); skipping", county, e
-            )
+            self.logger.error("NC[%s]: Telerik combobox never ready (%s); skipping", county, e)
             return
 
         # Install our own __doPostBack shim if the page didn't expose one.
@@ -641,9 +674,7 @@ class NorthCarolinaSpider(scrapy.Spider):
         # `javascript:__doPostBack(...)`, so they need a global to call.
         shim_state = await page.evaluate(_INSTALL_POSTBACK_SHIM)
         if shim_state == "no-form":
-            self.logger.error(
-                "NC[%s]: ASP.NET form not found on page; skipping", county
-            )
+            self.logger.error("NC[%s]: ASP.NET form not found on page; skipping", county)
             return
 
         # 1. Pick county. Try Telerik client API first; fall back to clicking
@@ -656,16 +687,12 @@ class NorthCarolinaSpider(scrapy.Spider):
             )
             try:
                 await page.click(f"#{COUNTY_COMBO_ID} .rcbActionButton", timeout=15000)
-                await page.wait_for_selector(
-                    f"#{COUNTY_COMBO_ID}_DropDown li.rcbItem", timeout=15000
+                await page.wait_for_selector(f"#{COUNTY_COMBO_ID}_DropDown li.rcbItem", timeout=15000)
+                await page.locator(f"#{COUNTY_COMBO_ID}_DropDown li.rcbItem", has_text=county).first.click(
+                    timeout=15000
                 )
-                await page.locator(
-                    f"#{COUNTY_COMBO_ID}_DropDown li.rcbItem", has_text=county
-                ).first.click(timeout=15000)
             except Exception as e:
-                self.logger.error(
-                    "NC[%s]: could not select county (%s); skipping", county, e
-                )
+                self.logger.error("NC[%s]: could not select county (%s); skipping", county, e)
                 return
 
         # 2. Submit by clicking the visible Search button. Its inline onclick
@@ -677,16 +704,15 @@ class NorthCarolinaSpider(scrapy.Spider):
         try:
             await page.click(SEARCH_BUTTON_SEL, timeout=20000)
         except Exception as e:
-            self.logger.error(
-                "NC[%s]: search-button click failed (%s); skipping", county, e
-            )
+            self.logger.error("NC[%s]: search-button click failed (%s); skipping", county, e)
             return
         try:
             await page.wait_for_selector(RESULTS_PANEL_SEL, timeout=60000)
         except Exception as e:
             self.logger.warning(
                 "NC[%s]: results panel never appeared (%s); skipping county",
-                county, e,
+                county,
+                e,
             )
             return
         # Re-install the shim — postback navigated to a fresh document.
@@ -700,7 +726,9 @@ class NorthCarolinaSpider(scrapy.Spider):
         total_pages = total_pages or 1
         self.logger.info(
             "NC[%s]: search returned %d records across %d page(s)",
-            county, record_count, total_pages,
+            county,
+            record_count,
+            total_pages,
         )
 
         seen = 0
@@ -711,7 +739,11 @@ class NorthCarolinaSpider(scrapy.Spider):
             if row_count == 0:
                 self.logger.warning(
                     "NC[%s]: page %d/%d had 0 rows; stopping (seen=%d/%d)",
-                    county, page_idx, total_pages, seen, record_count,
+                    county,
+                    page_idx,
+                    total_pages,
+                    seen,
+                    record_count,
                 )
                 return
             # Telerik occasionally pads the final page with a phantom row.
@@ -721,22 +753,27 @@ class NorthCarolinaSpider(scrapy.Spider):
             rows_to_process = min(row_count, max(remaining, 0))
             self.logger.info(
                 "NC[%s]: page %d/%d, %d rows (processing %d, seen=%d/%d)",
-                county, page_idx, total_pages, row_count, rows_to_process,
-                seen, record_count,
+                county,
+                page_idx,
+                total_pages,
+                row_count,
+                rows_to_process,
+                seen,
+                record_count,
             )
 
             for row_idx in range(rows_to_process):
-                row_link_sel = (
-                    f'tr[id="dnn_ctr1464_View_rgSearchResults_ctl00__{row_idx}"]'
-                    " td:nth-child(2) a"
-                )
+                row_link_sel = f'tr[id="dnn_ctr1464_View_rgSearchResults_ctl00__{row_idx}"] td:nth-child(2) a'
                 try:
                     await page.click(row_link_sel, timeout=20000)
                     await page.wait_for_selector(DETAIL_PANEL_SEL, timeout=60000)
                 except Exception as e:
                     self.logger.warning(
                         "NC[%s]: row %d on page %d failed to open (%s); skipping",
-                        county, row_idx, page_idx, e,
+                        county,
+                        row_idx,
+                        page_idx,
+                        e,
                     )
                     seen += 1
                     continue
@@ -753,7 +790,10 @@ class NorthCarolinaSpider(scrapy.Spider):
                 except Exception as e:
                     self.logger.error(
                         "NC[%s]: failed to return to results from row %d page %d (%s); aborting county",
-                        county, row_idx, page_idx, e,
+                        county,
+                        row_idx,
+                        page_idx,
+                        e,
                     )
                     return
                 await page.evaluate(_INSTALL_POSTBACK_SHIM)
@@ -761,13 +801,19 @@ class NorthCarolinaSpider(scrapy.Spider):
             if page_idx >= total_pages:
                 self.logger.info(
                     "NC[%s]: reached final page %d/%d (yielded %d/%d)",
-                    county, page_idx, total_pages, seen, record_count,
+                    county,
+                    page_idx,
+                    total_pages,
+                    seen,
+                    record_count,
                 )
                 return
 
             self.logger.info(
                 "NC[%s]: advancing to page %d/%d",
-                county, page_idx + 1, total_pages,
+                county,
+                page_idx + 1,
+                total_pages,
             )
             try:
                 await page.click(NEXT_PAGE_SEL, timeout=20000)
@@ -776,7 +822,9 @@ class NorthCarolinaSpider(scrapy.Spider):
             except Exception as e:
                 self.logger.warning(
                     "NC[%s]: next-page click failed on page %d (%s); stopping",
-                    county, page_idx, e,
+                    county,
+                    page_idx,
+                    e,
                 )
                 return
             await page.evaluate(_INSTALL_POSTBACK_SHIM)

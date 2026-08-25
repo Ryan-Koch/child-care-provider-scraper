@@ -1,16 +1,15 @@
-import pytest
 from scrapy.http import HtmlResponse, TextResponse
+
+from provider_scrape.items import InspectionItem, ProviderItem
 from provider_scrape.spiders.virginia import VadssSpider
-from provider_scrape.items import ProviderItem, InspectionItem
 
-def create_response(html_content, url='http://example.com'):
+
+def create_response(html_content, url="http://example.com"):
     """Helper function to create a Scrapy response from HTML content."""
-    return HtmlResponse(url=url, body=html_content.encode('utf-8'))
+    return HtmlResponse(url=url, body=html_content.encode("utf-8"))
 
 
-PROFILE_URL = (
-    "https://earlychildhoodquality.doe.virginia.gov/profiles/a-childs-dream-8609/"
-)
+PROFILE_URL = "https://earlychildhoodquality.doe.virginia.gov/profiles/a-childs-dream-8609/"
 
 
 def make_profile_html(
@@ -30,22 +29,12 @@ def make_profile_html(
     # Rendered twice to mimic the page's modal + visible duplication, so tests
     # guard against the rating value being concatenated from both copies.
     rating_block = (
-        (
-            f'<div class="card-body"><p class="card-text">'
-            f"VQB5 Quality Rating: {rating}</p></div>"
-        )
-        * 2
+        (f'<div class="card-body"><p class="card-text">VQB5 Quality Rating: {rating}</p></div>') * 2
         if rating is not None
         else ""
     )
-    funding_block = (
-        f"<p><strong>Public Funding Information:</strong> {funding}</p>"
-        if funding is not None
-        else ""
-    )
-    interaction_block = "".join(
-        f"<h4>{label}</h4><p>{desc}</p>" for label, desc in interactions
-    )
+    funding_block = f"<p><strong>Public Funding Information:</strong> {funding}</p>" if funding is not None else ""
+    interaction_block = "".join(f"<h4>{label}</h4><p>{desc}</p>" for label, desc in interactions)
     # Render each points card twice to mimic the real page's modal + visible
     # duplication, so tests exercise the "take first numeric value" dedup.
     one_points_set = "".join(
@@ -67,9 +56,8 @@ def make_profile_html(
 
 
 def make_programs_response(body):
-    return TextResponse(
-        url=VadssSpider.PROGRAMS_JSON_URL, body=body.encode("utf-8"), encoding="utf-8"
-    )
+    return TextResponse(url=VadssSpider.PROGRAMS_JSON_URL, body=body.encode("utf-8"), encoding="utf-8")
+
 
 def test_successful_extraction():
     """Test case: Successful extraction of all fields, including inspection data."""
@@ -209,34 +197,35 @@ def test_successful_extraction():
     assert len(spider.providers_by_ID) == 1
     extracted_data = next(iter(spider.providers_by_ID.values()))
     assert isinstance(extracted_data, ProviderItem)
-    assert extracted_data['provider_name'] == '4 Rs Preschool'
-    assert extracted_data['address'] == '6745 Jefferson Street HAYMARKET, VA 20169'
-    assert extracted_data['phone'] == '(703) 754-2497'
-    assert extracted_data['provider_type'] == 'Child Day Center'
-    assert extracted_data['va_license_type'] == 'Two Year'
-    assert extracted_data['administrator'] == 'Robyn Frazier'
-    assert extracted_data['hours'] == '9:00 a.m. - 3:30 p.m.'
-    assert extracted_data['capacity'] == '26'
-    assert extracted_data['ages_served'] == '3 years - 6 years 11 months'
-    assert extracted_data['va_inspector'] == 'Morgan Bryson: (540) 270-0057'
-    assert extracted_data['va_current_subsidy_provider'] == 'No'
-    assert extracted_data['license_number'] == '1106312'
+    assert extracted_data["provider_name"] == "4 Rs Preschool"
+    assert extracted_data["address"] == "6745 Jefferson Street HAYMARKET, VA 20169"
+    assert extracted_data["phone"] == "(703) 754-2497"
+    assert extracted_data["provider_type"] == "Child Day Center"
+    assert extracted_data["va_license_type"] == "Two Year"
+    assert extracted_data["administrator"] == "Robyn Frazier"
+    assert extracted_data["hours"] == "9:00 a.m. - 3:30 p.m."
+    assert extracted_data["capacity"] == "26"
+    assert extracted_data["ages_served"] == "3 years - 6 years 11 months"
+    assert extracted_data["va_inspector"] == "Morgan Bryson: (540) 270-0057"
+    assert extracted_data["va_current_subsidy_provider"] == "No"
+    assert extracted_data["license_number"] == "1106312"
 
     # Assertions for inspection data
-    assert len(extracted_data['inspections']) == 2
-    inspections = extracted_data['inspections']
+    assert len(extracted_data["inspections"]) == 2
+    inspections = extracted_data["inspections"]
 
     assert isinstance(inspections[0], InspectionItem)
-    assert inspections[0]['date'] == 'Jan. 30, 2025'
-    assert inspections[0]['va_shsi'] == 'No'
-    assert inspections[0]['va_complaint_related'] == 'No'
-    assert inspections[0]['va_violations'] == 'No'
+    assert inspections[0]["date"] == "Jan. 30, 2025"
+    assert inspections[0]["va_shsi"] == "No"
+    assert inspections[0]["va_complaint_related"] == "No"
+    assert inspections[0]["va_violations"] == "No"
 
     assert isinstance(inspections[1], InspectionItem)
-    assert inspections[1]['date'] == 'Sept. 24, 2020'
-    assert inspections[1]['va_shsi'] == 'Yes'
-    assert inspections[1]['va_complaint_related'] == 'No'
-    assert inspections[1]['va_violations'] == 'Yes'
+    assert inspections[1]["date"] == "Sept. 24, 2020"
+    assert inspections[1]["va_shsi"] == "Yes"
+    assert inspections[1]["va_complaint_related"] == "No"
+    assert inspections[1]["va_violations"] == "Yes"
+
 
 def test_missing_fields():
     """Test case: Handling missing fields and missing inspection data."""
@@ -290,21 +279,21 @@ def test_missing_fields():
     assert len(spider.providers_by_ID) == 1
     extracted_data = next(iter(spider.providers_by_ID.values()))
     assert isinstance(extracted_data, ProviderItem)
-    assert extracted_data['provider_name'] == '4 Rs Preschool'
-    assert extracted_data['address'] == 'N/A HAYMARKET, VA 20169'
-    assert extracted_data['phone'] == '(703) 754-2497'
-    assert extracted_data['provider_type'] == 'N/A'
-    assert extracted_data['va_license_type'] == 'N/A'
-    assert extracted_data['administrator'] == 'N/A'
-    assert extracted_data['hours'] == 'N/A'
-    assert extracted_data['capacity'] == 'N/A'
-    assert extracted_data['ages_served'] == 'N/A'
-    assert extracted_data['va_inspector'] == 'N/A'
-    assert extracted_data['va_current_subsidy_provider'] == 'N/A'
-    assert extracted_data['license_number'] == '1106312'
+    assert extracted_data["provider_name"] == "4 Rs Preschool"
+    assert extracted_data["address"] == "N/A HAYMARKET, VA 20169"
+    assert extracted_data["phone"] == "(703) 754-2497"
+    assert extracted_data["provider_type"] == "N/A"
+    assert extracted_data["va_license_type"] == "N/A"
+    assert extracted_data["administrator"] == "N/A"
+    assert extracted_data["hours"] == "N/A"
+    assert extracted_data["capacity"] == "N/A"
+    assert extracted_data["ages_served"] == "N/A"
+    assert extracted_data["va_inspector"] == "N/A"
+    assert extracted_data["va_current_subsidy_provider"] == "N/A"
+    assert extracted_data["license_number"] == "1106312"
 
     # Assert that inspection data is an empty list when missing
-    assert extracted_data['inspections'] == []
+    assert extracted_data["inspections"] == []
 
 
 def test_parse_provider_page_collapses_whitespace():
@@ -336,11 +325,11 @@ def test_parse_provider_page_collapses_whitespace():
     list(spider.parse_provider_page(create_response(html_content)))
     provider = next(iter(spider.providers_by_ID.values()))
 
-    assert provider['address'] == '1 Main St RICHMOND, VA 23220'
-    assert provider['hours'] == '6:00 AM - 6:00 PM, Monday - Friday'
-    assert provider['ages_served'] == '4 years - 12 years'
-    assert provider['va_inspector'] == 'Nanette Roberts: (757) 404-2322'
-    assert provider['inspections'][0]['date'] == 'Jan. 31, 2022 and Feb. 2, 2022'
+    assert provider["address"] == "1 Main St RICHMOND, VA 23220"
+    assert provider["hours"] == "6:00 AM - 6:00 PM, Monday - Friday"
+    assert provider["ages_served"] == "4 years - 12 years"
+    assert provider["va_inspector"] == "Nanette Roberts: (757) 404-2322"
+    assert provider["inspections"][0]["date"] == "Jan. 31, 2022 and Feb. 2, 2022"
 
 
 def test_parse_quality_programs_queues_profiles():
@@ -363,9 +352,7 @@ def test_parse_quality_programs_queues_profiles():
     assert spider.pending_enrichments == 2
     assert all(r.callback == spider.parse_quality_detail for r in requests)
     assert all("playwright" not in r.meta for r in requests)
-    assert requests[0].url == (
-        "https://earlychildhoodquality.doe.virginia.gov/profiles/alpha-1/"
-    )
+    assert requests[0].url == ("https://earlychildhoodquality.doe.virginia.gov/profiles/alpha-1/")
 
 
 def test_parse_quality_programs_empty_yields_providers():
@@ -419,9 +406,7 @@ def test_parse_quality_detail_enriches_match():
 
     assert provider["va_quality_rating"] == "Meets Expectations"
     assert provider["va_public_funding"] == "VA CCSP; MCCYN"
-    assert provider["va_interactions"] == (
-        "Infant Classrooms: Observations have met expectations."
-    )
+    assert provider["va_interactions"] == ("Infant Classrooms: Observations have met expectations.")
     assert provider["va_interactions_points"] == "465"
     assert provider["va_curriculum_points"] == "0"
     assert provider["va_total_points"] == "465"

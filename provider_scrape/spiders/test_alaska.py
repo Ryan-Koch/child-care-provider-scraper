@@ -6,6 +6,7 @@ Loads the committed fixtures under ``provider_scrape/spiders/fixtures/`` --
 ``docs/alaska_field_mapping.md`` for what each fixture record was included
 to exercise.
 """
+
 import json
 import os
 from unittest.mock import MagicMock
@@ -25,7 +26,6 @@ from provider_scrape.spiders.alaska import (
     _yesno,
 )
 
-
 FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures")
 
 
@@ -41,6 +41,7 @@ def _by_id(roster):
 # --------------------------------------------------------------------------- #
 # pytest fixtures
 # --------------------------------------------------------------------------- #
+
 
 @pytest.fixture
 def spider():
@@ -62,14 +63,15 @@ def inspections():
 def _search_response(body):
     """Build a TextResponse mimicking the POST /Facility/Search reply."""
     req = Request(AlaskaSpider.SEARCH_URL, method="POST")
-    return TextResponse(url=AlaskaSpider.SEARCH_URL,
-                        body=json.dumps(body).encode("utf-8"),
-                        encoding="utf-8", request=req)
+    return TextResponse(
+        url=AlaskaSpider.SEARCH_URL, body=json.dumps(body).encode("utf-8"), encoding="utf-8", request=req
+    )
 
 
 # --------------------------------------------------------------------------- #
 # _iso_date
 # --------------------------------------------------------------------------- #
+
 
 def test_iso_date_dotnet_iso_input():
     assert _iso_date("2025-06-01T08:00:00Z") == "2025-06-01"
@@ -104,6 +106,7 @@ def test_iso_date_garbage_returns_none():
 # _months_to_age
 # --------------------------------------------------------------------------- #
 
+
 def test_months_to_age_full_licensed_range():
     """155 months = 12y 11m -- the state's maximum authorized upper bound."""
     assert _months_to_age(0.0, 155.0) == "0 Months - 12 Years, 11 Months"
@@ -132,30 +135,26 @@ def test_months_to_age_missing_or_inverted():
 # _age_flags
 # --------------------------------------------------------------------------- #
 
+
 def test_age_flags_full_range_all_true():
-    assert _age_flags(0.0, 155.0) == {
-        "infant": True, "toddler": True, "preschool": True, "school": True}
+    assert _age_flags(0.0, 155.0) == {"infant": True, "toddler": True, "preschool": True, "school": True}
 
 
 def test_age_flags_infant_only():
-    assert _age_flags(0.0, 11.0) == {
-        "infant": True, "toddler": False, "preschool": False, "school": False}
+    assert _age_flags(0.0, 11.0) == {"infant": True, "toddler": False, "preschool": False, "school": False}
 
 
 def test_age_flags_preschool_only():
-    assert _age_flags(36.0, 59.0) == {
-        "infant": False, "toddler": False, "preschool": True, "school": False}
+    assert _age_flags(36.0, 59.0) == {"infant": False, "toddler": False, "preschool": True, "school": False}
 
 
 def test_age_flags_school_only():
-    assert _age_flags(60.0, 155.0) == {
-        "infant": False, "toddler": False, "preschool": False, "school": True}
+    assert _age_flags(60.0, 155.0) == {"infant": False, "toddler": False, "preschool": False, "school": True}
 
 
 def test_age_flags_boundary_at_12_months():
     """A 11-13 month range hits both infant and toddler."""
-    assert _age_flags(11.0, 13.0) == {
-        "infant": True, "toddler": True, "preschool": False, "school": False}
+    assert _age_flags(11.0, 13.0) == {"infant": True, "toddler": True, "preschool": False, "school": False}
 
 
 def test_age_flags_missing_returns_empty():
@@ -168,6 +167,7 @@ def test_age_flags_missing_returns_empty():
 # --------------------------------------------------------------------------- #
 # _expand_compliance
 # --------------------------------------------------------------------------- #
+
 
 def test_expand_compliance_known_codes():
     assert _expand_compliance("C") == "In Compliance"
@@ -189,18 +189,18 @@ def test_expand_compliance_empty_is_none():
 # _build_address
 # --------------------------------------------------------------------------- #
 
+
 def test_build_address_empty_address2_no_double_space():
     """AKCCIS often ships address2 as an empty string -- must not collapse
     into a double space."""
-    assert _build_address(
-        "35095 Huntington Drive", "", "Soldotna", "AK", "99669"
-    ) == "35095 Huntington Drive Soldotna, AK 99669"
+    assert (
+        _build_address("35095 Huntington Drive", "", "Soldotna", "AK", "99669")
+        == "35095 Huntington Drive Soldotna, AK 99669"
+    )
 
 
 def test_build_address_with_address2():
-    assert _build_address(
-        "100 Main St", "Suite 4", "Juneau", "AK", "99801"
-    ) == "100 Main St Suite 4 Juneau, AK 99801"
+    assert _build_address("100 Main St", "Suite 4", "Juneau", "AK", "99801") == "100 Main St Suite 4 Juneau, AK 99801"
 
 
 def test_build_address_all_none():
@@ -215,6 +215,7 @@ def test_build_address_missing_city():
 # --------------------------------------------------------------------------- #
 # Small stringifier helpers
 # --------------------------------------------------------------------------- #
+
 
 def test_yesno():
     assert _yesno(True) == "Yes"
@@ -234,6 +235,7 @@ def test_stringify_coordinate_preserves_precision():
 # build_item -- golden path (facility 10000, Little Peoples Learning World)
 # --------------------------------------------------------------------------- #
 
+
 def test_build_item_golden_path_common_fields(spider, roster):
     item = spider.build_item(roster["10000"], [])
     assert isinstance(item, ProviderItem)
@@ -241,8 +243,7 @@ def test_build_item_golden_path_common_fields(spider, roster):
     assert item["provider_name"] == "Little Peoples Learning World"
     # licenseNumber is int on the wire -- must be stringified, not int()-cast.
     assert item["license_number"] == "970002"
-    assert item["provider_url"] == (
-        "https://akccis.com/client/map?facilityGenId=10000")
+    assert item["provider_url"] == ("https://akccis.com/client/map?facilityGenId=10000")
     assert item["phone"] == "(907)262-4113"
     assert item["capacity"] == 60
     assert item["administrator"] == "Rachel Jenkins"
@@ -298,6 +299,7 @@ def test_build_item_golden_path_ak_fields(spider, roster):
 # build_item -- edge / sparse records
 # --------------------------------------------------------------------------- #
 
+
 def test_build_item_license_exempt_no_license_object(spider, roster):
     """License Exempt records lack the `license` sub-object entirely and
     typically have no capacity or licensed ages."""
@@ -308,8 +310,7 @@ def test_build_item_license_exempt_no_license_object(spider, roster):
     assert item["license_expiration"] is None
     assert item["provider_name"] == "Paula Sieghart"
     # facilityTypeSubTypeDescription is populated for exempt records only.
-    assert item["ak_facility_subtype"] == (
-        "License Exempt - Home (less than 4 unrelated) – MOA")
+    assert item["ak_facility_subtype"] == ("License Exempt - Home (less than 4 unrelated) – MOA")
 
 
 def test_build_item_illegally_unlicensed_flows_through(spider, roster):
@@ -352,7 +353,8 @@ def test_build_item_dba_matching_name_is_not_emitted(spider):
     """The ~62 records where doingBusinessAs == facilityName add no signal
     -- don't populate license_holder in that case."""
     record = {
-        "facilityGenId": "1", "facilityName": "Same Name Preschool",
+        "facilityGenId": "1",
+        "facilityName": "Same Name Preschool",
         "doingBusinessAs": "Same Name Preschool",
     }
     item = AlaskaSpider().build_item(record, [])
@@ -363,6 +365,7 @@ def test_build_item_dba_matching_name_is_not_emitted(spider):
 # --------------------------------------------------------------------------- #
 # build_inspections
 # --------------------------------------------------------------------------- #
+
 
 def test_build_inspections_golden_path(inspections):
     result = AlaskaSpider.build_inspections(inspections)
@@ -405,13 +408,15 @@ def test_build_inspections_empty_input_returns_empty():
 def test_build_inspections_future_dated_visits_are_emitted():
     """AKCCIS occasionally publishes scheduled/upcoming visits with a future
     visitDate. Emit them as-is; downstream may filter to date<=today."""
-    future = [{
-        "visitDate": "6/23/2099 1:00 PM",
-        "purposeOfVisit": "Annual",
-        "visitType": "Announced",
-        "compliance": "C",
-        "licensingSpecialist": "Future Person",
-    }]
+    future = [
+        {
+            "visitDate": "6/23/2099 1:00 PM",
+            "purposeOfVisit": "Annual",
+            "visitType": "Announced",
+            "compliance": "C",
+            "licensingSpecialist": "Future Person",
+        }
+    ]
     result = AlaskaSpider.build_inspections(future)
     assert len(result) == 1
     assert result[0]["date"] == "2099-06-23"
@@ -420,11 +425,13 @@ def test_build_inspections_future_dated_visits_are_emitted():
 def test_build_inspections_garbage_date_still_emits_visit():
     """A malformed visitDate becomes None on the item; the visit still
     surfaces so downstream can see it."""
-    events = [{
-        "visitDate": "not a date",
-        "purposeOfVisit": "Annual",
-        "compliance": "C",
-    }]
+    events = [
+        {
+            "visitDate": "not a date",
+            "purposeOfVisit": "Annual",
+            "compliance": "C",
+        }
+    ]
     result = AlaskaSpider.build_inspections(events)
     assert len(result) == 1
     assert result[0]["date"] is None
@@ -434,11 +441,13 @@ def test_build_inspections_garbage_date_still_emits_visit():
 def test_build_inspections_optional_fields_only_set_when_present():
     """Missing visitType / licensingSpecialist -> unset (not None) on the
     item, so downstream sees a clean absence."""
-    events = [{
-        "visitDate": "5/5/2025 9:15 AM",
-        "purposeOfVisit": "Annual",
-        "compliance": "C",
-    }]
+    events = [
+        {
+            "visitDate": "5/5/2025 9:15 AM",
+            "purposeOfVisit": "Annual",
+            "compliance": "C",
+        }
+    ]
     result = AlaskaSpider.build_inspections(events)
     assert len(result) == 1
     assert result[0].get("ak_visit_type") is None
@@ -449,6 +458,7 @@ def test_build_inspections_optional_fields_only_set_when_present():
 # parse_search -- request fan-out
 # --------------------------------------------------------------------------- #
 
+
 def test_parse_search_yields_one_inspection_request_per_provider(spider):
     body = [
         {"facilityGenId": "10000", "facilityName": "A"},
@@ -458,8 +468,8 @@ def test_parse_search_yields_one_inspection_request_per_provider(spider):
     requests = list(spider.parse_search(_search_response(body)))
     assert len(requests) == 2
     assert requests[0].url == (
-        "https://akccis.com/server/api/Inspection/"
-        "GetFacilityInspectionTasksPublicView?facilityGenId=10000")
+        "https://akccis.com/server/api/Inspection/GetFacilityInspectionTasksPublicView?facilityGenId=10000"
+    )
     assert requests[1].url.endswith("facilityGenId=10001")
 
 
@@ -482,6 +492,7 @@ def test_parse_search_wires_callback_and_errback(spider):
 # --------------------------------------------------------------------------- #
 # errback_inspection -- provider still emitted on inspection-fetch failure
 # --------------------------------------------------------------------------- #
+
 
 def test_errback_inspection_emits_provider_without_inspections(spider):
     roster_row = {

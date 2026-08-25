@@ -32,6 +32,7 @@ Three phases, only two callbacks do real work:
   listing is the only source for city/zip/county on the ~38% of facilities
   that suppress their address -- Sec 5.4).
 """
+
 import json
 import re
 
@@ -56,20 +57,21 @@ EXPECTED_MIN_COUNTIES = 100
 # a straight one.
 SUPPRESSED_PREFIX = "Not Displayed"
 
-COUNTY_DROPDOWN_SEL = (
-    "#ctl00_ContentPlaceHolder1_countyComboList_DropDown li.rcbItem::text"
-)
+COUNTY_DROPDOWN_SEL = "#ctl00_ContentPlaceHolder1_countyComboList_DropDown li.rcbItem::text"
 COUNTY_CLIENTSTATE_FIELD = "ctl00_ContentPlaceHolder1_countyComboList_ClientState"
-PROGRAM_TYPE_CLIENTSTATE_FIELD = (
-    "ctl00_ContentPlaceHolder1_programTypeListDetails_ClientState"
-)
+PROGRAM_TYPE_CLIENTSTATE_FIELD = "ctl00_ContentPlaceHolder1_programTypeListDetails_ClientState"
 
 # Program Type list-box indices: 0 is the "Please Select" placeholder (must
 # NOT be included -- that alone returns 0 rows), 1-7 are the seven real types.
-PROGRAM_TYPE_CLIENT_STATE = json.dumps({
-    "isEnabled": True, "logEntries": [], "selectedIndices": [1, 2, 3, 4, 5, 6, 7],
-    "checkedIndices": [], "scrollPosition": 0,
-})
+PROGRAM_TYPE_CLIENT_STATE = json.dumps(
+    {
+        "isEnabled": True,
+        "logEntries": [],
+        "selectedIndices": [1, 2, 3, 4, 5, 6, 7],
+        "checkedIndices": [],
+        "scrollPosition": 0,
+    }
+)
 
 # One row is a name-link table immediately followed by a details table; the
 # two selectors below are 1:1 and same-order (verified against the live
@@ -124,10 +126,10 @@ def split_address(raw, city):
     if not m:
         return raw, None
     state, zip5, plus4 = m.group(1), m.group(2), m.group(3)
-    head = raw[:m.start()].rstrip()
+    head = raw[: m.start()].rstrip()
     if not head.lower().endswith(city.lower()):
         return raw, None
-    street = head[:len(head) - len(city)].rstrip()
+    street = head[: len(head) - len(city)].rstrip()
     if not street:
         return raw, None
     tail = f"{zip5}-{plus4}" if plus4 and plus4 != "0000" else zip5
@@ -151,10 +153,16 @@ def _hidden_fields(response):
 
 
 def _county_client_state(county):
-    return json.dumps({
-        "logEntries": [], "value": county, "text": county, "enabled": True,
-        "checkedIndices": [], "checkedItemsTextOverflows": False,
-    })
+    return json.dumps(
+        {
+            "logEntries": [],
+            "value": county,
+            "text": county,
+            "enabled": True,
+            "checkedIndices": [],
+            "checkedItemsTextOverflows": False,
+        }
+    )
 
 
 def _search_formdata(response, county):
@@ -218,10 +226,7 @@ class KansasSpider(scrapy.Spider):
         "DOWNLOAD_TIMEOUT": 120,  # Next postbacks slow under load (up to ~15s)
         "RETRY_TIMES": 5,
         "ROBOTSTXT_OBEY": False,  # no robots.txt exists (404)
-        "USER_AGENT": (
-            "Mozilla/5.0 (X11; Linux x86_64; rv:153.0) "
-            "Gecko/20100101 Firefox/153.0"
-        ),
+        "USER_AGENT": ("Mozilla/5.0 (X11; Linux x86_64; rv:153.0) Gecko/20100101 Firefox/153.0"),
     }
 
     def __init__(self, counties=None, findings=0, *args, **kwargs):
@@ -231,9 +236,7 @@ class KansasSpider(scrapy.Spider):
         # default (full statewide crawl).
         self.county_filter = None
         if counties:
-            self.county_filter = {
-                c.strip().lower() for c in str(counties).split(",") if c.strip()
-            }
+            self.county_filter = {c.strip().lower() for c in str(counties).split(",") if c.strip()}
         # `-a findings=1` opts into fetching OIDS_ViewFacilityFindings.aspx
         # for every survey with a non-zero findings count (Sec 6.3). Off by
         # default -- it roughly doubles the crawl.
@@ -249,8 +252,7 @@ class KansasSpider(scrapy.Spider):
     # ------------------------------------------------------------------ #
 
     def start_requests(self):
-        yield scrapy.Request(SEARCH_URL, callback=self.parse_counties,
-                              dont_filter=True)
+        yield scrapy.Request(SEARCH_URL, callback=self.parse_counties, dont_filter=True)
 
     def parse_counties(self, response):
         """Scrape the county dropdown and fire one search POST per county.
@@ -260,12 +262,12 @@ class KansasSpider(scrapy.Spider):
         one session drove a successful search in a brand-new session), so one
         GET is comfortably enough for the whole fan-out.
         """
-        counties = [c.strip() for c in response.css(COUNTY_DROPDOWN_SEL).getall()
-                    if c.strip()]
+        counties = [c.strip() for c in response.css(COUNTY_DROPDOWN_SEL).getall() if c.strip()]
         if len(counties) < EXPECTED_MIN_COUNTIES:
             self.logger.warning(
                 "Kansas: only %d counties found on the search page (expected "
-                "~106) -- the site's markup may have changed", len(counties),
+                "~106) -- the site's markup may have changed",
+                len(counties),
             )
         if self.county_filter:
             counties = [c for c in counties if c.lower() in self.county_filter]
@@ -298,40 +300,45 @@ class KansasSpider(scrapy.Spider):
         tables = response.css(ROW_DETAIL_TABLE_SEL)
         if len(links) != len(tables):
             self.logger.error(
-                "Kansas: row/detail-table count mismatch at %s (%d links, "
-                "%d tables) -- page markup may have changed",
-                response.url, len(links), len(tables),
+                "Kansas: row/detail-table count mismatch at %s (%d links, %d tables) -- page markup may have changed",
+                response.url,
+                len(links),
+                len(tables),
             )
         rows = []
-        for link, table in zip(links, tables):
-            token = link.attrib["id"][len("ContentPlaceHolder1_"):]
+        for link, table in zip(links, tables, strict=False):
+            token = link.attrib["id"][len("ContentPlaceHolder1_") :]
             values = [v.strip() for v in table.css("label::text").getall()][1::2]
             if len(values) < 6:
                 self.logger.error(
                     "Kansas: unexpected row shape for token=%s: %r",
-                    token, values,
+                    token,
+                    values,
                 )
                 continue
             _owner, _license_number, city, zip_raw, county, program_type = values[:6]
-            rows.append({
-                "token": token,
-                "city": city,
-                "zip": zip_raw,
-                "county": county,
-                "program_type": program_type,
-            })
+            rows.append(
+                {
+                    "token": token,
+                    "city": city,
+                    "zip": zip_raw,
+                    "county": county,
+                    "program_type": program_type,
+                }
+            )
         return rows
 
     def parse_results(self, response):
         county = response.meta["county"]
         page = response.meta["page"]
         rows = self._parse_rows(response)
-        self.county_running_total[county] = (
-            self.county_running_total.get(county, 0) + len(rows)
-        )
+        self.county_running_total[county] = self.county_running_total.get(county, 0) + len(rows)
         self.logger.info(
             "Kansas: %s page %d -> %d rows (running total %d)",
-            county, page, len(rows), self.county_running_total[county],
+            county,
+            page,
+            len(rows),
+            self.county_running_total[county],
         )
 
         for row in rows:
@@ -349,7 +356,9 @@ class KansasSpider(scrapy.Spider):
                 self.logger.error(
                     "Kansas: %s reached MAX_PAGES=%d without a short page -- "
                     "pagination forcibly stopped and this county is likely "
-                    "TRUNCATED", county, MAX_PAGES,
+                    "TRUNCATED",
+                    county,
+                    MAX_PAGES,
                 )
                 self.county_final_pages[county] = page
                 return
@@ -400,9 +409,9 @@ class KansasSpider(scrapy.Spider):
             # guard so a silently empty page never becomes a blank row
             # (Sec 5.8).
             self.logger.error(
-                "Kansas: parse_detail missing faciltyNameValue at %s "
-                "(token=%s) -- no item emitted",
-                response.url, row.get("token"),
+                "Kansas: parse_detail missing faciltyNameValue at %s (token=%s) -- no item emitted",
+                response.url,
+                row.get("token"),
             )
             return
 
@@ -451,8 +460,9 @@ class KansasSpider(scrapy.Spider):
             item["address"] = address
             if street is None:
                 self.logger.warning(
-                    "Kansas: split_address fell back to the raw form for "
-                    "token=%s: %r", row.get("token"), raw_address,
+                    "Kansas: split_address fell back to the raw form for token=%s: %r",
+                    row.get("token"),
+                    raw_address,
                 )
 
         phone = self._span_text(response, DETAIL_FIELD_IDS["phone"])
@@ -466,7 +476,8 @@ class KansasSpider(scrapy.Spider):
             except ValueError:
                 self.logger.warning(
                     "Kansas: non-integer capacity %r for token=%s",
-                    cap_raw, row.get("token"),
+                    cap_raw,
+                    row.get("token"),
                 )
 
         eff_date = self._span_text(response, DETAIL_FIELD_IDS["eff_date"])
@@ -487,7 +498,8 @@ class KansasSpider(scrapy.Spider):
         if inspections:
             item["inspections"] = inspections
         survey_counts = [
-            insp["ks_findings_count"] for insp in inspections
+            insp["ks_findings_count"]
+            for insp in inspections
             if insp.get("type") in ("Licensing Survey", "Complaint Survey")
             and insp.get("ks_findings_count") is not None
         ]
@@ -496,7 +508,8 @@ class KansasSpider(scrapy.Spider):
 
         if self.fetch_findings:
             pending = [
-                insp for insp in inspections
+                insp
+                for insp in inspections
                 if insp.get("type") in ("Licensing Survey", "Complaint Survey")
                 and (insp.get("ks_findings_count") or 0) > 0
                 and insp.get("report_url")
@@ -522,7 +535,8 @@ class KansasSpider(scrapy.Spider):
             if len(tds) < 10:
                 self.logger.warning(
                     "Kansas: %s survey row with %d cells (expected 10)",
-                    insp_type, len(tds),
+                    insp_type,
+                    len(tds),
                 )
                 continue
             insp = InspectionItem()
@@ -556,7 +570,8 @@ class KansasSpider(scrapy.Spider):
                     insp["ks_regulations_reviewed"] = int(m.group(2))
                 else:
                     self.logger.warning(
-                        "Kansas: unparsed findings text %r", findings_text,
+                        "Kansas: unparsed findings text %r",
+                        findings_text,
                     )
             response_text = tds[9].css("a::text").get()
             response_text = response_text.strip() if response_text else None
@@ -573,8 +588,8 @@ class KansasSpider(scrapy.Spider):
             tds = tr.css("td")
             if len(tds) < 5:
                 self.logger.warning(
-                    "Kansas: administrative order row with %d cells "
-                    "(expected 5)", len(tds),
+                    "Kansas: administrative order row with %d cells (expected 5)",
+                    len(tds),
                 )
                 continue
             insp = InspectionItem()
@@ -644,17 +659,15 @@ class KansasSpider(scrapy.Spider):
                 continue
             m = re.match(
                 r"(.*?)<br\s*/?>\s*<b>\s*Description\s*:\s*(.*?)</b>\s*$",
-                block, re.S,
+                block,
+                re.S,
             )
             if not m:
                 continue
-            regulation = _WHITESPACE_RE.sub(
-                " ", re.sub(r"<[^>]+>", " ", m.group(1))).strip()
-            description = _WHITESPACE_RE.sub(
-                " ", re.sub(r"<[^>]+>", " ", m.group(2))).strip()
+            regulation = _WHITESPACE_RE.sub(" ", re.sub(r"<[^>]+>", " ", m.group(1))).strip()
+            description = _WHITESPACE_RE.sub(" ", re.sub(r"<[^>]+>", " ", m.group(2))).strip()
             if regulation or description:
-                findings.append({"regulation": regulation,
-                                  "description": description})
+                findings.append({"regulation": regulation, "description": description})
         return findings
 
     # ------------------------------------------------------------------ #
@@ -662,14 +675,16 @@ class KansasSpider(scrapy.Spider):
     def closed(self, reason):
         total_unique = len(self.seen)
         self.logger.info(
-            "Kansas: finished (%s) -- %d counties, %d unique facilities, "
-            "%d in-source duplicate rows skipped",
-            reason, len(self.county_running_total), total_unique,
+            "Kansas: finished (%s) -- %d counties, %d unique facilities, %d in-source duplicate rows skipped",
+            reason,
+            len(self.county_running_total),
+            total_unique,
             self.duplicate_rows,
         )
         for county in sorted(self.county_running_total):
             self.logger.info(
                 "Kansas: county summary -- %s: %d rows across %s page(s)",
-                county, self.county_running_total[county],
+                county,
+                self.county_running_total[county],
                 self.county_final_pages.get(county, "?"),
             )

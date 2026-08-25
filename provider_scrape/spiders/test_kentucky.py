@@ -48,19 +48,17 @@ def spider():
 
 # --- response builders --------------------------------------------------- #
 
+
 def search_response(payload, zip5=42101, attempt=1):
     req = Request(AURA_URL, method="POST", meta={"zip": zip5, "attempt": attempt})
-    return TextResponse(url=AURA_URL, body=json.dumps(payload).encode(),
-                        encoding="utf-8", request=req)
+    return TextResponse(url=AURA_URL, body=json.dumps(payload).encode(), encoding="utf-8", request=req)
 
 
 def detail_response(payload, item=None, provider_id=1):
     if item is None:
         item = ProviderItem()
-    req = Request(AURA_URL, method="POST",
-                  meta={"item": item, "provider_id": provider_id})
-    return TextResponse(url=AURA_URL, body=json.dumps(payload).encode(),
-                        encoding="utf-8", request=req)
+    req = Request(AURA_URL, method="POST", meta={"item": item, "provider_id": provider_id})
+    return TextResponse(url=AURA_URL, body=json.dumps(payload).encode(), encoding="utf-8", request=req)
 
 
 def split_search_outputs(outputs):
@@ -80,6 +78,7 @@ def split_search_outputs(outputs):
 
 
 # --- helper unit tests (§8.1-5) ------------------------------------------ #
+
 
 def test_format_phone():
     assert format_phone("2707834484") == "(270) 783-4484"
@@ -113,38 +112,51 @@ def test_format_hours_lists_mixed_days():
 
 
 def test_format_hours_all_closed_is_none():
-    hours = [{"Day": d, "ServiceTime": "No Information Available"}
-             for d in ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
-                       "Saturday", "Sunday")]
+    hours = [
+        {"Day": d, "ServiceTime": "No Information Available"}
+        for d in ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+    ]
     assert format_hours(hours) is None
     assert format_hours(None) is None
     assert format_hours([]) is None
 
 
-@pytest.mark.parametrize("record,expected_flags,expected_ages", [
-    ({"Infant": "Y", "Toddler": "Y", "PreSchool": "Y", "SchoolAge": "Y"},
-     {"infant": True, "toddler": True, "preschool": True, "school": True},
-     "Infant, Toddler, Preschool, School Age"),
-    ({"Infant": "N", "Toddler": "N", "PreSchool": "N", "SchoolAge": "N"},
-     {"infant": False, "toddler": False, "preschool": False, "school": False},
-     None),
-    ({"Infant": None, "Toddler": None, "PreSchool": None, "SchoolAge": None},
-     {}, None),
-    ({"Infant": "Y", "Toddler": "N", "PreSchool": None, "SchoolAge": "Y"},
-     {"infant": True, "toddler": False, "school": True}, "Infant, School Age"),
-])
+@pytest.mark.parametrize(
+    "record,expected_flags,expected_ages",
+    [
+        (
+            {"Infant": "Y", "Toddler": "Y", "PreSchool": "Y", "SchoolAge": "Y"},
+            {"infant": True, "toddler": True, "preschool": True, "school": True},
+            "Infant, Toddler, Preschool, School Age",
+        ),
+        (
+            {"Infant": "N", "Toddler": "N", "PreSchool": "N", "SchoolAge": "N"},
+            {"infant": False, "toddler": False, "preschool": False, "school": False},
+            None,
+        ),
+        ({"Infant": None, "Toddler": None, "PreSchool": None, "SchoolAge": None}, {}, None),
+        (
+            {"Infant": "Y", "Toddler": "N", "PreSchool": None, "SchoolAge": "Y"},
+            {"infant": True, "toddler": False, "school": True},
+            "Infant, School Age",
+        ),
+    ],
+)
 def test_ages_from_flags(record, expected_flags, expected_ages):
     ages, flags = ages_from_flags(record)
     assert flags == expected_flags
     assert ages == expected_ages
 
 
-@pytest.mark.parametrize("raw,expected", [
-    ("WARREN", "Warren"),
-    ("MCCRACKEN", "McCracken"),
-    ("MCCREARY", "McCreary"),
-    ("MCLEAN", "McLean"),
-])
+@pytest.mark.parametrize(
+    "raw,expected",
+    [
+        ("WARREN", "Warren"),
+        ("MCCRACKEN", "McCracken"),
+        ("MCCREARY", "McCreary"),
+        ("MCLEAN", "McLean"),
+    ],
+)
 def test_title_county(raw, expected):
     assert title_county(raw) == expected
 
@@ -203,6 +215,7 @@ def test_concurrency_arg_reaches_the_crawler_settings(arg, expected):
 
 # --- parse_search (§8.6-9) ------------------------------------------------ #
 
+
 def test_parse_search_golden_yields_24_detail_requests(spider):
     payload = _load_fixture("ky_search_42101.json")
     outputs = list(spider.parse_search(search_response(payload, zip5=42101)))
@@ -232,18 +245,15 @@ def test_parse_search_empty_zip_is_quiet(spider, caplog):
 def test_parse_search_error_state_retries_then_gives_up(spider, caplog):
     payload = _load_fixture("ky_search_error.json")
     with caplog.at_level(logging.WARNING):
-        outputs = list(spider.parse_search(
-            search_response(payload, zip5=40999, attempt=1)))
+        outputs = list(spider.parse_search(search_response(payload, zip5=40999, attempt=1)))
     assert spider.error_state_count == 1
     assert len(outputs) == 1
     retry_req = outputs[0]
-    assert _decode_message(retry_req)["actions"][0]["params"]["method"] == \
-        "getChildCareProviderDetails"
+    assert _decode_message(retry_req)["actions"][0]["params"]["method"] == "getChildCareProviderDetails"
     assert retry_req.meta["attempt"] == 2
     assert any("Aura state" in r.getMessage() for r in caplog.records)
 
-    outputs2 = list(spider.parse_search(
-        search_response(payload, zip5=40999, attempt=MAX_ERROR_RETRIES + 1)))
+    outputs2 = list(spider.parse_search(search_response(payload, zip5=40999, attempt=MAX_ERROR_RETRIES + 1)))
     assert outputs2 == []
     assert 40999 in spider.zips_failed
 
@@ -259,13 +269,13 @@ def test_parse_search_dedupes_across_zips(spider):
 
 # --- parse_detail (§8.10-13, 17-19) --------------------------------------- #
 
+
 def test_parse_detail_center_golden(spider):
     record = _decode_records(_load_fixture("ky_search_42101.json"))[0]
     provider_id = _num(record["ProviderId"])
     item = spider._item_from_summary(record, provider_id)
     payload = _load_fixture("ky_detail_center.json")
-    result = next(spider.parse_detail(
-        detail_response(payload, item=item, provider_id=provider_id)))
+    result = next(spider.parse_detail(detail_response(payload, item=item, provider_id=provider_id)))
 
     assert isinstance(result, ProviderItem)
     assert result["provider_name"] == "Warren County Head Start & Child Care Center"
@@ -295,8 +305,7 @@ def test_golden_item_has_no_undefined_fields(spider):
     provider_id = _num(record["ProviderId"])
     item = spider._item_from_summary(record, provider_id)
     payload = _load_fixture("ky_detail_center.json")
-    result = next(spider.parse_detail(
-        detail_response(payload, item=item, provider_id=provider_id)))
+    result = next(spider.parse_detail(detail_response(payload, item=item, provider_id=provider_id)))
     assert dict(result)  # constructing/serializing raises on an undefined field
 
 
@@ -305,26 +314,37 @@ def test_parse_detail_home_golden(spider):
     # detail capture, ky_detail_home.json); build a minimal, plausible
     # summary the way a real Certified-home record looks.
     record = {
-        "ProviderId": 103038.0, "ProviderCLRNumber": "C68494",
-        "ProviderName": "Tammy Caldera's Day Care", "ProviderType": "Certified",
-        "ProviderStatus": "APPROVED", "LocationAddressLine1": "100 Main St",
-        "LocationAddressLine2": None, "LocationCity": "Somewhere",
-        "LocationCountyDescription": "FAYETTE", "LocationStateDescription": "KY",
-        "LocationZipCode5": 40502.0, "AddressLatitude": "38.0",
-        "AddressLongitude": "-84.5", "PhoneNumber": "8595551212",
-        "NumberOfStars": 0, "Infant": "Y", "Toddler": None, "PreSchool": None,
-        "SchoolAge": None, "IsSubsidyAccepted": "Y", "Transportation": "N",
-        "PreKPartnershipFlag": "N", "IsOngoingProcess": "N",
+        "ProviderId": 103038.0,
+        "ProviderCLRNumber": "C68494",
+        "ProviderName": "Tammy Caldera's Day Care",
+        "ProviderType": "Certified",
+        "ProviderStatus": "APPROVED",
+        "LocationAddressLine1": "100 Main St",
+        "LocationAddressLine2": None,
+        "LocationCity": "Somewhere",
+        "LocationCountyDescription": "FAYETTE",
+        "LocationStateDescription": "KY",
+        "LocationZipCode5": 40502.0,
+        "AddressLatitude": "38.0",
+        "AddressLongitude": "-84.5",
+        "PhoneNumber": "8595551212",
+        "NumberOfStars": 0,
+        "Infant": "Y",
+        "Toddler": None,
+        "PreSchool": None,
+        "SchoolAge": None,
+        "IsSubsidyAccepted": "Y",
+        "Transportation": "N",
+        "PreKPartnershipFlag": "N",
+        "IsOngoingProcess": "N",
         "HoursOfOperationList": [],
     }
     item = spider._item_from_summary(record, 103038)
     payload = _load_fixture("ky_detail_home.json")
-    result = next(spider.parse_detail(
-        detail_response(payload, item=item, provider_id=103038)))
+    result = next(spider.parse_detail(detail_response(payload, item=item, provider_id=103038)))
 
     assert result["license_number"] == "C68494"
-    assert norm.facility_category_from_type(result["provider_type"]) == \
-        "family_home"
+    assert norm.facility_category_from_type(result["provider_type"]) == "family_home"
     assert result["capacity"] == 6
     assert len(result["inspections"]) == 25
 
@@ -334,8 +354,7 @@ def test_parse_detail_empty_keeps_summary_item(spider):
     item["provider_name"] = "Some Provider"
     item["license_number"] = "L999999"
     payload = _load_fixture("ky_detail_empty.json")
-    result = next(spider.parse_detail(
-        detail_response(payload, item=item, provider_id=999)))
+    result = next(spider.parse_detail(detail_response(payload, item=item, provider_id=999)))
     assert result["license_number"] == "L999999"
     assert "capacity" not in result
     assert "inspections" not in result
@@ -360,8 +379,7 @@ def test_inspection_join_poc(spider):
     item = ProviderItem()
     item["license_number"] = "L353576"
     payload = _load_fixture("ky_detail_poc.json")
-    result = next(spider.parse_detail(
-        detail_response(payload, item=item, provider_id=403)))
+    result = next(spider.parse_detail(detail_response(payload, item=item, provider_id=403)))
 
     inspections = result["inspections"]
     assert len(inspections) == 20
@@ -375,12 +393,9 @@ def test_inspection_join_poc(spider):
 
     # The two lists' InspectionIds must be the exact same set (§5.4/§6.2) --
     # verified directly against the raw fixture, independent of parse logic.
-    kiccs = payload["actions"][0]["returnValue"]["returnValue"]["mapResponse"][
-        "KICCSDataDetails"]
-    history_ids = {row["InspectionId"] for row in
-                   json.loads(kiccs["InspectionHistoryList"])["inspections"]}
-    updated_ids = {_num(row["InspectionId"])
-                   for row in kiccs["InspectionHistoryListUpdated"]}
+    kiccs = payload["actions"][0]["returnValue"]["returnValue"]["mapResponse"]["KICCSDataDetails"]
+    history_ids = {row["InspectionId"] for row in json.loads(kiccs["InspectionHistoryList"])["inspections"]}
+    updated_ids = {_num(row["InspectionId"]) for row in kiccs["InspectionHistoryListUpdated"]}
     assert history_ids == updated_ids
 
 
@@ -388,8 +403,7 @@ def test_ongoing_processes_and_max_inspections(spider):
     item = ProviderItem()
     item["license_number"] = "L356054"
     payload = _load_fixture("ky_detail_ongoing.json")
-    result = next(spider.parse_detail(
-        detail_response(payload, item=item, provider_id=1500)))
+    result = next(spider.parse_detail(detail_response(payload, item=item, provider_id=1500)))
 
     assert result["ky_ongoing_processes"] == [
         {"process_type": "Adverse Action", "status": "On-going"},
@@ -398,19 +412,20 @@ def test_ongoing_processes_and_max_inspections(spider):
     assert len(result["inspections"]) == 109  # the statewide max seen
 
 
-@pytest.mark.parametrize("source_field,item_field", [
-    ("IsAcceditationsAvailable", "ky_accreditation_available"),
-    ("IsFoodPermitAvailable", "ky_food_permit"),
-])
+@pytest.mark.parametrize(
+    "source_field,item_field",
+    [
+        ("IsAcceditationsAvailable", "ky_accreditation_available"),
+        ("IsFoodPermitAvailable", "ky_food_permit"),
+    ],
+)
 def test_tristate_flags(spider, source_field, item_field):
     for raw, expected in (("Y", True), ("N", False), (None, None)):
         payload = _load_fixture("ky_detail_center.json")
-        kiccs = payload["actions"][0]["returnValue"]["returnValue"][
-            "mapResponse"]["KICCSDataDetails"]
+        kiccs = payload["actions"][0]["returnValue"]["returnValue"]["mapResponse"]["KICCSDataDetails"]
         kiccs[source_field] = raw
         item = ProviderItem()
-        result = next(spider.parse_detail(
-            detail_response(payload, item=item, provider_id=84)))
+        result = next(spider.parse_detail(detail_response(payload, item=item, provider_id=84)))
         if expected is None:
             assert item_field not in result  # null -> unset, not False
         else:
@@ -419,14 +434,18 @@ def test_tristate_flags(spider, source_field, item_field):
 
 # --- normalization pipeline (§8.15-16) ------------------------------------ #
 
+
 def test_kentucky_status_mapping():
     assert norm.canonical_status("APPROVED") == "active"
     assert norm.canonical_status("SUSPENDED") == "enforcement"
 
 
-@pytest.mark.parametrize("provider_type,category", [
-    ("Licensed", "center"),
-    ("Certified", "family_home"),
-])
+@pytest.mark.parametrize(
+    "provider_type,category",
+    [
+        ("Licensed", "center"),
+        ("Certified", "family_home"),
+    ],
+)
 def test_kentucky_facility_category_mapping(provider_type, category):
     assert norm.facility_category_from_type(provider_type) == category

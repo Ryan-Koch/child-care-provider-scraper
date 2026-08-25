@@ -25,10 +25,10 @@ xvfb exactly like run_spiders.sh does. In the Docker image:
 
 Exit code: 0 if both levers look good, 1 if a likely-blocking problem is found.
 """
+
 import asyncio
 import json
 import sys
-import urllib.request
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -36,10 +36,10 @@ from playwright.async_api import async_playwright
 
 # Pull the spider's REAL config so this reflects exactly what will run.
 from provider_scrape.spiders.rhode_island import (
-    RhodeIslandSpider,
-    _STEALTH_SCRIPT,
     _CANVAS_PATCH,
     _HW_PATCH,
+    _STEALTH_SCRIPT,
+    RhodeIslandSpider,
 )
 
 _CS = RhodeIslandSpider.custom_settings
@@ -92,7 +92,7 @@ async def _egress_via_browser(page):
             if data.get("timezone"):
                 data["_source"] = url
                 return data
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             last = f"{url}: {e}"
     return {"_error": f"could not resolve egress ({last})"}
 
@@ -132,10 +132,12 @@ def report(egress, fp):
         warnings.append("egress geo lookup failed — check connectivity/VPN")
     else:
         print(f"  ip           : {egress.get('ip')}")
-        print(f"  location     : {egress.get('city')}, "
-              f"{egress.get('region')}, {egress.get('country')}")
-        print(f"  egress tz    : {egress_tz}  (UTC{egress_off:+})"
-              if egress_off is not None else f"  egress tz    : {egress_tz}")
+        print(f"  location     : {egress.get('city')}, {egress.get('region')}, {egress.get('country')}")
+        print(
+            f"  egress tz    : {egress_tz}  (UTC{egress_off:+})"
+            if egress_off is not None
+            else f"  egress tz    : {egress_tz}"
+        )
         print(f"  (via {egress.get('_source')})")
 
     print()
@@ -155,19 +157,18 @@ def report(egress, fp):
         problems.append("No WebGL context at all — a strong headless/bot tell.")
     else:
         rend_state = "OK (masked, no SwiftShader tell)"
-    print(f"  claimed tz   : {CLAIMED_TZ}  (UTC{claimed_off:+})"
-          if claimed_off is not None else f"  claimed tz   : {CLAIMED_TZ}")
-    print(f"  browser tz   : {fp['browserTimezone']}  "
-          f"(offset {-fp['timezoneOffsetMin']//60:+}h)")
+    print(
+        f"  claimed tz   : {CLAIMED_TZ}  (UTC{claimed_off:+})"
+        if claimed_off is not None
+        else f"  claimed tz   : {CLAIMED_TZ}"
+    )
+    print(f"  browser tz   : {fp['browserTimezone']}  (offset {-fp['timezoneOffsetMin'] // 60:+}h)")
     print(f"  webglRenderer: {rend}")
     print(f"                 -> {rend_state}")
-    print(f"  webdriver    : {fp['webdriver']}  "
-          f"({'OK' if fp['webdriver'] is False else '!! should be false'})")
-    print(f"  plugins      : {fp['pluginsLength']}  "
-          f"({'OK' if fp['pluginsLength'] else '!! 0 = bot tell'})")
+    print(f"  webdriver    : {fp['webdriver']}  ({'OK' if fp['webdriver'] is False else '!! should be false'})")
+    print(f"  plugins      : {fp['pluginsLength']}  ({'OK' if fp['pluginsLength'] else '!! 0 = bot tell'})")
     print(f"  platform     : {fp['platform']}")
-    print(f"  cpu cores    : {fp['hardwareConcurrency']}  "
-          f"(host-dependent; informational)")
+    print(f"  cpu cores    : {fp['hardwareConcurrency']}  (host-dependent; informational)")
 
     if fp["webdriver"] is not False:
         problems.append("navigator.webdriver is not false.")
@@ -183,11 +184,12 @@ def report(egress, fp):
         print("  ?? egress timezone unknown — cannot verify the #1 lever.")
         warnings.append("Could not verify timezone<->IP match.")
     elif claimed_off is not None and abs(claimed_off - egress_off) < 0.01:
-        print(f"  OK  browser {CLAIMED_TZ} (UTC{claimed_off:+}) matches "
-              f"egress (UTC{egress_off:+}).")
+        print(f"  OK  browser {CLAIMED_TZ} (UTC{claimed_off:+}) matches egress (UTC{egress_off:+}).")
     else:
-        print(f"  !! MISMATCH  browser claims {CLAIMED_TZ} (UTC{claimed_off:+}) "
-              f"but egress IP is UTC{egress_off:+} ({egress_tz}).")
+        print(
+            f"  !! MISMATCH  browser claims {CLAIMED_TZ} (UTC{claimed_off:+}) "
+            f"but egress IP is UTC{egress_off:+} ({egress_tz})."
+        )
         problems.append(
             f"TIMEZONE<->IP MISMATCH: browser={CLAIMED_TZ} (UTC{claimed_off:+}) "
             f"vs egress={egress_tz} (UTC{egress_off:+}). Per browser_signature.md "
@@ -205,9 +207,11 @@ def report(egress, fp):
         for i, msg in enumerate(problems, 1):
             print(f"    {i}. {msg}")
     else:
-        print("  Both levers look good. If v3 still fails, suspect IP "
-              "reputation (hosting/VPN range) — try a cleaner/residential exit, "
-              "or use -a manual_captcha=1 for an attended run.")
+        print(
+            "  Both levers look good. If v3 still fails, suspect IP "
+            "reputation (hosting/VPN range) — try a cleaner/residential exit, "
+            "or use -a manual_captcha=1 for an attended run."
+        )
     for w in warnings:
         print(f"  (warn) {w}")
     return 1 if problems else 0

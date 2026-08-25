@@ -40,6 +40,7 @@ def spider():
 
 # --- response builders ----------------------------------------------------- #
 
+
 def provider_response(payload, provider_id=1):
     url = PROVIDER_URL.format(provider_id)
     req = Request(url, meta={"provider_id": provider_id})
@@ -49,8 +50,7 @@ def provider_response(payload, provider_id=1):
 
 def inspection_response(payload, provider_id=1, inspection_id=1):
     url = INSPECTION_URL.format(inspection_id)
-    req = Request(url, meta={"provider_id": provider_id,
-                             "inspection_id": inspection_id})
+    req = Request(url, meta={"provider_id": provider_id, "inspection_id": inspection_id})
     body = b"null" if payload is None else json.dumps(payload).encode()
     return TextResponse(url=url, body=body, encoding="utf-8", request=req)
 
@@ -64,8 +64,7 @@ def discovery_response(id_, exists):
 
 def town_search_response(payload, town="Kent"):
     req = Request(f"{SEARCH_URL}?town={town}", meta={"town": town})
-    return TextResponse(url=req.url, body=json.dumps(payload).encode(),
-                        encoding="utf-8", request=req)
+    return TextResponse(url=req.url, body=json.dumps(payload).encode(), encoding="utf-8", request=req)
 
 
 def split_provider_outputs(outputs):
@@ -78,29 +77,35 @@ def split_provider_outputs(outputs):
 
 # --- pure helper unit tests ------------------------------------------------ #
 
-@pytest.mark.parametrize("raw,expected", [
-    ("06825-1062\t", "06825-1062"),
-    (" 06010-8521", "06010-8521"),
-    ("06002", "06002"),
-    (None, None),
-])
+
+@pytest.mark.parametrize(
+    "raw,expected",
+    [
+        ("06825-1062\t", "06825-1062"),
+        (" 06010-8521", "06010-8521"),
+        ("06002", "06002"),
+        (None, None),
+    ],
+)
 def test_clean_zip_full(raw, expected):
     assert clean_zip_full(raw) == expected
 
 
-@pytest.mark.parametrize("cleaned,expected", [
-    ("06825-1062", "06825"),
-    ("06002", "06002"),
-    (None, None),
-    ("", None),
-])
+@pytest.mark.parametrize(
+    "cleaned,expected",
+    [
+        ("06825-1062", "06825"),
+        ("06002", "06002"),
+        (None, None),
+        ("", None),
+    ],
+)
 def test_zip5_from_clean(cleaned, expected):
     assert zip5_from_clean(cleaned) == expected
 
 
 def test_compose_address_full():
-    assert compose_address("778 Long Ridge Road", "Stamford", "06902") == \
-        "778 Long Ridge Road, Stamford, CT 06902"
+    assert compose_address("778 Long Ridge Road", "Stamford", "06902") == "778 Long Ridge Road, Stamford, CT 06902"
 
 
 def test_compose_address_keeps_dirty_zip_dash_but_no_tab():
@@ -114,17 +119,20 @@ def test_compose_address_missing_pieces():
     assert compose_address("1 Main St", None, None) == "1 Main St, CT"
 
 
-@pytest.mark.parametrize("license_number,expected", [
-    ("DCCC.15079", "Licensed Child Care Center"),
-    ("DCFH.56737", "Licensed Family Child Care Home"),
-    ("DCGH.80040", "Licensed Group Child Care Home"),
-    ("YCYC.00424", "Licensed Youth Camp"),
-    ("DCEX.80638", "License-Exempt Child Care Program"),
-    ("YCEX.00001", "Exempt Youth Camp"),
-    (None, None),
-    ("", None),
-    ("BOGUS.123", None),
-])
+@pytest.mark.parametrize(
+    "license_number,expected",
+    [
+        ("DCCC.15079", "Licensed Child Care Center"),
+        ("DCFH.56737", "Licensed Family Child Care Home"),
+        ("DCGH.80040", "Licensed Group Child Care Home"),
+        ("YCYC.00424", "Licensed Youth Camp"),
+        ("DCEX.80638", "License-Exempt Child Care Program"),
+        ("YCEX.00001", "Exempt Youth Camp"),
+        (None, None),
+        ("", None),
+        ("BOGUS.123", None),
+    ],
+)
 def test_ct_license_type_from_number(license_number, expected):
     assert ct_license_type_from_number(license_number) == expected
 
@@ -139,20 +147,28 @@ def test_ages_from_shifts_empty_is_none_and_no_flags():
 
 
 def test_ages_from_shifts_skips_null_group():
-    shifts = [{"population_by_age": [
-        {"group": None, "label": "should be skipped"},
-        {"group": "Infant", "label": "0-17 Months"},
-    ]}]
+    shifts = [
+        {
+            "population_by_age": [
+                {"group": None, "label": "should be skipped"},
+                {"group": "Infant", "label": "0-17 Months"},
+            ]
+        }
+    ]
     ages, flags = ages_from_shifts(shifts)
     assert ages == "0-17 Months"
     assert flags == {"infant": True}
 
 
 def test_ages_from_shifts_toddler_preschool_sets_both_flags():
-    shifts = [{"population_by_age": [
-        {"group": "Toddler/Preschool", "label": "18-71 Months"},
-    ]}]
-    ages, flags = ages_from_shifts(shifts)
+    shifts = [
+        {
+            "population_by_age": [
+                {"group": "Toddler/Preschool", "label": "18-71 Months"},
+            ]
+        }
+    ]
+    _ages, flags = ages_from_shifts(shifts)
     assert flags == {"toddler": True, "preschool": True}
 
 
@@ -199,22 +215,24 @@ def test_rates_from_shifts_skips_all_null_buckets():
     assert "full_time_daily" not in infant  # null bucket omitted
 
 
-@pytest.mark.parametrize("start,end,max_hit,trailing,results,exp_max,exp_trail", [
-    # A clean run of hits keeps resetting the streak.
-    (1, 3, 0, 0, {1: True, 2: True, 3: True}, 3, 0),
-    # Misses accumulate, then a hit resets it.
-    (1, 5, 0, 0, {1: True, 2: False, 3: False, 4: True, 5: False}, 4, 1),
-    # All misses just accumulate onto the running streak.
-    (10, 12, 5, 2, {10: False, 11: False, 12: False}, 5, 5),
-])
-def test_extend_miss_streak(start, end, max_hit, trailing, results, exp_max,
-                            exp_trail):
-    got_max, got_trail = extend_miss_streak(results, start, end, max_hit,
-                                            trailing)
+@pytest.mark.parametrize(
+    "start,end,max_hit,trailing,results,exp_max,exp_trail",
+    [
+        # A clean run of hits keeps resetting the streak.
+        (1, 3, 0, 0, {1: True, 2: True, 3: True}, 3, 0),
+        # Misses accumulate, then a hit resets it.
+        (1, 5, 0, 0, {1: True, 2: False, 3: False, 4: True, 5: False}, 4, 1),
+        # All misses just accumulate onto the running streak.
+        (10, 12, 5, 2, {10: False, 11: False, 12: False}, 5, 5),
+    ],
+)
+def test_extend_miss_streak(start, end, max_hit, trailing, results, exp_max, exp_trail):
+    got_max, got_trail = extend_miss_streak(results, start, end, max_hit, trailing)
     assert (got_max, got_trail) == (exp_max, exp_trail)
 
 
 # --- _item_from_provider field mapping (plan Sec 8, tests 1-11) ----------- #
+
 
 def test_rich_center_full_mapping(spider):
     data = _load_fixture("ct_provider_center_rich.json")
@@ -260,8 +278,7 @@ def test_family_home_license_holder_set(spider):
     item = spider._item_from_provider(data, 2653)
     assert item["license_holder"] == "Lisa Newman"
     assert item["provider_name"] == "Lola's Little Ones"
-    assert norm.facility_category_from_type(item["provider_type"]) == \
-        "family_home"
+    assert norm.facility_category_from_type(item["provider_type"]) == "family_home"
     assert item["zip"] == "06385"
 
 
@@ -301,8 +318,7 @@ def test_group_home_facility_category(spider):
     data = _load_fixture("ct_provider_group_home.json")
     item = spider._item_from_provider(data, 6925)
     assert item["provider_type"] == "Group Home"
-    assert norm.facility_category_from_type(item["provider_type"]) == \
-        "group_home"
+    assert norm.facility_category_from_type(item["provider_type"]) == "group_home"
 
 
 def test_zero_coords_not_set(spider):
@@ -344,6 +360,7 @@ def test_not_searchable_status_and_naive_split(spider):
 
 
 # --- parse_provider dispatch + hold-and-join (Sec 4.3) --------------------- #
+
 
 def test_missing_id_emits_nothing(spider):
     payload = _load_fixture("ct_provider_missing_null.json")
@@ -414,19 +431,24 @@ def test_full_hold_and_join_cycle_emits_once_all_resolve(spider):
     for req in requests:
         insp_id = req.meta["inspection_id"]
         if insp_id == 14856:
-            emitted.extend(spider.parse_inspection_detail(
-                inspection_response(with_violations, provider_id=772,
-                                    inspection_id=insp_id)))
+            emitted.extend(
+                spider.parse_inspection_detail(
+                    inspection_response(with_violations, provider_id=772, inspection_id=insp_id)
+                )
+            )
         elif insp_id == 14861:
-            emitted.extend(spider.parse_inspection_detail(
-                inspection_response(no_violations, provider_id=772,
-                                    inspection_id=insp_id)))
+            emitted.extend(
+                spider.parse_inspection_detail(
+                    inspection_response(no_violations, provider_id=772, inspection_id=insp_id)
+                )
+            )
         else:
             # Simulate every other detail request failing outright -- the
             # guarded failure path must still decrement the counter.
             class _Failure:
                 request = req
                 value = TimeoutError("boom")
+
             emitted.extend(spider.inspection_errback(_Failure()))
 
     assert len(emitted) == 1
@@ -440,10 +462,8 @@ def test_full_hold_and_join_cycle_emits_once_all_resolve(spider):
     with_v = inspections_by_id[14856]
     assert len(with_v["ct_violations"]) == 11
     assert with_v["ct_violations"][0]["regulation"] == "[19a-79-10(d)(1)(A-C)]"
-    assert with_v["ct_violations"][0]["statute"].startswith(
-        "In child care centers there shall be a sink")
-    assert with_v["ct_violations"][0]["category"] == \
-        " Adequate sinks-handwashing-diapering/other use-food prep"
+    assert with_v["ct_violations"][0]["statute"].startswith("In child care centers there shall be a sink")
+    assert with_v["ct_violations"][0]["category"] == " Adequate sinks-handwashing-diapering/other use-food prep"
     # No "Inspection Report" doc on this inspection (only "Corrective Action
     # Plan") -> report_url stays unset.
     assert "report_url" not in with_v
@@ -473,6 +493,7 @@ def test_inspection_id_none_still_decrements_pending(spider):
 
 # --- from_crawler concurrency (plan Sec 4.5) -------------------------------- #
 
+
 @pytest.mark.parametrize("arg,expected", [(None, 8), ("8", 8), ("2", 2)])
 def test_concurrency_arg_reaches_the_crawler_settings(arg, expected):
     """Regression guard: setting ``self.custom_settings`` from ``__init__``
@@ -493,6 +514,7 @@ def test_concurrency_arg_reaches_the_crawler_settings(arg, expected):
 
 
 # --- max_id discovery / override (plan Sec 4.1) ----------------------------- #
+
 
 def test_max_id_override_skips_discovery_and_sweeps_directly():
     spider = ConnecticutSpider(max_id=10)
@@ -527,16 +549,14 @@ def test_discovery_chains_blocks_then_hands_off_to_sweep(monkeypatch):
     sweep_requests = []
     for req in block2:
         id_ = req.meta["discovery_id"]
-        sweep_requests.extend(
-            spider.parse_discovery(discovery_response(id_, False)))
+        sweep_requests.extend(spider.parse_discovery(discovery_response(id_, False)))
 
     assert spider.max_id == 100
     assert len(sweep_requests) == 100
     assert {r.meta["provider_id"] for r in sweep_requests} == set(range(1, 101))
 
 
-def test_discovery_errback_counts_as_a_miss_and_warns_below_baseline(
-        monkeypatch, caplog):
+def test_discovery_errback_counts_as_a_miss_and_warns_below_baseline(monkeypatch, caplog):
     import provider_scrape.spiders.connecticut as ct_module
 
     monkeypatch.setattr(ct_module, "DISCOVERY_BLOCK_SIZE", 2)
@@ -553,29 +573,31 @@ def test_discovery_errback_counts_as_a_miss_and_warns_below_baseline(
 
     with caplog.at_level(logging.WARNING):
         outputs = list(spider.discovery_errback(_Failure()))
-        outputs.extend(spider.parse_discovery(
-            discovery_response(block1[1].meta["discovery_id"], False)))
+        outputs.extend(spider.parse_discovery(discovery_response(block1[1].meta["discovery_id"], False)))
     # Both ids in the block missed (one via errback) -> streak hits the
     # limit immediately -> sweep begins at max_id=0 (nothing was ever a hit).
     assert spider.max_id == 0
     assert len(outputs) == 0  # range(1, 0 + 1) sweeps nothing
-    assert any("BELOW the known baseline" in r.getMessage()
-              for r in caplog.records)
+    assert any("BELOW the known baseline" in r.getMessage() for r in caplog.records)
 
 
 # --- normalization pipeline integration (plan Sec 7) ------------------------ #
+
 
 def test_not_listed_status_maps_to_closed():
     assert norm.canonical_status("Not Listed") == "closed"
 
 
-@pytest.mark.parametrize("provider_type,category", [
-    ("Nursery School", "center"),
-    ("Summer Camp/Program", "other"),
-    ("Child Care Center", "center"),
-    ("Family Child Care", "family_home"),
-    ("Group Home", "group_home"),
-])
+@pytest.mark.parametrize(
+    "provider_type,category",
+    [
+        ("Nursery School", "center"),
+        ("Summer Camp/Program", "other"),
+        ("Child Care Center", "center"),
+        ("Family Child Care", "family_home"),
+        ("Group Home", "group_home"),
+    ],
+)
 def test_connecticut_facility_category_mapping(provider_type, category):
     assert norm.facility_category_from_type(provider_type) == category
 
@@ -600,6 +622,7 @@ def test_field_collapse_covers_all_ct_source_fields():
 
 # --- closed() logging (plan Sec 10) ----------------------------------------- #
 
+
 def test_closed_warns_when_emitted_below_baseline(spider, caplog):
     spider.emitted = 100
     with caplog.at_level(logging.WARNING):
@@ -612,8 +635,7 @@ def test_closed_flushes_and_warns_on_leftover_pending(spider, caplog):
     spider.pending[999] = {"item": ProviderItem(), "outstanding": 1}
     with caplog.at_level(logging.WARNING):
         spider.closed("finished")
-    assert any("still pending at shutdown" in r.getMessage()
-              for r in caplog.records)
+    assert any("still pending at shutdown" in r.getMessage() for r in caplog.records)
 
 
 def test_closed_verify_audit_reports_gap(spider, caplog):
@@ -623,8 +645,7 @@ def test_closed_verify_audit_reports_gap(spider, caplog):
     spider.sweep_ids = {1, 2}  # 3 was found by the town search but not swept
     with caplog.at_level(logging.WARNING):
         spider.closed("finished")
-    assert any("gaps" not in r.getMessage() and "missed" in r.getMessage()
-              for r in caplog.records)
+    assert any("gaps" not in r.getMessage() and "missed" in r.getMessage() for r in caplog.records)
 
 
 def test_closed_verify_audit_clean_when_no_gap(spider, caplog):
@@ -640,22 +661,20 @@ def test_closed_verify_audit_clean_when_no_gap(spider, caplog):
 
 # --- optional -a verify=1 town-frontier audit (plan Sec 4.4) ---------------- #
 
+
 def test_parse_town_search_harvests_ids_no_new_towns(spider):
     spider.towns_queried.add("kent")
     payload = _load_fixture("ct_search_town_kent.json")
-    outputs = list(spider.parse_town_search(
-        town_search_response(payload, town="Kent")))
+    outputs = list(spider.parse_town_search(town_search_response(payload, town="Kent")))
     assert outputs == []  # every record's own town is "Kent" -- nothing new
-    assert spider.town_ids == {2491, 6315, 3588, 7558, 3337, 2675, 6243,
-                               1602, 1930}
+    assert spider.town_ids == {2491, 6315, 3588, 7558, 3337, 2675, 6243, 1602, 1930}
 
 
 def test_parse_town_search_discovers_new_town():
     spider = ConnecticutSpider()
     spider.towns_queried.add("someplace")
     payload = [{"id": 1, "town": "Newtown"}, {"id": 2, "town": "Someplace"}]
-    outputs = list(spider.parse_town_search(
-        town_search_response(payload, town="Someplace")))
+    outputs = list(spider.parse_town_search(town_search_response(payload, town="Someplace")))
     assert spider.town_ids == {1, 2}
     assert len(outputs) == 1
     assert "town=Newtown" in outputs[0].url
@@ -663,14 +682,18 @@ def test_parse_town_search_discovers_new_town():
 
 # --- Sec 10.1 follow-ups: zip padding, address suppression, report fallback - #
 
-@pytest.mark.parametrize("cleaned,expected", [
-    ("6516", "06516"),           # the lost leading zero (West Haven)
-    ("6516-1234", "06516-1234"),  # pad the base, leave the +4 alone
-    ("06516", "06516"),          # already 5 digits -- untouched
-    ("06825-1062", "06825-1062"),
-    ("", ""),
-    (None, None),
-])
+
+@pytest.mark.parametrize(
+    "cleaned,expected",
+    [
+        ("6516", "06516"),  # the lost leading zero (West Haven)
+        ("6516-1234", "06516-1234"),  # pad the base, leave the +4 alone
+        ("06516", "06516"),  # already 5 digits -- untouched
+        ("06825-1062", "06825-1062"),
+        ("", ""),
+        (None, None),
+    ],
+)
 def test_pad_zip_base(cleaned, expected):
     assert pad_zip_base(cleaned) == expected
 
@@ -679,19 +702,23 @@ def test_pad_zip_base_feeds_zip5():
     """A 4-digit source zip must survive as a real 5-digit zip, not be dropped."""
     assert zip5_from_clean(pad_zip_base("6516")) == "06516"
     # ...and the composed address carries the padded form too.
-    assert compose_address("17 Lattanzi St", "West Haven", pad_zip_base("6516")) \
-        == "17 Lattanzi St, West Haven, CT 06516"
+    assert (
+        compose_address("17 Lattanzi St", "West Haven", pad_zip_base("6516")) == "17 Lattanzi St, West Haven, CT 06516"
+    )
 
 
-@pytest.mark.parametrize("street,expected", [
-    ("This provider's address has been hidden", True),
-    ("this provider's address has been HIDDEN", True),
-    ("  This provider's   address has been hidden  ", True),
-    ("200 Bloomfield", False),
-    ("123 Main St", False),      # a placeholder, but not the sentinel
-    ("", False),
-    (None, False),
-])
+@pytest.mark.parametrize(
+    "street,expected",
+    [
+        ("This provider's address has been hidden", True),
+        ("this provider's address has been HIDDEN", True),
+        ("  This provider's   address has been hidden  ", True),
+        ("200 Bloomfield", False),
+        ("123 Main St", False),  # a placeholder, but not the sentinel
+        ("", False),
+        (None, False),
+    ],
+)
 def test_is_suppressed_address(street, expected):
     assert is_suppressed_address(street) is expected
 
@@ -718,37 +745,46 @@ def test_address_not_suppressed_flag_is_false(spider):
 def test_report_url_prefers_inspection_report():
     """An exact "Inspection Report" wins even when a follow-up doc is listed first."""
     insp = InspectionItem()
-    ConnecticutSpider._apply_inspection_detail(insp, {
-        "documents": [
-            {"description": "Follow-up Inspection Report", "link": "https://x/follow"},
-            {"description": "Inspection Report", "link": "https://x/main"},
-        ],
-    })
+    ConnecticutSpider._apply_inspection_detail(
+        insp,
+        {
+            "documents": [
+                {"description": "Follow-up Inspection Report", "link": "https://x/follow"},
+                {"description": "Inspection Report", "link": "https://x/main"},
+            ],
+        },
+    )
     assert insp["report_url"] == "https://x/main"
 
 
 def test_report_url_falls_back_to_followup():
     """A follow-up visit publishes only its own report -- use it (Sec 10.1)."""
     insp = InspectionItem()
-    ConnecticutSpider._apply_inspection_detail(insp, {
-        "documents": [
-            {"description": "Corrective Action Plan", "link": "https://x/cap"},
-            {"description": "Follow-up Inspection Report", "link": "https://x/follow"},
-        ],
-    })
+    ConnecticutSpider._apply_inspection_detail(
+        insp,
+        {
+            "documents": [
+                {"description": "Corrective Action Plan", "link": "https://x/cap"},
+                {"description": "Follow-up Inspection Report", "link": "https://x/follow"},
+            ],
+        },
+    )
     assert insp["report_url"] == "https://x/follow"
 
 
 def test_report_url_unset_when_no_report_document():
     """CAP / Legal Resolution / Addendum alone must not masquerade as the report."""
     insp = InspectionItem()
-    ConnecticutSpider._apply_inspection_detail(insp, {
-        "documents": [
-            {"description": "Corrective Action Plan", "link": "https://x/cap"},
-            {"description": "Legal Resolution", "link": "https://x/legal"},
-            {"description": "Inspection Report Addendum", "link": "https://x/add"},
-        ],
-    })
+    ConnecticutSpider._apply_inspection_detail(
+        insp,
+        {
+            "documents": [
+                {"description": "Corrective Action Plan", "link": "https://x/cap"},
+                {"description": "Legal Resolution", "link": "https://x/legal"},
+                {"description": "Inspection Report Addendum", "link": "https://x/add"},
+            ],
+        },
+    )
     assert "report_url" not in insp
     # every link is still reachable
     assert len(insp["ct_documents"]) == 3
@@ -756,17 +792,29 @@ def test_report_url_unset_when_no_report_document():
 
 # --- exception containment: one bad inspection must not cost the parent ---- #
 
+
 def _provider_with_two_inspections(spider):
     """Put one provider into `pending` with two outstanding inspections."""
     data = _load_fixture("ct_provider_center_rich.json")
-    data = dict(data, inspections=[
-        {"id": 901, "visited_on": "2025-01-02T00:00:00.000Z",
-         "visit_type": "UNANNOUNCED INSPECTION - FULL", "violations_count": 1,
-         "document_count": 1},
-        {"id": 902, "visited_on": "2025-03-04T00:00:00.000Z",
-         "visit_type": "Follow-Up Inspection", "violations_count": 0,
-         "document_count": 0},
-    ])
+    data = dict(
+        data,
+        inspections=[
+            {
+                "id": 901,
+                "visited_on": "2025-01-02T00:00:00.000Z",
+                "visit_type": "UNANNOUNCED INSPECTION - FULL",
+                "violations_count": 1,
+                "document_count": 1,
+            },
+            {
+                "id": 902,
+                "visited_on": "2025-03-04T00:00:00.000Z",
+                "visit_type": "Follow-Up Inspection",
+                "violations_count": 0,
+                "document_count": 0,
+            },
+        ],
+    )
     outputs = list(spider.parse_provider(provider_response(data, provider_id=772)))
     # the two detail Requests go out; the ProviderItem is held back
     assert [o for o in outputs if isinstance(o, ProviderItem)] == []
@@ -784,18 +832,20 @@ def test_raising_inspection_merge_still_emits_parent(spider, monkeypatch):
 
     monkeypatch.setattr(spider, "_merge_inspection_detail", boom)
     emitted = []
-    emitted += list(spider.parse_inspection_detail(
-        inspection_response({"id": 901}, provider_id=772, inspection_id=901)))
-    assert emitted == []            # still one outstanding, nothing emitted
-    emitted += list(spider.parse_inspection_detail(
-        inspection_response({"id": 902}, provider_id=772, inspection_id=902)))
+    emitted += list(
+        spider.parse_inspection_detail(inspection_response({"id": 901}, provider_id=772, inspection_id=901))
+    )
+    assert emitted == []  # still one outstanding, nothing emitted
+    emitted += list(
+        spider.parse_inspection_detail(inspection_response({"id": 902}, provider_id=772, inspection_id=902))
+    )
 
     # the parent survived both exceptions
     assert len(emitted) == 1
     item = emitted[0]
     assert item["ct_provider_id"] == 772
-    assert len(item["inspections"]) == 2      # summaries intact
-    assert spider.pending == {}               # nothing stranded
+    assert len(item["inspections"]) == 2  # summaries intact
+    assert spider.pending == {}  # nothing stranded
     assert spider.inspection_detail_failures == 2
 
 
@@ -803,14 +853,16 @@ def test_malformed_inspection_json_still_emits_parent(spider):
     """A non-JSON detail body is contained the same way."""
     _provider_with_two_inspections(spider)
     from scrapy.http import Request, TextResponse
+
     url = INSPECTION_URL.format(901)
     bad = TextResponse(
-        url=url, body=b"<html>gateway error</html>", encoding="utf-8",
+        url=url,
+        body=b"<html>gateway error</html>",
+        encoding="utf-8",
         request=Request(url, meta={"provider_id": 772, "inspection_id": 901}),
     )
     assert list(spider.parse_inspection_detail(bad)) == []
-    emitted = list(spider.parse_inspection_detail(
-        inspection_response({"id": 902}, provider_id=772, inspection_id=902)))
+    emitted = list(spider.parse_inspection_detail(inspection_response({"id": 902}, provider_id=772, inspection_id=902)))
     assert len(emitted) == 1
     assert spider.pending == {}
     assert spider.inspection_detail_failures == 1
@@ -819,10 +871,7 @@ def test_malformed_inspection_json_still_emits_parent(spider):
 def test_exception_is_logged_not_swallowed(spider, monkeypatch, caplog):
     """Containment must stay visible -- a silent drop would be worse."""
     _provider_with_two_inspections(spider)
-    monkeypatch.setattr(spider, "_merge_inspection_detail",
-                        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("x")))
+    monkeypatch.setattr(spider, "_merge_inspection_detail", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("x")))
     with caplog.at_level(logging.ERROR):
-        list(spider.parse_inspection_detail(
-            inspection_response({"id": 901}, provider_id=772, inspection_id=901)))
-    assert any("keeping the provider" in r.message or "keeping the provider" in r.getMessage()
-               for r in caplog.records)
+        list(spider.parse_inspection_detail(inspection_response({"id": 901}, provider_id=772, inspection_id=901)))
+    assert any("keeping the provider" in r.message or "keeping the provider" in r.getMessage() for r in caplog.records)

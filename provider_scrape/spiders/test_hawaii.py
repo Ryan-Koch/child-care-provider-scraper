@@ -161,9 +161,12 @@ def test_parse_search_subdivides_on_cap(spider):
     capped = {
         "hanaResponse": {
             "results": [
-                {"providerId": i, "providerType": "OR", "name": f"P{i}",
-                 "services": [{"serviceId": i, "serviceType": "03",
-                               "serviceName": f"S{i}", "area": "AG1"}]}
+                {
+                    "providerId": i,
+                    "providerType": "OR",
+                    "name": f"P{i}",
+                    "services": [{"serviceId": i, "serviceType": "03", "serviceName": f"S{i}", "area": "AG1"}],
+                }
                 for i in range(100)
             ]
         }
@@ -187,9 +190,12 @@ def test_parse_search_single_query_is_not_subdivided(spider):
     capped = {
         "hanaResponse": {
             "results": [
-                {"providerId": i, "providerType": "OR", "name": f"P{i}",
-                 "services": [{"serviceId": i, "serviceType": "03",
-                               "serviceName": f"S{i}", "area": "AG"}]}
+                {
+                    "providerId": i,
+                    "providerType": "OR",
+                    "name": f"P{i}",
+                    "services": [{"serviceId": i, "serviceType": "03", "serviceName": f"S{i}", "area": "AG"}],
+                }
                 for i in range(100)
             ]
         }
@@ -209,14 +215,26 @@ def test_parse_search_single_query_is_not_subdivided(spider):
 
 
 def test_format_address_or_includes_street():
-    addr = {"street1": "16-120 OPUKAHA IA STREET", "street2": None, "building": None,
-            "city": "KEAAU", "state": "HI", "zipCode": 96749}
+    addr = {
+        "street1": "16-120 OPUKAHA IA STREET",
+        "street2": None,
+        "building": None,
+        "city": "KEAAU",
+        "state": "HI",
+        "zipCode": 96749,
+    }
     assert format_address(addr, "OR") == "16-120 OPUKAHA IA STREET, KEAAU, HI 96749"
 
 
 def test_format_address_cg_suppresses_street():
-    addr = {"street1": "123 SECRET LN", "street2": None, "building": None,
-            "city": "HILO", "state": "HI", "zipCode": 96720}
+    addr = {
+        "street1": "123 SECRET LN",
+        "street2": None,
+        "building": None,
+        "city": "HILO",
+        "state": "HI",
+        "zipCode": 96720,
+    }
     result = format_address(addr, "CG")
     assert "SECRET" not in result
     assert result == "HILO, HI 96720"
@@ -366,11 +384,14 @@ def test_fill_contacts_handles_null_and_website(spider):
     assert item.get("email") is None
 
     item2 = ProviderItem()
-    spider._fill_contacts(item2, [
-        {"mode": "WW", "value": "https://example.com"},
-        {"mode": "EM", "value": "info@example.com"},
-        {"mode": "PH", "value": "NA8089354304"},
-    ])
+    spider._fill_contacts(
+        item2,
+        [
+            {"mode": "WW", "value": "https://example.com"},
+            {"mode": "EM", "value": "info@example.com"},
+            {"mode": "PH", "value": "NA8089354304"},
+        ],
+    )
     assert item2["provider_website"] == "https://example.com"
     assert item2["email"] == "info@example.com"
     assert item2["phone"] == "(808) 935-4304"
@@ -388,10 +409,15 @@ def test_convert_military_time():
 
 
 def test_format_hours_orders_days_and_handles_empty():
-    shifts = [{"shiftNumber": 1, "hours": [
-        {"weekdayNumber": 6, "startTime": 730, "endTime": 1530},
-        {"weekdayNumber": 2, "startTime": 730, "endTime": 1530},
-    ]}]
+    shifts = [
+        {
+            "shiftNumber": 1,
+            "hours": [
+                {"weekdayNumber": 6, "startTime": 730, "endTime": 1530},
+                {"weekdayNumber": 2, "startTime": 730, "endTime": 1530},
+            ],
+        }
+    ]
     assert format_hours(shifts) == "Mon 7:30 AM - 3:30 PM; Fri 7:30 AM - 3:30 PM"
     assert format_hours([]) is None
     assert format_hours(None) is None
@@ -401,10 +427,14 @@ def test_format_hours_orders_days_and_handles_empty():
 
 
 def test_code_table_map_falls_back_to_code():
-    table = {"hanaResponse": {"codeTableRows": [
-        {"code": "BR", "description": "Breakfast"},
-        {"code": "XX", "description": None},
-    ]}}
+    table = {
+        "hanaResponse": {
+            "codeTableRows": [
+                {"code": "BR", "description": "Breakfast"},
+                {"code": "XX", "description": None},
+            ]
+        }
+    }
     mapping = code_table_map(table)
     assert mapping["BR"] == "Breakfast"
     # Null description falls back to the raw code.
@@ -499,9 +529,7 @@ def test_parse_inspections_warm_cache_counts_embedded_and_fetches_rest(spider):
     assert state["pending"] == 1
 
     # Resolving the outstanding visit-detail fetch sets the count and emits.
-    resp = _text_response(
-        request.url, json.dumps(_visit_detail_payload(2)), meta=request.meta
-    )
+    resp = _text_response(request.url, json.dumps(_visit_detail_payload(2)), meta=request.meta)
     out2 = list(spider.parse_visit_detail(resp))
     assert out2 == [item]
     assert inspections[14341]["hi_requirements_not_met"] == 2
@@ -560,13 +588,24 @@ def test_parse_inspection_list_dispatches_a_visit_detail_fetch_per_visit(spider)
     item["hi_service_id"] = 34
     item["inspections"] = []
     payload = _list_payload(
-        {"visitId": 15516, "visitType": "LR", "visitDate": "2024-10-15",
-         "licensingPeriodStart": "2024-11-20", "licensingPeriodEnd": "2026-10-31"},
-        {"visitId": 20542, "visitType": "LO", "visitDate": "2025-10-13",
-         "licensingPeriodStart": "2024-11-01", "licensingPeriodEnd": "2026-10-31"},
+        {
+            "visitId": 15516,
+            "visitType": "LR",
+            "visitDate": "2024-10-15",
+            "licensingPeriodStart": "2024-11-20",
+            "licensingPeriodEnd": "2026-10-31",
+        },
+        {
+            "visitId": 20542,
+            "visitType": "LO",
+            "visitDate": "2025-10-13",
+            "licensingPeriodStart": "2024-11-01",
+            "licensingPeriodEnd": "2026-10-31",
+        },
     )
     resp = _text_response(
-        "https://prod-26.usgovtexas.logic.azure.us/x", json.dumps(payload),
+        "https://prod-26.usgovtexas.logic.azure.us/x",
+        json.dumps(payload),
         meta={"partial_item": item},
     )
     out = list(spider.parse_inspection_list(resp))
@@ -615,9 +654,7 @@ def test_visit_detail_errback_emits_item_when_last(spider):
     state = {"item": item, "pending": 1}
 
     class _Failure:
-        request = Request(
-            url="https://x", meta={"state": state, "inspection": inspection}
-        )
+        request = Request(url="https://x", meta={"state": state, "inspection": inspection})
 
     out = list(spider.visit_detail_errback(_Failure()))
     assert out == [item]
@@ -630,7 +667,8 @@ def test_parse_inspection_list_handles_error_response(spider):
     item["inspections"] = []
     payload = {"hanaResponseStatus": {"responseCode": 500}, "hanaResponse": {}}
     resp = _text_response(
-        "https://prod-26.usgovtexas.logic.azure.us/x", json.dumps(payload),
+        "https://prod-26.usgovtexas.logic.azure.us/x",
+        json.dumps(payload),
         meta={"partial_item": item},
     )
     out = list(spider.parse_inspection_list(resp))
@@ -659,8 +697,7 @@ def test_fill_details_maps_populated_accreditations(spider):
         "meals": [],
         # Accreditations are dicts keyed by accreditationType, with dates.
         "accreditations": [
-            {"accreditationType": "02", "effectiveDate": "2021-10-31",
-             "expirationDate": "2027-10-31"},
+            {"accreditationType": "02", "effectiveDate": "2021-10-31", "expirationDate": "2027-10-31"},
             {"accreditationType": "99", "effectiveDate": None, "expirationDate": None},
         ],
         "shifts": [],

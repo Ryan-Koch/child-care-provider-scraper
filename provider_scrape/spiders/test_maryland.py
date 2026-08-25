@@ -1,26 +1,26 @@
 import json
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 import pytest
 import scrapy
 from scrapy.http import HtmlResponse, Request, TextResponse
+from twisted.python.failure import Failure
+
+from provider_scrape.items import ProviderItem
 from provider_scrape.spiders.maryland import (
-    MarylandSpider,
-    extract_address_from_pdf,
-    MAX_NAV_ATTEMPTS,
-    MAX_CHAIN_RESTARTS,
-    MAX_DETAIL_REPRIMES,
-    STALL_ALERT_WINDOWS,
-    STALL_CLOSE_WINDOWS,
-    RESULTS_PRIORITY,
+    DETAIL_COOKIEJAR,
     DETAIL_DOWNLOAD_TIMEOUT,
     EXCELS_DOWNLOAD_TIMEOUT,
-    DETAIL_COOKIEJAR,
+    MAX_CHAIN_RESTARTS,
+    MAX_DETAIL_REPRIMES,
+    MAX_NAV_ATTEMPTS,
+    RESULTS_PRIORITY,
     SEARCH_RESULTS_REFERER,
+    STALL_ALERT_WINDOWS,
+    STALL_CLOSE_WINDOWS,
+    MarylandSpider,
 )
-from types import SimpleNamespace
-from twisted.python.failure import Failure
-from provider_scrape.items import ProviderItem
-from unittest.mock import Mock, patch
 
 
 @pytest.fixture
@@ -32,13 +32,9 @@ def spider():
 
 def _excels_response(data, license_number="150301"):
     """Build a TextResponse mimicking the EXCELS search?license= endpoint."""
-    request = Request(
-        url=f"https://findaprogram.marylandexcels.org/api/fap/search?license={license_number}"
-    )
+    request = Request(url=f"https://findaprogram.marylandexcels.org/api/fap/search?license={license_number}")
     body = json.dumps({"statusCode": 200, "data": data})
-    return TextResponse(
-        url=request.url, body=body, encoding="utf-8", request=request
-    )
+    return TextResponse(url=request.url, body=body, encoding="utf-8", request=request)
 
 
 DETAIL_HTML = """
@@ -200,16 +196,16 @@ def test_parse_detail_page_chains_to_excels(spider):
     request = Request(
         url="https://www.checkccmd.org/FacilityDetail.aspx?ft=&fn=&sn=&z=&c=&co=&lc=&fi=134978",
     )
-    response = HtmlResponse(
-        url=request.url, body=DETAIL_HTML, encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=DETAIL_HTML, encoding="utf-8", request=request)
 
-    results = list(spider.parse_detail(
-        response,
-        address="N Howard Street, Baltimore, MD 21201",
-        school_name="Lincoln Elementary",
-        program_type="CTR",
-    ))
+    results = list(
+        spider.parse_detail(
+            response,
+            address="N Howard Street, Baltimore, MD 21201",
+            school_name="Lincoln Elementary",
+            program_type="CTR",
+        )
+    )
 
     # Should yield a Request to the EXCELS API for the provider's license
     assert len(results) == 1
@@ -253,9 +249,7 @@ def test_parse_detail_page_inspections(spider):
     request = Request(
         url="https://www.checkccmd.org/FacilityDetail.aspx?fi=134978",
     )
-    response = HtmlResponse(
-        url=request.url, body=DETAIL_HTML, encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=DETAIL_HTML, encoding="utf-8", request=request)
 
     results = list(spider.parse_detail(response))
     # parse_detail now yields an EXCELS enrichment Request; the item (with its
@@ -288,9 +282,7 @@ def test_parse_detail_page_inspections(spider):
 def test_parse_results_page(spider):
     """Test extracting provider links, row data, and pagination from the results page."""
     request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
-    response = HtmlResponse(
-        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request)
 
     results = list(spider.parse_results(response, county_key="TestCounty"))
 
@@ -335,9 +327,7 @@ def test_parse_results_page(spider):
 def test_parse_results_deduplicates_on_reprocess(spider):
     """Test that reprocessing the same results page skips duplicate detail/pagination."""
     request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
-    response = HtmlResponse(
-        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request)
 
     # First call processes normally (page 1)
     results1 = list(spider.parse_results(response, county_key="TestCounty"))
@@ -361,9 +351,7 @@ def test_parse_results_self_heals_stale_postback(spider):
         url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
     )
 
-    results = list(
-        spider.parse_results(response, county_key="TestCounty", expected_page=2)
-    )
+    results = list(spider.parse_results(response, county_key="TestCounty", expected_page=2))
 
     # Exactly one re-navigation request, no detail items, page 1 not parsed.
     assert len(results) == 1
@@ -377,9 +365,7 @@ def test_parse_results_self_heals_stale_postback(spider):
 def test_parse_results_tracks_declared_and_found_counts(spider):
     """parse_results records the declared total and tallies rows found per county."""
     request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
-    response = HtmlResponse(
-        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request)
 
     list(spider.parse_results(response, county_key="TestCounty"))
 
@@ -427,9 +413,7 @@ def test_closed_reports_item_shortfall(spider, caplog):
     spider.declared_total_by_county = {"Kent County": 35, "Garrett County": 44}
     spider.found_count_by_county = {"Kent County": 35, "Garrett County": 44}
     # Only 10 of the 79 declared providers actually became items.
-    spider.crawler = SimpleNamespace(
-        stats=SimpleNamespace(get_value=lambda key, default=None: 10)
-    )
+    spider.crawler = SimpleNamespace(stats=SimpleNamespace(get_value=lambda key, default=None: 10))
 
     with caplog.at_level("INFO"):
         spider.closed("finished")
@@ -446,9 +430,7 @@ def test_closed_no_item_shortfall_when_items_meet_declared(spider, caplog):
     """When scraped items meet the declared total, no item-shortfall error fires."""
     spider.declared_total_by_county = {"Kent County": 35, "Garrett County": 44}
     spider.found_count_by_county = {"Kent County": 35, "Garrett County": 44}
-    spider.crawler = SimpleNamespace(
-        stats=SimpleNamespace(get_value=lambda key, default=None: 80)
-    )
+    spider.crawler = SimpleNamespace(stats=SimpleNamespace(get_value=lambda key, default=None: 80))
 
     with caplog.at_level("INFO"):
         spider.closed("finished")
@@ -470,9 +452,7 @@ def test_check_stall_fires_after_consecutive_no_progress_windows(spider, caplog)
     spider._stall_last_progress = 50 + 3351  # pages + items from the prior tick
     # One window short of the alert threshold; this call reaches it.
     spider._stall_windows = STALL_ALERT_WINDOWS - 1
-    spider.crawler = SimpleNamespace(
-        stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 3351})
-    )
+    spider.crawler = SimpleNamespace(stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 3351}))
 
     with caplog.at_level("ERROR"):
         spider._check_stall()
@@ -487,9 +467,7 @@ def test_check_stall_fires_when_frozen_with_no_responses(spider, caplog):
     spider._stall_last_progress = 100 + 423
     spider._stall_windows = STALL_ALERT_WINDOWS - 1
     # Responses did NOT advance (d_resp == 0) — the earlier watchdog missed this.
-    spider.crawler = SimpleNamespace(
-        stats=_stats_from({"response_received_count": 1613, "item_scraped_count": 423})
-    )
+    spider.crawler = SimpleNamespace(stats=_stats_from({"response_received_count": 1613, "item_scraped_count": 423}))
 
     with caplog.at_level("ERROR"):
         spider._check_stall()
@@ -546,9 +524,7 @@ def test_check_stall_single_window_does_not_fire(spider, caplog):
     spider._stall_last_responses = 0
     spider._stall_last_progress = 0
     spider._stall_windows = 0
-    spider.crawler = SimpleNamespace(
-        stats=_stats_from({"response_received_count": 18, "item_scraped_count": 0})
-    )
+    spider.crawler = SimpleNamespace(stats=_stats_from({"response_received_count": 18, "item_scraped_count": 0}))
 
     with caplog.at_level("ERROR"):
         spider._check_stall()
@@ -563,9 +539,7 @@ def test_check_stall_resets_counter_on_progress(spider, caplog):
     spider._stall_last_responses = 8000
     spider._stall_last_progress = 50 + 3351
     spider._stall_windows = STALL_ALERT_WINDOWS - 1  # was nearly at threshold
-    spider.crawler = SimpleNamespace(
-        stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 3351})
-    )
+    spider.crawler = SimpleNamespace(stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 3351}))
 
     with caplog.at_level("ERROR"):
         spider._check_stall()
@@ -580,9 +554,7 @@ def test_check_stall_quiet_when_items_advance(spider, caplog):
     spider._stall_last_responses = 8000
     spider._stall_last_progress = 50 + 3351
     spider._stall_windows = STALL_ALERT_WINDOWS - 1
-    spider.crawler = SimpleNamespace(
-        stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 3400})
-    )
+    spider.crawler = SimpleNamespace(stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 3400}))
 
     with caplog.at_level("ERROR"):
         spider._check_stall()
@@ -641,9 +613,7 @@ def test_check_stall_single_degraded_window_does_not_warn(spider, caplog):
     spider._stall_last_progress = 50 + 400
     spider._slow_windows = 0
     spider._stall_windows = 0
-    spider.crawler = SimpleNamespace(
-        stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 402})
-    )
+    spider.crawler = SimpleNamespace(stats=_stats_from({"response_received_count": 8020, "item_scraped_count": 402}))
 
     with caplog.at_level("WARNING"):
         spider._check_stall()
@@ -664,23 +634,15 @@ def test_detail_timeout_arg_flows_to_detail_requests():
     s = MarylandSpider(proxies="off", detail_timeout="90")
     assert s.detail_timeout == 90.0
     request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
-    response = HtmlResponse(
-        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
-    )
-    details = [
-        r
-        for r in s.parse_results(response, county_key="TestCounty")
-        if not isinstance(r, scrapy.FormRequest)
-    ]
+    response = HtmlResponse(url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request)
+    details = [r for r in s.parse_results(response, county_key="TestCounty") if not isinstance(r, scrapy.FormRequest)]
     assert details
     assert all(d.meta["download_timeout"] == 90.0 for d in details)
 
 
 def test_pool_built_from_inline_endpoints():
     """`-a proxies="h:p,h:p"` builds a pool without needing an env file."""
-    s = MarylandSpider(
-        proxies="1.1.1.1:80,2.2.2.2:81", proxy_env="/nonexistent.env"
-    )
+    s = MarylandSpider(proxies="1.1.1.1:80,2.2.2.2:81", proxy_env="/nonexistent.env")
     assert s.proxy_pool is not None
     assert len(s.proxy_pool) == 2
 
@@ -690,9 +652,7 @@ def test_log_run_mode_reports_pool(caplog):
     s = MarylandSpider(proxies="1.1.1.1:80,2.2.2.2:81", proxy_env="/nonexistent.env")
     with caplog.at_level("INFO"):
         s._log_run_mode()
-    assert "proxy pool ENABLED — 2 egress IPs" in "\n".join(
-        r.message for r in caplog.records
-    )
+    assert "proxy pool ENABLED — 2 egress IPs" in "\n".join(r.message for r in caplog.records)
 
 
 def test_log_run_mode_reports_single_ip(caplog):
@@ -738,9 +698,7 @@ def test_parse_shards_by_facility_type(spider):
     piling every 'Homes' onto one IP.
     """
     request = Request(url="https://www.checkccmd.org/")
-    response = HtmlResponse(
-        url=request.url, body=SEARCH_PAGE_HTML, encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=SEARCH_PAGE_HTML, encoding="utf-8", request=request)
 
     reqs = list(spider.parse(response))
 
@@ -767,9 +725,7 @@ def test_parse_county_search_submits_single_facility_type(spider):
     spider._license_statuses = ["Open"]
     spider._cities = ["CityA"]
     request = Request(url="https://www.checkccmd.org/")
-    response = HtmlResponse(
-        url=request.url, body=SEARCH_FORM_HTML, encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=SEARCH_FORM_HTML, encoding="utf-8", request=request)
 
     reqs = list(
         spider.parse_county_search(
@@ -832,9 +788,7 @@ def test_parse_results_splits_oversized_shard_by_status(spider):
 def test_parse_results_status_subshard_not_split(spider):
     """A status sub-shard (allow_split=False) paginates normally, never re-splits."""
     request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
-    response = HtmlResponse(
-        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request)
 
     reqs = list(
         spider.parse_results(
@@ -858,9 +812,7 @@ def test_parse_results_small_shard_not_split(spider):
     spider._license_status_options = [("Open", "Open")]
     small_html = RESULTS_HTML.replace("8476", "42")
     request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
-    response = HtmlResponse(
-        url=request.url, body=small_html, encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=small_html, encoding="utf-8", request=request)
 
     reqs = list(
         spider.parse_results(
@@ -881,9 +833,7 @@ def test_parse_results_small_shard_not_split(spider):
 def test_detail_requests_carry_no_proxy_affinity(spider):
     """Detail GETs rotate across the pool, so they must not pin to a proxy."""
     request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
-    response = HtmlResponse(
-        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request)
     results = list(spider.parse_results(response, county_key="TestCounty"))
     detail_requests = [r for r in results if not isinstance(r, scrapy.FormRequest)]
     assert detail_requests
@@ -897,9 +847,7 @@ def test_pagination_request_pins_proxy_affinity_to_county(spider):
     response = HtmlResponse(  # renders as page 1; expected_page=2 -> re-navigation
         url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
     )
-    results = list(
-        spider.parse_results(response, county_key="TestCounty", expected_page=2)
-    )
+    results = list(spider.parse_results(response, county_key="TestCounty", expected_page=2))
     renav = results[0]
     assert isinstance(renav, scrapy.FormRequest)
     assert renav.meta["proxy_affinity"] == "TestCounty"
@@ -908,22 +856,16 @@ def test_pagination_request_pins_proxy_affinity_to_county(spider):
 def test_pagination_gives_up_after_max_nav_attempts(spider, caplog):
     """Repeated stale postbacks for one page are capped, not looped forever."""
     request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
-    response = HtmlResponse(
-        url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request)
 
     # Pretend page 2 has already been attempted the maximum number of times.
     spider.nav_attempts_by_county["TestCounty"] = {2: MAX_NAV_ATTEMPTS}
 
-    results = list(
-        spider.parse_results(response, county_key="TestCounty", expected_page=2)
-    )
+    results = list(spider.parse_results(response, county_key="TestCounty", expected_page=2))
 
     # No further navigation is issued; the give-up is surfaced at ERROR.
     assert results == []
-    assert any(
-        "gave up navigating to page 2" in r.message for r in caplog.records
-    )
+    assert any("gave up navigating to page 2" in r.message for r in caplog.records)
 
 
 def _failed_pagination_failure(county="Baltimore County", page=58, retry_times=10):
@@ -965,19 +907,14 @@ def test_pagination_errback_gives_up_after_max_restarts(spider, caplog):
     out = spider._pagination_errback(failure)
 
     assert out is None
-    assert any(
-        "exhausted" in r.message and "truncated" in r.message
-        for r in caplog.records
-    )
+    assert any("exhausted" in r.message and "truncated" in r.message for r in caplog.records)
 
 
 def test_parse_detail_page_missing_data(spider):
     """Test handling a detail page with no provider data yields item directly."""
     html_content = "<html><body><div>No data here</div></body></html>"
     request = Request(url="https://www.checkccmd.org/FacilityDetail.aspx?fi=999999")
-    response = HtmlResponse(
-        url=request.url, body=html_content, encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=html_content, encoding="utf-8", request=request)
 
     results = list(spider.parse_detail(response))
     # No inspections, so yields item directly (not a Request)
@@ -1013,9 +950,7 @@ def test_parse_detail_page_no_inspections(spider):
     </body></html>
     """
     request = Request(url="https://www.checkccmd.org/FacilityDetail.aspx?fi=999999")
-    response = HtmlResponse(
-        url=request.url, body=html_content, encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=html_content, encoding="utf-8", request=request)
 
     results = list(spider.parse_detail(response))
     # Numeric license -> parse_detail chains to the EXCELS request; the fully
@@ -1065,15 +1000,15 @@ def test_parse_detail_non_operating(spider):
     request = Request(
         url="https://www.checkccmd.org/FacilityDetail.aspx?fi=570530",
     )
-    response = HtmlResponse(
-        url=request.url, body=NON_OPERATING_HTML, encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=NON_OPERATING_HTML, encoding="utf-8", request=request)
 
-    results = list(spider.parse_detail(
-        response,
-        address="Harmans Road, Hanover, MD 21076",
-        program_type="FCCH",
-    ))
+    results = list(
+        spider.parse_detail(
+            response,
+            address="Harmans Road, Hanover, MD 21076",
+            program_type="FCCH",
+        )
+    )
 
     # Non-operating provider still has a numeric license -> EXCELS request.
     assert len(results) == 1
@@ -1102,9 +1037,7 @@ def test_parse_detail_drops_loudly_when_unrecoverable(spider, caplog):
     """
     html_content = "<html><body>Search form</body></html>"
     request = Request(url="https://www.checkccmd.org/")
-    response = HtmlResponse(
-        url=request.url, body=html_content, encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=html_content, encoding="utf-8", request=request)
 
     with caplog.at_level("ERROR"):
         results = list(spider.parse_detail(response))
@@ -1120,21 +1053,15 @@ def test_parse_detail_reissues_on_session_bounce(spider, caplog):
     original detail URL is preserved in ``redirect_urls``. The spider re-issues
     that fi on the shared detail jar with the SearchResults referer restored.
     """
-    detail_url = (
-        "https://www.checkccmd.org/FacilityDetail.aspx?ft=&fn=&sn=&z=&c=&co=&lc=&fi=463466"
-    )
+    detail_url = "https://www.checkccmd.org/FacilityDetail.aspx?ft=&fn=&sn=&z=&c=&co=&lc=&fi=463466"
     request = Request(
         url="https://www.checkccmd.org/default.aspx",
         meta={"redirect_urls": [detail_url], "cookiejar": DETAIL_COOKIEJAR},
     )
-    response = HtmlResponse(
-        url=request.url, body=b"<html>search</html>", encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=b"<html>search</html>", encoding="utf-8", request=request)
 
     with caplog.at_level("WARNING"):
-        results = list(
-            spider.parse_detail(response, address="A St", program_type="CTR")
-        )
+        results = list(spider.parse_detail(response, address="A St", program_type="CTR"))
 
     assert len(results) == 1
     retry = results[0]
@@ -1161,9 +1088,7 @@ def test_parse_detail_gives_up_after_max_reprimes(spider, caplog):
             "detail_reprimes": MAX_DETAIL_REPRIMES,
         },
     )
-    response = HtmlResponse(
-        url=request.url, body=b"<html>search</html>", encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=b"<html>search</html>", encoding="utf-8", request=request)
 
     with caplog.at_level("ERROR"):
         results = list(spider.parse_detail(response))
@@ -1184,9 +1109,7 @@ async def test_parse_inspection_pdf_updates_address(spider):
         return_value="325 N Howard Street, Baltimore, MD 21201",
     ):
         request = Request(url="https://www.checkccmd.org/PublicReports/PrintTask.aspx?t=526&d=3384")
-        response = HtmlResponse(
-            url=request.url, body=b"fake pdf bytes", encoding="utf-8", request=request
-        )
+        response = HtmlResponse(url=request.url, body=b"fake pdf bytes", encoding="utf-8", request=request)
         results = [item async for item in spider.parse_inspection_pdf(response, item=item)]
 
     assert len(results) == 1
@@ -1215,11 +1138,7 @@ def test_parse_excels_center_hit_sets_address_and_coords(spider):
     item["address"] = "N Howard Street, Baltimore, MD 21201"  # street-name only
 
     response = _excels_response([EXCELS_RECORD])
-    results = list(
-        spider.parse_excels(
-            response, item=item, first_report_url="https://www.checkccmd.org/x.pdf"
-        )
-    )
+    results = list(spider.parse_excels(response, item=item, first_report_url="https://www.checkccmd.org/x.pdf"))
 
     # No PDF request — the house-numbered EXCELS address satisfied the need.
     assert len(results) == 1
@@ -1280,12 +1199,9 @@ def test_parse_excels_family_home_no_report_keeps_coords(spider):
     item["license_number"] = "150301"
     item["address"] = "Roundhill Road, Ellicott City, MD 21043"
 
-    record = dict(EXCELS_RECORD, streetAddress="Roundhill Road",
-                  lat=39.24, long=-76.78)
+    record = dict(EXCELS_RECORD, streetAddress="Roundhill Road", lat=39.24, long=-76.78)
     response = _excels_response([record])
-    results = list(
-        spider.parse_excels(response, item=item, first_report_url=None)
-    )
+    results = list(spider.parse_excels(response, item=item, first_report_url=None))
 
     assert len(results) == 1
     assert results[0] is item
@@ -1327,9 +1243,7 @@ def test_parse_excels_miss_without_report_yields_item(spider):
     item["address"] = "Some Street, Baltimore, MD 21201"
 
     response = _excels_response([], license_number="999999")
-    results = list(
-        spider.parse_excels(response, item=item, first_report_url=None)
-    )
+    results = list(spider.parse_excels(response, item=item, first_report_url=None))
 
     assert len(results) == 1
     assert results[0] is item
@@ -1394,9 +1308,7 @@ async def test_parse_inspection_pdf_keeps_fallback_on_ocr_failure(spider):
         return_value=None,
     ):
         request = Request(url="https://www.checkccmd.org/PublicReports/PrintTask.aspx?t=526&d=3384")
-        response = HtmlResponse(
-            url=request.url, body=b"bad pdf", encoding="utf-8", request=request
-        )
+        response = HtmlResponse(url=request.url, body=b"bad pdf", encoding="utf-8", request=request)
         results = [item async for item in spider.parse_inspection_pdf(response, item=item)]
 
     assert len(results) == 1

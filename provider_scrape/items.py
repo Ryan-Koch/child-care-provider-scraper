@@ -58,19 +58,19 @@ class InspectionItem(scrapy.Item):
 
     # Alaska specific inspection fields (AKCCIS
     # GetFacilityInspectionTasksPublicView -- see docs/alaska_field_mapping.md).
-    ak_visit_type = scrapy.Field()          # "Announced" | "Unannounced"
+    ak_visit_type = scrapy.Field()  # "Announced" | "Unannounced"
     ak_licensing_specialist = scrapy.Field()
 
     # Wisconsin specific inspection fields (childcarefinder.wisconsin.gov).
     # The detail page publishes three tables; each row becomes one
     # InspectionItem discriminated by `type` ("Monitoring" | "Enforcement" |
     # "Violation").
-    wi_rule_number = scrapy.Field()          # admin-code cite, e.g. "251.055(1)(a)"
-    wi_rule_summary = scrapy.Field()         # e.g. "Supervision Of Children"
-    wi_description = scrapy.Field()          # violation / enforcement narrative
-    wi_enforcement_type = scrapy.Field()     # "Orders Letter" | "Warning Letter" | ...
-    wi_appeal = scrapy.Field()               # "Yes" | "No"
-    wi_decision = scrapy.Field()             # enforcement appeal decision
+    wi_rule_number = scrapy.Field()  # admin-code cite, e.g. "251.055(1)(a)"
+    wi_rule_summary = scrapy.Field()  # e.g. "Supervision Of Children"
+    wi_description = scrapy.Field()  # violation / enforcement narrative
+    wi_enforcement_type = scrapy.Field()  # "Orders Letter" | "Warning Letter" | ...
+    wi_appeal = scrapy.Field()  # "Yes" | "No"
+    wi_decision = scrapy.Field()  # enforcement appeal decision
     wi_correction_plan_url = scrapy.Field()  # monitoring "View Correction Plan" doc
 
     # Indiana specific inspection fields (secure.in.gov providersearch JSON API).
@@ -78,11 +78,11 @@ class InspectionItem(scrapy.Item):
     # (centerRule.code/description) and a non-compliance narrative are present
     # only on visits that recorded a violation -- clean visits carry just the
     # survey date, department, and the health-violation flag.
-    in_rule_code = scrapy.Field()            # e.g. "470 IAC 3-4.7-100(e)"
-    in_rule_description = scrapy.Field()      # centerRule.description
-    in_noncompliance = scrapy.Field()         # noncomplianceStatement narrative
-    in_is_health_violation = scrapy.Field()   # bool
-    in_correction_date = scrapy.Field()       # date the non-compliance was corrected
+    in_rule_code = scrapy.Field()  # e.g. "470 IAC 3-4.7-100(e)"
+    in_rule_description = scrapy.Field()  # centerRule.description
+    in_noncompliance = scrapy.Field()  # noncomplianceStatement narrative
+    in_is_health_violation = scrapy.Field()  # bool
+    in_correction_date = scrapy.Field()  # date the non-compliance was corrected
 
     # Kansas specific inspection fields (khap.kdhe.ks.gov OIDS). Each licensing
     # or complaint survey row becomes one InspectionItem (`type` = "Licensing
@@ -90,28 +90,28 @@ class InspectionItem(scrapy.Item):
     # Survey ID can produce several NOSF rows with different findings counts
     # (see kansas_plan.md Sec 2.5). Administrative order rows are a third
     # discriminated `type` ("Administrative Order") with their own fields.
-    ks_survey_id = scrapy.Field()             # Survey ID -- NOT unique per row
-    ks_nosf_id = scrapy.Field()               # NOSF ID -- the true row key
-    ks_survey_number = scrapy.Field()         # e.g. "25-005368"
-    ks_survey_reason = scrapy.Field()         # "Annual Survey" / "Initial Survey" / ...
-    ks_findings_count = scrapy.Field()        # numerator of "View Findings (3/568)"
+    ks_survey_id = scrapy.Field()  # Survey ID -- NOT unique per row
+    ks_nosf_id = scrapy.Field()  # NOSF ID -- the true row key
+    ks_survey_number = scrapy.Field()  # e.g. "25-005368"
+    ks_survey_reason = scrapy.Field()  # "Annual Survey" / "Initial Survey" / ...
+    ks_findings_count = scrapy.Field()  # numerator of "View Findings (3/568)"
     ks_regulations_reviewed = scrapy.Field()  # denominator of "View Findings (3/568)"
-    ks_survey_template_url = scrapy.Field()   # blank-template link (claris.kdhe.state.ks.us)
-    ks_facility_response = scrapy.Field()     # "No Response" / "Facility Response" / "Not Received"
-    ks_order_number = scrapy.Field()          # administrative order Number
-    ks_order_type = scrapy.Field()            # e.g. "Intent to Assess Civil Fine"
-    ks_order_reason = scrapy.Field()          # order Reason (often blank)
-    ks_order_final_status = scrapy.Field()    # e.g. "Appeal not filed order is final"
+    ks_survey_template_url = scrapy.Field()  # blank-template link (claris.kdhe.state.ks.us)
+    ks_facility_response = scrapy.Field()  # "No Response" / "Facility Response" / "Not Received"
+    ks_order_number = scrapy.Field()  # administrative order Number
+    ks_order_type = scrapy.Field()  # e.g. "Intent to Assess Civil Fine"
+    ks_order_reason = scrapy.Field()  # order Reason (often blank)
+    ks_order_final_status = scrapy.Field()  # e.g. "Appeal not filed order is final"
     # Findings-tier detail (opt-in, `-a findings=1`): K.A.R. citation +
     # "Description :" narrative pairs from OIDS_ViewFacilityFindings.aspx.
-    ks_findings = scrapy.Field()              # [{regulation, description}]
+    ks_findings = scrapy.Field()  # [{regulation, description}]
 
     # Kentucky specific inspection fields (kynect.ky.gov). Each row of the
     # provider's KICCS inspection history; `ky_poc_id` is present only on the
     # subset that produced a plan of correction.
-    ky_inspection_id = scrapy.Field()   # KICCS InspectionId
-    ky_report_name = scrapy.Field()     # form id, e.g. "KID013A"
-    ky_poc_id = scrapy.Field()          # Plan-of-Correction id
+    ky_inspection_id = scrapy.Field()  # KICCS InspectionId
+    ky_report_name = scrapy.Field()  # form id, e.g. "KID013A"
+    ky_poc_id = scrapy.Field()  # Plan-of-Correction id
 
     # Connecticut specific inspection fields (www.211childcare.org). Each
     # entry of a provider's embedded `inspections[]` becomes one InspectionItem
@@ -119,21 +119,21 @@ class InspectionItem(scrapy.Item):
     # `ct_documents`/`report_url` are filled in only by the Phase 3 detail
     # fan-out to /inspections/{id}.json (default on, `-a violations=0` to
     # skip -- see connecticut_plan.md Sec 4.3/6.3).
-    ct_inspection_id = scrapy.Field()     # the /inspections/{id} key
-    ct_case_uid = scrapy.Field()          # CT OEC case id
+    ct_inspection_id = scrapy.Field()  # the /inspections/{id} key
+    ct_case_uid = scrapy.Field()  # CT OEC case id
     ct_inspection_status = scrapy.Field()  # "CLOSED" (97%) / "PENDING"
-    ct_severity = scrapy.Field()          # "Low" / "High" / "N/A" / "PENDING"
+    ct_severity = scrapy.Field()  # "Low" / "High" / "N/A" / "PENDING"
     ct_reason = scrapy.Field()
     ct_resolution = scrapy.Field()
     ct_violations_count = scrapy.Field()  # int, 0 on ~35% of inspections
-    ct_document_count = scrapy.Field()    # int, 0 on ~7% of inspections
+    ct_document_count = scrapy.Field()  # int, 0 on ~7% of inspections
     # [{regulation, category, statute}] -- NOTE the source API's own field
     # names are swapped: `description` holds the regulation cite and
     # `statute` holds the requirement text (Sec 6.3). Unset when
     # ct_violations_count is 0 (the API still returns a "No Violations"
     # sentinel row in that case, which is deliberately filtered out).
     ct_violations = scrapy.Field()
-    ct_documents = scrapy.Field()         # [{description, document_type, visited_on, link}]
+    ct_documents = scrapy.Field()  # [{description, document_type, visited_on, link}]
 
     # Delaware specific inspection fields (data.delaware.gov Socrata). Two
     # discriminated kinds share the `inspections` list, told apart by `type`:
@@ -148,11 +148,11 @@ class InspectionItem(scrapy.Item):
     # produces no row at all, so de_violation_count is >= 1 by construction
     # and the visit list is not a complete inspection history
     # (delaware_plan.md Sec 6.3).
-    de_violation_count = scrapy.Field()   # int, always >= 1
-    de_violations = scrapy.Field()        # [{regulation_code, description,
-                                          #   corrective_action, correction_status,
-                                          #   correction_due, corrected_date,
-                                          #   how_corrected}]
+    de_violation_count = scrapy.Field()  # int, always >= 1
+    de_violations = scrapy.Field()  # [{regulation_code, description,
+    #   corrective_action, correction_status,
+    #   correction_due, corrected_date,
+    #   how_corrected}]
     de_investigation_conclusion = scrapy.Field()  # complaint narrative; absent on IA Investigations
 
 
@@ -211,7 +211,7 @@ class ProviderItem(scrapy.Item):
     # (see provider_scrape/geocoding.py). `latitude`/`longitude` are filled from
     # the address for states that don't publish coordinates; these two fields
     # record where each coordinate came from so downstream consumers can filter.
-    geocode_source = scrapy.Field()      # "state" | "census" | "unmatched" | None
+    geocode_source = scrapy.Field()  # "state" | "census" | "unmatched" | None
     geocode_confidence = scrapy.Field()  # "exact" | "approximate" | "tie" | "no_match" | None
 
     # Ohio specific fields
@@ -609,13 +609,13 @@ class ProviderItem(scrapy.Item):
     nd_philosophy = scrapy.Field()  # philosophyStatement
 
     # Alaska specific fields (AKCCIS -- see docs/alaska_field_mapping.md).
-    ak_facility_gen_id = scrapy.Field()          # AKCCIS internal facility id
-    ak_facility_number = scrapy.Field()          # 7-digit facility number
-    ak_legacy_license_number = scrapy.Field()    # pre-migration license id
-    ak_vendor_id = scrapy.Field()                # CCAP subsidy-billing vendor code
-    ak_facility_subtype = scrapy.Field()         # facilityTypeSubTypeDescription
-    ak_license_type = scrapy.Field()             # "Biennial"|"Provisional"|...
-    ak_licensing_specialist = scrapy.Field()     # assigned state specialist
+    ak_facility_gen_id = scrapy.Field()  # AKCCIS internal facility id
+    ak_facility_number = scrapy.Field()  # 7-digit facility number
+    ak_legacy_license_number = scrapy.Field()  # pre-migration license id
+    ak_vendor_id = scrapy.Field()  # CCAP subsidy-billing vendor code
+    ak_facility_subtype = scrapy.Field()  # facilityTypeSubTypeDescription
+    ak_license_type = scrapy.Field()  # "Biennial"|"Provisional"|...
+    ak_licensing_specialist = scrapy.Field()  # assigned state specialist
 
     # Washington DC specific fields (mychildcare.dc.gov). No license dates,
     # status, or inspections are published by this source; the internal facility
@@ -637,16 +637,16 @@ class ProviderItem(scrapy.Item):
     # `license_number` + `wi_location_number` (or the standalone
     # `wi_facility_number`). YoungStar rating stays state-specific per the
     # field-mapping playbook.
-    wi_youngstar_rating = scrapy.Field()     # e.g. "5 Stars" | "Not Yet Rated"
-    wi_location_number = scrapy.Field()      # e.g. "016"
-    wi_facility_number = scrapy.Field()      # licensed facility #, e.g. "120162"
-    wi_night_capacity = scrapy.Field()       # night capacity (day cap -> `capacity`)
-    wi_months_open = scrapy.Field()          # e.g. "Jan - Dec"
-    wi_unique_services = scrapy.Field()      # YoungStar "Unique Program Services" list
-    wi_special_care_types = scrapy.Field()   # provider-reported special care list
-    wi_program_philosophy = scrapy.Field()   # provider-reported philosophy text
-    wi_vacancies = scrapy.Field()            # provider-reported vacancies text
-    wi_waitlist = scrapy.Field()             # provider-reported waitlist text
+    wi_youngstar_rating = scrapy.Field()  # e.g. "5 Stars" | "Not Yet Rated"
+    wi_location_number = scrapy.Field()  # e.g. "016"
+    wi_facility_number = scrapy.Field()  # licensed facility #, e.g. "120162"
+    wi_night_capacity = scrapy.Field()  # night capacity (day cap -> `capacity`)
+    wi_months_open = scrapy.Field()  # e.g. "Jan - Dec"
+    wi_unique_services = scrapy.Field()  # YoungStar "Unique Program Services" list
+    wi_special_care_types = scrapy.Field()  # provider-reported special care list
+    wi_program_philosophy = scrapy.Field()  # provider-reported philosophy text
+    wi_vacancies = scrapy.Field()  # provider-reported vacancies text
+    wi_waitlist = scrapy.Field()  # provider-reported waitlist text
 
     # Vermont specific fields (brightfutures.dcf.state.vt.us). VT publishes no
     # explicit license number, so the internal Provider ID is emitted as the
@@ -655,22 +655,22 @@ class ProviderItem(scrapy.Item):
     # field-mapping playbook. The `infant`/`toddler`/`preschool`/`school` common
     # fields carry the per-age *capacities*; the per-age *vacancies* (the
     # registry's frequently-updated, VT-unique content) live in the vt_* fields.
-    vt_provider_id = scrapy.Field()          # PARTY_ID, e.g. "3053"
-    vt_star_level = scrapy.Field()           # STARS rating, e.g. "4 Star"
-    vt_type_of_care = scrapy.Field()         # e.g. "Full-Time, Part-Time, Daytime"
-    vt_days_of_operation = scrapy.Field()    # e.g. "Monday, Tuesday, ..."
+    vt_provider_id = scrapy.Field()  # PARTY_ID, e.g. "3053"
+    vt_star_level = scrapy.Field()  # STARS rating, e.g. "4 Star"
+    vt_type_of_care = scrapy.Field()  # e.g. "Full-Time, Part-Time, Daytime"
+    vt_days_of_operation = scrapy.Field()  # e.g. "Monday, Tuesday, ..."
     vt_special_schedule = scrapy.Field()
-    vt_building_type = scrapy.Field()        # Building Type/Setting, e.g. "House"
-    vt_area_description = scrapy.Field()      # e.g. "Fenced Yard"
-    vt_religious_activity = scrapy.Field()   # "Yes" | "No"
-    vt_sibling_discount = scrapy.Field()     # "Yes" | "No"
+    vt_building_type = scrapy.Field()  # Building Type/Setting, e.g. "House"
+    vt_area_description = scrapy.Field()  # e.g. "Fenced Yard"
+    vt_religious_activity = scrapy.Field()  # "Yes" | "No"
+    vt_sibling_discount = scrapy.Field()  # "Yes" | "No"
     vt_special_services = scrapy.Field()
     vt_program_participation = scrapy.Field()
-    vt_guidance = scrapy.Field()             # provider-reported guidance philosophy
-    vt_program_description = scrapy.Field()   # provider-reported daily program text
+    vt_guidance = scrapy.Field()  # provider-reported guidance philosophy
+    vt_program_description = scrapy.Field()  # provider-reported daily program text
     vt_pets = scrapy.Field()
-    vt_vacancy_as_of = scrapy.Field()        # "Current as of" date for vacancies
-    vt_current_vacancy = scrapy.Field()      # total current vacancy count
+    vt_vacancy_as_of = scrapy.Field()  # "Current as of" date for vacancies
+    vt_current_vacancy = scrapy.Field()  # total current vacancy count
     vt_infant_vacancies = scrapy.Field()
     vt_toddler_vacancies = scrapy.Field()
     vt_preschool_vacancies = scrapy.Field()
@@ -680,24 +680,24 @@ class ProviderItem(scrapy.Item):
     # public feed is coarse (provider_type is only Child Care / DOE / Exempt,
     # and there are no license dates or ZIP). QRIS quality data stays
     # state-specific per docs/field_mapping_playbook.md.
-    tn_provider_id = scrapy.Field()            # registry "Provider ID", e.g. "84171"
-    tn_regulatory_agency = scrapy.Field()      # "DHS Child Care" | "Department of Education"
+    tn_provider_id = scrapy.Field()  # registry "Provider ID", e.g. "84171"
+    tn_regulatory_agency = scrapy.Field()  # "DHS Child Care" | "Department of Education"
     tn_regulatory_individual = scrapy.Field()  # assigned state licensing rep
-    tn_vacancy = scrapy.Field()                # raw vacancy string
+    tn_vacancy = scrapy.Field()  # raw vacancy string
     tn_participates_certificate = scrapy.Field()  # bool (Certificate program)
     tn_wheelchair_accessible = scrapy.Field()  # "Yes" | "No"
-    tn_age_group_rates = scrapy.Field()        # list of {age_group, weekly_rate, unit_of_care, vacancy}
-    tn_quality_rating = scrapy.Field()         # overall QRIS score, e.g. "91/100"
+    tn_age_group_rates = scrapy.Field()  # list of {age_group, weekly_rate, unit_of_care, vacancy}
+    tn_quality_rating = scrapy.Field()  # overall QRIS score, e.g. "91/100"
     tn_rating_effective_date = scrapy.Field()  # rating effective date (MM/DD/YYYY)
-    tn_rating_expiration = scrapy.Field()      # rating expiration date (MM/DD/YYYY)
-    tn_rating_scorecard = scrapy.Field()       # dict of per-domain score + percent
+    tn_rating_expiration = scrapy.Field()  # rating expiration date (MM/DD/YYYY)
+    tn_rating_scorecard = scrapy.Field()  # dict of per-domain score + percent
 
     # South Dakota specific fields (olapublic.sd.gov). The detail page's
     # Services Offered and Months of Operation multi-selects have no common
     # field; each is a small SD-specific vocabulary. (Ages of Children Served
     # maps to the common `ages_served`; Nationally Accredited -> `accreditation`.)
-    sd_services_offered = scrapy.Field()      # list, e.g. ["After School"]
-    sd_months_of_operation = scrapy.Field()   # list, e.g. ["12 Months"]
+    sd_services_offered = scrapy.Field()  # list, e.g. ["After School"]
+    sd_months_of_operation = scrapy.Field()  # list, e.g. ["12 Months"]
 
     # Indiana specific fields (secure.in.gov/apps/fssa/providersearch JSON API).
     # Indiana publishes no license number, so the internal providerId is emitted
@@ -706,35 +706,35 @@ class ProviderItem(scrapy.Item):
     # The Paths to QUALITY (PTQ) rating stays state-specific per the field-mapping
     # playbook. Capacity is published only as a per-age breakdown, so the common
     # `capacity` carries the sum and the exact breakdown is preserved here.
-    in_provider_id = scrapy.Field()               # providerId (== license_number)
-    in_location_id = scrapy.Field()               # locationId (2nd half of detail key)
-    in_ptq_level = scrapy.Field()                 # "0"-"4"; 0 = not rated
-    in_health_violation_count = scrapy.Field()    # int
-    in_is_ccdf = scrapy.Field()                   # bool (also -> scholarships_accepted)
-    in_is_temporarily_closed = scrapy.Field()     # bool
+    in_provider_id = scrapy.Field()  # providerId (== license_number)
+    in_location_id = scrapy.Field()  # locationId (2nd half of detail key)
+    in_ptq_level = scrapy.Field()  # "0"-"4"; 0 = not rated
+    in_health_violation_count = scrapy.Field()  # int
+    in_is_ccdf = scrapy.Field()  # bool (also -> scholarships_accepted)
+    in_is_temporarily_closed = scrapy.Field()  # bool
     in_temporarily_closed_message = scrapy.Field()
-    in_programs = scrapy.Field()                  # e.g. ["CCDF Provider", "On My Way Pre-K"]
-    in_licensed_ages = scrapy.Field()             # [{start_age, end_age, quantity}]
-    in_schedule = scrapy.Field()                  # [{day, open, close}]
-    in_complaints = scrapy.Field()                # [{complaint_date, issue, closed_date}]
+    in_programs = scrapy.Field()  # e.g. ["CCDF Provider", "On My Way Pre-K"]
+    in_licensed_ages = scrapy.Field()  # [{start_age, end_age, quantity}]
+    in_schedule = scrapy.Field()  # [{day, open, close}]
+    in_complaints = scrapy.Field()  # [{complaint_date, issue, closed_date}]
 
     # Iowa specific fields. C3 (search.iachildcareconnect.org) publishes live
     # vacancy counts, a quality level, and two service-description
     # vocabularies; Titan (secureapp.dhs.state.ia.us) contributes the
     # per-provider report counts (see tasks/iowa_epic/iowa_plan.md).
-    ia_iq4k_level = scrapy.Field()                 # "IQ4K Level 1".."5" (82.5% null)
-    ia_region = scrapy.Field()                     # "Region 1".."Region 5"
-    ia_total_openings = scrapy.Field()             # int, live vacancy count (0..131)
-    ia_openings_by_age = scrapy.Field()            # list of {ageGroup, fullTime, partTime}
-    ia_openings_as_of = scrapy.Field()             # date the openings were reported
-    ia_days_of_operation = scrapy.Field()          # "Mon, Tue, ..."
-    ia_care_types = scrapy.Field()                 # hoursOfOperation service vocab
-    ia_serves_special_needs = scrapy.Field()       # "Yes"/"No"
-    ia_business_type = scrapy.Field()              # "house"/"building" pin glyph
-    ia_padded_license_id = scrapy.Field()          # C3 display form, zero-padded
-    ia_referral_listed = scrapy.Field()            # bool: in the referral network
-    ia_compliance_report_count = scrapy.Field()    # Titan ComplianceCount
-    ia_complaint_count = scrapy.Field()            # Titan ComplaintCount
+    ia_iq4k_level = scrapy.Field()  # "IQ4K Level 1".."5" (82.5% null)
+    ia_region = scrapy.Field()  # "Region 1".."Region 5"
+    ia_total_openings = scrapy.Field()  # int, live vacancy count (0..131)
+    ia_openings_by_age = scrapy.Field()  # list of {ageGroup, fullTime, partTime}
+    ia_openings_as_of = scrapy.Field()  # date the openings were reported
+    ia_days_of_operation = scrapy.Field()  # "Mon, Tue, ..."
+    ia_care_types = scrapy.Field()  # hoursOfOperation service vocab
+    ia_serves_special_needs = scrapy.Field()  # "Yes"/"No"
+    ia_business_type = scrapy.Field()  # "house"/"building" pin glyph
+    ia_padded_license_id = scrapy.Field()  # C3 display form, zero-padded
+    ia_referral_listed = scrapy.Field()  # bool: in the referral network
+    ia_compliance_report_count = scrapy.Field()  # Titan ComplianceCount
+    ia_complaint_count = scrapy.Field()  # Titan ComplaintCount
     ia_regulation_checklist_count = scrapy.Field()  # Titan RegulationCheckListCount
 
     # Kansas specific fields (khap.kdhe.ks.gov/OIDS -- OIDS_Search.aspx /
@@ -744,25 +744,25 @@ class ProviderItem(scrapy.Item):
     # identity (see kansas_plan.md Sec 4.6). ``provider_type`` is taken from
     # the detail page; when the listing disagrees (rare) the listing value is
     # kept here rather than discarded (Sec 4.1).
-    ks_facility_token = scrapy.Field()          # stable "SearchLink.<token>" id
-    ks_listing_program_type = scrapy.Field()    # listing Program Type, only if != detail
-    ks_address_suppressed = scrapy.Field()      # bool: owner opted out (~38% of rows)
+    ks_facility_token = scrapy.Field()  # stable "SearchLink.<token>" id
+    ks_listing_program_type = scrapy.Field()  # listing Program Type, only if != detail
+    ks_address_suppressed = scrapy.Field()  # bool: owner opted out (~38% of rows)
 
     # Kentucky specific fields (kynect.ky.gov Salesforce Aura API). The All
     # STARS quality rating stays state-specific per the field-mapping playbook.
     # `ky_provider_id` is the internal id and the detail-call join key (the
     # public licence number is emitted as `license_number`).
-    ky_provider_id = scrapy.Field()             # ProviderId, e.g. 403
-    ky_stars_rating = scrapy.Field()            # All STARS 0-5; 0 = not rated
-    ky_prek_partnership = scrapy.Field()        # bool (state pre-K partnership)
-    ky_ongoing_process = scrapy.Field()         # bool: open licensing action
+    ky_provider_id = scrapy.Field()  # ProviderId, e.g. 403
+    ky_stars_rating = scrapy.Field()  # All STARS 0-5; 0 = not rated
+    ky_prek_partnership = scrapy.Field()  # bool (state pre-K partnership)
+    ky_ongoing_process = scrapy.Field()  # bool: open licensing action
     # Open regulatory actions, e.g. [{"process_type": "Adverse Action",
     # "status": "On-going"}]. Present on ~1.5% of providers.
-    ky_ongoing_processes = scrapy.Field()       # [{process_type, status}]
-    ky_food_permit = scrapy.Field()             # bool; null in source -> unset
+    ky_ongoing_processes = scrapy.Field()  # [{process_type, status}]
+    ky_food_permit = scrapy.Field()  # bool; null in source -> unset
     ky_accreditation_available = scrapy.Field()  # bool; null in source -> unset
-                                                 # (source typo'd "Acceditations")
-    ky_service_costs = scrapy.Field()           # [{age_group, full_time_cost, part_time_cost}]
+    # (source typo'd "Acceditations")
+    ky_service_costs = scrapy.Field()  # [{age_group, full_time_cost, part_time_cost}]
 
     # Connecticut specific fields (www.211childcare.org -- 211 Child Care, a
     # Rails JSON API front for CT's Office of Early Childhood). Per D-1 the
@@ -772,10 +772,10 @@ class ProviderItem(scrapy.Item):
     # closed listing is documented on `status`/`STATUS_BUCKETS`, not asserted
     # here (connecticut_plan.md Sec 5.3). Per D-3, `status` derives from
     # `searchable` ("Listed"/"Not Listed") -- CT publishes no license status.
-    ct_provider_id = scrapy.Field()             # int -- the /providers/{id} key
-    ct_provider_uid = scrapy.Field()            # uuid str -- CT OEC join key
-    ct_searchable = scrapy.Field()              # bool -- visible in CT's own directory
-    ct_licensed = scrapy.Field()                # bool (`license`); false == exempt/unlisted
+    ct_provider_id = scrapy.Field()  # int -- the /providers/{id} key
+    ct_provider_uid = scrapy.Field()  # uuid str -- CT OEC join key
+    ct_searchable = scrapy.Field()  # bool -- visible in CT's own directory
+    ct_licensed = scrapy.Field()  # bool (`license`); false == exempt/unlisted
     # Derived from the license_number prefix (Sec 5.6) -- a clean, fully
     # correlated taxonomy. NOTE: a DCEX (license-exempt) record's
     # type_of_provider is still a plain "Child Care Center", so the pipeline's
@@ -785,19 +785,19 @@ class ProviderItem(scrapy.Item):
     # with a global override for it.
     ct_license_type = scrapy.Field()
     ct_elevate_membership_level = scrapy.Field()  # CT's Elevate QRIS; stays state-specific
-    ct_type_of_care = scrapy.Field()            # coarser vocab; emitted only when != provider_type
-    ct_accreditations = scrapy.Field()          # list, e.g. NAEYC, NAFCC, Head Start
-    ct_school_districts = scrapy.Field()        # list
-    ct_transportation = scrapy.Field()          # list
-    ct_accepting_referrals = scrapy.Field()     # bool
-    ct_head_start = scrapy.Field()              # headstart_funding OR "Head Start" in accreditations
-    ct_education_levels = scrapy.Field()        # list of staff credentials
-    ct_special_needs = scrapy.Field()           # list
-    ct_administers_meds = scrapy.Field()        # bool
-    ct_wheelchair_accessible = scrapy.Field()   # bool
+    ct_type_of_care = scrapy.Field()  # coarser vocab; emitted only when != provider_type
+    ct_accreditations = scrapy.Field()  # list, e.g. NAEYC, NAFCC, Head Start
+    ct_school_districts = scrapy.Field()  # list
+    ct_transportation = scrapy.Field()  # list
+    ct_accepting_referrals = scrapy.Field()  # bool
+    ct_head_start = scrapy.Field()  # headstart_funding OR "Head Start" in accreditations
+    ct_education_levels = scrapy.Field()  # list of staff credentials
+    ct_special_needs = scrapy.Field()  # list
+    ct_administers_meds = scrapy.Field()  # bool
+    ct_wheelchair_accessible = scrapy.Field()  # bool
     ct_capacity_three_and_under = scrapy.Field()  # int
-    ct_capacity_full_time = scrapy.Field()      # int
-    ct_capacity_school_aged = scrapy.Field()    # int
+    ct_capacity_full_time = scrapy.Field()  # int
+    ct_capacity_school_aged = scrapy.Field()  # int
     # Licensed age range in WEEKS, not months/years (6 == 6 weeks old). Never a
     # fallback for ages_served/age flags -- age_range_max: 0 and shifts: [] are
     # the exact same 38 (of 4,114) records, so that fallback path is broken in
@@ -805,10 +805,10 @@ class ProviderItem(scrapy.Item):
     # to unset here.
     ct_age_range_min_weeks = scrapy.Field()
     ct_age_range_max_weeks = scrapy.Field()
-    ct_date_established = scrapy.Field()        # business founding date, NOT a licence date
-    ct_oec_contact_id = scrapy.Field()          # CT Office of Early Childhood contact id
-    ct_schedule = scrapy.Field()                # [{day, open, close}] (cf. in_schedule)
-    ct_rates = scrapy.Field()                   # [{age_group, label, full_time_weekly, ...}]
+    ct_date_established = scrapy.Field()  # business founding date, NOT a licence date
+    ct_oec_contact_id = scrapy.Field()  # CT Office of Early Childhood contact id
+    ct_schedule = scrapy.Field()  # [{day, open, close}] (cf. in_schedule)
+    ct_rates = scrapy.Field()  # [{age_group, label, full_time_weekly, ...}]
     # bool: the provider opted out of publishing a street address -- the source
     # `address` is the literal sentence "This provider's address has been
     # hidden" rather than a street (15 of 6,910 on the 2026-08-21 run). When
@@ -820,11 +820,11 @@ class ProviderItem(scrapy.Item):
     # DSCYF / Office of Child Care Licensing). Delaware publishes no license
     # dates and no QRIS rating -- Delaware Stars is suspended pending a
     # system redesign.
-    de_enforcement_action = scrapy.Field()   # "Suspended" / "Probation" / "Revoked" / ...
-    de_intent_to_revoke = scrapy.Field()     # notice of a pending action, e.g. "Intent to Revoke"
-    de_special_conditions = scrapy.Field()   # "Variance" / "High Nitrate Water" / "Foster Care" / ...
+    de_enforcement_action = scrapy.Field()  # "Suspended" / "Probation" / "Revoked" / ...
+    de_intent_to_revoke = scrapy.Field()  # notice of a pending action, e.g. "Intent to Revoke"
+    de_special_conditions = scrapy.Field()  # "Variance" / "High Nitrate Water" / "Foster Care" / ...
     de_financial_arrangements = scrapy.Field()  # raw ";"-joined token string (see de_profit_status)
-    de_profit_status = scrapy.Field()        # "Nonprofit" / "Private" / "Profit" / "Publicly Operated"
+    de_profit_status = scrapy.Field()  # "Nonprofit" / "Private" / "Profit" / "Publicly Operated"
     # Multi-year injury/death narrative, e.g. "2024: 5 facility injuries. No
     # facility deaths reported.; 2023: 1 facility injury. ...". 914 of 1,243
     # read "No facility injuries reported. No facility deaths reported."

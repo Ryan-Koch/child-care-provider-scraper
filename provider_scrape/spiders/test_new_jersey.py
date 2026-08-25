@@ -7,8 +7,8 @@ from scrapy.http import HtmlResponse, Request
 from provider_scrape.items import ProviderItem
 from provider_scrape.spiders.new_jersey import (
     API_PATH,
-    NewJerseySpider,
     SEARCH_URL,
+    NewJerseySpider,
     _build_social_media,
     _empty_to_none,
     _trim_seconds,
@@ -308,27 +308,36 @@ def test_trim_seconds_already_trimmed():
 
 def test_format_hours_weekdays_only():
     result = format_hours(WOW_KIDS)
-    assert result == (
-        "Mon 07:30-18:30; Tue 07:30-18:30; Wed 07:30-18:30; "
-        "Thu 07:30-18:30; Fri 07:30-18:30"
-    )
+    assert result == ("Mon 07:30-18:30; Tue 07:30-18:30; Wed 07:30-18:30; Thu 07:30-18:30; Fri 07:30-18:30")
 
 
 def test_format_hours_all_empty_returns_none():
     blank = {
         f"DailyOpeningTime{day}": ""
         for day in [
-            "Sunday", "Monday", "Tuesday", "Wednesday",
-            "Thursday", "Friday", "Saturday",
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
         ]
     }
-    blank.update({
-        f"DailyClosingTime{day}": ""
-        for day in [
-            "Sunday", "Monday", "Tuesday", "Wednesday",
-            "Thursday", "Friday", "Saturday",
-        ]
-    })
+    blank.update(
+        {
+            f"DailyClosingTime{day}": ""
+            for day in [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+            ]
+        }
+    )
     assert format_hours(blank) is None
 
 
@@ -349,10 +358,7 @@ def test_build_address_normal():
 
 
 def test_build_address_street_number_empty_uses_street_name_only():
-    assert (
-        build_address(TWENTY_FIRST_CENTURY)
-        == "Smalley School 163 Cherry Ave, Bound Brook, NJ 08805"
-    )
+    assert build_address(TWENTY_FIRST_CENTURY) == "Smalley School 163 Cherry Ave, Bound Brook, NJ 08805"
 
 
 def test_build_address_all_empty_returns_none():
@@ -360,23 +366,33 @@ def test_build_address_all_empty_returns_none():
 
 
 def test_build_address_only_street():
-    assert build_address({
-        "ProgramAddressStreetNumber": "1",
-        "ProgramAddressStreetName": "Main St",
-        "ProgramCity": "",
-        "ProgramState": "",
-        "ProgramZipCode": "",
-    }) == "1 Main St"
+    assert (
+        build_address(
+            {
+                "ProgramAddressStreetNumber": "1",
+                "ProgramAddressStreetName": "Main St",
+                "ProgramCity": "",
+                "ProgramState": "",
+                "ProgramZipCode": "",
+            }
+        )
+        == "1 Main St"
+    )
 
 
 def test_build_address_missing_zip():
-    assert build_address({
-        "ProgramAddressStreetNumber": "1",
-        "ProgramAddressStreetName": "Main St",
-        "ProgramCity": "Newark",
-        "ProgramState": "NJ",
-        "ProgramZipCode": "",
-    }) == "1 Main St, Newark, NJ"
+    assert (
+        build_address(
+            {
+                "ProgramAddressStreetNumber": "1",
+                "ProgramAddressStreetName": "Main St",
+                "ProgramCity": "Newark",
+                "ProgramState": "NJ",
+                "ProgramZipCode": "",
+            }
+        )
+        == "1 Main St, Newark, NJ"
+    )
 
 
 # ---- _empty_to_none ----
@@ -435,10 +451,7 @@ def test_build_item_full_record_core_fields():
     assert item["license_number"] == "13OLA0001"
     assert item["languages"] == ["English", "French Creole", "Spanish"]
     assert item["ages_served"] == [1, 2, 3, 4]
-    assert item["hours"] == (
-        "Mon 07:30-17:30; Tue 07:30-17:30; Wed 07:30-17:30; "
-        "Thu 07:30-17:30; Fri 07:30-17:30"
-    )
+    assert item["hours"] == ("Mon 07:30-17:30; Tue 07:30-17:30; Wed 07:30-17:30; Thu 07:30-17:30; Fri 07:30-17:30")
 
 
 def test_build_item_full_record_nj_fields():
@@ -516,18 +529,12 @@ def test_build_item_sparse_record():
 def test_build_item_sparse_record_hours():
     item = build_item(WOW_KIDS)
     # Weekday-only hours
-    assert item["hours"] == (
-        "Mon 07:30-18:30; Tue 07:30-18:30; Wed 07:30-18:30; "
-        "Thu 07:30-18:30; Fri 07:30-18:30"
-    )
+    assert item["hours"] == ("Mon 07:30-18:30; Tue 07:30-18:30; Wed 07:30-18:30; Thu 07:30-18:30; Fri 07:30-18:30")
 
 
 def test_build_item_packed_street_name():
     item = build_item(TWENTY_FIRST_CENTURY)
-    assert (
-        item["address"]
-        == "Smalley School 163 Cherry Ave, Bound Brook, NJ 08805"
-    )
+    assert item["address"] == "Smalley School 163 Cherry Ave, Bound Brook, NJ 08805"
     assert item["ages_served"] == [4]
     assert item["nj_participation_programs"] is None
 
@@ -576,10 +583,12 @@ def _payload(facility_count, result_count=None, template=None):
         rec["UniqueProgramID"] = str(700000 + i)
         rec["ProgramName"] = f"Provider {i}"
         facilities.append(rec)
-    return json.dumps({
-        "Facilities": facilities,
-        "ResultCount": result_count if result_count is not None else facility_count,
-    })
+    return json.dumps(
+        {
+            "Facilities": facilities,
+            "ResultCount": result_count if result_count is not None else facility_count,
+        }
+    )
 
 
 async def _collect(agen):
@@ -593,10 +602,12 @@ async def _collect(agen):
 async def test_parse_search_page_single_shot_success(spider):
     probe_body = _payload(facility_count=1, result_count=3)
     full_body = _payload(facility_count=3, result_count=3)
-    page = _make_fake_page([
-        {"status": 200, "body": probe_body},
-        {"status": 200, "body": full_body},
-    ])
+    page = _make_fake_page(
+        [
+            {"status": 200, "body": probe_body},
+            {"status": 200, "body": full_body},
+        ]
+    )
     response = _make_fake_response(page)
 
     items = await _collect(spider.parse_search_page(response))
@@ -625,13 +636,15 @@ async def test_parse_search_page_falls_back_to_pagination_when_capped(spider):
     page_b = _payload(facility_count=2, result_count=5)
     page_c = _payload(facility_count=1, result_count=5)
 
-    page = _make_fake_page([
-        {"status": 200, "body": probe_body},
-        {"status": 200, "body": capped_body},
-        {"status": 200, "body": page_a},
-        {"status": 200, "body": page_b},
-        {"status": 200, "body": page_c},
-    ])
+    page = _make_fake_page(
+        [
+            {"status": 200, "body": probe_body},
+            {"status": 200, "body": capped_body},
+            {"status": 200, "body": page_a},
+            {"status": 200, "body": page_b},
+            {"status": 200, "body": page_c},
+        ]
+    )
     response = _make_fake_response(page)
 
     items = await _collect(spider.parse_search_page(response))
@@ -639,9 +652,7 @@ async def test_parse_search_page_falls_back_to_pagination_when_capped(spider):
     assert len(items) == 5
     # 1 probe + 1 big-capped + 3 paginated pages
     assert page.evaluate.await_count == 5
-    paginated_calls = [
-        call.args[1] for call in page.evaluate.call_args_list[2:]
-    ]
+    paginated_calls = [call.args[1] for call in page.evaluate.call_args_list[2:]]
     assert all("pageSize=2" in path for path in paginated_calls)
     assert "currentPage=0" in paginated_calls[0]
     assert "currentPage=1" in paginated_calls[1]
@@ -651,9 +662,11 @@ async def test_parse_search_page_falls_back_to_pagination_when_capped(spider):
 
 @pytest.mark.asyncio
 async def test_parse_search_page_probe_http_error_stops_early(spider):
-    page = _make_fake_page([
-        {"status": 403, "body": "Cloudflare blocked"},
-    ])
+    page = _make_fake_page(
+        [
+            {"status": 403, "body": "Cloudflare blocked"},
+        ]
+    )
     response = _make_fake_response(page)
 
     items = await _collect(spider.parse_search_page(response))
@@ -665,9 +678,11 @@ async def test_parse_search_page_probe_http_error_stops_early(spider):
 
 @pytest.mark.asyncio
 async def test_parse_search_page_zero_result_count_exits_cleanly(spider):
-    page = _make_fake_page([
-        {"status": 200, "body": json.dumps({"Facilities": [], "ResultCount": 0})},
-    ])
+    page = _make_fake_page(
+        [
+            {"status": 200, "body": json.dumps({"Facilities": [], "ResultCount": 0})},
+        ]
+    )
     response = _make_fake_response(page)
 
     items = await _collect(spider.parse_search_page(response))

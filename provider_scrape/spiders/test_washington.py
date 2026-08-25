@@ -3,7 +3,7 @@ import json
 import pytest
 from scrapy.http import HtmlResponse, Request, TextResponse
 
-from provider_scrape.items import InspectionItem, ProviderItem
+from provider_scrape.items import ProviderItem
 from provider_scrape.spiders.washington import (
     WashingtonSpider,
     extract_field,
@@ -23,14 +23,18 @@ Visualforce.remoting.Manager.add(new $VFRM.RemotingProviderImpl({"vf":{"vid":"06
 </head><body></body></html>
 """
 
-PROVIDER_IDS_RESPONSE = json.dumps([{
-    "statusCode": 200,
-    "result": [
-        "001t000000HmMBqAAN",
-        "001t000000CjPPeAAN",
-        "001t000000E93HAAAZ",
-    ],
-}])
+PROVIDER_IDS_RESPONSE = json.dumps(
+    [
+        {
+            "statusCode": 200,
+            "result": [
+                "001t000000HmMBqAAN",
+                "001t000000CjPPeAAN",
+                "001t000000E93HAAAZ",
+            ],
+        }
+    ]
+)
 
 DETAIL_HTML = """
 <html>
@@ -414,9 +418,7 @@ DETAIL_HTML_MINIMAL = """
 def test_extract_field():
     """Test the extract_field helper function."""
     request = Request(url="https://www.findchildcarewa.org/PSS_Provider?id=test")
-    response = HtmlResponse(
-        url=request.url, body=DETAIL_HTML, encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=DETAIL_HTML, encoding="utf-8", request=request)
 
     assert extract_field(response, "License Number:") == "PL-80322"
     assert extract_field(response, "Provider ID:") == "1585273"
@@ -428,9 +430,7 @@ def test_extract_field():
 def test_parse_search_page(spider):
     """Test that parse_search_page extracts tokens and yields API request."""
     request = Request(url="https://www.findchildcarewa.org/PSS_Search?p=DEL%20Licensed")
-    response = HtmlResponse(
-        url=request.url, body=SEARCH_PAGE_HTML, encoding="utf-8", request=request
-    )
+    response = HtmlResponse(url=request.url, body=SEARCH_PAGE_HTML, encoding="utf-8", request=request)
 
     results = list(spider.parse_search_page(response))
     assert len(results) == 1
@@ -468,12 +468,8 @@ def test_parse_provider_ids(spider):
 
 def test_parse_detail(spider):
     """Test full detail page parsing."""
-    request = Request(
-        url="https://www.findchildcarewa.org/PSS_Provider?id=001t000000HmMBqAAN"
-    )
-    response = HtmlResponse(
-        url=request.url, body=DETAIL_HTML, encoding="utf-8", request=request
-    )
+    request = Request(url="https://www.findchildcarewa.org/PSS_Provider?id=001t000000HmMBqAAN")
+    response = HtmlResponse(url=request.url, body=DETAIL_HTML, encoding="utf-8", request=request)
 
     results = list(spider.parse_detail(response))
     assert len(results) == 1
@@ -537,12 +533,8 @@ def test_parse_detail(spider):
 
 def test_parse_contacts(spider):
     """Test provider contacts table parsing."""
-    request = Request(
-        url="https://www.findchildcarewa.org/PSS_Provider?id=test"
-    )
-    response = HtmlResponse(
-        url=request.url, body=DETAIL_HTML, encoding="utf-8", request=request
-    )
+    request = Request(url="https://www.findchildcarewa.org/PSS_Provider?id=test")
+    response = HtmlResponse(url=request.url, body=DETAIL_HTML, encoding="utf-8", request=request)
 
     results = list(spider.parse_detail(response))
     item = results[0]
@@ -559,12 +551,8 @@ def test_parse_contacts(spider):
 
 def test_parse_inspections(spider):
     """Test inspections table parsing."""
-    request = Request(
-        url="https://www.findchildcarewa.org/PSS_Provider?id=test"
-    )
-    response = HtmlResponse(
-        url=request.url, body=DETAIL_HTML, encoding="utf-8", request=request
-    )
+    request = Request(url="https://www.findchildcarewa.org/PSS_Provider?id=test")
+    response = HtmlResponse(url=request.url, body=DETAIL_HTML, encoding="utf-8", request=request)
 
     results = list(spider.parse_detail(response))
     item = results[0]
@@ -580,12 +568,8 @@ def test_parse_inspections(spider):
 
 def test_parse_license_history(spider):
     """Test license history table parsing."""
-    request = Request(
-        url="https://www.findchildcarewa.org/PSS_Provider?id=test"
-    )
-    response = HtmlResponse(
-        url=request.url, body=DETAIL_HTML, encoding="utf-8", request=request
-    )
+    request = Request(url="https://www.findchildcarewa.org/PSS_Provider?id=test")
+    response = HtmlResponse(url=request.url, body=DETAIL_HTML, encoding="utf-8", request=request)
 
     results = list(spider.parse_detail(response))
     item = results[0]
@@ -606,9 +590,7 @@ def test_parse_license_history(spider):
 
 def test_parse_detail_minimal(spider):
     """Test parsing a minimal detail page with few fields."""
-    request = Request(
-        url="https://www.findchildcarewa.org/PSS_Provider?id=test"
-    )
+    request = Request(url="https://www.findchildcarewa.org/PSS_Provider?id=test")
     response = HtmlResponse(
         url=request.url,
         body=DETAIL_HTML_MINIMAL,

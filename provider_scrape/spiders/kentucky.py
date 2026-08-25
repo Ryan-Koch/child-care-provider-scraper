@@ -25,6 +25,7 @@ One endpoint, two Apex methods (``SSP_ChildCareProviderSearchController``):
 See tasks/kentucky_epic/kentucky_plan.md for the full recon writeup (a live,
 statewide 2,800-ZIP enumeration and a headless-browser audit of the search UI).
 """
+
 import json
 import re
 from urllib.parse import urlencode
@@ -33,10 +34,7 @@ import scrapy
 
 from provider_scrape.items import InspectionItem, ProviderItem
 
-AURA_URL = (
-    "https://kynect.ky.gov/benefits/s/sfsites/aura"
-    "?r=12&aura.ApexAction.execute=1"
-)
+AURA_URL = "https://kynect.ky.gov/benefits/s/sfsites/aura?r=12&aura.ApexAction.execute=1"
 SEARCH_PAGE_URL = "https://kynect.ky.gov/benefits/s/child-care-provider"
 # The map is a single Aura route with no per-provider deep link and a
 # POST-only detail; this is the Indiana/DC/Kansas precedent (plan Sec 4.3).
@@ -47,19 +45,16 @@ AURA_PAGE_URI = "/benefits/s/child-care-provider?origin=program-page&language=en
 # 2026-08-20; Kentucky's org will bump this a few times a year on Salesforce
 # release upgrades (plan Sec 5.6). When it goes stale the endpoint answers
 # every action with an Aura ERROR state instead of data -- see closed().
-FWUID = (
-    "OUcwT3JDYUZld21JQ2ZOckR1VnppUWtVMjdnTGFERUU2S3FfSVdrcU92bkExNC4xOTIu"
-    "ODM4ODYwOA"
-)
+FWUID = "OUcwT3JDYUZld21JQ2ZOckR1VnppUWtVMjdnTGFERUU2S3FfSVdrcU92bkExNC4xOTIuODM4ODYwOA"
 
 AURA_CONTEXT = {
     "mode": "PROD",
     "fwuid": FWUID,
     "app": "siteforce:communityApp",
-    "loaded": {
-        "APPLICATION@markup://siteforce:communityApp": "1706_8wJLrETnpOGvg7aPJCutcg"
-    },
-    "dn": [], "globals": {}, "uad": True,
+    "loaded": {"APPLICATION@markup://siteforce:communityApp": "1706_8wJLrETnpOGvg7aPJCutcg"},
+    "dn": [],
+    "globals": {},
+    "uad": True,
 }
 
 HEADERS = {
@@ -72,13 +67,24 @@ HEADERS = {
 # varies (plan Sec 2.2). ``zipCode5`` is an exact match, not a radius or a
 # prefix: one request per ZIP is the only way to enumerate.
 QUERY_DATA_BASE = {
-    "latitude": "", "longitude": "", "providerName": None, "licenseNumber": None,
-    "providerIDValues": None, "isFavoriteSearch": False,
-    "DestinationLatitude": None, "DestinationLongitude": None,
-    "SourceAddressDetails": None, "DestinationAddressDetails": None,
-    "SourceCountyName": None, "SourceCity": None, "DestinationCountyName": None,
-    "DestinationCity": None, "alongTheRouteLocations": None,
-    "SearchCriteria": "ZipCode", "sourceState": None, "destinationState": None,
+    "latitude": "",
+    "longitude": "",
+    "providerName": None,
+    "licenseNumber": None,
+    "providerIDValues": None,
+    "isFavoriteSearch": False,
+    "DestinationLatitude": None,
+    "DestinationLongitude": None,
+    "SourceAddressDetails": None,
+    "DestinationAddressDetails": None,
+    "SourceCountyName": None,
+    "SourceCity": None,
+    "DestinationCountyName": None,
+    "DestinationCity": None,
+    "alongTheRouteLocations": None,
+    "SearchCriteria": "ZipCode",
+    "sourceState": None,
+    "destinationState": None,
     "distance": None,
 }
 
@@ -112,12 +118,14 @@ EXPECTED_MIN_PROVIDERS = 1800
 
 def _aura_body(message):
     """URL-encode the four Aura form fields for one action envelope."""
-    return urlencode({
-        "message": json.dumps(message),
-        "aura.context": json.dumps(AURA_CONTEXT),
-        "aura.pageURI": AURA_PAGE_URI,
-        "aura.token": "null",
-    })
+    return urlencode(
+        {
+            "message": json.dumps(message),
+            "aura.context": json.dumps(AURA_CONTEXT),
+            "aura.pageURI": AURA_PAGE_URI,
+            "aura.token": "null",
+        }
+    )
 
 
 def _num(value, cast=int):
@@ -175,9 +183,11 @@ def format_hours(hours_list):
     """
     if not hours_list:
         return None
-    rows = [(h.get("Day"), h.get("ServiceTime")) for h in hours_list
-            if h.get("Day") and h.get("ServiceTime")
-            and h.get("ServiceTime") != CLOSED_DAY]
+    rows = [
+        (h.get("Day"), h.get("ServiceTime"))
+        for h in hours_list
+        if h.get("Day") and h.get("ServiceTime") and h.get("ServiceTime") != CLOSED_DAY
+    ]
     if not rows:
         return None
     times = {time for _, time in rows}
@@ -234,10 +244,10 @@ class KentuckySpider(scrapy.Spider):
         self.do_details = str(details).strip().lower() not in ("0", "false")
         self.concurrency = int(concurrency)
 
-        self.seen = set()          # ProviderIds already emitted/scheduled
+        self.seen = set()  # ProviderIds already emitted/scheduled
         self.zips_done = 0
         self.zips_with_hits = 0
-        self.zips_failed = set()   # ZIPs that never resolved (Aura ERROR loop)
+        self.zips_failed = set()  # ZIPs that never resolved (Aura ERROR loop)
         self.detail_failures = 0
         self.error_state_count = 0
 
@@ -283,18 +293,23 @@ class KentuckySpider(scrapy.Spider):
 
     def _search_request(self, zip5, attempt=1):
         query_data = {**QUERY_DATA_BASE, "zipCode5": f"{zip5:05d}"}
-        message = {"actions": [{
-            "id": "84;a",
-            "descriptor": "aura://ApexActionController/ACTION$execute",
-            "callingDescriptor": "UNKNOWN",
-            "params": {
-                "namespace": "",
-                "classname": "SSP_ChildCareProviderSearchController",
-                "method": "getChildCareProviderDetails",
-                "params": {"queryData": query_data},
-                "cacheable": False, "isContinuation": False,
-            },
-        }]}
+        message = {
+            "actions": [
+                {
+                    "id": "84;a",
+                    "descriptor": "aura://ApexActionController/ACTION$execute",
+                    "callingDescriptor": "UNKNOWN",
+                    "params": {
+                        "namespace": "",
+                        "classname": "SSP_ChildCareProviderSearchController",
+                        "method": "getChildCareProviderDetails",
+                        "params": {"queryData": query_data},
+                        "cacheable": False,
+                        "isContinuation": False,
+                    },
+                }
+            ]
+        }
         return scrapy.Request(
             AURA_URL,
             method="POST",
@@ -309,7 +324,9 @@ class KentuckySpider(scrapy.Spider):
     def start_requests(self):
         self.logger.info(
             "Kentucky: sweeping %d ZIP(s) (details=%s, concurrency=%d)",
-            len(self.zip_list), self.do_details, self.concurrency,
+            len(self.zip_list),
+            self.do_details,
+            self.concurrency,
         )
         for zip5 in self.zip_list:
             yield self._search_request(zip5)
@@ -324,7 +341,8 @@ class KentuckySpider(scrapy.Spider):
         self.logger.warning(
             "Kentucky: ZIP %05d search failed after all retries (%s) -- a "
             "pocket of providers may be missing (plan Sec 2.7)",
-            zip5, failure.value,
+            zip5,
+            failure.value,
         )
         self._maybe_log_progress()
 
@@ -340,9 +358,11 @@ class KentuckySpider(scrapy.Spider):
             attempt = response.meta.get("attempt", 1)
             if attempt <= MAX_ERROR_RETRIES:
                 self.logger.warning(
-                    "Kentucky: ZIP %05d search returned Aura state=%r "
-                    "(attempt %d/%d) -- re-issuing",
-                    zip5, action.get("state"), attempt, MAX_ERROR_RETRIES,
+                    "Kentucky: ZIP %05d search returned Aura state=%r (attempt %d/%d) -- re-issuing",
+                    zip5,
+                    action.get("state"),
+                    attempt,
+                    MAX_ERROR_RETRIES,
                 )
                 yield self._search_request(zip5, attempt=attempt + 1)
                 return
@@ -352,7 +372,8 @@ class KentuckySpider(scrapy.Spider):
                 "Kentucky: ZIP %05d search gave up after %d Aura ERROR "
                 "responses in a row -- if this count is high across the "
                 "run, `fwuid` may have gone stale (plan Sec 5.6)",
-                zip5, attempt,
+                zip5,
+                attempt,
             )
             self._maybe_log_progress()
             return
@@ -392,9 +413,11 @@ class KentuckySpider(scrapy.Spider):
     def _maybe_log_progress(self):
         if self.zips_done % 100 == 0:
             self.logger.info(
-                "Kentucky: %d/%d ZIPs done, %d with hits, %d unique "
-                "providers so far", self.zips_done, len(self.zip_list),
-                self.zips_with_hits, len(self.seen),
+                "Kentucky: %d/%d ZIPs done, %d with hits, %d unique providers so far",
+                self.zips_done,
+                len(self.zip_list),
+                self.zips_with_hits,
+                len(self.seen),
             )
 
     def _item_from_summary(self, record, provider_id):
@@ -469,21 +492,25 @@ class KentuckySpider(scrapy.Spider):
     # --- detail (per provider) ------------------------------------------ #
 
     def _detail_request(self, provider_id, license_number, item):
-        message = {"actions": [{
-            "id": "84;a",
-            "descriptor": "aura://ApexActionController/ACTION$execute",
-            "callingDescriptor": "UNKNOWN",
-            "params": {
-                "namespace": "",
-                "classname": "SSP_ChildCareProviderSearchController",
-                "method": "fetchBrightwheelDetailsForProvider",
-                # Both keys are required -- a null licenseNumber resets the
-                # connection exactly like the Sec 2.7 timeout (plan Sec 5.5).
-                "params": {"providerId": provider_id,
-                           "licenseNumber": license_number},
-                "cacheable": False, "isContinuation": False,
-            },
-        }]}
+        message = {
+            "actions": [
+                {
+                    "id": "84;a",
+                    "descriptor": "aura://ApexActionController/ACTION$execute",
+                    "callingDescriptor": "UNKNOWN",
+                    "params": {
+                        "namespace": "",
+                        "classname": "SSP_ChildCareProviderSearchController",
+                        "method": "fetchBrightwheelDetailsForProvider",
+                        # Both keys are required -- a null licenseNumber resets the
+                        # connection exactly like the Sec 2.7 timeout (plan Sec 5.5).
+                        "params": {"providerId": provider_id, "licenseNumber": license_number},
+                        "cacheable": False,
+                        "isContinuation": False,
+                    },
+                }
+            ]
+        }
         return scrapy.Request(
             AURA_URL,
             method="POST",
@@ -504,9 +531,9 @@ class KentuckySpider(scrapy.Spider):
         if item is not None:
             self.detail_failures += 1
             self.logger.warning(
-                "Kentucky: detail request failed for provider %s (%s); "
-                "emitting summary-only item",
-                failure.request.meta.get("provider_id"), failure.value,
+                "Kentucky: detail request failed for provider %s (%s); emitting summary-only item",
+                failure.request.meta.get("provider_id"),
+                failure.value,
             )
             yield item
 
@@ -518,9 +545,9 @@ class KentuckySpider(scrapy.Spider):
             self.error_state_count += 1
             self.detail_failures += 1
             self.logger.warning(
-                "Kentucky: detail for provider %s returned Aura state=%r; "
-                "emitting summary-only item",
-                response.meta.get("provider_id"), action.get("state"),
+                "Kentucky: detail for provider %s returned Aura state=%r; emitting summary-only item",
+                response.meta.get("provider_id"),
+                action.get("state"),
             )
             yield item
             return
@@ -553,8 +580,7 @@ class KentuckySpider(scrapy.Spider):
         ongoing_processes = kiccs.get("OngoingProcessListUpdated") or []
         if ongoing_processes:
             item["ky_ongoing_processes"] = [
-                {"process_type": p.get("ProcessType"), "status": p.get("Status")}
-                for p in ongoing_processes
+                {"process_type": p.get("ProcessType"), "status": p.get("Status")} for p in ongoing_processes
             ]
 
         inspections = self._parse_inspections(kiccs)
@@ -621,22 +647,26 @@ class KentuckySpider(scrapy.Spider):
             "Kentucky: finished (%s) -- %d/%d ZIPs done (%d failed), %d "
             "with hits, %d unique providers, %d detail failures, %d Aura "
             "ERROR responses",
-            reason, self.zips_done, len(self.zip_list), len(self.zips_failed),
-            self.zips_with_hits, len(self.seen), self.detail_failures,
+            reason,
+            self.zips_done,
+            len(self.zip_list),
+            len(self.zips_failed),
+            self.zips_with_hits,
+            len(self.seen),
+            self.detail_failures,
             self.error_state_count,
         )
-        if len(self.zip_list) >= (MAX_ZIP - MIN_ZIP + 1) and \
-                len(self.seen) < EXPECTED_MIN_PROVIDERS:
+        if len(self.zip_list) >= (MAX_ZIP - MIN_ZIP + 1) and len(self.seen) < EXPECTED_MIN_PROVIDERS:
             self.logger.warning(
-                "Kentucky: only %d providers found (< %d baseline) -- "
-                "possible incomplete crawl", len(self.seen),
+                "Kentucky: only %d providers found (< %d baseline) -- possible incomplete crawl",
+                len(self.seen),
                 EXPECTED_MIN_PROVIDERS,
             )
         if self.zips_failed:
             self.logger.warning(
-                "Kentucky: %d ZIP(s) never resolved: %s -- these pockets of "
-                "providers are missing from this run",
-                len(self.zips_failed), sorted(self.zips_failed),
+                "Kentucky: %d ZIP(s) never resolved: %s -- these pockets of providers are missing from this run",
+                len(self.zips_failed),
+                sorted(self.zips_failed),
             )
         # Diagnostic per plan Sec 3.3: lots of ResponseFailed/ConnectionLost
         # and zero HTTP error codes is the Sec 2.7 deadline -- lower
@@ -647,5 +677,6 @@ class KentuckySpider(scrapy.Spider):
                 "Kentucky: %d requests returned an Aura ERROR state -- if "
                 "unexpectedly high, check whether `fwuid` has gone stale "
                 "(plan Sec 5.6); it is a framework build id that Salesforce "
-                "rotates on org upgrades.", self.error_state_count,
+                "rotates on org upgrades.",
+                self.error_state_count,
             )

@@ -25,6 +25,7 @@ API flow, per county, for the Child Care Provider (CCP) program:
 The three "No results" counties (27/57/66) simply return an empty served list and
 finish; nothing hangs.
 """
+
 import json
 import uuid
 
@@ -45,8 +46,23 @@ PROGRAMS = ["CCP"]
 # The advanced-search form's full care-level and star-rating vocabularies. We
 # select them all so the search is unfiltered on those facets (every provider).
 ALL_CARE_LEVELS = [
-    "UTO", "TOT", "ONE", "TWO", "THREE", "FOU", "FIV", "SIX", "SEV", "EIG",
-    "NIN", "TEN", "ELE", "TWE", "THI", "FRT", "FTN",
+    "UTO",
+    "TOT",
+    "ONE",
+    "TWO",
+    "THREE",
+    "FOU",
+    "FIV",
+    "SIX",
+    "SEV",
+    "EIG",
+    "NIN",
+    "TEN",
+    "ELE",
+    "TWE",
+    "THI",
+    "FRT",
+    "FTN",
 ]
 ALL_STAR_RATINGS = ["0", "1", "2", "3", "4"]
 
@@ -61,8 +77,8 @@ OPENINGS_MAP = {
 # PA has 67 counties, keyed "01".."67" in the search form.
 COUNTIES = [f"{i:02d}" for i in range(1, 68)]
 
-MAX_POLLS = 15       # results GET polls before giving up on a search
-MAX_GROUPS = 100     # pagination safety cap (Philadelphia needs ~12)
+MAX_POLLS = 15  # results GET polls before giving up on a search
+MAX_GROUPS = 100  # pagination safety cap (Philadelphia needs ~12)
 
 
 def format_phone(value):
@@ -100,8 +116,7 @@ class PennsylvaniaSpider(scrapy.Spider):
         "DOWNLOAD_TIMEOUT": 60,
         "ROBOTSTXT_OBEY": False,
         "USER_AGENT": (
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-            "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
         ),
     }
 
@@ -134,38 +149,62 @@ class PennsylvaniaSpider(scrapy.Spider):
         sort_order = "ASC" if group_id > 1 else ""
         return {
             "starRating": ALL_STAR_RATINGS,
-            "street": "", "city": "", "zipCode": [],
+            "street": "",
+            "city": "",
+            "zipCode": [],
             "careLevel": ALL_CARE_LEVELS,
             "program": PROGRAMS,
             "county": [county],
-            "municipality": [], "schoolDistrictSearch": [], "serviceSchedule": [],
-            "mealOptions": [], "providerType": [], "environment": [],
-            "additionalActivities": [], "unitsOfCare": [], "language": [],
-            "languageUsage": [], "searchDistance": 0, "additionalCharges": [],
-            "accreditation": [], "days": [], "publicTransportation": [],
-            "providerName": "", "publicSchool": [], "openTime": "", "closeTime": "",
-            "schooldistrictchildcare": "", "transportationDistrict": "",
-            "transportationCounty": "", "FinancialProgramParticipation": [],
-            "absoluteAddress": "", "fromHours": "", "fromMinutes": "",
-            "toHours": "", "toMinutes": "", "callerApplication": "",
-            "callerLanguage": "English", "callerSearchIdentifier": "",
-            "otherEarlyLearningPrograms": [], "emergencyOperationStatus": [],
-            "groupIdentifier": group_id, "paymentOption": [],
-            "searchIdentifier": search_id, "searchType": "AdvancedSearch",
-            "specialAccommodations": [], "homeVisitingPrograms": [],
-            "geographicCriteriaType": "CountySearch", "sortBy": "",
-            "sortOrder": sort_order, "searchResultsDeleteType": 0,
+            "municipality": [],
+            "schoolDistrictSearch": [],
+            "serviceSchedule": [],
+            "mealOptions": [],
+            "providerType": [],
+            "environment": [],
+            "additionalActivities": [],
+            "unitsOfCare": [],
+            "language": [],
+            "languageUsage": [],
+            "searchDistance": 0,
+            "additionalCharges": [],
+            "accreditation": [],
+            "days": [],
+            "publicTransportation": [],
+            "providerName": "",
+            "publicSchool": [],
+            "openTime": "",
+            "closeTime": "",
+            "schooldistrictchildcare": "",
+            "transportationDistrict": "",
+            "transportationCounty": "",
+            "FinancialProgramParticipation": [],
+            "absoluteAddress": "",
+            "fromHours": "",
+            "fromMinutes": "",
+            "toHours": "",
+            "toMinutes": "",
+            "callerApplication": "",
+            "callerLanguage": "English",
+            "callerSearchIdentifier": "",
+            "otherEarlyLearningPrograms": [],
+            "emergencyOperationStatus": [],
+            "groupIdentifier": group_id,
+            "paymentOption": [],
+            "searchIdentifier": search_id,
+            "searchType": "AdvancedSearch",
+            "specialAccommodations": [],
+            "homeVisitingPrograms": [],
+            "geographicCriteriaType": "CountySearch",
+            "sortBy": "",
+            "sortOrder": sort_order,
+            "searchResultsDeleteType": 0,
             "enrollmentStatus": [],
         }
 
     def _summary_request(self, meta):
         """POST the search criteria for ``meta['county']`` / ``meta['group']``."""
         body = self._summary_body(meta["county"], meta["group"], meta["search_id"])
-        origin = (
-            "providersearch/advancedsearch"
-            if meta["group"] == 1
-            else "providersearch/searchresults"
-        )
+        origin = "providersearch/advancedsearch" if meta["group"] == 1 else "providersearch/searchresults"
         return scrapy.Request(
             SUMMARY_URL,
             method="POST",
@@ -220,7 +259,7 @@ class PennsylvaniaSpider(scrapy.Spider):
                 "sid": str(uuid.uuid4()),
                 "group": 1,
                 "search_id": 0,
-                "accum": {},       # (providerId, locationId) -> provider row
+                "accum": {},  # (providerId, locationId) -> provider row
                 "prev_count": -1,  # deduped size before this batch
                 "poll": 0,
             }
@@ -246,9 +285,11 @@ class PennsylvaniaSpider(scrapy.Spider):
                 yield self._results_request(nxt)
             else:
                 self.logger.warning(
-                    "County %s group %s: results not served after %d polls; "
-                    "finishing with %d collected",
-                    meta["county"], meta["group"], MAX_POLLS, len(meta["accum"]),
+                    "County %s group %s: results not served after %d polls; finishing with %d collected",
+                    meta["county"],
+                    meta["group"],
+                    MAX_POLLS,
+                    len(meta["accum"]),
                 )
                 yield from self._finish_or_paginate(meta, grew=False)
             return
@@ -294,7 +335,9 @@ class PennsylvaniaSpider(scrapy.Spider):
         accum = meta["accum"]
         self.logger.info(
             "County %s: %d provider location(s) collected across %d group(s)",
-            meta["county"], len(accum), meta["group"],
+            meta["county"],
+            len(accum),
+            meta["group"],
         )
         for provider in accum.values():
             key = (
@@ -312,10 +355,7 @@ class PennsylvaniaSpider(scrapy.Spider):
         except ValueError:
             provider = {}
         if not provider:
-            self.logger.warning(
-                "Empty detail for %s", response.meta.get("provider", {})
-                .get("providerName")
-            )
+            self.logger.warning("Empty detail for %s", response.meta.get("provider", {}).get("providerName"))
             return
         yield self.build_item(provider)
 
@@ -362,12 +402,14 @@ class PennsylvaniaSpider(scrapy.Spider):
 
         cost_table = []
         for cl in provider.get("careLevel") or []:
-            cost_table.append({
-                "age_group": (cl.get("careLevel") or "").strip() or None,
-                "full_time_rate": cl.get("ftRate"),
-                "part_time_rate": cl.get("ptRate"),
-                "openings": OPENINGS_MAP.get(cl.get("careLevelOpeningStatus"), "-"),
-            })
+            cost_table.append(
+                {
+                    "age_group": (cl.get("careLevel") or "").strip() or None,
+                    "full_time_rate": cl.get("ftRate"),
+                    "part_time_rate": cl.get("ptRate"),
+                    "openings": OPENINGS_MAP.get(cl.get("careLevelOpeningStatus"), "-"),
+                }
+            )
         item["pa_cost_table"] = cost_table
 
         return item

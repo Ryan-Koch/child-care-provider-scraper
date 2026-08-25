@@ -184,6 +184,7 @@ implement `_expand_compliance`:
 ```python
 _COMPLIANCE = {"C": "In Compliance", "NC": "Non-Compliance"}
 
+
 def _expand_compliance(code):
     code = (code or "").strip()
     return _COMPLIANCE.get(code, code) or None

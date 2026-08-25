@@ -193,23 +193,16 @@ def test_yes_no_to_bool():
 
 def test_join_address_full():
     assert (
-        _join_address("981 KIRKPATRICK RD", "BURLINGTON", "NC", "27215")
-        == "981 KIRKPATRICK RD, BURLINGTON, NC 27215"
+        _join_address("981 KIRKPATRICK RD", "BURLINGTON", "NC", "27215") == "981 KIRKPATRICK RD, BURLINGTON, NC 27215"
     )
 
 
 def test_join_address_missing_zip():
-    assert (
-        _join_address("123 Main St", "Raleigh", "NC", None)
-        == "123 Main St, Raleigh, NC"
-    )
+    assert _join_address("123 Main St", "Raleigh", "NC", None) == "123 Main St, Raleigh, NC"
 
 
 def test_join_address_only_street():
-    assert (
-        _join_address("100 Oak Ln", None, None, None)
-        == "100 Oak Ln"
-    )
+    assert _join_address("100 Oak Ln", None, None, None) == "100 Oak Ln"
 
 
 def test_join_address_all_empty():
@@ -220,18 +213,22 @@ def test_join_address_all_empty():
 
 
 def test_read_obfuscated_email_prefers_mailto_href():
-    sel = Selector(text="""
+    sel = Selector(
+        text="""
         <span id="x">
             <a href="mailto:foo@example.com">foo<i class="fas fa-at"></i>example.com</a>
         </span>
-    """)
+    """
+    )
     assert _read_obfuscated_email(sel, "x") == "foo@example.com"
 
 
 def test_read_obfuscated_email_rebuilds_from_fa_at_when_no_anchor():
-    sel = Selector(text="""
+    sel = Selector(
+        text="""
         <span id="x">armc<i class="fa fas fa-at"></i>brighthorizons.com</span>
-    """)
+    """
+    )
     assert _read_obfuscated_email(sel, "x") == "armc@brighthorizons.com"
 
 
@@ -286,9 +283,7 @@ def test_parse_licenses_current_entry(details_sel):
     assert current["capacity_first_shift"] == 184
     assert current["capacity_second_shift"] == 0
     assert current["capacity_third_shift"] == 0
-    assert current["license_restrictions"] == [
-        "Other - Meets all enhanced requirements and reduced ratios"
-    ]
+    assert current["license_restrictions"] == ["Other - Meets all enhanced requirements and reduced ratios"]
     # Current license has no star rating in this example.
     assert current["star_rating_total_points"] is None
     assert current["program_standards_points"] is None
@@ -308,9 +303,7 @@ def test_parse_licenses_previous_entry_with_star_rating(details_sel):
     assert previous["educational_standards_max_points"] == 7
     assert previous["star_rating_total_points"] == 15
     assert previous["star_rating_max_points"] == 15
-    assert previous["license_restrictions"] == [
-        "Other - Meets all enhanced requirements and reduced ratios"
-    ]
+    assert previous["license_restrictions"] == ["Other - Meets all enhanced requirements and reduced ratios"]
 
 
 # ---- parse_special_features ---------------------------------------------------

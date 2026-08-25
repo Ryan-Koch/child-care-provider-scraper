@@ -52,13 +52,11 @@ def _search_row_html(ctl_suffix, fields):
 
 def _search_results_html(*rows):
     return (
-        '<html><body>'
+        "<html><body>"
         '<input type="hidden" id="hdnTotalRecords" value="2">'
         '<table id="ctl00_ContentPlaceHolder1_ucLicenseeSearchResult_ResultsGrid">'
-        '<tr><th>Header</th></tr>'
-        + "".join(rows)
-        + '</table>'
-        '</body></html>'
+        "<tr><th>Header</th></tr>" + "".join(rows) + "</table>"
+        "</body></html>"
     )
 
 
@@ -150,10 +148,7 @@ def test_format_hours_returns_none_when_every_day_closed():
 
 
 def test_format_qris_address_handles_present_and_missing_parts():
-    assert (
-        format_qris_address("123 Main St", "Las Vegas", "89102")
-        == "123 Main St, Las Vegas, NV 89102"
-    )
+    assert format_qris_address("123 Main St", "Las Vegas", "89102") == "123 Main St, Las Vegas, NV 89102"
     # Missing zip is fine.
     assert format_qris_address("123 Main St", "Las Vegas", None) == "123 Main St, Las Vegas, NV"
     # Missing street still produces a usable locality.
@@ -262,8 +257,7 @@ def test_parse_search_results_dispatches_one_request_per_row(spider):
 def _hours_row_html(ctl_suffix, day, spans):
     """Render a single hours-of-operation grid row matching the live HTML shape."""
     inner_id = (
-        f"ctl00_ContentPlaceHolder1_ucHoursOfOperation_ucHoursOfOperation_"
-        f"ucGridUserControl_ResultsGrid_ctl{ctl_suffix}"
+        f"ctl00_ContentPlaceHolder1_ucHoursOfOperation_ucHoursOfOperation_ucGridUserControl_ResultsGrid_ctl{ctl_suffix}"
     )
     cells = [f'<td><span id="{inner_id}_lblDay">{day}</span></td>']
     for s in spans:
@@ -271,13 +265,13 @@ def _hours_row_html(ctl_suffix, day, spans):
     return "<tr>" + "".join(cells) + "</tr>"
 
 
-def _sod_row_html(ctl_suffix, date, number, reason, count, status_code="CLS", status_reason="POCA", wrap_count_in_font=False):
+def _sod_row_html(
+    ctl_suffix, date, number, reason, count, status_code="CLS", status_reason="POCA", wrap_count_in_font=False
+):
     inner_id = f"ctl00_ContentPlaceHolder1_ucSODgrid_ResultsGrid_ctl{ctl_suffix}"
     # Live site wraps the count in a <font> tag inside the span; older fixtures
     # had it as bare text. We test both shapes.
-    count_inner = (
-        f'<font color="Red">{count}</font>' if wrap_count_in_font else count
-    )
+    count_inner = f'<font color="Red">{count}</font>' if wrap_count_in_font else count
     return (
         "<tr>"
         f'<td><span id="{inner_id}_lblInspectionEndDate">{date}</span></td>'
@@ -287,7 +281,7 @@ def _sod_row_html(ctl_suffix, date, number, reason, count, status_code="CLS", st
         f'<td><span id="{inner_id}_lblCount">{count_inner}</span>'
         f'<input type="hidden" id="{inner_id}_hdSODStatusCode" value="{status_code}">'
         f'<input type="hidden" id="{inner_id}_hdSODStatusReasonCode" value="{status_reason}">'
-        '</td>'
+        "</td>"
         "</tr>"
     )
 
@@ -300,11 +294,11 @@ def _detail_html(hours_rows, sod_rows, total="243", row1_from="6 weeks", row1_to
         <span id="ctl00_ContentPlaceHolder1_ucChildrenAge_lblTotal">{total}</span>
         <table id="ctl00_ContentPlaceHolder1_ucHoursOfOperation_ucHoursOfOperation_ucGridUserControl_ResultsGrid">
             <thead><tr><th>Day</th></tr></thead>
-            <tbody>{''.join(hours_rows)}</tbody>
+            <tbody>{"".join(hours_rows)}</tbody>
         </table>
         <table id="ctl00_ContentPlaceHolder1_ucSODgrid_ResultsGrid">
             <thead><tr><th>Date</th></tr></thead>
-            <tbody>{''.join(sod_rows)}</tbody>
+            <tbody>{"".join(sod_rows)}</tbody>
         </table>
     </body></html>
     """
@@ -332,7 +326,9 @@ def test_parse_detail_enriches_partial_item(spider):
         url="https://nvdpbh.aithent.com/Protected/INS/SODPublicView.aspx?LicenseeId=139953",
         body=body,
         encoding="utf-8",
-        request=Request(url="https://nvdpbh.aithent.com/Protected/INS/SODPublicView.aspx", meta={"partial_item": partial}),
+        request=Request(
+            url="https://nvdpbh.aithent.com/Protected/INS/SODPublicView.aspx", meta={"partial_item": partial}
+        ),
     )
     response.meta["partial_item"] = partial
 
@@ -378,7 +374,9 @@ def test_parse_detail_handles_missing_sections(spider):
         url="https://nvdpbh.aithent.com/Protected/INS/SODPublicView.aspx?LicenseeId=12345",
         body=body,
         encoding="utf-8",
-        request=Request(url="https://nvdpbh.aithent.com/Protected/INS/SODPublicView.aspx", meta={"partial_item": partial}),
+        request=Request(
+            url="https://nvdpbh.aithent.com/Protected/INS/SODPublicView.aspx", meta={"partial_item": partial}
+        ),
     )
     response.meta["partial_item"] = partial
 
@@ -401,8 +399,7 @@ def _quality_response_json(dm0, value_dicts, dict_names, restart_token=None):
     """Assemble a minimal querydata response around a hand-built DM0 row set."""
     dm0 = [dict(row) for row in dm0]
     dm0[0]["S"] = [
-        ({"N": f"G{i}", "T": 1, "DN": dn} if dn else {"N": f"G{i}", "T": 7})
-        for i, dn in enumerate(dict_names)
+        ({"N": f"G{i}", "T": 1, "DN": dn} if dn else {"N": f"G{i}", "T": 7}) for i, dn in enumerate(dict_names)
     ]
     ds = {"N": "DS0", "PH": [{"DM0": dm0}], "ValueDicts": value_dicts}
     if restart_token is not None:
@@ -420,7 +417,7 @@ def test_decode_data_shape_golden_path_real_fixture():
     # Window 1 is not the last; it carries a restart token to page the next window.
     assert restart_token is not None
 
-    first = dict(zip((p for p, _, _ in QUALITY_SELECT), rows[0]))
+    first = dict(zip((p for p, _, _ in QUALITY_SELECT), rows[0], strict=False))
     assert first["LicenseNumber"] == "02204-D"
     assert first["ProgramName"] == "Squires ES"
     assert first["ProgramType"] == "School Based"
@@ -441,14 +438,12 @@ def test_decode_dm0_repeat_null_and_inline_string():
     value_dicts = {"D0": ["Alpha", "Beta"], "D1": ["North", "South"]}
     dict_names = ["D0", None, "D1"]  # col1 is a date (no dictionary)
     dm0 = [
-        {"C": [0, 1700000000000, 0]},                 # Alpha, date, North
-        {"C": [1], "R": 0b110},                        # Beta; cols 1,2 repeat
+        {"C": [0, 1700000000000, 0]},  # Alpha, date, North
+        {"C": [1], "R": 0b110},  # Beta; cols 1,2 repeat
         {"C": [1710000000000], "R": 0b001, "Ø": 0b100},  # col0 repeat, col2 null
-        {"C": ["Gamma Inline", 1720000000000, 1]},     # col0 inline string overflow
+        {"C": ["Gamma Inline", 1720000000000, 1]},  # col0 inline string overflow
     ]
-    rows, _ = decode_data_shape(
-        _quality_response_json(dm0, value_dicts, dict_names)
-    )
+    rows, _ = decode_data_shape(_quality_response_json(dm0, value_dicts, dict_names))
     assert rows[0] == ["Alpha", 1700000000000, "North"]
     assert rows[1] == ["Beta", 1700000000000, "North"]
     assert rows[2] == ["Beta", 1710000000000, None]
@@ -456,11 +451,7 @@ def test_decode_dm0_repeat_null_and_inline_string():
 
 
 def test_decode_data_shape_raises_on_query_definition_error():
-    bad = {
-        "results": [
-            {"result": {"data": {"dsr": {"DataShapes": [{"odata.error": "boom"}]}}}}
-        ]
-    }
+    bad = {"results": [{"result": {"data": {"dsr": {"DataShapes": [{"odata.error": "boom"}]}}}}]}
     with pytest.raises(ValueError):
         decode_data_shape(bad)
 
@@ -476,8 +467,8 @@ def test_epoch_ms_to_date_converts_utc_midnight():
 
 def test_normalize_license_strips_suffix_and_leading_zeros():
     assert normalize_license("831-26") == "831"
-    assert normalize_license("028-26") == "28"      # leading zero dropped
-    assert normalize_license("02204-D") == "2204"    # school-based suffix
+    assert normalize_license("028-26") == "28"  # leading zero dropped
+    assert normalize_license("02204-D") == "2204"  # school-based suffix
     assert normalize_license("UTF1028517") == "UTF1028517"
     assert normalize_license(None) is None
     assert normalize_license("") is None
@@ -501,9 +492,7 @@ def test_build_quality_command_literals_and_selection():
 
 def test_build_quality_command_threads_restart_token():
     token = [["'tok'"]]
-    command = build_quality_command(2026, "April", restart_token=token)[
-        "SemanticQueryDataShapeCommand"
-    ]
+    command = build_quality_command(2026, "April", restart_token=token)["SemanticQueryDataShapeCommand"]
     window = command["Binding"]["DataReduction"]["Primary"]["Window"]
     assert window["RestartTokens"] == token
 
@@ -521,7 +510,7 @@ def _quality_row(license_number, **overrides):
         "StarRatingFriendlyName": "Three Stars",
         "StatusFriendlyName": "Maintenance",
         "RatingPeriodStartDate": 1704067200000,  # 01/01/2024
-        "RatingPeriodEndDate": 1777507200000,    # 04/30/2026
+        "RatingPeriodEndDate": 1777507200000,  # 04/30/2026
         "DateEnrollmentFormSubmitted": 1661299200000,  # 08/24/2022
         "RatingPeriodName": "Annual 2026",
         "SiteCharacteristic": "Standard",
@@ -714,39 +703,61 @@ def _full_quality_window(restart_token=None):
     dictionary-encoded to mirror the real Power BI payload shape.
     """
     value_dicts = {
-        "D0": ["831"],            # LicenseNumber
-        "D1": ["Example"],        # ProgramName
-        "D2": ["Center"],         # ProgramType
-        "D3": ["Clark"],          # County
-        "D4": ["South"],          # Region
-        "D5": ["Three Stars"],    # StarRatingFriendlyName
-        "D6": ["Maintenance"],    # StatusFriendlyName
-        "D7": ["Annual 2026"],    # RatingPeriodName
-        "D8": ["Standard"],       # SiteCharacteristic
-        "D9": ["123 Main St"],    # Address
-        "D10": ["Henderson"],     # City
-        "D11": ["89015"],         # Zip
+        "D0": ["831"],  # LicenseNumber
+        "D1": ["Example"],  # ProgramName
+        "D2": ["Center"],  # ProgramType
+        "D3": ["Clark"],  # County
+        "D4": ["South"],  # Region
+        "D5": ["Three Stars"],  # StarRatingFriendlyName
+        "D6": ["Maintenance"],  # StatusFriendlyName
+        "D7": ["Annual 2026"],  # RatingPeriodName
+        "D8": ["Standard"],  # SiteCharacteristic
+        "D9": ["123 Main St"],  # Address
+        "D10": ["Henderson"],  # City
+        "D11": ["89015"],  # Zip
     }
     # Order matches QUALITY_SELECT — date/integer columns have no DN.
     dict_names = [
-        "D0", "D1", "D2", "D3", "D4", "D5", "D6",
-        None, None, None,   # RatingPeriodStart/End, DateEnrollmentFormSubmitted
-        "D7", "D8",
-        None,               # RatingPriority (integer)
-        "D9", "D10", "D11",
+        "D0",
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "D5",
+        "D6",
+        None,
+        None,
+        None,  # RatingPeriodStart/End, DateEnrollmentFormSubmitted
+        "D7",
+        "D8",
+        None,  # RatingPriority (integer)
+        "D9",
+        "D10",
+        "D11",
     ]
-    dm0 = [{"C": [
-        0, 0, 0, 0, 0, 0, 0,
-        1704067200000,      # RatingPeriodStartDate
-        1777507200000,      # RatingPeriodEndDate
-        1661299200000,      # DateEnrollmentFormSubmitted
-        0, 0,
-        10,                 # RatingPriority
-        0, 0, 0,
-    ]}]
-    return _quality_response_json(
-        dm0, value_dicts, dict_names, restart_token=restart_token
-    )
+    dm0 = [
+        {
+            "C": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                1704067200000,  # RatingPeriodStartDate
+                1777507200000,  # RatingPeriodEndDate
+                1661299200000,  # DateEnrollmentFormSubmitted
+                0,
+                0,
+                10,  # RatingPriority
+                0,
+                0,
+                0,
+            ]
+        }
+    ]
+    return _quality_response_json(dm0, value_dicts, dict_names, restart_token=restart_token)
 
 
 def test_parse_quality_window_pages_then_finishes(spider):
@@ -758,13 +769,7 @@ def test_parse_quality_window_pages_then_finishes(spider):
     request = Request(
         url=POWERBI_QUERY_URL,
         method="POST",
-        body=json.dumps(
-            {
-                "queries": [
-                    {"Query": {"Commands": [build_quality_command(2026, "April")]}}
-                ]
-            }
-        ),
+        body=json.dumps({"queries": [{"Query": {"Commands": [build_quality_command(2026, "April")]}}]}),
     )
     resp1 = TextResponse(
         url=POWERBI_QUERY_URL,
@@ -780,9 +785,7 @@ def test_parse_quality_window_pages_then_finishes(spider):
 
     # Final window has no restart token -> enrichment runs and providers emit.
     win2 = _full_quality_window()
-    resp2 = TextResponse(
-        url=POWERBI_QUERY_URL, body=json.dumps(win2).encode(), encoding="utf-8"
-    )
+    resp2 = TextResponse(url=POWERBI_QUERY_URL, body=json.dumps(win2).encode(), encoding="utf-8")
     out2 = list(spider.parse_quality_window(resp2))
     assert out2 == [provider]
 
@@ -796,9 +799,7 @@ def test_parse_period_discovery_picks_latest_then_queries(spider):
     requests = list(spider.parse_period_discovery(resp))
     assert len(requests) == 1
     body = json.loads(requests[0].body)
-    where = body["queries"][0]["Query"]["Commands"][0][
-        "SemanticQueryDataShapeCommand"
-    ]["Query"]["Where"]
+    where = body["queries"][0]["Query"]["Commands"][0]["SemanticQueryDataShapeCommand"]["Query"]["Where"]
     # Latest data month in the fixture is April 2026.
     assert where[0]["Condition"]["In"]["Values"][0][0]["Literal"]["Value"] == "2026L"
     assert where[1]["Condition"]["In"]["Values"][0][0]["Literal"]["Value"] == "'April'"
@@ -806,14 +807,10 @@ def test_parse_period_discovery_picks_latest_then_queries(spider):
 
 def test_parse_period_discovery_falls_back_on_bad_response(spider):
     bad = {"results": [{"result": {"data": {"dsr": {"DataShapes": []}}}}]}
-    resp = TextResponse(
-        url=POWERBI_QUERY_URL, body=json.dumps(bad).encode(), encoding="utf-8"
-    )
+    resp = TextResponse(url=POWERBI_QUERY_URL, body=json.dumps(bad).encode(), encoding="utf-8")
     requests = list(spider.parse_period_discovery(resp))
     # Falls back to the hardcoded period rather than failing outright.
     assert len(requests) == 1
     body = json.loads(requests[0].body)
-    where = body["queries"][0]["Query"]["Commands"][0][
-        "SemanticQueryDataShapeCommand"
-    ]["Query"]["Where"]
+    where = body["queries"][0]["Query"]["Commands"][0]["SemanticQueryDataShapeCommand"]["Query"]["Where"]
     assert where[0]["Condition"]["In"]["Values"][0][0]["Literal"]["Value"] == "2026L"

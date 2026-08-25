@@ -1,7 +1,7 @@
 import pytest
 from scrapy.http import HtmlResponse, Request
 
-from provider_scrape.items import InspectionItem, ProviderItem
+from provider_scrape.items import ProviderItem
 from provider_scrape.spiders.ohio import OhdcySpider
 
 # Full HTML content for a provider page
@@ -126,9 +126,7 @@ def spider():
 
 
 def test_parse_provider_page_happy_path(spider):
-    response = HtmlResponse(
-        url="http://example.com/provider/12345", body=PROVIDER_HTML, encoding="utf-8"
-    )
+    response = HtmlResponse(url="http://example.com/provider/12345", body=PROVIDER_HTML, encoding="utf-8")
 
     # The spider yields a Request for inspections, so we need to capture that
     requests = list(spider.parse_provider_page(response))
@@ -136,15 +134,12 @@ def test_parse_provider_page_happy_path(spider):
     # There should be one request for inspections and one provider item
     assert len(requests) == 2
 
-    provider_item_request = next(r for r in requests if isinstance(r, ProviderItem))
+    _provider_item_request = next(r for r in requests if isinstance(r, ProviderItem))
     inspection_request = next(r for r in requests if not isinstance(r, ProviderItem))
 
     provider = inspection_request.meta["provider"]
 
-    assert (
-        provider["provider_name"]
-        == '"BECOMING ME" ENRICHMENT AFTER-SCHOOL PROGRAM'
-    )
+    assert provider["provider_name"] == '"BECOMING ME" ENRICHMENT AFTER-SCHOOL PROGRAM'
     assert provider["status"] == "Active"
     assert provider["oh_sutq_rating"] == "Star 5"
     assert provider["license_number"] == "12345"
@@ -156,9 +151,7 @@ def test_parse_provider_page_happy_path(spider):
     assert provider["address"] == "12474 COUNTY ROAD K, WAUSEON, OH 43567"
     assert provider["email"] == "test@example.com"
     assert provider["phone"] == "View Inspections"
-    assert (
-        inspection_request.url == "https://childcaresearch.ohio.gov/inspections/12345"
-    )
+    assert inspection_request.url == "https://childcaresearch.ohio.gov/inspections/12345"
 
 
 def test_parse_provider_page_missing_fields(spider):
@@ -172,7 +165,7 @@ def test_parse_provider_page_missing_fields(spider):
 
     assert len(requests) == 2
 
-    provider_item_request = next(r for r in requests if isinstance(r, ProviderItem))
+    _provider_item_request = next(r for r in requests if isinstance(r, ProviderItem))
     inspection_request = next(r for r in requests if not isinstance(r, ProviderItem))
 
     provider = inspection_request.meta["provider"]
@@ -189,16 +182,12 @@ def test_parse_provider_page_missing_fields(spider):
     assert provider.get("administrator") is None
     assert provider.get("email") is None
     assert provider.get("phone") == "View Inspections"
-    assert (
-        inspection_request.url == "https://childcaresearch.ohio.gov/inspections/54321"
-    )
+    assert inspection_request.url == "https://childcaresearch.ohio.gov/inspections/54321"
 
 
 def test_parse_inspections(spider):
     provider = ProviderItem(license_number="12345")
-    request = Request(
-        url="http://example.com/inspections/12345", meta={"provider": provider}
-    )
+    request = Request(url="http://example.com/inspections/12345", meta={"provider": provider})
     response = HtmlResponse(
         url="http://example.com/inspections/12345",
         body=INSPECTIONS_HTML,

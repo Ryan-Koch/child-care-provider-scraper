@@ -1,4 +1,3 @@
-import pytest
 from scrapy.http import HtmlResponse, Request
 
 from provider_scrape.items import InspectionItem, ProviderItem
@@ -10,9 +9,7 @@ from provider_scrape.spiders.west_virginia import (
 
 def make_response(body, url="https://www.wvdhhr.org/bcf/ece/cccenters/get_detailsWVI.asp?q=12345"):
     request = Request(url=url)
-    return HtmlResponse(
-        url=url, body=body.encode("utf-8"), encoding="utf-8", request=request
-    )
+    return HtmlResponse(url=url, body=body.encode("utf-8"), encoding="utf-8", request=request)
 
 
 RESULTS_HTML = """
@@ -114,12 +111,8 @@ def test_parse_results_yields_request_per_provider():
     requests = list(spider.parse_results(response))
 
     assert len(requests) == 2
-    assert requests[0].url == (
-        "https://www.wvdhhr.org/bcf/ece/cccenters/get_detailsWVI.asp?q=30179048"
-    )
-    assert requests[1].url == (
-        "https://www.wvdhhr.org/bcf/ece/cccenters/get_detailsWVI.asp?q=30192173"
-    )
+    assert requests[0].url == ("https://www.wvdhhr.org/bcf/ece/cccenters/get_detailsWVI.asp?q=30179048")
+    assert requests[1].url == ("https://www.wvdhhr.org/bcf/ece/cccenters/get_detailsWVI.asp?q=30192173")
     for req in requests:
         assert req.callback == spider.parse_details
 
@@ -135,12 +128,8 @@ def test_parse_details_golden_path():
     assert isinstance(provider, ProviderItem)
     assert provider["source_state"] == "West Virginia"
     assert provider["provider_url"] == response.url
-    assert provider["provider_name"] == (
-        "10 Fingers 10 Toes at the Yellow Schoolhouse 6/13/2026"
-    )
-    assert provider["address"] == (
-        "8368 Summit Point Rd Suite 102, Charles Town 25414"
-    )
+    assert provider["provider_name"] == ("10 Fingers 10 Toes at the Yellow Schoolhouse 6/13/2026")
+    assert provider["address"] == ("8368 Summit Point Rd Suite 102, Charles Town 25414")
     assert provider["county"] == "Jefferson"
     assert provider["phone"] == "(304) 724-8800"
     assert provider["wv_licensing_specialist"] == "WILLIAM RIGGLEMAN"

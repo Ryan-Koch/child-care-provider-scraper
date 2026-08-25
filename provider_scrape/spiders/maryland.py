@@ -29,9 +29,7 @@ DEFAULT_PROXY_ENV = os.path.join(
 # one fast (~1-2s) JSON call on a separate, non-tarpitting domain. This replaces
 # the slow inspection-report PDF download + OCR for the ~91% of inspected
 # providers that participate in EXCELS. See maryland_performance_epic.
-EXCELS_SEARCH_URL = (
-    "https://findaprogram.marylandexcels.org/api/fap/search?license={license}"
-)
+EXCELS_SEARCH_URL = "https://findaprogram.marylandexcels.org/api/fap/search?license={license}"
 EXCELS_REFERER = "https://findaprogram.marylandexcels.org/"
 
 # Realistic browser UA applied to every request ("stealth-lite") to reduce the
@@ -309,18 +307,14 @@ class MarylandSpider(scrapy.Spider):
         # Apply the (tunable) global in-flight cap. Set here (not custom_settings)
         # so ``-a concurrency=<n>`` works; this is the primary throughput lever
         # now that the origin's detail endpoint is the concurrency bottleneck.
-        crawler.settings.set(
-            "CONCURRENT_REQUESTS", spider.concurrency, priority="spider"
-        )
+        crawler.settings.set("CONCURRENT_REQUESTS", spider.concurrency, priority="spider")
         # NOTE: from_crawler runs *before* Scrapy attaches the LOG_FILE handler
         # (Crawler.crawl calls _create_spider ahead of _update_root_log_handler),
         # so anything logged here never reaches the log file. Defer the run-mode
         # banner and start the stall watchdog on spider_opened, which fires once
         # logging is fully configured.
         crawler.signals.connect(spider._log_run_mode, signal=signals.spider_opened)
-        crawler.signals.connect(
-            spider._start_stall_watch, signal=signals.spider_opened
-        )
+        crawler.signals.connect(spider._start_stall_watch, signal=signals.spider_opened)
         return spider
 
     def _log_run_mode(self, *args, **kwargs):
@@ -373,18 +367,14 @@ class MarylandSpider(scrapy.Spider):
         # If the no-progress stall watchdog sees a persistent wedge, force-close
         # the spider rather than let it hang for hours. On by default; disable
         # (leave a dead run hanging, e.g. for debugging) with -a stall_close=off.
-        self.stall_close = str(stall_close).lower() not in (
-            "false", "0", "no", "off"
-        )
+        self.stall_close = str(stall_close).lower() not in ("false", "0", "no", "off")
         # Optional multi-IP proxy pool (opt-in). Off by default: with no
         # webshare.env and no ``-a proxies=``, the crawl egresses from the single
         # host IP exactly as before. Disable explicitly with ``-a proxies=off``
         # even when an env file is present; supply endpoints inline with
         # ``-a proxies="host:port,host:port"`` (credentials still read from the
         # env file, or embed full ``http://user:pass@host:port`` URLs).
-        if proxies is not None and str(proxies).lower() in (
-            "off", "none", "false", "0", "no", ""
-        ):
+        if proxies is not None and str(proxies).lower() in ("off", "none", "false", "0", "no", ""):
             self.proxy_pool = None
         else:
             self.proxy_pool = load_pool(
@@ -435,12 +425,8 @@ class MarylandSpider(scrapy.Spider):
         """Extract form options, then launch a fresh session per county."""
         self.logger.info("Loaded search page, extracting form options...")
 
-        self._fac_types = response.css(
-            "#MainContent_ddlFacType option::attr(value)"
-        ).getall()
-        self._license_statuses = response.css(
-            "#MainContent_ddlLicenseStatus option::attr(value)"
-        ).getall()
+        self._fac_types = response.css("#MainContent_ddlFacType option::attr(value)").getall()
+        self._license_statuses = response.css("#MainContent_ddlLicenseStatus option::attr(value)").getall()
         # (value, label) per status, for splitting an oversized shard by status.
         # The value is a comma-joined status list; the label ("Open", "Closed",
         # …) makes a readable sub-shard key.
@@ -452,22 +438,12 @@ class MarylandSpider(scrapy.Spider):
             for o in response.css("#MainContent_ddlLicenseStatus option")
             if o.attrib.get("value")
         ]
-        counties = response.css(
-            "#MainContent_ddlCountyList option::attr(value)"
-        ).getall()
-        self._cities = response.css(
-            "#MainContent_ddlCityList option::attr(value)"
-        ).getall()
+        counties = response.css("#MainContent_ddlCountyList option::attr(value)").getall()
+        self._cities = response.css("#MainContent_ddlCityList option::attr(value)").getall()
 
         if self._county_filter:
-            counties = [
-                c
-                for c in counties
-                if any(term in c.lower() for term in self._county_filter)
-            ]
-            self.logger.info(
-                f"County debug filter active — restricting to: {counties}"
-            )
+            counties = [c for c in counties if any(term in c.lower() for term in self._county_filter)]
+            self.logger.info(f"County debug filter active — restricting to: {counties}")
 
         self.logger.info(
             f"Form options: {len(self._fac_types)} types, "
@@ -652,9 +628,7 @@ class MarylandSpider(scrapy.Spider):
         # delivery): don't re-extract its rows or re-drive pagination from it.
         parsed_pages = self.parsed_pages_by_county.setdefault(county_key, set())
         if current_page in parsed_pages:
-            self.logger.debug(
-                f"[{county_key}] page {current_page} already parsed — skipping."
-            )
+            self.logger.debug(f"[{county_key}] page {current_page} already parsed — skipping.")
             return
         parsed_pages.add(current_page)
         # Forward progress for the stall watchdog (a new page, even while items
@@ -665,12 +639,8 @@ class MarylandSpider(scrapy.Spider):
         rows = response.css("#grdResults tr.rowStyle")
         # Tally provider rows actually paginated through, per county, vs the
         # declared total — the spider-close completeness guardrail.
-        self.found_count_by_county[county_key] = (
-            self.found_count_by_county.get(county_key, 0) + len(rows)
-        )
-        self.logger.info(
-            f"[{county_key}] Found {len(rows)} provider rows on page {current_page}."
-        )
+        self.found_count_by_county[county_key] = self.found_count_by_county.get(county_key, 0) + len(rows)
+        self.logger.info(f"[{county_key}] Found {len(rows)} provider rows on page {current_page}.")
 
         for row in rows:
             cols = row.css("td")
@@ -687,15 +657,9 @@ class MarylandSpider(scrapy.Spider):
                     self.seen_fi.add(fi)
 
                 # Extract fields only available on the results page
-                address = (
-                    cols[2].css("::text").get("").strip() if len(cols) > 2 else None
-                )
-                school_name = (
-                    cols[4].css("::text").get("").strip() if len(cols) > 4 else None
-                )
-                program_type = (
-                    cols[5].css("::text").get("").strip() if len(cols) > 5 else None
-                )
+                address = cols[2].css("::text").get("").strip() if len(cols) > 2 else None
+                school_name = cols[4].css("::text").get("").strip() if len(cols) > 4 else None
+                program_type = cols[5].css("::text").get("").strip() if len(cols) > 5 else None
 
                 # Details ride one shared, self-warming session jar rather than
                 # this county's pagination session (see DETAIL_COOKIEJAR): the fi
@@ -773,9 +737,7 @@ class MarylandSpider(scrapy.Spider):
             )
             return
         attempts[target_page] = count + 1
-        self.logger.info(
-            f"[{county_key}] Navigating to page {target_page} (attempt {count + 1})..."
-        )
+        self.logger.info(f"[{county_key}] Navigating to page {target_page} (attempt {count + 1})...")
         yield scrapy.FormRequest.from_response(
             response,
             formdata={
@@ -947,14 +909,10 @@ class MarylandSpider(scrapy.Spider):
                 f"{len(incomplete)} short:"
             )
             for shard, found, declared in incomplete:
-                self.logger.error(
-                    f"  [{shard}] {found}/{declared} "
-                    f"({declared - found} missing)"
-                )
+                self.logger.error(f"  [{shard}] {found}/{declared} ({declared - found} missing)")
         else:
             self.logger.info(
-                f"Crawl complete ({reason}): paginated all {total_found} "
-                f"declared providers across {n_shards} shards."
+                f"Crawl complete ({reason}): paginated all {total_found} declared providers across {n_shards} shards."
             )
 
         # Item-level completeness. The paginated-row check above only proves we
@@ -985,9 +943,7 @@ class MarylandSpider(scrapy.Spider):
         ``MAX_DETAIL_REPRIMES``; an unrecoverable fi is dropped loudly (ERROR).
         """
         if "FacilityDetail" not in response.url:
-            yield from self._reissue_bounced_detail(
-                response, address, school_name, program_type
-            )
+            yield from self._reissue_bounced_detail(response, address, school_name, program_type)
             return
 
         item = ProviderItem()
@@ -1000,49 +956,27 @@ class MarylandSpider(scrapy.Spider):
         item["provider_type"] = program_type
 
         # Closed/suspended providers use a different panel with *Op suffixed IDs
-        is_non_operating = (
-            response.css("#MainContent_PnlNonOperating").get() is not None
-        )
+        is_non_operating = response.css("#MainContent_PnlNonOperating").get() is not None
 
         if is_non_operating:
-            item["provider_name"] = self._get_span_text(
-                response, "MainContent_txtProviderNameOp"
-            )
-            item["license_number"] = self._get_span_text(
-                response, "MainContent_txtLicenseOp"
-            )
-            item["status"] = self._get_span_text(
-                response, "MainContent_txtProviderStatusOp"
-            )
-            item["md_approved_education"] = self._get_span_text(
-                response, "MainContent_txtApprovedEducationProgramOp"
-            )
-            item["md_accreditation"] = self._get_span_text(
-                response, "MainContent_txtAccreditationOp"
-            )
-            item["md_excels_level"] = self._get_span_text(
-                response, "MainContent_txtEXCELSLevelOp"
-            )
+            item["provider_name"] = self._get_span_text(response, "MainContent_txtProviderNameOp")
+            item["license_number"] = self._get_span_text(response, "MainContent_txtLicenseOp")
+            item["status"] = self._get_span_text(response, "MainContent_txtProviderStatusOp")
+            item["md_approved_education"] = self._get_span_text(response, "MainContent_txtApprovedEducationProgramOp")
+            item["md_accreditation"] = self._get_span_text(response, "MainContent_txtAccreditationOp")
+            item["md_excels_level"] = self._get_span_text(response, "MainContent_txtEXCELSLevelOp")
         else:
-            item["provider_name"] = self._get_span_text(
-                response, "MainContent_txtProviderName"
-            )
-            item["license_number"] = self._get_span_text(
-                response, "MainContent_txtLicense"
-            )
+            item["provider_name"] = self._get_span_text(response, "MainContent_txtProviderName")
+            item["license_number"] = self._get_span_text(response, "MainContent_txtLicense")
             item["county"] = self._get_span_text(response, "MainContent_txtCounty")
-            item["status"] = self._get_span_text(
-                response, "MainContent_txtProviderStatus"
-            )
+            item["status"] = self._get_span_text(response, "MainContent_txtProviderStatus")
             item["phone"] = self._get_span_text(response, "MainContent_txtPhone")
             item["email"] = self._get_span_text(response, "MainContent_txtEmail")
 
             # Capacity - may contain total + age breakdowns separated by <br> tags
             capacity_raw = self._get_span_html(response, "MainContent_txtCapacity")
             if capacity_raw:
-                parts = [
-                    p.strip() for p in re.split(r"<br\s*/?>", capacity_raw) if p.strip()
-                ]
+                parts = [p.strip() for p in re.split(r"<br\s*/?>", capacity_raw) if p.strip()]
                 if parts:
                     item["capacity"] = parts[0]
                     if len(parts) > 1:
@@ -1051,27 +985,15 @@ class MarylandSpider(scrapy.Spider):
             # Hours
             hours_raw = self._get_span_html(response, "MainContent_txtHours")
             if hours_raw:
-                parts = [
-                    p.strip() for p in re.split(r"<br\s*/?>", hours_raw) if p.strip()
-                ]
+                parts = [p.strip() for p in re.split(r"<br\s*/?>", hours_raw) if p.strip()]
                 item["hours"] = "; ".join(parts)
 
             # Maryland-specific fields
-            item["md_approved_education"] = self._get_span_text(
-                response, "MainContent_txtApprovedEducationProgram"
-            )
-            item["md_accreditation"] = self._get_span_text(
-                response, "MainContent_txtAccreditation"
-            )
-            item["md_fatalities"] = self._get_span_text(
-                response, "MainContent_txtFatalities"
-            )
-            item["md_serious_injuries"] = self._get_span_text(
-                response, "MainContent_txtInjuries"
-            )
-            item["md_excels_level"] = self._get_span_text(
-                response, "MainContent_txtEXCELSLevel"
-            )
+            item["md_approved_education"] = self._get_span_text(response, "MainContent_txtApprovedEducationProgram")
+            item["md_accreditation"] = self._get_span_text(response, "MainContent_txtAccreditation")
+            item["md_fatalities"] = self._get_span_text(response, "MainContent_txtFatalities")
+            item["md_serious_injuries"] = self._get_span_text(response, "MainContent_txtInjuries")
+            item["md_excels_level"] = self._get_span_text(response, "MainContent_txtEXCELSLevel")
 
         # Inspections
         item["inspections"] = self._extract_inspections(response)
@@ -1111,8 +1033,7 @@ class MarylandSpider(scrapy.Spider):
         original = (response.meta.get("redirect_urls") or [response.url])[0]
         if "FacilityDetail" not in original or reprimes >= MAX_DETAIL_REPRIMES:
             self.logger.error(
-                f"Detail dropped: {original} still bounces to {response.url} "
-                f"after {reprimes} re-prime(s)."
+                f"Detail dropped: {original} still bounces to {response.url} after {reprimes} re-prime(s)."
             )
             return
         self.logger.warning(
@@ -1163,10 +1084,7 @@ class MarylandSpider(scrapy.Spider):
             if isinstance(data, list) and data:
                 record = data[0]
         except (ValueError, AttributeError) as e:
-            self.logger.debug(
-                f"EXCELS parse failed for license "
-                f"{item.get('license_number')}: {e}"
-            )
+            self.logger.debug(f"EXCELS parse failed for license {item.get('license_number')}: {e}")
 
         if record:
             self._apply_excels_location(item, record)
@@ -1246,9 +1164,7 @@ class MarylandSpider(scrapy.Spider):
         pdf_bytes = response.body
         precise_address = await asyncio.to_thread(extract_address_from_pdf, pdf_bytes)
         if precise_address:
-            self.logger.debug(
-                f"OCR address for {item.get('provider_name')}: {precise_address}"
-            )
+            self.logger.debug(f"OCR address for {item.get('provider_name')}: {precise_address}")
             item["address"] = precise_address
         yield item
 
@@ -1286,15 +1202,9 @@ class MarylandSpider(scrapy.Spider):
             md_finding = cols[5].css("::text").get("").strip()
             md_status = cols[6].css("::text").get("").strip()
 
-            insp["md_regulation"] = (
-                md_regulation if md_regulation and md_regulation != "\xa0" else None
-            )
-            insp["md_finding"] = (
-                md_finding if md_finding and md_finding != "\xa0" else None
-            )
-            insp["md_inspection_status"] = (
-                md_status if md_status and md_status != "\xa0" else None
-            )
+            insp["md_regulation"] = md_regulation if md_regulation and md_regulation != "\xa0" else None
+            insp["md_finding"] = md_finding if md_finding and md_finding != "\xa0" else None
+            insp["md_inspection_status"] = md_status if md_status and md_status != "\xa0" else None
 
             if insp.get("date") or insp.get("type"):
                 inspections.append(insp)

@@ -38,11 +38,12 @@ Usage:
 
 Invoked automatically at the end of a run by ``run_spiders.sh -u``.
 """
+
 import argparse
 import logging
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import yaml
 from huggingface_hub import CommitOperationAdd, HfApi
@@ -83,7 +84,7 @@ def load_env_file(path):
     values = {}
     if not os.path.exists(path):
         return values
-    with open(path, "r", encoding="utf-8") as handle:
+    with open(path, encoding="utf-8") as handle:
         for line in handle:
             line = line.strip()
             if not line or line.startswith("#") or "=" not in line:
@@ -131,9 +132,8 @@ def build_operations(files, path_in_repo):
     operations = []
     for path in files:
         name = os.path.basename(path)
-        target = "%s/%s" % (prefix, name) if prefix else name
-        operations.append(
-            CommitOperationAdd(path_in_repo=target, path_or_fileobj=path))
+        target = f"{prefix}/{name}" if prefix else name
+        operations.append(CommitOperationAdd(path_in_repo=target, path_or_fileobj=path))
     return operations
 
 
@@ -151,9 +151,8 @@ def build_extra_operations(extra_files, path_in_repo):
             logger.warning("Skipping extra file %s: not found", path)
             continue
         name = os.path.basename(path)
-        target = "%s/%s" % (prefix, name) if prefix else name
-        operations.append(
-            CommitOperationAdd(path_in_repo=target, path_or_fileobj=path))
+        target = f"{prefix}/{name}" if prefix else name
+        operations.append(CommitOperationAdd(path_in_repo=target, path_or_fileobj=path))
     return operations
 
 
@@ -177,11 +176,10 @@ def build_configs(files, path_in_repo):
         name = os.path.basename(path)
         cfg = config_name_for(path)
         if cfg in seen:
-            logger.warning(
-                "Duplicate config name %r (%s); keeping the first.", cfg, path)
+            logger.warning("Duplicate config name %r (%s); keeping the first.", cfg, path)
             continue
         seen.add(cfg)
-        data_file = "%s/%s" % (prefix, name) if prefix else name
+        data_file = f"{prefix}/{name}" if prefix else name
         configs.append({"config_name": cfg, "data_files": data_file})
     return configs
 
@@ -210,11 +208,11 @@ def split_frontmatter(text):
         # Opening fence with no close: not real frontmatter, treat as body.
         return {}, text
     fm_text = "\n".join(lines[1:end])
-    body = "\n".join(lines[end + 1:])
+    body = "\n".join(lines[end + 1 :])
     try:
         data = yaml.safe_load(fm_text)
     except yaml.YAMLError as exc:
-        raise ValueError(str(exc))
+        raise ValueError(str(exc)) from exc
     if data is None:
         data = {}
     if not isinstance(data, dict):
@@ -231,26 +229,21 @@ def render_readme(existing_text, configs):
     data, body = split_frontmatter(existing_text)
     data = dict(data)
     data["configs"] = configs
-    frontmatter = yaml.safe_dump(
-        data, sort_keys=False, allow_unicode=True,
-        default_flow_style=False).rstrip("\n")
+    frontmatter = yaml.safe_dump(data, sort_keys=False, allow_unicode=True, default_flow_style=False).rstrip("\n")
     body = body.strip("\n")
     if not body:
         body = DEFAULT_README_BODY.strip("\n")
-    return "---\n%s\n---\n\n%s\n" % (frontmatter, body)
+    return f"---\n{frontmatter}\n---\n\n{body}\n"
 
 
 def fetch_existing_readme(api, repo):
     """Return the repo's current README text, or None if it has none."""
     try:
-        local = api.hf_hub_download(
-            repo_id=repo, repo_type="dataset", filename=README_FILENAME)
+        local = api.hf_hub_download(repo_id=repo, repo_type="dataset", filename=README_FILENAME)
     except EntryNotFoundError:
         return None
     except (RepositoryNotFoundError, HfHubHTTPError) as exc:
-        logger.warning(
-            "Couldn't fetch existing %s (%s); generating a fresh one.",
-            README_FILENAME, exc)
+        logger.warning("Couldn't fetch existing %s (%s); generating a fresh one.", README_FILENAME, exc)
         return None
     with open(local, encoding="utf-8") as handle:
         return handle.read()
@@ -258,86 +251,92 @@ def fetch_existing_readme(api, repo):
 
 def build_arg_parser():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("inputs", nargs="+",
-                        help="directories and/or files to upload")
-    parser.add_argument("-f", "--format", default="json",
-                        choices=["json", "csv"],
-                        help="data file extension to collect from directories "
-                             "(default: %(default)s)")
-    parser.add_argument("--repo",
-                        help="dataset repo id (default: %s in the env file)"
-                             % REPO_KEY)
-    parser.add_argument("--token",
-                        help="write token (default: %s in the env file)"
-                             % TOKEN_KEY)
-    parser.add_argument("--env-file", default=DEFAULT_ENV_FILE,
-                        help="key=value file with token/repo "
-                             "(default: %(default)s)")
-    parser.add_argument("--path-in-repo", default="",
-                        help="subdirectory in the repo to upload into "
-                             "(default: repo root)")
-    parser.add_argument("--extra-file", dest="extra_files", action="append",
-                        default=[], metavar="PATH",
-                        help="additional file to include in the commit, as-is, "
-                             "under --path-in-repo (repeatable); e.g. a "
-                             "generated SOURCES.md. Missing files are skipped.")
-    parser.add_argument("--commit-message",
-                        help="commit message (default: a timestamped message)")
-    parser.add_argument("--readme", dest="readme", action="store_true",
-                        default=None,
-                        help="also write a README.md declaring one dataset "
-                             "config per state file (default: on for json)")
-    parser.add_argument("--no-readme", dest="readme", action="store_false",
-                        help="don't touch the dataset README.md")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="list what would be uploaded; no network, no push")
-    parser.add_argument("-v", "--verbose", action="store_true",
-                        help="debug-level logging")
+    parser.add_argument("inputs", nargs="+", help="directories and/or files to upload")
+    parser.add_argument(
+        "-f",
+        "--format",
+        default="json",
+        choices=["json", "csv"],
+        help="data file extension to collect from directories (default: %(default)s)",
+    )
+    parser.add_argument("--repo", help=f"dataset repo id (default: {REPO_KEY} in the env file)")
+    parser.add_argument("--token", help=f"write token (default: {TOKEN_KEY} in the env file)")
+    parser.add_argument(
+        "--env-file", default=DEFAULT_ENV_FILE, help="key=value file with token/repo (default: %(default)s)"
+    )
+    parser.add_argument(
+        "--path-in-repo", default="", help="subdirectory in the repo to upload into (default: repo root)"
+    )
+    parser.add_argument(
+        "--extra-file",
+        dest="extra_files",
+        action="append",
+        default=[],
+        metavar="PATH",
+        help="additional file to include in the commit, as-is, "
+        "under --path-in-repo (repeatable); e.g. a "
+        "generated SOURCES.md. Missing files are skipped.",
+    )
+    parser.add_argument("--commit-message", help="commit message (default: a timestamped message)")
+    parser.add_argument(
+        "--readme",
+        dest="readme",
+        action="store_true",
+        default=None,
+        help="also write a README.md declaring one dataset config per state file (default: on for json)",
+    )
+    parser.add_argument("--no-readme", dest="readme", action="store_false", help="don't touch the dataset README.md")
+    parser.add_argument("--dry-run", action="store_true", help="list what would be uploaded; no network, no push")
+    parser.add_argument("-v", "--verbose", action="store_true", help="debug-level logging")
     return parser
 
 
 def main(argv=None):
     args = build_arg_parser().parse_args(argv)
     logging.basicConfig(
-        level=logging.DEBUG if args.verbose else logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+        level=logging.DEBUG if args.verbose else logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+    )
 
     env = load_env_file(args.env_file)
     token = args.token or env.get(TOKEN_KEY)
     repo = args.repo or env.get(REPO_KEY)
 
     if not repo:
-        logger.error("No dataset repo id: pass --repo or set %s in %s",
-                     REPO_KEY, args.env_file)
+        logger.error("No dataset repo id: pass --repo or set %s in %s", REPO_KEY, args.env_file)
         return 2
     if not token and not args.dry_run:
-        logger.error("No token: pass --token or set %s in %s",
-                     TOKEN_KEY, args.env_file)
+        logger.error("No token: pass --token or set %s in %s", TOKEN_KEY, args.env_file)
         return 2
 
     files = collect_files(args.inputs, args.format)
     if not files:
-        logger.error("No .%s files found in: %s",
-                     args.format, ", ".join(args.inputs))
+        logger.error("No .%s files found in: %s", args.format, ", ".join(args.inputs))
         return 1
 
     total_bytes = sum(os.path.getsize(f) for f in files)
-    logger.info("Found %d .%s file(s) totaling %.1f MB to upload to %s",
-                len(files), args.format, total_bytes / 1_048_576.0, repo)
+    logger.info(
+        "Found %d .%s file(s) totaling %.1f MB to upload to %s",
+        len(files),
+        args.format,
+        total_bytes / 1_048_576.0,
+        repo,
+    )
     for path in files:
         logger.info("  %s (%.1f MB)", path, os.path.getsize(path) / 1_048_576.0)
 
     # Default: manage the README for JSON (the format HF parses into the
     # per-state dataset), leave it alone for CSV. --readme/--no-readme override.
-    generate_readme = args.readme if args.readme is not None \
-        else (args.format == "json")
+    generate_readme = args.readme if args.readme is not None else (args.format == "json")
 
     if args.dry_run:
         if generate_readme:
             configs = build_configs(files, args.path_in_repo)
-            logger.info("Would write %s with %d per-state config(s): %s",
-                        README_FILENAME, len(configs),
-                        ", ".join(c["config_name"] for c in configs))
+            logger.info(
+                "Would write %s with %d per-state config(s): %s",
+                README_FILENAME,
+                len(configs),
+                ", ".join(c["config_name"] for c in configs),
+            )
         for path in args.extra_files:
             if os.path.isfile(path):
                 logger.info("Would include extra file %s", path)
@@ -346,9 +345,7 @@ def main(argv=None):
         logger.info("Dry run: nothing uploaded.")
         return 0
 
-    message = args.commit_message or (
-        "Scheduled data upload %s"
-        % datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"))
+    message = args.commit_message or (f"Scheduled data upload {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}")
     api = HfApi(token=token)
     operations = build_operations(files, args.path_in_repo)
     operations.extend(build_extra_operations(args.extra_files, args.path_in_repo))
@@ -361,14 +358,15 @@ def main(argv=None):
             logger.warning(
                 "Existing %s frontmatter couldn't be parsed (%s); skipping the "
                 "README config update. Fix or delete it to let this script "
-                "regenerate it.", README_FILENAME, exc)
+                "regenerate it.",
+                README_FILENAME,
+                exc,
+            )
         else:
-            operations.insert(0, CommitOperationAdd(
-                path_in_repo=README_FILENAME,
-                path_or_fileobj=readme_text.encode("utf-8")))
-            logger.info(
-                "Including auto-generated %s with %d per-state config(s).",
-                README_FILENAME, len(configs))
+            operations.insert(
+                0, CommitOperationAdd(path_in_repo=README_FILENAME, path_or_fileobj=readme_text.encode("utf-8"))
+            )
+            logger.info("Including auto-generated %s with %d per-state config(s).", README_FILENAME, len(configs))
     try:
         commit = api.create_commit(
             repo_id=repo,
@@ -380,15 +378,16 @@ def main(argv=None):
         logger.error(
             "Dataset repo %s not found (or the token lacks access). Create it "
             "on the Hugging Face website and give the token write scope; this "
-            "script does not create repos.", repo)
+            "script does not create repos.",
+            repo,
+        )
         return 1
     except HfHubHTTPError as error:
         logger.error("Upload to %s failed: %s", repo, error)
         return 1
 
     commit_url = getattr(commit, "commit_url", None) or repo
-    logger.info("Uploaded %d file(s) to %s (%s)",
-                len(operations), repo, commit_url)
+    logger.info("Uploaded %d file(s) to %s (%s)", len(operations), repo, commit_url)
     return 0
 
 

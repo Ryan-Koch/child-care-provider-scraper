@@ -18,8 +18,7 @@ def extract_field(response, label_text):
         <div ...><p class="form-control-static">Value</p></div>
     """
     p = response.xpath(
-        f'//label[contains(text(),"{label_text}")]'
-        '/following-sibling::div/p[@class="form-control-static"]/text()'
+        f'//label[contains(text(),"{label_text}")]/following-sibling::div/p[@class="form-control-static"]/text()'
     ).get()
     return p.strip() if p and p.strip() else None
 
@@ -45,9 +44,7 @@ class WashingtonSpider(scrapy.Spider):
 
     def parse_search_page(self, response):
         """Extract Visualforce remoting tokens and request all provider IDs."""
-        match = re.search(
-            r"RemotingProviderImpl\((\{.*?\})\)\);", response.text
-        )
+        match = re.search(r"RemotingProviderImpl\((\{.*?\})\)\);", response.text)
         if not match:
             self.logger.error("Could not find Visualforce remoting config")
             return
@@ -57,20 +54,22 @@ class WashingtonSpider(scrapy.Spider):
         methods = config["actions"]["PSS_SearchController"]["ms"]
         sosl_method = next(m for m in methods if m["name"] == "getSOSLKeys")
 
-        payload = json.dumps({
-            "action": "PSS_SearchController",
-            "method": "getSOSLKeys",
-            "data": ["", "", ["DEL Licensed"], [], None, None, None, []],
-            "type": "rpc",
-            "tid": 2,
-            "ctx": {
-                "csrf": sosl_method["csrf"],
-                "vid": vid,
-                "ns": sosl_method["ns"],
-                "ver": int(sosl_method["ver"]),
-                "authorization": sosl_method["authorization"],
-            },
-        })
+        payload = json.dumps(
+            {
+                "action": "PSS_SearchController",
+                "method": "getSOSLKeys",
+                "data": ["", "", ["DEL Licensed"], [], None, None, None, []],
+                "type": "rpc",
+                "tid": 2,
+                "ctx": {
+                    "csrf": sosl_method["csrf"],
+                    "vid": vid,
+                    "ns": sosl_method["ns"],
+                    "ver": int(sosl_method["ver"]),
+                    "authorization": sosl_method["authorization"],
+                },
+            }
+        )
 
         yield scrapy.Request(
             APEXREMOTE_URL,
@@ -104,23 +103,17 @@ class WashingtonSpider(scrapy.Spider):
         item["provider_url"] = response.url
 
         # Provider name from the h1 in the panel heading
-        name = response.css(
-            "div.panel-heading h1::text"
-        ).get()
+        name = response.css("div.panel-heading h1::text").get()
         if name:
             item["provider_name"] = name.strip()
 
         # Early Achievers status from the heading area
-        ea_status = response.css(
-            "div.panel-heading div.text-right > p::text"
-        ).get()
+        ea_status = response.css("div.panel-heading div.text-right > p::text").get()
         if ea_status and ea_status.strip():
             item["wa_early_achievers_status"] = ea_status.strip()
 
         # Address from the panel body
-        addr_p = response.css(
-            "div.panel-body div.col-xs-4 p[style='display:block']"
-        )
+        addr_p = response.css("div.panel-body div.col-xs-4 p[style='display:block']")
         if addr_p:
             addr_html = addr_p[0].css("::text").getall()
             addr_text = " ".join(t.strip() for t in addr_html if t.strip())
@@ -135,17 +128,13 @@ class WashingtonSpider(scrapy.Spider):
 
         # Provider status
         status_div = response.xpath(
-            '//div[@class="panel-body"]'
-            '//label[contains(text(),"Provider Status")]'
-            "/following-sibling::div/text()"
+            '//div[@class="panel-body"]//label[contains(text(),"Provider Status")]/following-sibling::div/text()'
         ).get()
         if status_div and status_div.strip():
             item["wa_provider_status"] = status_div.strip()
 
         # Hours of operation
-        hours_items = response.css(
-            "div.panel-body ul.list-unstyled li"
-        )
+        hours_items = response.css("div.panel-body ul.list-unstyled li")
         hours_parts = []
         for li in hours_items:
             texts = li.css("::text").getall()
@@ -183,45 +172,28 @@ class WashingtonSpider(scrapy.Spider):
         item["email"] = extract_field(response, "Email:")
         item["administrator"] = extract_field(response, "Primary Contact:")
         item["wa_head_start"] = extract_field(response, "Head Start Funding:")
-        item["wa_early_head_start"] = extract_field(
-            response, "Early Head Start Funding:"
-        )
+        item["wa_early_head_start"] = extract_field(response, "Early Head Start Funding:")
         item["wa_eceap"] = extract_field(response, "ECEAP Funding:")
-        item["wa_available_slots"] = extract_field(
-            response, "Total Available Slots:"
-        )
-        item["wa_slot_age_groups"] = extract_field(
-            response, "Age Groups of Available Slots:"
-        )
+        item["wa_available_slots"] = extract_field(response, "Total Available Slots:")
+        item["wa_slot_age_groups"] = extract_field(response, "Age Groups of Available Slots:")
         item["languages"] = extract_field(response, "Languages Spoken:")
-        item["wa_languages_of_instruction"] = extract_field(
-            response, "Languages of Instruction:"
-        )
+        item["wa_languages_of_instruction"] = extract_field(response, "Languages of Instruction:")
         item["wa_license_name"] = extract_field(response, "License Name:")
         item["license_number"] = extract_field(response, "License Number:")
         item["wa_provider_id"] = extract_field(response, "Provider ID:")
         item["provider_type"] = extract_field(response, "Facility Type:")
         item["ages_served"] = extract_field(response, "Ages:")
-        item["license_begin_date"] = extract_field(
-            response, "Initial License Date:"
-        )
+        item["license_begin_date"] = extract_field(response, "Initial License Date:")
         item["status"] = extract_field(response, "License Status:")
         item["wa_license_type"] = extract_field(response, "License Type:")
         item["capacity"] = extract_field(response, "Licensed Capacity:")
-        item["wa_school_district"] = extract_field(
-            response, "School District:"
-        )
-        item["wa_food_program"] = extract_field(
-            response, "Food Program Participation:"
-        )
-        item["wa_subsidy"] = extract_field(
-            response, "Subsidy Participation:"
-        )
+        item["wa_school_district"] = extract_field(response, "School District:")
+        item["wa_food_program"] = extract_field(response, "Food Program Participation:")
+        item["wa_subsidy"] = extract_field(response, "Subsidy Participation:")
 
         # Website is in a form-control-static inside a special form
         website_p = response.xpath(
-            '//label[contains(text(),"Website:")]'
-            "/following-sibling::div//p[@class='form-control-static']"
+            "//label[contains(text(),\"Website:\")]/following-sibling::div//p[@class='form-control-static']"
         )
         if website_p:
             link = website_p.css("a::attr(href)").get()
@@ -240,17 +212,19 @@ class WashingtonSpider(scrapy.Spider):
             if len(tds) < 5:
                 continue
 
-            def cell_text(idx):
+            def cell_text(idx, tds=tds):
                 text = tds[idx].css("::text").get()
                 return text.strip() if text and text.strip() else ""
 
-            contacts.append({
-                "name": cell_text(0),
-                "role": cell_text(1),
-                "email": cell_text(2),
-                "phone": cell_text(3),
-                "start_date": cell_text(4),
-            })
+            contacts.append(
+                {
+                    "name": cell_text(0),
+                    "role": cell_text(1),
+                    "email": cell_text(2),
+                    "phone": cell_text(3),
+                    "start_date": cell_text(4),
+                }
+            )
         return contacts
 
     def _parse_inspections(self, response):
@@ -300,19 +274,21 @@ class WashingtonSpider(scrapy.Spider):
             if len(tds) < 9:
                 continue
 
-            def cell_text(idx):
+            def cell_text(idx, tds=tds):
                 text = tds[idx].css("::text").get()
                 return text.strip() if text and text.strip() else ""
 
-            history.append({
-                "license_id": cell_text(0),
-                "regulation_type": cell_text(1),
-                "regulation_authority": cell_text(2),
-                "facility_type": cell_text(3),
-                "license_type": cell_text(4),
-                "license_status": cell_text(5),
-                "issue_date": cell_text(6),
-                "closure_date": cell_text(7),
-                "status_reason": cell_text(8),
-            })
+            history.append(
+                {
+                    "license_id": cell_text(0),
+                    "regulation_type": cell_text(1),
+                    "regulation_authority": cell_text(2),
+                    "facility_type": cell_text(3),
+                    "license_type": cell_text(4),
+                    "license_status": cell_text(5),
+                    "issue_date": cell_text(6),
+                    "closure_date": cell_text(7),
+                    "status_reason": cell_text(8),
+                }
+            )
         return history

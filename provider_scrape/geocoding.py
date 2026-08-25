@@ -17,6 +17,7 @@ The backend is the free US Census Bureau batch geocoder. The flow is:
 
 See ``tasks/geocoding_epic/geocoding_plan.md`` for the epic plan.
 """
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,17 +26,15 @@ logger = logging.getLogger(__name__)
 # Census batch geocoder configuration (consumed by the CLI; kept here so the
 # one geocoding module owns the backend contract).
 # --------------------------------------------------------------------------- #
-CENSUS_BATCH_URL = (
-    "https://geocoding.geo.census.gov/geocoder/locations/addressbatch"
-)
+CENSUS_BATCH_URL = "https://geocoding.geo.census.gov/geocoder/locations/addressbatch"
 CENSUS_BENCHMARK = "Public_AR_Current"
 # Census caps a batch at 10,000 rows; we chunk smaller because large batches
 # time out. Sequential chunks keep us polite to a free public service.
 MAX_BATCH_SIZE = 3000
 
 # `geocode_source` values.
-SOURCE_STATE = "state"          # coordinate came from the spider / source state
-SOURCE_CENSUS = "census"        # coordinate derived by the Census geocoder
+SOURCE_STATE = "state"  # coordinate came from the spider / source state
+SOURCE_CENSUS = "census"  # coordinate derived by the Census geocoder
 SOURCE_UNMATCHED = "unmatched"  # geocoding attempted but produced no usable point
 
 
@@ -77,9 +76,9 @@ def split_address_for_geocode(item):
     if not isinstance(address, str) or not address.strip():
         return None
     address = address.strip()
-    city = (str(item["city"]).strip() if _present(item.get("city")) else "")
-    state = (str(item["state"]).strip() if _present(item.get("state")) else "")
-    zip_code = (str(item["zip"]).strip() if _present(item.get("zip")) else "")
+    city = str(item["city"]).strip() if _present(item.get("city")) else ""
+    state = str(item["state"]).strip() if _present(item.get("state")) else ""
+    zip_code = str(item["zip"]).strip() if _present(item.get("zip")) else ""
 
     street = address
     for piece in (zip_code, state, city):
@@ -145,8 +144,7 @@ def parse_response_line(fields):
                 result["longitude"] = longitude
                 result["latitude"] = latitude
             else:
-                logger.warning(
-                    "parse_response_line: blank coordinate in %r", fields)
+                logger.warning("parse_response_line: blank coordinate in %r", fields)
     return result
 
 
@@ -159,12 +157,10 @@ def apply_result(item, result):
     geocoder in the first place). Returns the same ``item``.
     """
     match = result.get("match")
-    has_point = _present(result.get("latitude")) and _present(
-        result.get("longitude"))
+    has_point = _present(result.get("latitude")) and _present(result.get("longitude"))
     if match == "Match" and has_point:
         item["geocode_source"] = SOURCE_CENSUS
-        item["geocode_confidence"] = (
-            "exact" if result.get("match_type") == "Exact" else "approximate")
+        item["geocode_confidence"] = "exact" if result.get("match_type") == "Exact" else "approximate"
         if not has_coordinates(item):
             item["latitude"] = result["latitude"]
             item["longitude"] = result["longitude"]

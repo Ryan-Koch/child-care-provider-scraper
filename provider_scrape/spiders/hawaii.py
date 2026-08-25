@@ -18,7 +18,6 @@ import scrapy
 
 from ..items import InspectionItem, ProviderItem
 
-
 # --- Azure Logic App endpoints (hardcoded fallbacks; we prefer the live URLs
 # scraped off the landing page so a rotated SAS `sig` token doesn't break us). ---
 AREAS_URL = (
@@ -39,9 +38,7 @@ SEARCH_WORKFLOW_ID = "179f51f14f6a4837b49e82a3099bc3c3"
 
 LANDING_URL = "https://childcareprovidersearch.dhs.hawaii.gov/"
 DETAIL_URL = "https://childcareprovidersearch.dhs.hawaii.gov/details/?serviceId={}"
-INSPECTIONS_URL = (
-    "https://childcareprovidersearch.dhs.hawaii.gov/inspections/?serviceId={}"
-)
+INSPECTIONS_URL = "https://childcareprovidersearch.dhs.hawaii.gov/inspections/?serviceId={}"
 # The inspections page embeds the visit list only when the portal's Dataverse
 # cache is warm; when it's cold the page fetches the list client-side from this
 # HANA "inspection list" Logic App. We POST it directly (hardcoded fallback; we
@@ -84,9 +81,7 @@ AZURE_HEADERS = {
     "Accept": "*/*",
     "Origin": "https://childcareprovidersearch.dhs.hawaii.gov",
     "Referer": "https://childcareprovidersearch.dhs.hawaii.gov/",
-    "User-Agent": (
-        "Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0"
-    ),
+    "User-Agent": ("Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0"),
 }
 
 # 1 = Sunday ... 7 = Saturday (verified against a sample provider's Mon-Fri shift).
@@ -111,9 +106,7 @@ def extract_endpoint_urls(html):
     Returns (areas_url, search_url), each None when the regex finds no URL with
     the matching workflow id (the caller falls back to the hardcoded constants).
     """
-    urls = re.findall(
-        r"https://prod-\d+\.usgovtexas\.logic\.azure\.us[^'\"\s]+", html
-    )
+    urls = re.findall(r"https://prod-\d+\.usgovtexas\.logic\.azure\.us[^'\"\s]+", html)
     areas_url = search_url = None
     for url in urls:
         if AREAS_WORKFLOW_ID in url and areas_url is None:
@@ -131,7 +124,7 @@ def extract_embedded_json(html, var_name):
     the literal is absent or unparseable.
     """
     match = re.search(
-        r"const\s+%s\s*=\s*(?:JSON\.parse\()?`(.*?)`" % re.escape(var_name),
+        rf"const\s+{re.escape(var_name)}\s*=\s*(?:JSON\.parse\()?`(.*?)`",
         html,
         re.DOTALL,
     )
@@ -220,9 +213,7 @@ def extract_inspection_details(html):
 
 def _find_workflow_url(html, workflow_id):
     """Return the first embedded Logic App URL carrying `workflow_id`, or None."""
-    for url in re.findall(
-        r"https://prod-\d+\.usgovtexas\.logic\.azure\.us[^'\"\s]+", html
-    ):
+    for url in re.findall(r"https://prod-\d+\.usgovtexas\.logic\.azure\.us[^'\"\s]+", html):
         if workflow_id in url:
             return url
     return None
@@ -326,15 +317,24 @@ def build_search_body(areas_csv):
         "ZipCode": "",
         "Areas": areas_csv,
         "Type": {
-            "Center": "true", "Center1": "true", "Center2": "true",
-            "Center3": "true", "Home": "true", "Home1": "true", "Home2": "true",
+            "Center": "true",
+            "Center1": "true",
+            "Center2": "true",
+            "Center3": "true",
+            "Home": "true",
+            "Home1": "true",
+            "Home2": "true",
         },
         "Ages": {
-            "InfantandToddler": "false", "Preschool": "false", "School-aged": "false",
+            "InfantandToddler": "false",
+            "Preschool": "false",
+            "School-aged": "false",
         },
         "Others": {
-            "Accredited": "false", "WeekendCare": "false",
-            "MealsProvided": "false", "SnacksProvided": "false",
+            "Accredited": "false",
+            "WeekendCare": "false",
+            "MealsProvided": "false",
+            "SnacksProvided": "false",
         },
     }
 
@@ -436,11 +436,7 @@ def format_age_range(min_unit, min_value, max_unit, max_value):
 
 def _address_parts(addr):
     """Ordered non-empty street/building components of an address dict."""
-    return [
-        part
-        for part in (addr.get("street1"), addr.get("street2"), addr.get("building"))
-        if part
-    ]
+    return [part for part in (addr.get("street1"), addr.get("street2"), addr.get("building")) if part]
 
 
 def format_address(addr, provider_kind):
@@ -508,9 +504,7 @@ class HawaiiSpider(scrapy.Spider):
         self.accreditations_map = {}
 
     def start_requests(self):
-        yield scrapy.Request(
-            LANDING_URL, callback=self.parse_landing, meta={"playwright": False}
-        )
+        yield scrapy.Request(LANDING_URL, callback=self.parse_landing, meta={"playwright": False})
 
     def parse_landing(self, response):
         """Scrape the live endpoint URLs, then kick off the area-table fetch."""
@@ -562,10 +556,7 @@ class HawaiiSpider(scrapy.Spider):
         if single:
             areas_csv = fully_qualified(area_code, self.parent_of)
         else:
-            areas_csv = ",".join(
-                fully_qualified(c, self.parent_of)
-                for c in subtree_codes(area_code, self.children)
-            )
+            areas_csv = ",".join(fully_qualified(c, self.parent_of) for c in subtree_codes(area_code, self.children))
         return scrapy.Request(
             self.search_url,
             method="POST",
@@ -649,16 +640,10 @@ class HawaiiSpider(scrapy.Spider):
         """Parse and cache the embedded code tables off the first detail page."""
         if self._code_tables_loaded:
             return
-        self.service_type_map = code_table_map(
-            extract_embedded_json(html, "hanaJSON"), value_field="publicName"
-        )
+        self.service_type_map = code_table_map(extract_embedded_json(html, "hanaJSON"), value_field="publicName")
         self.meals_map = code_table_map(extract_embedded_json(html, "serviceMealsResponse"))
-        self.languages_map = code_table_map(
-            extract_embedded_json(html, "serviceLanguagesResponse")
-        )
-        self.accreditations_map = code_table_map(
-            extract_embedded_json(html, "serviceAccreditationsResponse")
-        )
+        self.languages_map = code_table_map(extract_embedded_json(html, "serviceLanguagesResponse"))
+        self.accreditations_map = code_table_map(extract_embedded_json(html, "serviceAccreditationsResponse"))
         self._code_tables_loaded = True
         self.logger.info(
             "Loaded code tables: %s service types, %s meals, %s languages, %s accreditations",
@@ -781,9 +766,7 @@ class HawaiiSpider(scrapy.Spider):
         for visit in summaries:
             inspection = InspectionItem()
             inspection["date"] = visit.get("visitDate")
-            inspection["type"] = VISIT_TYPE_MAP.get(
-                visit.get("visitType"), visit.get("visitType")
-            )
+            inspection["type"] = VISIT_TYPE_MAP.get(visit.get("visitType"), visit.get("visitType"))
             inspection["hi_visit_id"] = visit.get("visitId")
             inspection["hi_licensing_period_start"] = visit.get("licensingPeriodStart")
             inspection["hi_licensing_period_end"] = visit.get("licensingPeriodEnd")
@@ -796,8 +779,7 @@ class HawaiiSpider(scrapy.Spider):
         pending = [
             insp
             for insp in inspections
-            if insp.get("hi_requirements_not_met") is None
-            and insp.get("hi_visit_id") is not None
+            if insp.get("hi_requirements_not_met") is None and insp.get("hi_visit_id") is not None
         ]
         if not pending:
             self.logger.info(
@@ -885,45 +867,35 @@ class HawaiiSpider(scrapy.Spider):
             return
         item["provider_name"] = summary.get("serviceName") or item.get("provider_name")
         item["license_holder"] = summary.get("providerName") or item.get("license_holder")
-        item["provider_type"] = service_type_name(
-            summary.get("serviceType"), self.service_type_map
-        )
+        item["provider_type"] = service_type_name(summary.get("serviceType"), self.service_type_map)
         item["hi_provider_kind"] = summary.get("providerType") or item.get("hi_provider_kind")
         item["license_number"] = summary.get("licenseNumber")
         item["license_begin_date"] = summary.get("effectiveDate")
         item["license_expiration"] = summary.get("expirationDate")
         item["capacity"] = summary.get("capacity")
         item["ages_served"] = format_age_range(
-            summary.get("minAgeUnit"), summary.get("minAgeValue"),
-            summary.get("maxAgeUnit"), summary.get("maxAgeValue"),
+            summary.get("minAgeUnit"),
+            summary.get("minAgeValue"),
+            summary.get("maxAgeUnit"),
+            summary.get("maxAgeValue"),
         )
         license_type = summary.get("licenseType")
-        item["hi_license_type"] = {"P": "Provisional", "R": "Regular"}.get(
-            license_type, license_type
-        )
+        item["hi_license_type"] = {"P": "Provisional", "R": "Regular"}.get(license_type, license_type)
 
     def fill_details(self, item, details):
         if not details:
             return
         provider_kind = item.get("hi_provider_kind")
         item["address"] = format_address(details.get("locationAddress"), provider_kind)
-        item["hi_mailing_address"] = format_address(
-            details.get("mailingAddress"), provider_kind
-        )
+        item["hi_mailing_address"] = format_address(details.get("mailingAddress"), provider_kind)
         item["hi_usda_food_program"] = details.get("usdaFoodProgram")
         item["hi_diapered_children_accepted"] = details.get("diaperedChildrenAccepted")
         item["hi_demonstration_project"] = details.get("demonstrationProject")
         item["hours"] = format_hours(details.get("shifts"))
 
-        item["hi_meals"] = [
-            self.meals_map.get(c, c) for c in (details.get("meals") or [])
-        ]
-        item["hi_accreditations"] = [
-            self._accreditation_entry(a) for a in (details.get("accreditations") or [])
-        ]
-        languages = [
-            self.languages_map.get(c, c) for c in (details.get("caregiverLanguages") or [])
-        ]
+        item["hi_meals"] = [self.meals_map.get(c, c) for c in (details.get("meals") or [])]
+        item["hi_accreditations"] = [self._accreditation_entry(a) for a in (details.get("accreditations") or [])]
+        languages = [self.languages_map.get(c, c) for c in (details.get("caregiverLanguages") or [])]
         if languages:
             item["languages"] = languages
 

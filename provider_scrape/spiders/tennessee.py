@@ -17,6 +17,7 @@ Flow:
 
 See tasks/tennessee_epic/tennessee_development_plan.md for the full write-up.
 """
+
 import json
 import re
 from urllib.parse import parse_qs, urlencode
@@ -34,9 +35,7 @@ RECTANGLE_ID_FALLBACK = "9d8c1f2e1bc6c9102c9ce3fb234bcbe9"
 DETAIL_PAGE_ID = "cp_provider_details_maps"
 MAP_PAGE_ID = "tn_cc_prv_maps"
 
-USER_AGENT = (
-    "Mozilla/5.0 (X11; Linux x86_64; rv:153.0) Gecko/20100101 Firefox/153.0"
-)
+USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64; rv:153.0) Gecko/20100101 Firefox/153.0"
 
 # Warn in closed() if we finish well below this. Calibrate after the first full
 # run (~80% of the observed statewide total). Calibrated to a 2026-08 full run
@@ -46,20 +45,101 @@ EXPECTED_MIN_PROVIDERS = 3200
 # The 95 Tennessee counties, spelled exactly as the API expects (verified live:
 # "DeKalb" has no space; "Van Buren" has a space).
 ALL_COUNTIES = [
-    "Anderson", "Bedford", "Benton", "Bledsoe", "Blount", "Bradley", "Campbell",
-    "Cannon", "Carroll", "Carter", "Cheatham", "Chester", "Claiborne", "Clay",
-    "Cocke", "Coffee", "Crockett", "Cumberland", "Davidson", "Decatur", "DeKalb",
-    "Dickson", "Dyer", "Fayette", "Fentress", "Franklin", "Gibson", "Giles",
-    "Grainger", "Greene", "Grundy", "Hamblen", "Hamilton", "Hancock", "Hardeman",
-    "Hardin", "Hawkins", "Haywood", "Henderson", "Henry", "Hickman", "Houston",
-    "Humphreys", "Jackson", "Jefferson", "Johnson", "Knox", "Lake", "Lauderdale",
-    "Lawrence", "Lewis", "Lincoln", "Loudon", "Macon", "Madison", "Marion",
-    "Marshall", "Maury", "McMinn", "McNairy", "Meigs", "Monroe", "Montgomery",
-    "Moore", "Morgan", "Obion", "Overton", "Perry", "Pickett", "Polk", "Putnam",
-    "Rhea", "Roane", "Robertson", "Rutherford", "Scott", "Sequatchie", "Sevier",
-    "Shelby", "Smith", "Stewart", "Sullivan", "Sumner", "Tipton", "Trousdale",
-    "Unicoi", "Union", "Van Buren", "Warren", "Washington", "Wayne", "Weakley",
-    "White", "Williamson", "Wilson",
+    "Anderson",
+    "Bedford",
+    "Benton",
+    "Bledsoe",
+    "Blount",
+    "Bradley",
+    "Campbell",
+    "Cannon",
+    "Carroll",
+    "Carter",
+    "Cheatham",
+    "Chester",
+    "Claiborne",
+    "Clay",
+    "Cocke",
+    "Coffee",
+    "Crockett",
+    "Cumberland",
+    "Davidson",
+    "Decatur",
+    "DeKalb",
+    "Dickson",
+    "Dyer",
+    "Fayette",
+    "Fentress",
+    "Franklin",
+    "Gibson",
+    "Giles",
+    "Grainger",
+    "Greene",
+    "Grundy",
+    "Hamblen",
+    "Hamilton",
+    "Hancock",
+    "Hardeman",
+    "Hardin",
+    "Hawkins",
+    "Haywood",
+    "Henderson",
+    "Henry",
+    "Hickman",
+    "Houston",
+    "Humphreys",
+    "Jackson",
+    "Jefferson",
+    "Johnson",
+    "Knox",
+    "Lake",
+    "Lauderdale",
+    "Lawrence",
+    "Lewis",
+    "Lincoln",
+    "Loudon",
+    "Macon",
+    "Madison",
+    "Marion",
+    "Marshall",
+    "Maury",
+    "McMinn",
+    "McNairy",
+    "Meigs",
+    "Monroe",
+    "Montgomery",
+    "Moore",
+    "Morgan",
+    "Obion",
+    "Overton",
+    "Perry",
+    "Pickett",
+    "Polk",
+    "Putnam",
+    "Rhea",
+    "Roane",
+    "Robertson",
+    "Rutherford",
+    "Scott",
+    "Sequatchie",
+    "Sevier",
+    "Shelby",
+    "Smith",
+    "Stewart",
+    "Sullivan",
+    "Sumner",
+    "Tipton",
+    "Trousdale",
+    "Unicoi",
+    "Union",
+    "Van Buren",
+    "Warren",
+    "Washington",
+    "Wayne",
+    "Weakley",
+    "White",
+    "Williamson",
+    "Wilson",
 ]
 
 NO_INFO = "no information available"
@@ -140,7 +220,7 @@ def flatten_hours(hours):
 
 
 def build_ages_served(young, old):
-    """"6 Week(s)" + "12 Year(s)" -> "6 Week(s) to 12 Year(s)"."""
+    """ "6 Week(s)" + "12 Year(s)" -> "6 Week(s) to 12 Year(s)"."""
     young, old = clean(young), clean(old)
     if young and old:
         return f"{young} to {old}"
@@ -151,12 +231,14 @@ def build_rates(arr_aar):
     """Map ``arrAar`` rows to the tn_age_group_rates list."""
     rates = []
     for r in arr_aar or []:
-        rates.append({
-            "age_group": clean(r.get("ageGroup")),
-            "weekly_rate": clean(r.get("fullTime")),
-            "unit_of_care": clean(r.get("unitOfCare")),
-            "vacancy": clean(r.get("vacancy")),
-        })
+        rates.append(
+            {
+                "age_group": clean(r.get("ageGroup")),
+                "weekly_rate": clean(r.get("fullTime")),
+                "unit_of_care": clean(r.get("unitOfCare")),
+                "vacancy": clean(r.get("vacancy")),
+            }
+        )
     return rates
 
 
@@ -287,8 +369,7 @@ class TennesseeSpider(scrapy.Spider):
     # --- phase 0: bootstrap --------------------------------------------- #
 
     def start_requests(self):
-        yield scrapy.Request(LANDING_URL, callback=self.parse_landing,
-                             dont_filter=True)
+        yield scrapy.Request(LANDING_URL, callback=self.parse_landing, dont_filter=True)
 
     def parse_landing(self, response):
         self.token = self._extract_token(response.text)
@@ -336,19 +417,21 @@ class TennesseeSpider(scrapy.Spider):
                 data = response.json()
             except ValueError:
                 stale = True
-        locs = (((data.get("result") or {}).get("data") or {})
-                .get("locsCounty")) or []
+        locs = (((data.get("result") or {}).get("data") or {}).get("locsCounty")) or []
 
         # A stale session shows up as HTTP 401 or an empty list. Re-bootstrap
         # once, then retry this county.
         if (stale or not locs) and not meta.get("reauth"):
             self.logger.warning(
                 "TN county %s: stale/empty (HTTP %s) -- re-bootstrapping.",
-                county, response.status,
+                county,
+                response.status,
             )
             yield scrapy.Request(
-                LANDING_URL, callback=self._refresh_then_retry_county,
-                meta={"retry_county": county}, dont_filter=True,
+                LANDING_URL,
+                callback=self._refresh_then_retry_county,
+                meta={"retry_county": county},
+                dont_filter=True,
             )
             return
 
@@ -363,7 +446,9 @@ class TennesseeSpider(scrapy.Spider):
             if color and color != "green":
                 self.logger.warning(
                     "TN county %s: non-green marker (%s) for %s",
-                    county, color, rec.get("prnameCounty"),
+                    county,
+                    color,
+                    rec.get("prnameCounty"),
                 )
             if not sysid or sysid in self.seen:
                 continue
@@ -381,26 +466,25 @@ class TennesseeSpider(scrapy.Spider):
     def parse_detail(self, response):
         meta = response.meta
         if response.status == 401 and not meta.get("reauth"):
-            self.logger.warning("TN detail %s: 401 -- re-bootstrapping.",
-                                meta.get("sysid"))
+            self.logger.warning("TN detail %s: 401 -- re-bootstrapping.", meta.get("sysid"))
             yield scrapy.Request(
-                LANDING_URL, callback=self._refresh_then_retry_detail,
-                meta={"retry_meta": dict(meta)}, dont_filter=True,
+                LANDING_URL,
+                callback=self._refresh_then_retry_detail,
+                meta={"retry_meta": dict(meta)},
+                dont_filter=True,
             )
             return
 
         try:
             page = response.json()
         except ValueError:
-            self.logger.warning("TN detail %s: non-JSON response.",
-                                meta.get("sysid"))
+            self.logger.warning("TN detail %s: non-JSON response.", meta.get("sysid"))
             return
 
         det = find_dict_with(page, "prvId")
         contact = find_dict_with(page, "ActsPresent") or {}
         if not det:
-            self.logger.warning("TN detail %s: no provider data found.",
-                                meta.get("sysid"))
+            self.logger.warning("TN detail %s: no provider data found.", meta.get("sysid"))
             return
 
         yield self.build_item(det, contact, meta)
@@ -411,9 +495,14 @@ class TennesseeSpider(scrapy.Spider):
         sysid = meta["sysid"]
         url = f"{PAGE_API}?" + urlencode({"id": DETAIL_PAGE_ID, "sysid": sysid})
         meta["reauth"] = True
-        yield scrapy.Request(url, headers=self.api_headers(),
-                             callback=self.parse_detail, errback=self.on_error,
-                             meta=meta, dont_filter=True)
+        yield scrapy.Request(
+            url,
+            headers=self.api_headers(),
+            callback=self.parse_detail,
+            errback=self.on_error,
+            meta=meta,
+            dont_filter=True,
+        )
 
     def build_item(self, det, contact, meta):
         sysid = meta.get("sysid")
@@ -421,8 +510,7 @@ class TennesseeSpider(scrapy.Spider):
         item["source_state"] = "Tennessee"
         item["provider_url"] = f"{BASE}/csp?id={DETAIL_PAGE_ID}&sysid={sysid}"
 
-        put(item, "provider_name",
-            clean(contact.get("name")) or meta.get("name"))
+        put(item, "provider_name", clean(contact.get("name")) or meta.get("name"))
         put(item, "license_number", clean(det.get("prvLicNum")))
         put(item, "provider_type", clean(det.get("prvType")))
         put(item, "status", clean(det.get("PrvStatus")))
@@ -434,8 +522,7 @@ class TennesseeSpider(scrapy.Spider):
         put(item, "email", clean(contact.get("email")) or meta.get("email"))
         put(item, "capacity", to_int(det.get("capacity")))
         put(item, "hours", flatten_hours(det.get("hours")))
-        put(item, "ages_served",
-            build_ages_served(det.get("youngChildAge"), det.get("oldChildAge")))
+        put(item, "ages_served", build_ages_served(det.get("youngChildAge"), det.get("oldChildAge")))
         put(item, "transportation", clean(det.get("transport")))
         put(item, "scholarships_accepted", clean(det.get("ccAssist")))
 
@@ -476,10 +563,10 @@ class TennesseeSpider(scrapy.Spider):
         self.logger.error("TN request failed: %s", repr(failure))
 
     def closed(self, reason):
-        self.logger.info("TN: finished (%s) -- %d unique providers.",
-                         reason, len(self.seen))
+        self.logger.info("TN: finished (%s) -- %d unique providers.", reason, len(self.seen))
         if len(self.seen) < EXPECTED_MIN_PROVIDERS:
             self.logger.warning(
-                "TN: only %d providers (< %d baseline) -- possible incomplete "
-                "crawl.", len(self.seen), EXPECTED_MIN_PROVIDERS,
+                "TN: only %d providers (< %d baseline) -- possible incomplete crawl.",
+                len(self.seen),
+                EXPECTED_MIN_PROVIDERS,
             )

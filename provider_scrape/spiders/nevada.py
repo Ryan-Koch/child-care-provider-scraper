@@ -1,14 +1,14 @@
+import contextlib
 import json
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import urlencode, urljoin
 
 import scrapy
 from scrapy.http import HtmlResponse
 
 from ..items import InspectionItem, ProviderItem
-
 
 DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 DAY_ABBR = {d: d[:3] for d in DAY_NAMES}
@@ -19,8 +19,23 @@ DAY_ABBR = {d: d[:3] for d in DAY_NAMES}
 # cmbCounty <option> values on LicenseeSearch.aspx ("All" is excluded on
 # purpose — it's the very query that gets truncated).
 COUNTY_CODES = [
-    "CC", "CH", "CL", "DO", "EL", "ES", "EU", "HU",
-    "LA", "LI", "LY", "MI", "NY", "PE", "ST", "WA", "WP",
+    "CC",
+    "CH",
+    "CL",
+    "DO",
+    "EL",
+    "ES",
+    "EU",
+    "HU",
+    "LA",
+    "LI",
+    "LY",
+    "MI",
+    "NY",
+    "PE",
+    "ST",
+    "WA",
+    "WP",
 ]
 COUNTY_FIELD = "ctl00$ContentPlaceHolder1$ucLicenseeSearchPublic$cmbCounty"
 BUSINESS_UNIT_FIELD = "ctl00$ContentPlaceHolder1$ucLicenseeSearchPublic$ddlBusinessUnit"
@@ -32,10 +47,7 @@ SEARCH_FIELD = "ctl00$ContentPlaceHolder1$CommonLinkButton1"
 # --- Silver State Stars QRIS quality dashboard (Power BI publish-to-web) ---
 # Anonymous; the only credential is the resource key sent as a request header.
 # IDs are stable for the life of the published report (see nevada_enrichment.md §1).
-POWERBI_QUERY_URL = (
-    "https://wabi-us-east-a-primary-api.analysis.windows.net"
-    "/public/reports/querydata?synchronous=true"
-)
+POWERBI_QUERY_URL = "https://wabi-us-east-a-primary-api.analysis.windows.net/public/reports/querydata?synchronous=true"
 POWERBI_RESOURCE_KEY = "545ba0e9-3934-4219-bbe9-3368f93e5a61"
 POWERBI_DATASET_ID = "3f54d90a-38da-4039-ba07-9c33886e2832"
 POWERBI_REPORT_ID = "b08aff48-6cf1-4cee-a756-facb59f0ea37"
@@ -89,7 +101,7 @@ def epoch_ms_to_date(value):
     """Convert a Power BI epoch-millisecond timestamp to an MM/DD/YYYY string."""
     if value is None:
         return None
-    return datetime.fromtimestamp(value / 1000, tz=timezone.utc).strftime("%m/%d/%Y")
+    return datetime.fromtimestamp(value / 1000, tz=UTC).strftime("%m/%d/%Y")
 
 
 def format_qris_address(street, city, zip_code):
@@ -122,9 +134,7 @@ def build_query_payload(command):
                 "QueryId": "",
                 "ApplicationContext": {
                     "DatasetId": POWERBI_DATASET_ID,
-                    "Sources": [
-                        {"ReportId": POWERBI_REPORT_ID, "VisualId": POWERBI_VISUAL_ID}
-                    ],
+                    "Sources": [{"ReportId": POWERBI_REPORT_ID, "VisualId": POWERBI_VISUAL_ID}],
                 },
             }
         ],
@@ -216,9 +226,7 @@ def build_quality_command(year, month_name, restart_token=None):
                 ],
             },
             "Binding": {
-                "Primary": {
-                    "Groupings": [{"Projections": list(range(len(QUALITY_SELECT)))}]
-                },
+                "Primary": {"Groupings": [{"Projections": list(range(len(QUALITY_SELECT)))}]},
                 "DataReduction": {"DataVolume": 3, "Primary": {"Window": window}},
                 "Version": 1,
             },
@@ -274,10 +282,7 @@ def decode_data_shape(response_json):
     data = response_json["results"][0]["result"]["data"]
     dsr = data["dsr"]
     if "DS" not in dsr:
-        raise ValueError(
-            "Power BI query-definition error: "
-            + json.dumps(dsr.get("DataShapes"))[:300]
-        )
+        raise ValueError("Power BI query-definition error: " + json.dumps(dsr.get("DataShapes"))[:300])
     ds = dsr["DS"][0]
     primary = ds.get("PH", [{}])[0]
     dm0 = primary.get("DM0", [])
@@ -286,6 +291,7 @@ def decode_data_shape(response_json):
     dict_names = [col.get("DN") for col in dm0[0]["S"]]
     rows = _decode_dm0(dm0, dict_names, ds.get("ValueDicts", {}))
     return rows, ds.get("RT")
+
 
 # Fields from each search row required to build a detail-page URL.
 DETAIL_URL_FIELDS = (
@@ -369,10 +375,7 @@ def format_hours(day_rows):
         from_hh, from_mm, from_ampm = spans[1], spans[2] or "00", spans[3]
         to_hh, to_mm, to_ampm = spans[4], spans[5] or "00", spans[6]
         if from_hh and to_hh:
-            parts.append(
-                f"{DAY_ABBR.get(day, day)} {from_hh}:{from_mm} {from_ampm}"
-                f" - {to_hh}:{to_mm} {to_ampm}"
-            )
+            parts.append(f"{DAY_ABBR.get(day, day)} {from_hh}:{from_mm} {from_ampm} - {to_hh}:{to_mm} {to_ampm}")
     return "; ".join(parts) if parts else None
 
 
@@ -396,9 +399,7 @@ class NevadaSpider(scrapy.Spider):
     name = "nevada"
     # analysis.windows.net is the Power BI quality dashboard host (see §1).
     allowed_domains = ["nvdpbh.aithent.com", "analysis.windows.net"]
-    start_urls = [
-        "https://nvdpbh.aithent.com/Protected/LIC/LicenseeSearch.aspx?Program=HF&PubliSearch=Y"
-    ]
+    start_urls = ["https://nvdpbh.aithent.com/Protected/LIC/LicenseeSearch.aspx?Program=HF&PubliSearch=Y"]
 
     custom_settings = {
         # Per-row detail fetches are cheap GETs but be polite to the state site.
@@ -440,9 +441,7 @@ class NevadaSpider(scrapy.Spider):
             return
 
         try:
-            bu_selector = (
-                "#ctl00_ContentPlaceHolder1_ucLicenseeSearchPublic_ddlBusinessUnit"
-            )
+            bu_selector = "#ctl00_ContentPlaceHolder1_ucLicenseeSearchPublic_ddlBusinessUnit"
             await page.wait_for_selector(bu_selector, timeout=60000)
             await page.select_option(bu_selector, "CCP")
             self.logger.info("Selected Business Unit: CCP")
@@ -456,15 +455,11 @@ class NevadaSpider(scrapy.Spider):
             # other's grid — so we walk the counties strictly one at a time,
             # chaining to the next only after the current one is fully paged.
             self.county_index = 0
-            self.logger.info(
-                "Starting per-county search across %s counties", len(COUNTY_CODES)
-            )
+            self.logger.info("Starting per-county search across %s counties", len(COUNTY_CODES))
             yield self._county_search_request(rendered, COUNTY_CODES[0])
         finally:
-            try:
+            with contextlib.suppress(Exception):
                 await page.close()
-            except Exception:
-                pass
 
     def _county_search_request(self, source_response, county_code):
         """Build the Search postback for one county.
@@ -497,12 +492,8 @@ class NevadaSpider(scrapy.Spider):
     def parse_search_results(self, response):
         page_num = response.meta.get("page_num", 1)
         county_code = response.meta.get("county_code")
-        total_records_value = response.css(
-            'input[id$="hdnTotalRecords"]::attr(value)'
-        ).get()
-        total_records = (
-            int(total_records_value) if total_records_value and total_records_value.isdigit() else None
-        )
+        total_records_value = response.css('input[id$="hdnTotalRecords"]::attr(value)').get()
+        total_records = int(total_records_value) if total_records_value and total_records_value.isdigit() else None
 
         rows = response.css('table[id*="ResultsGrid"] tr')
         provider_rows = [r for r in rows if r.css('input[type="hidden"]')]
@@ -516,9 +507,7 @@ class NevadaSpider(scrapy.Spider):
 
         for row in provider_rows:
             row_fields = collect_row_fields(row)
-            if not row_fields.get("hfName") or not row_fields.get(
-                "hfLicenseNumberToDisplay"
-            ):
+            if not row_fields.get("hfName") or not row_fields.get("hfLicenseNumberToDisplay"):
                 continue
             yield from self.dispatch_provider(response, row_fields)
 
@@ -527,10 +516,7 @@ class NevadaSpider(scrapy.Spider):
     def dispatch_provider(self, response, row_fields):
         # Guard against fetching the same provider twice if it ever surfaces
         # under more than one query (keyed on the same base license join key).
-        key = normalize_license(
-            row_fields.get("hfLicenseNumber")
-            or row_fields.get("hfLicenseNumberToDisplay")
-        )
+        key = normalize_license(row_fields.get("hfLicenseNumber") or row_fields.get("hfLicenseNumberToDisplay"))
         if key:
             if key in self.dispatched_keys:
                 return
@@ -556,9 +542,7 @@ class NevadaSpider(scrapy.Spider):
         item["provider_name"] = clean_text(row_fields.get("hfName"))
         item["license_number"] = clean_text(row_fields.get("hfLicenseNumberToDisplay"))
         # hdnStatusCode is the human-readable label ("Active"); hdnStatus is the code ("ACT").
-        item["status"] = clean_text(row_fields.get("hdnStatusCode")) or clean_text(
-            row_fields.get("hdnStatus")
-        )
+        item["status"] = clean_text(row_fields.get("hdnStatusCode")) or clean_text(row_fields.get("hdnStatus"))
         item["address"] = clean_text(row_fields.get("hPrimaryAddress"))
         item["phone"] = clean_text(row_fields.get("hPhoneNumber"))
         item["email"] = clean_text(row_fields.get("hEmail"))
@@ -580,9 +564,7 @@ class NevadaSpider(scrapy.Spider):
 
     def follow_pagination(self, response, page_num):
         county_code = response.meta.get("county_code")
-        page_links = response.xpath(
-            '//a[contains(@href, "Page$") and not(contains(@href, "..."))]/@href'
-        ).getall()
+        page_links = response.xpath('//a[contains(@href, "Page$") and not(contains(@href, "..."))]/@href').getall()
         visited = response.meta.get("visited_pages", {page_num})
 
         next_page_num = None
@@ -702,18 +684,12 @@ class NevadaSpider(scrapy.Spider):
     def extract_detail_fields(self, response):
         """Extract capacity, ages_served, hours from the detail page."""
         # Capacity: total spaces requested
-        total = clean_text(
-            response.css("#ctl00_ContentPlaceHolder1_ucChildrenAge_lblTotal::text").get()
-        )
+        total = clean_text(response.css("#ctl00_ContentPlaceHolder1_ucChildrenAge_lblTotal::text").get())
         capacity = int(total) if total and total.isdigit() else None
 
         # Ages served: primary age range (Row 1)
-        from_age = response.css(
-            "#ctl00_ContentPlaceHolder1_ucChildrenAge_txtRow1Age1::attr(value)"
-        ).get()
-        to_age = response.css(
-            "#ctl00_ContentPlaceHolder1_ucChildrenAge_txtRow1Age2::attr(value)"
-        ).get()
+        from_age = response.css("#ctl00_ContentPlaceHolder1_ucChildrenAge_txtRow1Age1::attr(value)").get()
+        to_age = response.css("#ctl00_ContentPlaceHolder1_ucChildrenAge_txtRow1Age2::attr(value)").get()
         ages_served = format_age_range(from_age, to_age)
 
         hours = format_hours(self.extract_hours_rows(response))
@@ -732,9 +708,7 @@ class NevadaSpider(scrapy.Spider):
         also possible).
         """
         rows = []
-        hours_rows = response.css(
-            'table[id$="ucHoursOfOperation_ucGridUserControl_ResultsGrid"] tr'
-        )
+        hours_rows = response.css('table[id$="ucHoursOfOperation_ucGridUserControl_ResultsGrid"] tr')
         for row in hours_rows:
             day = clean_text(row.css('span[id$="_lblDay"]::text').get())
             if not day:
@@ -753,37 +727,23 @@ class NevadaSpider(scrapy.Spider):
     def extract_inspections(self, response):
         """Parse the Statement of Deficiency grid into InspectionItem list."""
         results = []
-        sod_rows = response.css(
-            'table[id$="ucSODgrid_ResultsGrid"] tr'
-        )
+        sod_rows = response.css('table[id$="ucSODgrid_ResultsGrid"] tr')
         for row in sod_rows:
-            inspection_number = clean_text(
-                row.css('span[id$="_lblInspectionNumber"]::text').get()
-            )
-            inspection_date = clean_text(
-                row.css('span[id$="_lblInspectionEndDate"]::text').get()
-            )
+            inspection_number = clean_text(row.css('span[id$="_lblInspectionNumber"]::text').get())
+            inspection_date = clean_text(row.css('span[id$="_lblInspectionEndDate"]::text').get())
             if not inspection_number and not inspection_date:
                 continue
-            inspection_reason = clean_text(
-                row.css('span[id$="_InspectionReason"]::text').get()
-            )
+            inspection_reason = clean_text(row.css('span[id$="_InspectionReason"]::text').get())
             # lblCount can be wrapped in a <font> tag in the live HTML, so pull
             # text from any descendant rather than the span's direct text node.
             count_text = clean_text(
-                " ".join(
-                    row.css('span[id$="_lblCount"] *::text, span[id$="_lblCount"]::text').getall()
-                )
+                " ".join(row.css('span[id$="_lblCount"] *::text, span[id$="_lblCount"]::text').getall())
             )
             count_match = re.search(r"\d+", count_text or "")
             deficiency_count = int(count_match.group(0)) if count_match else None
 
-            status_code = clean_text(
-                row.css('input[id$="_hdSODStatusCode"]::attr(value)').get()
-            )
-            status_reason = clean_text(
-                row.css('input[id$="_hdSODStatusReasonCode"]::attr(value)').get()
-            )
+            status_code = clean_text(row.css('input[id$="_hdSODStatusCode"]::attr(value)').get())
+            status_reason = clean_text(row.css('input[id$="_hdSODStatusReasonCode"]::attr(value)').get())
 
             inspection = InspectionItem()
             inspection["date"] = inspection_date
@@ -859,9 +819,7 @@ class NevadaSpider(scrapy.Spider):
             latest = self._pick_latest_period(rows)
             if latest:
                 year, month_name = latest
-                self.logger.info(
-                    "Quality snapshot period: %s %s", month_name, year
-                )
+                self.logger.info("Quality snapshot period: %s %s", month_name, year)
             else:
                 self.logger.warning(
                     "Period discovery returned no rows; using fallback %s %s",
@@ -913,9 +871,7 @@ class NevadaSpider(scrapy.Spider):
         rows, restart_token = decode_data_shape(json.loads(response.text))
         self.quality_window += 1
         for row in rows:
-            self.quality_rows.append(
-                {prop: row[i] for i, (prop, _, _) in enumerate(QUALITY_SELECT)}
-            )
+            self.quality_rows.append({prop: row[i] for i, (prop, _, _) in enumerate(QUALITY_SELECT)})
         self.logger.info(
             "Quality window %s: %s rows (cumulative %s)",
             self.quality_window,
@@ -970,9 +926,7 @@ class NevadaSpider(scrapy.Spider):
             if not key:
                 continue
             current = best_by_license.get(key)
-            if current is None or (row.get("RatingPeriodEndDate") or 0) > (
-                current.get("RatingPeriodEndDate") or 0
-            ):
+            if current is None or (row.get("RatingPeriodEndDate") or 0) > (current.get("RatingPeriodEndDate") or 0):
                 best_by_license[key] = row
 
         license_provider_count = len(self.providers_by_license)
@@ -1020,9 +974,7 @@ class NevadaSpider(scrapy.Spider):
         item["nv_license_base"] = license_number
         item["provider_name"] = row.get("ProgramName")
         item["county"] = row.get("County")
-        address = format_qris_address(
-            row.get("Address"), row.get("City"), row.get("Zip")
-        )
+        address = format_qris_address(row.get("Address"), row.get("City"), row.get("Zip"))
         if address:
             item["address"] = address
         for prop, field, is_date in QUALITY_SELECT:

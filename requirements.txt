@@ -13,3 +13,4 @@ pypdfium2
 tesserocr
 huggingface_hub
 pillow
+ruff

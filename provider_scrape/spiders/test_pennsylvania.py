@@ -7,7 +7,6 @@ from provider_scrape.spiders.pennsylvania import (
     join_labels,
 )
 
-
 # A representative getchildcareinfo `provider` record (trimmed to the fields the
 # item builder reads), modeled on the live API response for a real provider.
 SAMPLE_DETAIL = {
@@ -59,9 +58,7 @@ class PennsylvaniaBuildItemTest(unittest.TestCase):
 
     def test_address_is_street_city_state_zip(self):
         # Format the normalization pipeline can parse into city/state/zip.
-        self.assertEqual(
-            self.item["address"], "142 Constitution Ave, Gettysburg, PA 17325"
-        )
+        self.assertEqual(self.item["address"], "142 Constitution Ave, Gettysburg, PA 17325")
 
     def test_phone_is_formatted(self):
         self.assertEqual(self.item["phone"], "(717) 337-8211")
@@ -82,7 +79,7 @@ class PennsylvaniaBuildItemTest(unittest.TestCase):
         self.assertEqual(cost[0]["full_time_rate"], "$60.00")
         self.assertEqual(cost[0]["part_time_rate"], "$60.00")
         self.assertEqual(cost[0]["openings"], "Call for Availability")  # "C"
-        self.assertEqual(cost[1]["openings"], "Enrolling")              # "E"
+        self.assertEqual(cost[1]["openings"], "Enrolling")  # "E"
 
 
 class PennsylvaniaCertificationTest(unittest.TestCase):

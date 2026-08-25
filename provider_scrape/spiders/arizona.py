@@ -1,6 +1,5 @@
 import asyncio
 import json
-import logging
 import platform
 import random
 from urllib.parse import urlencode
@@ -16,10 +15,7 @@ LANDING_PAGE_URL = "https://azchildcareprovidersearch.azdes.gov/"
 SEARCH_PAGE_URL = "https://azchildcaresearch.azdes.gov/s/providersearch?language=en_US"
 AURA_ENDPOINT_PATH = "/s/sfsites/aura?r=2&aura.ApexAction.execute=1"
 
-_UA = (
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/148.0.0.0 Safari/537.36"
-)
+_UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
 
 _PLATFORM = "Linux x86_64"
 
@@ -74,6 +70,7 @@ async ({url, body}) => {
 }
 """
 
+
 def extract_form_field(post_data, field):
     if not post_data:
         return None
@@ -81,8 +78,10 @@ def extract_form_field(post_data, field):
     for piece in post_data.split("&"):
         if piece.startswith(needle):
             from urllib.parse import unquote
-            return unquote(piece[len(needle):])
+
+            return unquote(piece[len(needle) :])
     return None
+
 
 def build_search_message(page_size, page_number):
     message = {
@@ -102,23 +101,27 @@ def build_search_message(page_size, page_number):
                         "streetAddress": "",
                         "pageSize": page_size,
                         "pageNumber": page_number,
-                        "filtersJson": None
+                        "filtersJson": None,
                     },
                     "cacheable": False,
-                    "isContinuation": False
-                }
+                    "isContinuation": False,
+                },
             }
         ]
     }
     return json.dumps(message, separators=(",", ":"))
 
+
 def build_search_post_body(page_size, page_number, aura_context):
-    return urlencode({
-        "message": build_search_message(page_size, page_number),
-        "aura.context": aura_context,
-        "aura.pageURI": "/s/providersearch?language=en_US",
-        "aura.token": "null"
-    })
+    return urlencode(
+        {
+            "message": build_search_message(page_size, page_number),
+            "aura.context": aura_context,
+            "aura.pageURI": "/s/providersearch?language=en_US",
+            "aura.token": "null",
+        }
+    )
+
 
 class StealthContextMiddleware:
     @classmethod
@@ -134,8 +137,7 @@ class StealthContextMiddleware:
         handler = handlers.get("https")
         if not isinstance(handler, ScrapyPlaywrightDownloadHandler):
             spider.logger.warning(
-                "StealthContextMiddleware: scrapy-playwright handler not found; "
-                "stealth patches NOT applied."
+                "StealthContextMiddleware: scrapy-playwright handler not found; stealth patches NOT applied."
             )
             return
 
@@ -154,6 +156,7 @@ class StealthContextMiddleware:
             return wrapper
 
         handler._create_browser_context = patched_create_context
+
 
 class ArizonaSpider(scrapy.Spider):
     name = "arizona"
@@ -181,12 +184,8 @@ class ArizonaSpider(scrapy.Spider):
             # headless/bot signal Cloudflare fingerprints. It only permits
             # SwiftShader as a fallback, so a real GPU (e.g. a dev Mac) is
             # still used when present.
-            "args": (
-                ["--ozone-platform=x11", "--enable-unsafe-swiftshader"]
-                if platform.system() == "Linux" else []
-            ) + (
-                ["--window-size=1920,1080"]
-            ),
+            "args": (["--ozone-platform=x11", "--enable-unsafe-swiftshader"] if platform.system() == "Linux" else [])
+            + (["--window-size=1920,1080"]),
             "timeout": 30 * 1000,
         },
         "PLAYWRIGHT_CONTEXTS": {
@@ -276,7 +275,7 @@ class ArizonaSpider(scrapy.Spider):
                 self.logger.info("Waiting for navigation to Aura app...")
                 await page.wait_for_url("**/s/providersearch**", timeout=60000)
                 await page.wait_for_load_state("domcontentloaded")
-                await page.wait_for_timeout(5000) # Give Aura time to bootstrap
+                await page.wait_for_timeout(5000)  # Give Aura time to bootstrap
             else:
                 self.logger.warning("Landing page Search button not found. Attempting direct navigation fallback...")
                 await page.goto(SEARCH_PAGE_URL)
@@ -291,7 +290,10 @@ class ArizonaSpider(scrapy.Spider):
             try:
                 await page.wait_for_selector(button_selector, timeout=30000)
             except Exception:
-                self.logger.error("Timed out waiting for the Aura search button to appear. The page might not have loaded correctly (check for 403s in logs).")
+                self.logger.error(
+                    "Timed out waiting for the Aura search button to appear. "
+                    "The page might not have loaded correctly (check for 403s in logs)."
+                )
                 # Log the current page content for debugging
                 content = await page.content()
                 self.logger.debug(f"Page content at failure: {content[:1000]}")
@@ -301,8 +303,7 @@ class ArizonaSpider(scrapy.Spider):
 
             self.logger.info("Clicking the search button to capture aura.context...")
             async with page.expect_response(
-                lambda r: "aura" in r.url and r.request.method == "POST",
-                timeout=30000
+                lambda r: "aura" in r.url and r.request.method == "POST", timeout=30000
             ) as resp_info:
                 await search_button.click()
 
@@ -355,7 +356,9 @@ class ArizonaSpider(scrapy.Spider):
                     yield self.parse_provider(record)
                     total_extracted += 1
 
-                self.logger.info(f"Extracted {len(records)} records from page {page_number}. Total so far: {total_extracted}")
+                self.logger.info(
+                    f"Extracted {len(records)} records from page {page_number}. Total so far: {total_extracted}"
+                )
 
                 page_number += 1
                 await asyncio.sleep(random.uniform(1.0, 3.0))

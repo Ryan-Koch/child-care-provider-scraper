@@ -110,14 +110,12 @@ class VadssSpider(scrapy.Spider):
             try:
                 result = _clean(response.xpath(query).get(default="N/A"))
                 return result if result else "N/A"
-            except:
+            except Exception:
                 return "N/A"
 
         def extract_inspection_data():
             inspection_data = []
-            table = response.xpath(
-                '//table[@class="cc_search"]/following::table[not(@class)]'
-            )
+            table = response.xpath('//table[@class="cc_search"]/following::table[not(@class)]')
             if table:
                 rows = table.xpath(".//tr[position()>1]")
                 for row in rows:
@@ -127,15 +125,11 @@ class VadssSpider(scrapy.Spider):
 
                     # Try to get text from the 'a' tag within td[4]
                     violations_text = violations_td.xpath("./a/text()").get()
-                    complaint_related_text = complaint_related_td.xpath(
-                        "./a/text()"
-                    ).get()
+                    complaint_related_text = complaint_related_td.xpath("./a/text()").get()
 
                     # If no text found in 'a' tag, try direct text or normalize-space
                     if not violations_text:
-                        violations_text = violations_td.xpath(
-                            "./text()"
-                        ).get()  # For cases like 'No'
+                        violations_text = violations_td.xpath("./text()").get()  # For cases like 'No'
                         if not violations_text:
                             violations_text = violations_td.xpath(
                                 "normalize-space()"
@@ -143,9 +137,7 @@ class VadssSpider(scrapy.Spider):
 
                     # If no text found in 'a' tag for complaint_related_td
                     if not complaint_related_text:
-                        complaint_related_text = complaint_related_td.xpath(
-                            "./text()"
-                        ).get()  # For cases like 'No'
+                        complaint_related_text = complaint_related_td.xpath("./text()").get()  # For cases like 'No'
                         if not complaint_related_text:
                             complaint_related_text = complaint_related_td.xpath(
                                 "normalize-space()"
@@ -163,14 +155,13 @@ class VadssSpider(scrapy.Spider):
         provider = ProviderItem(
             va_ID=provider_id,
             provider_name=extract_with_xpath("//table[not(@class)]/tr[1]/td/b/text()"),
-            address=f"{extract_with_xpath('//table[not(@class)]/tr[1]/td/br/following-sibling::text()')} {extract_with_xpath('//table[not(@class)]/tr[2]/td/text()')}",
+            address=(
+                f"{extract_with_xpath('//table[not(@class)]/tr[1]/td/br/following-sibling::text()')}"
+                f" {extract_with_xpath('//table[not(@class)]/tr[2]/td/text()')}"
+            ),
             phone=extract_with_xpath("//table[not(@class)]/tr[3]/td/text()"),
-            provider_type=extract_with_xpath(
-                '//table[@class="cc_search"]/tr[1]/td[2]/span/span/font/u/text()'
-            ),
-            va_license_type=extract_with_xpath(
-                '//table[@class="cc_search"]/tr[2]/td[2]/span/span/font/u/text()'
-            ),
+            provider_type=extract_with_xpath('//table[@class="cc_search"]/tr[1]/td[2]/span/span/font/u/text()'),
+            va_license_type=extract_with_xpath('//table[@class="cc_search"]/tr[2]/td[2]/span/span/font/u/text()'),
             administrator=extract_with_xpath(
                 '//table[@class="cc_search"]/tr/td[contains(text(), "Administrator:")]/following-sibling::td/text()'
             ),
@@ -187,10 +178,10 @@ class VadssSpider(scrapy.Spider):
                 '//table[@class="cc_search"]/tr/td[contains(text(), "Inspector:")]/following-sibling::td/text()'
             ),
             va_current_subsidy_provider=extract_with_xpath(
-                '//table[@class="cc_search"]/tr/td[contains(text(), "Current Subsidy Provider")]/following-sibling::td/text()'
+                '//table[@class="cc_search"]/tr/td[contains(text(), "Current Subsidy Provider")]/following-sibling::td/text()'  # noqa: E501
             ),
             license_number=extract_with_xpath(
-                '//table[@class="cc_search"]/tr/td[contains(text(), "License/Facility ID#")]/following-sibling::td/text()'
+                '//table[@class="cc_search"]/tr/td[contains(text(), "License/Facility ID#")]/following-sibling::td/text()'  # noqa: E501
             ),
             inspections=extract_inspection_data(),
             provider_url=response.url,
@@ -220,15 +211,9 @@ class VadssSpider(scrapy.Spider):
         cleaned = re.sub(r",(\s*[}\]])", r"\1", response.text)
         programs = json.loads(cleaned).get("programs", [])
 
-        urls = list(
-            dict.fromkeys(
-                response.urljoin(p["courseURL"]) for p in programs if p.get("courseURL")
-            )
-        )
+        urls = list(dict.fromkeys(response.urljoin(p["courseURL"]) for p in programs if p.get("courseURL")))
         self.pending_enrichments = len(urls)
-        self.logger.info(
-            f"Queuing {self.pending_enrichments} VQB5 profiles for enrichment"
-        )
+        self.logger.info(f"Queuing {self.pending_enrichments} VQB5 profiles for enrichment")
 
         if self.pending_enrichments == 0:
             yield from self._yield_all_providers()
@@ -239,9 +224,7 @@ class VadssSpider(scrapy.Spider):
 
     def parse_quality_detail(self, response):
         """Enrich a DSS provider with VQB5 quality data from its detail page."""
-        dss_link = response.css(
-            'p.public-default a[href*="dss.virginia.gov"]::attr(href)'
-        ).get()
+        dss_link = response.css('p.public-default a[href*="dss.virginia.gov"]::attr(href)').get()
 
         if dss_link:
             self.logger.info(f"Found DSS link {dss_link}")
@@ -262,9 +245,7 @@ class VadssSpider(scrapy.Spider):
                 if rating_nodes:
                     self.logger.info(f"Found rating data for {provider_id}")
                     raw = " ".join(t.strip() for t in rating_nodes if t.strip())
-                    provider["va_quality_rating"] = raw.replace(
-                        "VQB5 Quality Rating:", ""
-                    ).strip()
+                    provider["va_quality_rating"] = raw.replace("VQB5 Quality Rating:", "").strip()
 
                 # Public Funding Information — text node(s) inside the <p> that
                 # contains the <strong> label
@@ -273,9 +254,7 @@ class VadssSpider(scrapy.Spider):
                 ).getall()
                 if funding_nodes:
                     self.logger.info(f"Found funding data for {provider_id}")
-                    provider["va_public_funding"] = " ".join(
-                        f.strip() for f in funding_nodes if f.strip()
-                    )
+                    provider["va_public_funding"] = " ".join(f.strip() for f in funding_nodes if f.strip())
 
                 # Interaction observations per classroom type
                 interactions = []
@@ -294,8 +273,7 @@ class VadssSpider(scrapy.Spider):
                 # take the first numeric value found.
                 def extract_points(label):
                     nodes = response.xpath(
-                        f'//p[contains(@class,"card-text") and '
-                        f'starts-with(normalize-space(.),"{label}:")]/text()'
+                        f'//p[contains(@class,"card-text") and starts-with(normalize-space(.),"{label}:")]/text()'
                     ).getall()
                     for node in nodes:
                         m = re.search(r"\d[\d,]*", node)
@@ -318,7 +296,5 @@ class VadssSpider(scrapy.Spider):
             yield from self._yield_all_providers()
 
     def _yield_all_providers(self):
-        self.logger.info(
-            f"Yielding all providers for output. Count: {len(self.providers_by_ID)}"
-        )
+        self.logger.info(f"Yielding all providers for output. Count: {len(self.providers_by_ID)}")
         yield from self.providers_by_ID.values()

@@ -25,6 +25,7 @@ Usage::
     python scripts/update_webshare_proxies.py --dry-run      # show changes only
     python scripts/update_webshare_proxies.py --env-file X   # a different file
 """
+
 import argparse
 import os
 import sys
@@ -33,11 +34,9 @@ import urllib.request
 
 # Reuse the exact env-file parser the pool itself uses, so the two never drift.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from provider_scrape.proxy_pool import load_env_file  # noqa: E402
+from provider_scrape.proxy_pool import load_env_file
 
-DEFAULT_ENV_FILE = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "webshare.env"
-)
+DEFAULT_ENV_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "webshare.env")
 ENDPOINTS_KEY = "webshare_proxy_endpoints"
 DOWNLOAD_URL_KEY = "webshare_download_url"
 
@@ -93,15 +92,19 @@ def rewrite_endpoints_line(text, endpoints):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--env-file", default=DEFAULT_ENV_FILE,
+        "--env-file",
+        default=DEFAULT_ENV_FILE,
         help=f"path to the env file to update (default: {DEFAULT_ENV_FILE})",
     )
     parser.add_argument(
-        "--timeout", type=float, default=30.0,
+        "--timeout",
+        type=float,
+        default=30.0,
         help="HTTP timeout in seconds (default: 30)",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="fetch and report changes but do not write the file",
     )
     args = parser.parse_args(argv)
@@ -132,8 +135,7 @@ def main(argv=None):
     old = [e for e in (env.get(ENDPOINTS_KEY) or "").split(",") if e]
     added = [e for e in endpoints if e not in set(old)]
     removed = [e for e in old if e not in set(endpoints)]
-    print(f"Fetched {len(endpoints)} endpoints "
-          f"({len(added)} new, {len(removed)} gone, {len(old)} previously listed).")
+    print(f"Fetched {len(endpoints)} endpoints ({len(added)} new, {len(removed)} gone, {len(old)} previously listed).")
     for e in added:
         print(f"  + {e}")
     for e in removed:
@@ -143,7 +145,7 @@ def main(argv=None):
         print("Endpoints already up to date; no change.")
         return 0
 
-    with open(args.env_file, "r", encoding="utf-8") as handle:
+    with open(args.env_file, encoding="utf-8") as handle:
         text = handle.read()
     new_text = rewrite_endpoints_line(text, endpoints)
 

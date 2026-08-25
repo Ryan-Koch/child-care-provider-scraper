@@ -116,8 +116,7 @@ def test_detail_youngstar_and_accreditation(spider, detail_response):
     item = next(spider.parse_detail(detail_response))
     assert item["wi_youngstar_rating"] == "5 Stars"
     assert item["wi_unique_services"] == ["This program provides Infant Child Care."]
-    assert "National Association For The Education Of Young Children" in \
-        item["accreditation"]
+    assert "National Association For The Education Of Young Children" in item["accreditation"]
 
 
 def test_detail_provider_reported(spider, detail_response):
@@ -309,8 +308,7 @@ def test_detail_falls_back_to_stub_rating(spider):
 def test_showing_caption():
     # Live pager markup: "<p>Showing 1 - 50 out of 93<br><button>Next ></button>".
     sel = scrapy.Selector(
-        text="<html><body><p>Showing 1 - 50 out of 93<br>"
-             "<button>Next &gt;</button></p></body></html>"
+        text="<html><body><p>Showing 1 - 50 out of 93<br><button>Next &gt;</button></p></body></html>"
     )
     assert _showing(sel) == (1, 50, 93)
     # Last page.
@@ -321,12 +319,9 @@ def test_showing_caption():
 
 
 def test_split_city_state_zip():
-    assert _split_city_state_zip("Madison WI 53717-1013") == (
-        "Madison", "WI", "53717-1013")
-    assert _split_city_state_zip("Green Bay WI 54304") == (
-        "Green Bay", "WI", "54304")
-    assert _split_city_state_zip("S Milwaukee WI 53172-1005") == (
-        "S Milwaukee", "WI", "53172-1005")
+    assert _split_city_state_zip("Madison WI 53717-1013") == ("Madison", "WI", "53717-1013")
+    assert _split_city_state_zip("Green Bay WI 54304") == ("Green Bay", "WI", "54304")
+    assert _split_city_state_zip("S Milwaukee WI 53172-1005") == ("S Milwaukee", "WI", "53172-1005")
     assert _split_city_state_zip("nonsense") == (None, None, None)
     assert _split_city_state_zip(None) == (None, None, None)
 

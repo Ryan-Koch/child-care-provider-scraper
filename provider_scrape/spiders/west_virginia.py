@@ -2,10 +2,7 @@ import scrapy
 
 from ..items import InspectionItem, ProviderItem
 
-
-SEARCH_URL = (
-    "https://www.wvdhhr.org/bcf/ece/cccenters/eceWVIsearch.asp"
-)
+SEARCH_URL = "https://www.wvdhhr.org/bcf/ece/cccenters/eceWVIsearch.asp"
 
 PROVIDER_LABEL_MAP = {
     "Agency Name": "provider_name",
@@ -55,18 +52,12 @@ class WestVirginiaSpider(scrapy.Spider):
         for index, row in enumerate(rows, start=1):
             href = row.css("a::attr(href)").get()
             if not href:
-                self.logger.warning(
-                    "Skipping result row %d: no detail link found.", index
-                )
+                self.logger.warning("Skipping result row %d: no detail link found.", index)
                 continue
 
             detail_url = response.urljoin(href.strip())
-            self.logger.debug(
-                "Queueing detail page %d/%d: %s", index, len(rows), detail_url
-            )
-            yield scrapy.Request(
-                url=detail_url, callback=self.parse_details
-            )
+            self.logger.debug("Queueing detail page %d/%d: %s", index, len(rows), detail_url)
+            yield scrapy.Request(url=detail_url, callback=self.parse_details)
 
     def parse_details(self, response):
         provider = ProviderItem()
@@ -102,9 +93,7 @@ class WestVirginiaSpider(scrapy.Spider):
             if not label:
                 continue
             label = label.strip()
-            value = " ".join(
-                t.strip() for t in row.css("td:nth-of-type(2) ::text").getall()
-            ).strip()
+            value = " ".join(t.strip() for t in row.css("td:nth-of-type(2) ::text").getall()).strip()
             data[label] = value
         return data
 
@@ -138,9 +127,7 @@ class WestVirginiaSpider(scrapy.Spider):
             field = INSPECTION_LABEL_MAP.get(label)
             if field is None:
                 continue
-            value = " ".join(
-                t.strip() for t in row.css("td:nth-of-type(2) ::text").getall()
-            ).strip()
+            value = " ".join(t.strip() for t in row.css("td:nth-of-type(2) ::text").getall()).strip()
             current[field] = value
 
         if current is not None:

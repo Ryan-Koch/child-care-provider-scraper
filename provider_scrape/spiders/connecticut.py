@@ -37,6 +37,7 @@ Per Ryan's decisions (2026-08-20, plan Sec 1):
 
 See tasks/connecticut_epic/connecticut_plan.md for the full recon writeup.
 """
+
 import re
 from urllib.parse import quote
 
@@ -54,8 +55,7 @@ LISTING_URL_TMPL = BASE_URL + "/listings/{}"
 
 HEADERS = {
     "User-Agent": (
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like "
-        "Gecko) Chrome/151.0.0.0 Safari/537.36"
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36"
     ),
     "Accept": "application/json",
 }
@@ -97,20 +97,23 @@ AGE_GROUP_FLAGS = {
     "School Age": ("school",),
 }
 # Age order for rendering `ages_served` (youngest to oldest).
-AGE_GROUP_ORDER = ("Infant", "Toddler", "Toddler/Preschool", "Preschool",
-                    "School Age")
+AGE_GROUP_ORDER = ("Infant", "Toddler", "Toddler/Preschool", "Preschool", "School Age")
 
 # Monday-Sunday order for rendering shifts[].schedule, whose dict keys arrive
 # in arbitrary order (a real record starts with "Friday" -- plan Sec 5.7).
-DAY_ORDER = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
-             "Saturday", "Sunday")
+DAY_ORDER = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 
 # The eight rate buckets on shifts[].rates_by_age[].rates (plan Sec 6.4);
 # values are decimal strings, e.g. "322.00".
 RATE_BUCKETS = (
-    "full_time_daily", "full_time_hourly", "full_time_monthly",
-    "full_time_weekly", "part_time_daily", "part_time_hourly",
-    "part_time_monthly", "part_time_weekly",
+    "full_time_daily",
+    "full_time_hourly",
+    "full_time_monthly",
+    "full_time_weekly",
+    "part_time_daily",
+    "part_time_hourly",
+    "part_time_monthly",
+    "part_time_weekly",
 )
 
 # The complete set of Connecticut's 169 towns (CT has no county government --
@@ -122,37 +125,174 @@ RATE_BUCKETS = (
 # endpoint returns zero rows for those -- that gap is expected and is exactly
 # what the id sweep exists to cover (plan Sec 3.2).
 CT_TOWNS = (
-    "Andover", "Ansonia", "Ashford", "Avon", "Barkhamsted", "Beacon Falls",
-    "Berlin", "Bethany", "Bethel", "Bethlehem", "Bloomfield", "Bolton",
-    "Bozrah", "Branford", "Bridgeport", "Bridgewater", "Bristol",
-    "Brookfield", "Brooklyn", "Burlington", "Canaan", "Canterbury", "Canton",
-    "Chaplin", "Cheshire", "Chester", "Clinton", "Colchester", "Colebrook",
-    "Columbia", "Cornwall", "Coventry", "Cromwell", "Danbury", "Darien",
-    "Deep River", "Derby", "Durham", "Eastford", "East Granby",
-    "East Haddam", "East Hampton", "East Hartford", "East Haven",
-    "East Lyme", "Easton", "East Windsor", "Ellington", "Enfield", "Essex",
-    "Fairfield", "Farmington", "Franklin", "Glastonbury", "Goshen",
-    "Granby", "Greenwich", "Griswold", "Groton", "Guilford", "Haddam",
-    "Hamden", "Hampton", "Hartford", "Hartland", "Harwinton", "Hebron",
-    "Kent", "Killingly", "Killingworth", "Lebanon", "Ledyard", "Lisbon",
-    "Litchfield", "Lyme", "Madison", "Manchester", "Mansfield",
-    "Marlborough", "Meriden", "Middlebury", "Middlefield", "Middletown",
-    "Milford", "Monroe", "Montville", "Morris", "Naugatuck", "New Britain",
-    "New Canaan", "New Fairfield", "New Hartford", "New Haven", "Newington",
-    "New London", "New Milford", "Newtown", "Norfolk", "North Branford",
-    "North Canaan", "North Haven", "North Stonington", "Norwalk", "Norwich",
-    "Old Lyme", "Old Saybrook", "Orange", "Oxford", "Plainfield",
-    "Plainville", "Plymouth", "Pomfret", "Portland", "Preston", "Prospect",
-    "Putnam", "Redding", "Ridgefield", "Rocky Hill", "Roxbury", "Salem",
-    "Salisbury", "Scotland", "Seymour", "Sharon", "Shelton", "Sherman",
-    "Simsbury", "Somers", "Southbury", "Southington", "South Windsor",
-    "Sprague", "Stafford", "Stamford", "Sterling", "Stonington",
-    "Stratford", "Suffield", "Thomaston", "Thompson", "Tolland",
-    "Torrington", "Trumbull", "Union", "Vernon", "Voluntown", "Wallingford",
-    "Warren", "Washington", "Waterbury", "Waterford", "Watertown",
-    "Westbrook", "West Hartford", "West Haven", "Weston", "Westport",
-    "Wethersfield", "Willington", "Wilton", "Winchester", "Windham",
-    "Windsor", "Windsor Locks", "Wolcott", "Woodbridge", "Woodbury",
+    "Andover",
+    "Ansonia",
+    "Ashford",
+    "Avon",
+    "Barkhamsted",
+    "Beacon Falls",
+    "Berlin",
+    "Bethany",
+    "Bethel",
+    "Bethlehem",
+    "Bloomfield",
+    "Bolton",
+    "Bozrah",
+    "Branford",
+    "Bridgeport",
+    "Bridgewater",
+    "Bristol",
+    "Brookfield",
+    "Brooklyn",
+    "Burlington",
+    "Canaan",
+    "Canterbury",
+    "Canton",
+    "Chaplin",
+    "Cheshire",
+    "Chester",
+    "Clinton",
+    "Colchester",
+    "Colebrook",
+    "Columbia",
+    "Cornwall",
+    "Coventry",
+    "Cromwell",
+    "Danbury",
+    "Darien",
+    "Deep River",
+    "Derby",
+    "Durham",
+    "Eastford",
+    "East Granby",
+    "East Haddam",
+    "East Hampton",
+    "East Hartford",
+    "East Haven",
+    "East Lyme",
+    "Easton",
+    "East Windsor",
+    "Ellington",
+    "Enfield",
+    "Essex",
+    "Fairfield",
+    "Farmington",
+    "Franklin",
+    "Glastonbury",
+    "Goshen",
+    "Granby",
+    "Greenwich",
+    "Griswold",
+    "Groton",
+    "Guilford",
+    "Haddam",
+    "Hamden",
+    "Hampton",
+    "Hartford",
+    "Hartland",
+    "Harwinton",
+    "Hebron",
+    "Kent",
+    "Killingly",
+    "Killingworth",
+    "Lebanon",
+    "Ledyard",
+    "Lisbon",
+    "Litchfield",
+    "Lyme",
+    "Madison",
+    "Manchester",
+    "Mansfield",
+    "Marlborough",
+    "Meriden",
+    "Middlebury",
+    "Middlefield",
+    "Middletown",
+    "Milford",
+    "Monroe",
+    "Montville",
+    "Morris",
+    "Naugatuck",
+    "New Britain",
+    "New Canaan",
+    "New Fairfield",
+    "New Hartford",
+    "New Haven",
+    "Newington",
+    "New London",
+    "New Milford",
+    "Newtown",
+    "Norfolk",
+    "North Branford",
+    "North Canaan",
+    "North Haven",
+    "North Stonington",
+    "Norwalk",
+    "Norwich",
+    "Old Lyme",
+    "Old Saybrook",
+    "Orange",
+    "Oxford",
+    "Plainfield",
+    "Plainville",
+    "Plymouth",
+    "Pomfret",
+    "Portland",
+    "Preston",
+    "Prospect",
+    "Putnam",
+    "Redding",
+    "Ridgefield",
+    "Rocky Hill",
+    "Roxbury",
+    "Salem",
+    "Salisbury",
+    "Scotland",
+    "Seymour",
+    "Sharon",
+    "Shelton",
+    "Sherman",
+    "Simsbury",
+    "Somers",
+    "Southbury",
+    "Southington",
+    "South Windsor",
+    "Sprague",
+    "Stafford",
+    "Stamford",
+    "Sterling",
+    "Stonington",
+    "Stratford",
+    "Suffield",
+    "Thomaston",
+    "Thompson",
+    "Tolland",
+    "Torrington",
+    "Trumbull",
+    "Union",
+    "Vernon",
+    "Voluntown",
+    "Wallingford",
+    "Warren",
+    "Washington",
+    "Waterbury",
+    "Waterford",
+    "Watertown",
+    "Westbrook",
+    "West Hartford",
+    "West Haven",
+    "Weston",
+    "Westport",
+    "Wethersfield",
+    "Willington",
+    "Wilton",
+    "Winchester",
+    "Windham",
+    "Windsor",
+    "Windsor Locks",
+    "Wolcott",
+    "Woodbridge",
+    "Woodbury",
     "Woodstock",
 )
 
@@ -235,8 +375,7 @@ def is_suppressed_address(street):
     if not isinstance(street, str):
         return False
     normalized = re.sub(r"\s+", " ", street).strip().lower()
-    return (normalized.startswith(SUPPRESSED_ADDRESS_PREFIX)
-            and "hidden" in normalized)
+    return normalized.startswith(SUPPRESSED_ADDRESS_PREFIX) and "hidden" in normalized
 
 
 def compose_address(street, city, zip_full):
@@ -271,8 +410,7 @@ def ages_from_shifts(shifts):
     """
     if not shifts:
         return None, {}
-    flags = {"infant": False, "toddler": False, "preschool": False,
-             "school": False}
+    flags = {"infant": False, "toddler": False, "preschool": False, "school": False}
     labels_by_group = {}
     for shift in shifts:
         for band in shift.get("population_by_age") or []:
@@ -282,15 +420,14 @@ def ages_from_shifts(shifts):
             labels_by_group.setdefault(group, band.get("label"))
             for flag in AGE_GROUP_FLAGS.get(group, ()):
                 flags[flag] = True
-    ordered_labels = [labels_by_group[g] for g in AGE_GROUP_ORDER
-                      if labels_by_group.get(g)]
+    ordered_labels = [labels_by_group[g] for g in AGE_GROUP_ORDER if labels_by_group.get(g)]
     ages_served = ", ".join(ordered_labels) or None
     active_flags = {k: v for k, v in flags.items() if v}
     return ages_served, active_flags
 
 
 def _strip_seconds(value):
-    """"07:15:00" -> "07:15"; anything else passed through unchanged."""
+    """ "07:15:00" -> "07:15"; anything else passed through unchanged."""
     if isinstance(value, str) and value.count(":") == 2:
         return value.rsplit(":", 1)[0]
     return value
@@ -317,8 +454,7 @@ def schedule_rows(schedule):
         window = schedule.get(day)
         if not window:
             continue
-        rows.append((day, _strip_seconds(window.get("start_time")),
-                     _strip_seconds(window.get("end_time"))))
+        rows.append((day, _strip_seconds(window.get("start_time")), _strip_seconds(window.get("end_time"))))
     return rows
 
 
@@ -349,8 +485,7 @@ def rates_from_shifts(shifts):
     for shift in shifts or []:
         for band in shift.get("rates_by_age") or []:
             rates = band.get("rates") or {}
-            populated = {k: rates[k] for k in RATE_BUCKETS
-                        if rates.get(k) is not None}
+            populated = {k: rates[k] for k in RATE_BUCKETS if rates.get(k) is not None}
             if not populated:
                 continue
             entry = {"age_group": band.get("group"), "label": band.get("label")}
@@ -371,15 +506,12 @@ class ConnecticutSpider(scrapy.Spider):
         "ROBOTSTXT_OBEY": False,
     }
 
-    def __init__(self, max_id=None, violations=1, concurrency=8, verify=0,
-                 *args, **kwargs):
+    def __init__(self, max_id=None, violations=1, concurrency=8, verify=0, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.max_id_override = int(max_id) if max_id else None
-        self.do_violations = str(violations).strip().lower() not in \
-            ("0", "false")
+        self.do_violations = str(violations).strip().lower() not in ("0", "false")
         self.concurrency = int(concurrency)
-        self.verify_audit = str(verify).strip().lower() not in \
-            ("0", "false", "")
+        self.verify_audit = str(verify).strip().lower() not in ("0", "false", "")
 
         self.max_id = None
         self.missing = 0
@@ -387,7 +519,7 @@ class ConnecticutSpider(scrapy.Spider):
         self.provider_failures = 0
         self.inspection_fetch_count = 0
         self.inspection_detail_failures = 0
-        self.pending = {}       # provider_id -> {"item": ..., "outstanding": n}
+        self.pending = {}  # provider_id -> {"item": ..., "outstanding": n}
         self.sweep_ids = set()  # provider ids the id sweep actually emitted
 
         # -a verify=1 town-frontier audit state (off by default, plan Sec 4.4).
@@ -411,9 +543,9 @@ class ConnecticutSpider(scrapy.Spider):
         return spider
 
     def _get(self, url, callback, meta=None, errback=None):
-        return scrapy.Request(url, callback=callback, errback=errback,
-                              headers=HEADERS, meta=meta or {},
-                              dont_filter=True)
+        return scrapy.Request(
+            url, callback=callback, errback=errback, headers=HEADERS, meta=meta or {}, dont_filter=True
+        )
 
     # --- Phase 1: max_id discovery -------------------------------------- #
 
@@ -450,8 +582,10 @@ class ConnecticutSpider(scrapy.Spider):
         self._discovery_pending = DISCOVERY_BLOCK_SIZE
         for id_ in range(block_start, self._discovery_block_end + 1):
             yield self._get(
-                PROVIDER_URL.format(id_), self.parse_discovery,
-                meta={"discovery_id": id_}, errback=self.discovery_errback,
+                PROVIDER_URL.format(id_),
+                self.parse_discovery,
+                meta={"discovery_id": id_},
+                errback=self.discovery_errback,
             )
 
     def parse_discovery(self, response):
@@ -462,8 +596,9 @@ class ConnecticutSpider(scrapy.Spider):
     def discovery_errback(self, failure):
         id_ = failure.request.meta.get("discovery_id")
         self.logger.warning(
-            "Connecticut: discovery request for id %s failed (%s) -- "
-            "treating as a miss", id_, failure.value,
+            "Connecticut: discovery request for id %s failed (%s) -- treating as a miss",
+            id_,
+            failure.value,
         )
         yield from self._record_discovery(id_, False)
 
@@ -472,29 +607,31 @@ class ConnecticutSpider(scrapy.Spider):
         self._discovery_pending -= 1
         if self._discovery_pending > 0:
             return
-        self._discovery_max_hit, self._discovery_trailing_miss = \
-            extend_miss_streak(
-                self._discovery_results, self._discovery_block_start,
-                self._discovery_block_end, self._discovery_max_hit,
-                self._discovery_trailing_miss,
-            )
+        self._discovery_max_hit, self._discovery_trailing_miss = extend_miss_streak(
+            self._discovery_results,
+            self._discovery_block_start,
+            self._discovery_block_end,
+            self._discovery_max_hit,
+            self._discovery_trailing_miss,
+        )
         if self._discovery_trailing_miss >= MISS_STREAK_LIMIT:
             self.max_id = self._discovery_max_hit
             self.logger.info(
-                "Connecticut: discovery found ceiling max_id=%d (%d "
-                "consecutive misses)", self.max_id,
+                "Connecticut: discovery found ceiling max_id=%d (%d consecutive misses)",
+                self.max_id,
                 self._discovery_trailing_miss,
             )
             if self.max_id < KNOWN_MAX_ID:
                 self.logger.warning(
                     "Connecticut: discovered max_id=%d is BELOW the known "
                     "baseline %d -- the API likely changed shape, not that "
-                    "CT lost providers", self.max_id, KNOWN_MAX_ID,
+                    "CT lost providers",
+                    self.max_id,
+                    KNOWN_MAX_ID,
                 )
             yield from self._provider_sweep_requests()
             return
-        yield from self._discovery_block_requests(
-            self._discovery_block_end + 1)
+        yield from self._discovery_block_requests(self._discovery_block_end + 1)
 
     # --- Phase 2: provider sweep ----------------------------------------- #
 
@@ -502,8 +639,10 @@ class ConnecticutSpider(scrapy.Spider):
         self.logger.info("Connecticut: sweeping ids 1..%d", self.max_id)
         for id_ in range(1, self.max_id + 1):
             yield self._get(
-                PROVIDER_URL.format(id_), self.parse_provider,
-                meta={"provider_id": id_}, errback=self.provider_errback,
+                PROVIDER_URL.format(id_),
+                self.parse_provider,
+                meta={"provider_id": id_},
+                errback=self.provider_errback,
             )
 
     def provider_errback(self, failure):
@@ -511,7 +650,8 @@ class ConnecticutSpider(scrapy.Spider):
         self.provider_failures += 1
         self.logger.warning(
             "Connecticut: provider %s request failed after retries (%s)",
-            provider_id, failure.value,
+            provider_id,
+            failure.value,
         )
 
     def parse_provider(self, response):
@@ -527,8 +667,7 @@ class ConnecticutSpider(scrapy.Spider):
         summaries = self._summary_inspections(raw_inspections)
         if summaries:
             item["inspections"] = summaries
-            counts = [s["ct_violations_count"] for s in summaries
-                     if s.get("ct_violations_count") is not None]
+            counts = [s["ct_violations_count"] for s in summaries if s.get("ct_violations_count") is not None]
             if counts:
                 item["deficiencies"] = sum(counts)
 
@@ -542,7 +681,8 @@ class ConnecticutSpider(scrapy.Spider):
         # decrement the counter, guarding against a provider that never gets
         # emitted).
         self.pending[provider_id] = {
-            "item": item, "outstanding": len(raw_inspections),
+            "item": item,
+            "outstanding": len(raw_inspections),
         }
         for insp in raw_inspections:
             insp_id = insp.get("id")
@@ -550,7 +690,8 @@ class ConnecticutSpider(scrapy.Spider):
                 yield from self._maybe_emit_pending(provider_id)
                 continue
             yield self._get(
-                INSPECTION_URL.format(insp_id), self.parse_inspection_detail,
+                INSPECTION_URL.format(insp_id),
+                self.parse_inspection_detail,
                 meta={"provider_id": provider_id, "inspection_id": insp_id},
                 errback=self.inspection_errback,
             )
@@ -599,8 +740,7 @@ class ConnecticutSpider(scrapy.Spider):
         item["status"] = "Listed" if searchable else "Not Listed"
 
         item["ct_licensed"] = bool(data.get("license"))
-        put("ct_license_type",
-            ct_license_type_from_number(data.get("license_number")))
+        put("ct_license_type", ct_license_type_from_number(data.get("license_number")))
         put("ct_elevate_membership_level", data.get("elevate_membership_level"))
 
         # --- address ---
@@ -644,10 +784,7 @@ class ConnecticutSpider(scrapy.Spider):
         schedule = first_schedule(data.get("shifts"))
         put("hours", format_hours(schedule))
         if schedule:
-            item["ct_schedule"] = [
-                {"day": d, "open": o, "close": c}
-                for d, o, c in schedule_rows(schedule)
-            ]
+            item["ct_schedule"] = [{"day": d, "open": o, "close": c} for d, o, c in schedule_rows(schedule)]
         rates = rates_from_shifts(data.get("shifts"))
         if rates:
             item["ct_rates"] = rates
@@ -668,8 +805,7 @@ class ConnecticutSpider(scrapy.Spider):
 
         accreditations = data.get("accreditations") or []
         put("ct_accreditations", accreditations)
-        item["ct_head_start"] = bool(data.get("headstart_funding")) or \
-            ("Head Start" in accreditations)
+        item["ct_head_start"] = bool(data.get("headstart_funding")) or ("Head Start" in accreditations)
 
         put("languages", data.get("languages"))
         put("ct_school_districts", data.get("school_districts"))
@@ -732,8 +868,9 @@ class ConnecticutSpider(scrapy.Spider):
             else:
                 self.inspection_detail_failures += 1
                 self.logger.warning(
-                    "Connecticut: inspection %s (provider %s) returned a null "
-                    "detail body", inspection_id, provider_id,
+                    "Connecticut: inspection %s (provider %s) returned a null detail body",
+                    inspection_id,
+                    provider_id,
                 )
         except Exception:
             self.inspection_detail_failures += 1
@@ -741,7 +878,8 @@ class ConnecticutSpider(scrapy.Spider):
                 "Connecticut: inspection %s detail failed to parse for "
                 "provider %s -- keeping the provider, dropping this "
                 "inspection's violation/document detail",
-                inspection_id, provider_id,
+                inspection_id,
+                provider_id,
             )
         yield from self._maybe_emit_pending(provider_id)
 
@@ -751,10 +889,12 @@ class ConnecticutSpider(scrapy.Spider):
         self.inspection_detail_failures += 1
         # Same contract as parse_inspection_detail: the logging must never be
         # what strands the parent, so the decrement stays outside the guard.
-        try:
+        try:  # noqa: SIM105
             self.logger.warning(
-                "Connecticut: inspection %s detail request failed for provider "
-                "%s (%s)", inspection_id, provider_id, failure.value,
+                "Connecticut: inspection %s detail request failed for provider %s (%s)",
+                inspection_id,
+                provider_id,
+                failure.value,
             )
         except Exception:  # pragma: no cover -- defensive only
             pass
@@ -780,22 +920,22 @@ class ConnecticutSpider(scrapy.Spider):
         raw_violations = data.get("violations") or []
         if violations_count and raw_violations:
             insp_item["ct_violations"] = [
-                {"regulation": v.get("description"),
-                 "category": v.get("category"), "statute": v.get("statute")}
+                {"regulation": v.get("description"), "category": v.get("category"), "statute": v.get("statute")}
                 for v in raw_violations
             ]
         documents = data.get("documents") or []
         if documents:
             insp_item["ct_documents"] = [
-                {"description": d.get("description"),
-                 "document_type": d.get("document_type"),
-                 "visited_on": d.get("visited_on"), "link": d.get("link")}
+                {
+                    "description": d.get("description"),
+                    "document_type": d.get("document_type"),
+                    "visited_on": d.get("visited_on"),
+                    "link": d.get("link"),
+                }
                 for d in documents
             ]
             for wanted in REPORT_DOC_PREFERENCE:
-                link = next((d["link"] for d in documents
-                             if d.get("description") == wanted and d.get("link")),
-                            None)
+                link = next((d["link"] for d in documents if d.get("description") == wanted and d.get("link")), None)
                 if link:
                     insp_item["report_url"] = link
                     break
@@ -814,13 +954,13 @@ class ConnecticutSpider(scrapy.Spider):
 
     def _town_search_request(self, town):
         url = f"{SEARCH_URL}?town={quote(town)}"
-        return self._get(url, self.parse_town_search, meta={"town": town},
-                         errback=self.town_search_errback)
+        return self._get(url, self.parse_town_search, meta={"town": town}, errback=self.town_search_errback)
 
     def town_search_errback(self, failure):
         self.logger.warning(
             "Connecticut: verify-audit town search failed for %r (%s)",
-            failure.request.meta.get("town"), failure.value,
+            failure.request.meta.get("town"),
+            failure.value,
         )
 
     def parse_town_search(self, response):
@@ -852,14 +992,20 @@ class ConnecticutSpider(scrapy.Spider):
             "Connecticut: finished (%s) -- max_id=%s, %d providers emitted, "
             "%d missing ids, %d provider request failures, %d inspection "
             "details fetched, %d inspection detail failures, %d items still "
-            "pending at shutdown", reason, self.max_id, self.emitted,
-            self.missing, self.provider_failures, self.inspection_fetch_count,
-            self.inspection_detail_failures, len(self.pending),
+            "pending at shutdown",
+            reason,
+            self.max_id,
+            self.emitted,
+            self.missing,
+            self.provider_failures,
+            self.inspection_fetch_count,
+            self.inspection_detail_failures,
+            len(self.pending),
         )
         if self.emitted < EXPECTED_MIN_PROVIDERS:
             self.logger.warning(
-                "Connecticut: only %d providers emitted (< %d baseline) -- "
-                "possible incomplete crawl", self.emitted,
+                "Connecticut: only %d providers emitted (< %d baseline) -- possible incomplete crawl",
+                self.emitted,
                 EXPECTED_MIN_PROVIDERS,
             )
         if self.pending:
@@ -872,7 +1018,8 @@ class ConnecticutSpider(scrapy.Spider):
             self.logger.warning(
                 "Connecticut: %d provider(s) still pending at shutdown "
                 "(inspection detail requests never resolved) -- their items "
-                "were NOT emitted: %s", len(self.pending),
+                "were NOT emitted: %s",
+                len(self.pending),
                 sorted(self.pending)[:50],
             )
         if self.verify_audit:
@@ -881,11 +1028,12 @@ class ConnecticutSpider(scrapy.Spider):
                 self.logger.warning(
                     "Connecticut: verify audit found %d id(s) the "
                     "town-frontier search knows about but the id sweep "
-                    "missed: %s", len(missing_from_sweep),
+                    "missed: %s",
+                    len(missing_from_sweep),
                     sorted(missing_from_sweep)[:50],
                 )
             else:
                 self.logger.info(
-                    "Connecticut: verify audit found no gaps in the id sweep "
-                    "(%d town-search ids, all covered)", len(self.town_ids),
+                    "Connecticut: verify audit found no gaps in the id sweep (%d town-search ids, all covered)",
+                    len(self.town_ids),
                 )
