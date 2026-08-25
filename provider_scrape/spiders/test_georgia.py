@@ -12,12 +12,12 @@ from provider_scrape.spiders.georgia import (
     SEARCH_URL,
     VISITS_URL,
     GeorgiaSpider,
-    build_mailing_address,
-    parse_weekly_rates,
     _clean,
     _format_fee,
     _split_multi,
     _yes_no,
+    build_mailing_address,
+    parse_weekly_rates,
 )
 
 

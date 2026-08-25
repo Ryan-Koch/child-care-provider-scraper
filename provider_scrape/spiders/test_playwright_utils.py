@@ -1,6 +1,6 @@
 import logging
 import unittest
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 from provider_scrape.playwright_utils import PlaywrightErrbackMixin
 
@@ -76,7 +76,7 @@ class TestPlaywrightErrbackMixin(unittest.IsolatedAsyncioTestCase):
 
     async def test_skips_close_when_page_already_closed(self):
         """Guard against double-closing a page that Playwright already closed."""
-        failure, request, page, _ = self._failure({})
+        failure, _request, page, _ = self._failure({})
         page.is_closed = MagicMock(return_value=True)
 
         results = [out async for out in self.spider.errback_close_page(failure)]

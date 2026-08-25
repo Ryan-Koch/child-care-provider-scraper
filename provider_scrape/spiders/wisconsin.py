@@ -465,7 +465,7 @@ class WisconsinSpider(PlaywrightErrbackMixin, scrapy.Spider):
                     county_name,
                     page_num,
                     len(stubs),
-                    "showing %d-%d of %d" % showing if showing else "no count",
+                    f"showing {showing[0]}-{showing[1]} of {showing[2]}" if showing else "no count",
                 )
                 for stub in stubs:
                     if self.max_providers and self._provider_count >= self.max_providers:

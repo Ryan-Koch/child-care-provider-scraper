@@ -110,7 +110,7 @@ class VadssSpider(scrapy.Spider):
             try:
                 result = _clean(response.xpath(query).get(default="N/A"))
                 return result if result else "N/A"
-            except:
+            except Exception:
                 return "N/A"
 
         def extract_inspection_data():
@@ -155,7 +155,10 @@ class VadssSpider(scrapy.Spider):
         provider = ProviderItem(
             va_ID=provider_id,
             provider_name=extract_with_xpath("//table[not(@class)]/tr[1]/td/b/text()"),
-            address=f"{extract_with_xpath('//table[not(@class)]/tr[1]/td/br/following-sibling::text()')} {extract_with_xpath('//table[not(@class)]/tr[2]/td/text()')}",
+            address=(
+                f"{extract_with_xpath('//table[not(@class)]/tr[1]/td/br/following-sibling::text()')}"
+                f" {extract_with_xpath('//table[not(@class)]/tr[2]/td/text()')}"
+            ),
             phone=extract_with_xpath("//table[not(@class)]/tr[3]/td/text()"),
             provider_type=extract_with_xpath('//table[@class="cc_search"]/tr[1]/td[2]/span/span/font/u/text()'),
             va_license_type=extract_with_xpath('//table[@class="cc_search"]/tr[2]/td[2]/span/span/font/u/text()'),
@@ -175,10 +178,10 @@ class VadssSpider(scrapy.Spider):
                 '//table[@class="cc_search"]/tr/td[contains(text(), "Inspector:")]/following-sibling::td/text()'
             ),
             va_current_subsidy_provider=extract_with_xpath(
-                '//table[@class="cc_search"]/tr/td[contains(text(), "Current Subsidy Provider")]/following-sibling::td/text()'
+                '//table[@class="cc_search"]/tr/td[contains(text(), "Current Subsidy Provider")]/following-sibling::td/text()'  # noqa: E501
             ),
             license_number=extract_with_xpath(
-                '//table[@class="cc_search"]/tr/td[contains(text(), "License/Facility ID#")]/following-sibling::td/text()'
+                '//table[@class="cc_search"]/tr/td[contains(text(), "License/Facility ID#")]/following-sibling::td/text()'  # noqa: E501
             ),
             inspections=extract_inspection_data(),
             provider_url=response.url,

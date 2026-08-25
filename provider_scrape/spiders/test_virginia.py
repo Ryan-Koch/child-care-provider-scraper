@@ -1,7 +1,7 @@
-import pytest
 from scrapy.http import HtmlResponse, TextResponse
+
+from provider_scrape.items import InspectionItem, ProviderItem
 from provider_scrape.spiders.virginia import VadssSpider
-from provider_scrape.items import ProviderItem, InspectionItem
 
 
 def create_response(html_content, url="http://example.com"):

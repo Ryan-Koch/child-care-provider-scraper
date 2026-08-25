@@ -53,7 +53,7 @@ def _content_after(text, key):
     with ``<br>`` turned into newlines and HTML entities decoded. ``None`` when
     absent or empty.
     """
-    m = re.search(r'<label for="%s"[^>]*>.*?</label>' % re.escape(key), text, re.S)
+    m = re.search(rf'<label for="{re.escape(key)}"[^>]*>.*?</label>', text, re.S)
     if not m:
         return None
     v = re.search(r'<span class="content1">(.*?)</span>', text[m.end() : m.end() + 600], re.S)
@@ -66,7 +66,7 @@ def _content_after(text, key):
 
 def _hidden(text, name):
     """Value of a hidden ``<input name="..." value="...">`` (decoded)."""
-    m = re.search(r'name="%s"\s+value="([^"]*)"' % re.escape(name), text)
+    m = re.search(rf'name="{re.escape(name)}"\s+value="([^"]*)"', text)
     if not m:
         return None
     return unescape(m.group(1)).strip() or None

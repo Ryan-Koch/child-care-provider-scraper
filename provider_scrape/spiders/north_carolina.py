@@ -1,3 +1,4 @@
+import contextlib
 import re
 
 import scrapy
@@ -127,7 +128,7 @@ NEXT_PAGE_SEL = "#dnn_ctr1464_View_rgSearchResults_ctl00 .rgPageNext"
 # page-supplied function isn't reliably exposed on `window` even after
 # `domcontentloaded` (works fine in vanilla playwright). We install our own
 # postback shim instead.
-_CLIENT_READY_FN = ("() => typeof window.$find === 'function' && !!window.$find('%s')") % COUNTY_COMBO_ID
+_CLIENT_READY_FN = f"() => typeof window.$find === 'function' && !!window.$find('{COUNTY_COMBO_ID}')"
 
 # Shim that ensures `window.__doPostBack` exists. Mirrors ASP.NET's inline
 # WebForms script: write to the hidden __EVENTTARGET/__EVENTARGUMENT inputs
@@ -162,19 +163,16 @@ DETAIL_OWNER_PREFIX = "dnn_ctr1464_View_FacilityDetail_"
 # Telerik selects the county client-side. Find the matching item by text and
 # call .select(); this both updates the hidden ClientState input and fires the
 # change handlers the postback expects.
-_SELECT_COUNTY_SCRIPT = (
-    """
-(countyName) => {
-    const combo = window.$find && window.$find('%s');
-    if (!combo) { return false; }
+_SELECT_COUNTY_SCRIPT = f"""
+(countyName) => {{
+    const combo = window.$find && window.$find('{COUNTY_COMBO_ID}');
+    if (!combo) {{ return false; }}
     const item = combo.findItemByText(countyName);
-    if (!item) { return false; }
+    if (!item) {{ return false; }}
     item.select();
     return true;
-}
+}}
 """
-    % COUNTY_COMBO_ID
-)
 
 
 # ---- Parsing helpers ---------------------------------------------------------
@@ -656,14 +654,10 @@ class NorthCarolinaSpider(scrapy.Spider):
                 yield item
             self.logger.info("NC[%s]: county complete, yielded %d providers", county, yield_count)
         finally:
-            try:
+            with contextlib.suppress(Exception):
                 await page.close()
-            except Exception:
-                pass
-            try:
+            with contextlib.suppress(Exception):
                 await page.context.close()
-            except Exception:
-                pass
 
     async def _crawl_county(self, page, county):
         # Wait for Telerik to register the combobox client object.

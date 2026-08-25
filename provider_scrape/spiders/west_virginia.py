@@ -2,7 +2,6 @@ import scrapy
 
 from ..items import InspectionItem, ProviderItem
 
-
 SEARCH_URL = "https://www.wvdhhr.org/bcf/ece/cccenters/eceWVIsearch.asp"
 
 PROVIDER_LABEL_MAP = {

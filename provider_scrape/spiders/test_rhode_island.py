@@ -6,8 +6,8 @@ from scrapy.http import HtmlResponse, Request
 
 from provider_scrape.items import InspectionItem, ProviderItem
 from provider_scrape.spiders.rhode_island import (
-    RhodeIslandSpider,
     SEARCH_PAGE_URL,
+    RhodeIslandSpider,
     _empty_to_none,
     _extract_form_field,
     _summarize_compliance,
@@ -22,7 +22,6 @@ from provider_scrape.spiders.rhode_island import (
     format_availability,
     format_hours,
 )
-
 
 # ---- Sample search summary (real shape from providerSearch response) ----
 
@@ -922,7 +921,7 @@ async def test_submit_search_exhausts_retries_then_returns_empty(spider):
     )
     # Spider was built with search_retries=2 → 3 total attempts.
 
-    results, aura_context = await spider._submit_search(page)
+    results, _aura_context = await spider._submit_search(page)
 
     assert results == []
     assert spider._click_and_capture.await_count == 3

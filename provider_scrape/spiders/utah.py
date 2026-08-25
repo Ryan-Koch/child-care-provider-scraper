@@ -1,6 +1,8 @@
-import scrapy
 import json
 import urllib.parse
+
+import scrapy
+
 from provider_scrape.items import ProviderItem
 
 

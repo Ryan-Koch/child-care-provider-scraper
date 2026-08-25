@@ -5,8 +5,8 @@ from scrapy.http import HtmlResponse, Request, TextResponse
 
 from provider_scrape.items import InspectionItem, ProviderItem
 from provider_scrape.spiders.michigan import (
-    AURA_DESCRIPTOR,
     APEX_CLASSNAME,
+    AURA_DESCRIPTOR,
     MICHIGAN_COUNTIES,
     MichiganSpider,
     clean_address,
@@ -60,7 +60,6 @@ def test_parse_initial_page_yields_county_searches(spider):
         encoding="utf-8",
     )
     results = list(spider.parse_initial_page(response))
-    from provider_scrape.spiders.michigan import MICHIGAN_COUNTIES
 
     assert len(results) == len(MICHIGAN_COUNTIES)
     req = results[0]

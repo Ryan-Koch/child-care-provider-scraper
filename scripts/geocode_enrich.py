@@ -35,7 +35,7 @@ import sqlite3
 import sys
 import time
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import requests
 
@@ -43,7 +43,7 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
-from provider_scrape import geocoding  # noqa: E402
+from provider_scrape import geocoding
 
 logger = logging.getLogger("geocode_enrich")
 
@@ -93,7 +93,7 @@ class GeocodeCache:
             "INSERT OR REPLACE INTO geocode_cache"
             " (address_key, latitude, longitude, source, confidence,"
             "  matched_address, fetched_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (key, latitude, longitude, source, confidence, matched, datetime.now(timezone.utc).isoformat()),
+            (key, latitude, longitude, source, confidence, matched, datetime.now(UTC).isoformat()),
         )
         self.conn.commit()
 
@@ -147,7 +147,7 @@ def _post_batch(rows, benchmark, timeout, max_retries):
                 timeout=timeout,
             )
             if response.status_code >= 500:
-                raise requests.HTTPError("Census returned %s" % response.status_code)
+                raise requests.HTTPError(f"Census returned {response.status_code}")
             response.raise_for_status()
             text = response.text
             # Census sits behind a WAF that can answer HTTP 200 with an HTML
@@ -165,7 +165,7 @@ def _post_batch(rows, benchmark, timeout, max_retries):
                     "page) -- is the geocode step running through a blocked IP?"
                 )
             return list(csv.reader(io.StringIO(text)))
-        except (requests.RequestException,) as error:
+        except requests.RequestException as error:
             last_error = error
             if attempt < max_retries:
                 delay = BACKOFF_BASE * (2 ** (attempt - 1))
@@ -243,7 +243,7 @@ def enrich_records(records, cache, args):
 
     # 3. Network pass. Query rows carry a positional id into ``unique_keys`` so
     #    responses map back regardless of order.
-    query_rows = [[str(position)] + representative_row[key][1:] for position, key in enumerate(unique_keys)]
+    query_rows = [[str(position), *representative_row[key][1:]] for position, key in enumerate(unique_keys)]
     total_chunks = (len(query_rows) + args.batch_size - 1) // args.batch_size
     for chunk_number, chunk in enumerate(_chunks(query_rows, args.batch_size), 1):
         logger.info("Census batch %d/%d: querying %d addresses", chunk_number, total_chunks, len(chunk))
@@ -291,20 +291,20 @@ def _print_stats(path, counters):
     attempted = geocoded + unmatched
     rate = (100.0 * geocoded / attempted) if attempted else 0.0
     print("")
-    print("=== %s ===" % path)
-    print("  total records         : %d" % total)
-    print("  state-provided coords : %d" % counters["state"])
-    print("  no usable address     : %d" % counters["skipped_no_address"])
-    print("  geocode candidates    : %d" % counters["candidates"])
-    print("    cache hits          : %d" % counters["cache_hit"])
-    print("    duplicates deduped  : %d" % counters["dedup_saved"])
-    print("    geocoded (exact)    : %d" % counters["geocoded_exact"])
-    print("    geocoded (approx)   : %d" % counters["geocoded_approx"])
-    print("    unmatched (no_match): %d" % counters["unmatched_no_match"])
-    print("    unmatched (tie)     : %d" % counters["unmatched_tie"])
+    print(f"=== {path} ===")
+    print(f"  total records         : {total}")
+    print(f"  state-provided coords : {counters['state']}")
+    print(f"  no usable address     : {counters['skipped_no_address']}")
+    print(f"  geocode candidates    : {counters['candidates']}")
+    print(f"    cache hits          : {counters['cache_hit']}")
+    print(f"    duplicates deduped  : {counters['dedup_saved']}")
+    print(f"    geocoded (exact)    : {counters['geocoded_exact']}")
+    print(f"    geocoded (approx)   : {counters['geocoded_approx']}")
+    print(f"    unmatched (no_match): {counters['unmatched_no_match']}")
+    print(f"    unmatched (tie)     : {counters['unmatched_tie']}")
     if counters["query_failed"]:
-        print("    query failed        : %d" % counters["query_failed"])
-    print("  match rate (of attempted): %.1f%%" % rate)
+        print(f"    query failed        : {counters['query_failed']}")
+    print(f"  match rate (of attempted): {rate:.1f}%")
 
 
 def _is_csv(path):
@@ -321,14 +321,14 @@ def _read_records(path):
     already expect (an empty cell reads as ``""`` and counts as "no coordinate").
     """
     if _is_csv(path):
-        with open(path, "r", newline="", encoding="utf-8") as handle:
+        with open(path, newline="", encoding="utf-8") as handle:
             reader = csv.DictReader(handle)
             records = [dict(row) for row in reader]
             return records, list(reader.fieldnames or [])
-    with open(path, "r", encoding="utf-8") as handle:
+    with open(path, encoding="utf-8") as handle:
         records = json.load(handle)
     if not isinstance(records, list):
-        raise ValueError("%s is not a JSON array of records" % path)
+        raise ValueError(f"{path} is not a JSON array of records")
     return records, None
 
 

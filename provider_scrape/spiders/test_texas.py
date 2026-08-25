@@ -1,9 +1,11 @@
-import pytest
-import json
 import base64
-from scrapy.http import Response, Request
-from provider_scrape.spiders.texas import TxhhsSpider
+import json
+
+import pytest
+from scrapy.http import Response
+
 from provider_scrape.items import ProviderItem
+from provider_scrape.spiders.texas import TxhhsSpider
 
 # Happy path CSV content
 HAPPY_PATH_CSV = """

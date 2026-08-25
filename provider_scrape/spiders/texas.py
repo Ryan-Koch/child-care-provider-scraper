@@ -1,10 +1,12 @@
-import scrapy
+import base64
 import csv
 import io
 import json
-import base64
+
+import scrapy
 from scrapy_playwright.page import PageMethod
-from ..items import ProviderItem, InspectionItem
+
+from ..items import ProviderItem
 
 
 class TxhhsSpider(scrapy.Spider):
@@ -36,9 +38,10 @@ class TxhhsSpider(scrapy.Spider):
 
     async def start(self):
         search_api_url = "**/**"
-        wait_for_api = "**/__endpoint/reftable/getReferenceTables"
-        # This is a bit brittle right now. I'm going to come back to it. Further down is a retry mechanic I'll use for now.
-        # ToDo: Revisit the page methods here and explore making it less vulnerable to the auth header not being available.
+        # This is a bit brittle right now. I'm going to come back to it.
+        # Further down is a retry mechanic I'll use for now.
+        # ToDo: Revisit the page methods here and explore making it less
+        # vulnerable to the auth header not being available.
         yield scrapy.Request(
             url="https://childcare.hhs.texas.gov/public/childcaresearch",
             callback=self.make_download_request,
@@ -66,7 +69,10 @@ class TxhhsSpider(scrapy.Spider):
 
         if self.intercepted_auth_header:
             download_headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                    " (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+                ),
                 "Accept": "application/json, text/plain, */*",
                 "Accept-Language": "en",
                 "Content-Type": "application/json",
@@ -122,7 +128,6 @@ class TxhhsSpider(scrapy.Spider):
     def parse_csv(self, response):
         base_url = "https://childcare.hhs.texas.gov/Public/OperationDetails?operationId="
         self.logger.info(f"CSV download response from {response.url} was: {response.status}")
-        providers = []
         csv.field_size_limit(1024 * 1024 * 1024)
         try:
             json_response = json.loads(response.body)

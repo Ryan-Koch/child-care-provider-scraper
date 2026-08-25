@@ -28,7 +28,7 @@ def test_build_pool_url_encodes_credentials():
     pool = build_pool(["1.1.1.1:80"], "u@e", "p:w/d", id_prefix="ws")
     _id, url = pool.next_rotating()
     # ':' '@' '/' in creds must be percent-encoded so the URL parses correctly.
-    assert "http://u%40e:p%3Aw%2Fd@1.1.1.1:80" == url
+    assert url == "http://u%40e:p%3Aw%2Fd@1.1.1.1:80"
 
 
 def test_build_pool_passes_through_full_urls():

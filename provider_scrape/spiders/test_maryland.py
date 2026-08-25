@@ -1,26 +1,26 @@
 import json
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 import pytest
 import scrapy
 from scrapy.http import HtmlResponse, Request, TextResponse
+from twisted.python.failure import Failure
+
+from provider_scrape.items import ProviderItem
 from provider_scrape.spiders.maryland import (
-    MarylandSpider,
-    extract_address_from_pdf,
-    MAX_NAV_ATTEMPTS,
-    MAX_CHAIN_RESTARTS,
-    MAX_DETAIL_REPRIMES,
-    STALL_ALERT_WINDOWS,
-    STALL_CLOSE_WINDOWS,
-    RESULTS_PRIORITY,
+    DETAIL_COOKIEJAR,
     DETAIL_DOWNLOAD_TIMEOUT,
     EXCELS_DOWNLOAD_TIMEOUT,
-    DETAIL_COOKIEJAR,
+    MAX_CHAIN_RESTARTS,
+    MAX_DETAIL_REPRIMES,
+    MAX_NAV_ATTEMPTS,
+    RESULTS_PRIORITY,
     SEARCH_RESULTS_REFERER,
+    STALL_ALERT_WINDOWS,
+    STALL_CLOSE_WINDOWS,
+    MarylandSpider,
 )
-from types import SimpleNamespace
-from twisted.python.failure import Failure
-from provider_scrape.items import ProviderItem
-from unittest.mock import Mock, patch
 
 
 @pytest.fixture

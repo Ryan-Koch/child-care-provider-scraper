@@ -1,6 +1,8 @@
-import scrapy
-from provider_scrape.items import ProviderItem
 import re
+
+import scrapy
+
+from provider_scrape.items import ProviderItem
 
 
 class ColoradoSpider(scrapy.Spider):
@@ -46,7 +48,7 @@ class ColoradoSpider(scrapy.Spider):
             # Languages
             # Languages are often in text nodes following the strong tag
             langs = result.xpath('.//p[strong[contains(text(),"languages spoken")]]/text()').getall()
-            item["languages"] = ", ".join([l.strip() for l in langs if l.strip()])
+            item["languages"] = ", ".join([lang.strip() for lang in langs if lang.strip()])
 
             # CCCAP
             cccap = result.xpath('.//p[strong[contains(text(),"Accepts CCCAP")]]/span/text()').get()
@@ -91,7 +93,8 @@ class ColoradoSpider(scrapy.Spider):
 
         if next_link and view_state:
             # Extract parameters from onclick string
-            # pattern: jsfcljs(document.getElementById('page:searchForm'),'page:searchForm:j_id169,page:searchForm:j_id169','');
+            # pattern: jsfcljs(document.getElementById('page:searchForm'),
+            #   'page:searchForm:j_id169,page:searchForm:j_id169','');
             match = re.search(r"jsfcljs\([^,]+,'([^']+)'", next_link)
             if match:
                 params_str = match.group(1)

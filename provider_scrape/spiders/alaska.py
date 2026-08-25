@@ -25,7 +25,6 @@ import scrapy
 
 from provider_scrape.items import InspectionItem, ProviderItem
 
-
 # --------------------------------------------------------------------------- #
 # Helpers
 # --------------------------------------------------------------------------- #
@@ -104,7 +103,7 @@ def _format_months(months):
     Drops the months clause when zero (36 -> ``"3 Years"``); uses singular
     for a value of exactly one (1 -> ``"1 Year"``).
     """
-    total = int(round(months))
+    total = round(months)
     if total < 12:
         return f"{total} {'Month' if total == 1 else 'Months'}"
     years, remainder = divmod(total, 12)
@@ -181,10 +180,7 @@ def _build_address(street, street2, city, state, zip_code):
     left = " ".join(part for part in (street, street2) if part).strip()
     city = _clean(city) or ""
     state = _clean(state) or ""
-    if city and state:
-        mid = f"{city}, {state}"
-    else:
-        mid = city or state
+    mid = f"{city}, {state}" if city and state else city or state
     right = _clean(zip_code) or ""
     combined = " ".join(part for part in (left, mid, right) if part).strip()
     return combined or None

@@ -1,7 +1,6 @@
-from scrapy.http import HtmlResponse, Request
-from scrapy import Selector
-
 import pytest
+from scrapy import Selector
+from scrapy.http import HtmlResponse, Request
 
 from provider_scrape.items import ProviderItem
 from provider_scrape.spiders.south_carolina import (

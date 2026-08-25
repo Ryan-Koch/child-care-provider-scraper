@@ -25,7 +25,7 @@ def _load_generator():
 def test_committed_doc_matches_fresh_generation():
     generator = _load_generator()
     fresh = generator.build_markdown()
-    with open(COMMITTED_DOC, "r", encoding="utf-8") as handle:
+    with open(COMMITTED_DOC, encoding="utf-8") as handle:
         committed = handle.read()
     assert fresh == committed, (
         "SOURCES.md is out of date. Regenerate it with `.venv/bin/python scripts/generate_sources.py` and commit."
@@ -41,6 +41,6 @@ def test_every_spider_has_a_source():
     generator = _load_generator()
     missing = [label for label, hosts in generator.collect_rows() if not hosts]
     assert not missing, (
-        "These spiders resolve to no source host: %s. Add allowed_domains/"
-        "start_urls or a SOURCE_OVERRIDES entry in generate_sources.py." % ", ".join(missing)
+        f"These spiders resolve to no source host: {', '.join(missing)}. Add allowed_domains/"
+        "start_urls or a SOURCE_OVERRIDES entry in generate_sources.py."
     )

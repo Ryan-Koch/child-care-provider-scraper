@@ -43,7 +43,7 @@ import argparse
 import logging
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import yaml
 from huggingface_hub import CommitOperationAdd, HfApi
@@ -84,7 +84,7 @@ def load_env_file(path):
     values = {}
     if not os.path.exists(path):
         return values
-    with open(path, "r", encoding="utf-8") as handle:
+    with open(path, encoding="utf-8") as handle:
         for line in handle:
             line = line.strip()
             if not line or line.startswith("#") or "=" not in line:
@@ -132,7 +132,7 @@ def build_operations(files, path_in_repo):
     operations = []
     for path in files:
         name = os.path.basename(path)
-        target = "%s/%s" % (prefix, name) if prefix else name
+        target = f"{prefix}/{name}" if prefix else name
         operations.append(CommitOperationAdd(path_in_repo=target, path_or_fileobj=path))
     return operations
 
@@ -151,7 +151,7 @@ def build_extra_operations(extra_files, path_in_repo):
             logger.warning("Skipping extra file %s: not found", path)
             continue
         name = os.path.basename(path)
-        target = "%s/%s" % (prefix, name) if prefix else name
+        target = f"{prefix}/{name}" if prefix else name
         operations.append(CommitOperationAdd(path_in_repo=target, path_or_fileobj=path))
     return operations
 
@@ -179,7 +179,7 @@ def build_configs(files, path_in_repo):
             logger.warning("Duplicate config name %r (%s); keeping the first.", cfg, path)
             continue
         seen.add(cfg)
-        data_file = "%s/%s" % (prefix, name) if prefix else name
+        data_file = f"{prefix}/{name}" if prefix else name
         configs.append({"config_name": cfg, "data_files": data_file})
     return configs
 
@@ -212,7 +212,7 @@ def split_frontmatter(text):
     try:
         data = yaml.safe_load(fm_text)
     except yaml.YAMLError as exc:
-        raise ValueError(str(exc))
+        raise ValueError(str(exc)) from exc
     if data is None:
         data = {}
     if not isinstance(data, dict):
@@ -233,7 +233,7 @@ def render_readme(existing_text, configs):
     body = body.strip("\n")
     if not body:
         body = DEFAULT_README_BODY.strip("\n")
-    return "---\n%s\n---\n\n%s\n" % (frontmatter, body)
+    return f"---\n{frontmatter}\n---\n\n{body}\n"
 
 
 def fetch_existing_readme(api, repo):
@@ -259,8 +259,8 @@ def build_arg_parser():
         choices=["json", "csv"],
         help="data file extension to collect from directories (default: %(default)s)",
     )
-    parser.add_argument("--repo", help="dataset repo id (default: %s in the env file)" % REPO_KEY)
-    parser.add_argument("--token", help="write token (default: %s in the env file)" % TOKEN_KEY)
+    parser.add_argument("--repo", help=f"dataset repo id (default: {REPO_KEY} in the env file)")
+    parser.add_argument("--token", help=f"write token (default: {TOKEN_KEY} in the env file)")
     parser.add_argument(
         "--env-file", default=DEFAULT_ENV_FILE, help="key=value file with token/repo (default: %(default)s)"
     )
@@ -345,9 +345,7 @@ def main(argv=None):
         logger.info("Dry run: nothing uploaded.")
         return 0
 
-    message = args.commit_message or (
-        "Scheduled data upload %s" % datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    )
+    message = args.commit_message or (f"Scheduled data upload {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}")
     api = HfApi(token=token)
     operations = build_operations(files, args.path_in_repo)
     operations.extend(build_extra_operations(args.extra_files, args.path_in_repo))

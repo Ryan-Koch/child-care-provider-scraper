@@ -26,7 +26,6 @@ from provider_scrape.spiders.alaska import (
     _yesno,
 )
 
-
 FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures")
 
 

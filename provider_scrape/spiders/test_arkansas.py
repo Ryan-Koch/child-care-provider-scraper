@@ -1,7 +1,8 @@
 import unittest
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
+
+from provider_scrape.items import ProviderItem
 from provider_scrape.spiders.arkansas import ArkansasSpider
-from provider_scrape.items import ProviderItem, InspectionItem
 
 
 class TestArkansasSpider(unittest.IsolatedAsyncioTestCase):

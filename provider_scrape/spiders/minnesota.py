@@ -270,7 +270,7 @@ def _parse_csv_body(body, logger=None):
             continue
         header = [h.strip() for h in rows[0]]
         if "License Number" in header and "Name of Program" in header:
-            return [dict(zip(header, r)) for r in rows[1:] if r]
+            return [dict(zip(header, r, strict=False)) for r in rows[1:] if r]
 
     if logger:
         logger.warning("csvdownload body did not look like the expected CSV/TSV")

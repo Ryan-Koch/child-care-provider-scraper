@@ -1,8 +1,7 @@
 import scrapy
-from scrapy_playwright.page import PageMethod
-from provider_scrape.items import ProviderItem, InspectionItem
+
+from provider_scrape.items import InspectionItem, ProviderItem
 from provider_scrape.playwright_utils import PlaywrightErrbackMixin
-import re
 
 
 class MontanaSpider(PlaywrightErrbackMixin, scrapy.Spider):

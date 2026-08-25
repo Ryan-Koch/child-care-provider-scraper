@@ -1,7 +1,9 @@
 import unittest
-from scrapy.http import TextResponse, Request
-from provider_scrape.spiders.alabama import AlabamaSpider
+
+from scrapy.http import Request, TextResponse
+
 from provider_scrape.items import ProviderItem
+from provider_scrape.spiders.alabama import AlabamaSpider
 
 
 class AlabamaSpiderTest(unittest.TestCase):

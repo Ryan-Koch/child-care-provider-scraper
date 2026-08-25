@@ -34,7 +34,7 @@ import urllib.request
 
 # Reuse the exact env-file parser the pool itself uses, so the two never drift.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from provider_scrape.proxy_pool import load_env_file  # noqa: E402
+from provider_scrape.proxy_pool import load_env_file
 
 DEFAULT_ENV_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "webshare.env")
 ENDPOINTS_KEY = "webshare_proxy_endpoints"
@@ -145,7 +145,7 @@ def main(argv=None):
         print("Endpoints already up to date; no change.")
         return 0
 
-    with open(args.env_file, "r", encoding="utf-8") as handle:
+    with open(args.env_file, encoding="utf-8") as handle:
         text = handle.read()
     new_text = rewrite_endpoints_line(text, endpoints)
 

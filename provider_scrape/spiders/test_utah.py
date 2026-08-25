@@ -1,8 +1,10 @@
-import unittest
 import json
-from scrapy.http import TextResponse, Request
-from provider_scrape.spiders.utah import UtahSpider
+import unittest
+
+from scrapy.http import Request, TextResponse
+
 from provider_scrape.items import ProviderItem
+from provider_scrape.spiders.utah import UtahSpider
 
 
 class UtahSpiderTest(unittest.TestCase):

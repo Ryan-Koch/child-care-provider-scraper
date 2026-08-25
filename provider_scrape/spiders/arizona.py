@@ -1,6 +1,5 @@
 import asyncio
 import json
-import logging
 import platform
 import random
 from urllib.parse import urlencode
@@ -292,7 +291,8 @@ class ArizonaSpider(scrapy.Spider):
                 await page.wait_for_selector(button_selector, timeout=30000)
             except Exception:
                 self.logger.error(
-                    "Timed out waiting for the Aura search button to appear. The page might not have loaded correctly (check for 403s in logs)."
+                    "Timed out waiting for the Aura search button to appear. "
+                    "The page might not have loaded correctly (check for 403s in logs)."
                 )
                 # Log the current page content for debugging
                 content = await page.content()

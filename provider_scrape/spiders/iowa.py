@@ -193,7 +193,7 @@ def format_hours(formatted):
     """
     if not formatted:
         return None
-    rows = [(day, formatted.get(key)) for day, key in zip(DAY_LABELS, DAY_KEYS) if formatted.get(key)]
+    rows = [(day, formatted.get(key)) for day, key in zip(DAY_LABELS, DAY_KEYS, strict=True) if formatted.get(key)]
     if not rows:
         return None
     times = {t for _, t in rows}

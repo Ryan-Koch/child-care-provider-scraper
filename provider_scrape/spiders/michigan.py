@@ -3,7 +3,6 @@ import re
 import urllib.parse
 
 import scrapy
-from scrapy.http import TextResponse
 
 from provider_scrape.items import InspectionItem, ProviderItem
 
@@ -285,7 +284,7 @@ class MichiganSpider(scrapy.Spider):
         docs_info = self._extract_decoded_return_value(data, action_index=3) or {}
 
         # getDetailInfo returns an array — take the first element
-        if isinstance(detail_raw, list):
+        if isinstance(detail_raw, list):  # noqa: SIM108
             detail_info = detail_raw[0] if detail_raw else {}
         else:
             detail_info = detail_raw or {}
@@ -297,7 +296,7 @@ class MichiganSpider(scrapy.Spider):
             op_details = (operational_raw or {}).get("operationalDetails", [])
 
         # getServiceDetailInfo returns an array — take the first element
-        if isinstance(service_raw, list):
+        if isinstance(service_raw, list):  # noqa: SIM108
             service_info = service_raw[0] if service_raw else {}
         else:
             service_info = service_raw or {}
@@ -547,7 +546,7 @@ class MichiganSpider(scrapy.Spider):
             try:
                 return json.loads(inner)
             except json.JSONDecodeError:
-                self.logger.warning(f"Failed to decode inner returnValue JSON")
+                self.logger.warning("Failed to decode inner returnValue JSON")
                 return {}
         # Already decoded (e.g. in tests)
         return inner

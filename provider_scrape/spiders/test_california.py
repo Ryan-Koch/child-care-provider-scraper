@@ -1,7 +1,9 @@
 import unittest
+
 from scrapy.http import TextResponse
-from provider_scrape.spiders.california import CaclSpider
+
 from provider_scrape.items import ProviderItem
+from provider_scrape.spiders.california import CaclSpider
 
 
 class CaclSpiderTest(unittest.TestCase):

@@ -1,7 +1,9 @@
 import unittest
-from scrapy.http import TextResponse, Headers
-from provider_scrape.spiders.illinois import IllinoisSpider
+
+from scrapy.http import Headers, TextResponse
+
 from provider_scrape.items import ProviderItem
+from provider_scrape.spiders.illinois import IllinoisSpider
 
 
 class IllinoisSpiderTest(unittest.TestCase):

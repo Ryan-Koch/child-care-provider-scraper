@@ -1,14 +1,14 @@
+import contextlib
 import json
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import urlencode, urljoin
 
 import scrapy
 from scrapy.http import HtmlResponse
 
 from ..items import InspectionItem, ProviderItem
-
 
 DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 DAY_ABBR = {d: d[:3] for d in DAY_NAMES}
@@ -101,7 +101,7 @@ def epoch_ms_to_date(value):
     """Convert a Power BI epoch-millisecond timestamp to an MM/DD/YYYY string."""
     if value is None:
         return None
-    return datetime.fromtimestamp(value / 1000, tz=timezone.utc).strftime("%m/%d/%Y")
+    return datetime.fromtimestamp(value / 1000, tz=UTC).strftime("%m/%d/%Y")
 
 
 def format_qris_address(street, city, zip_code):
@@ -458,10 +458,8 @@ class NevadaSpider(scrapy.Spider):
             self.logger.info("Starting per-county search across %s counties", len(COUNTY_CODES))
             yield self._county_search_request(rendered, COUNTY_CODES[0])
         finally:
-            try:
+            with contextlib.suppress(Exception):
                 await page.close()
-            except Exception:
-                pass
 
     def _county_search_request(self, source_response, county_code):
         """Build the Search postback for one county.

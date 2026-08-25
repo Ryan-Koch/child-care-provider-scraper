@@ -212,7 +212,7 @@ class WashingtonSpider(scrapy.Spider):
             if len(tds) < 5:
                 continue
 
-            def cell_text(idx):
+            def cell_text(idx, tds=tds):
                 text = tds[idx].css("::text").get()
                 return text.strip() if text and text.strip() else ""
 
@@ -274,7 +274,7 @@ class WashingtonSpider(scrapy.Spider):
             if len(tds) < 9:
                 continue
 
-            def cell_text(idx):
+            def cell_text(idx, tds=tds):
                 text = tds[idx].css("::text").get()
                 return text.strip() if text and text.strip() else ""
 

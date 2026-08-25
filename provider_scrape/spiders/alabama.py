@@ -1,6 +1,8 @@
-import scrapy
-from provider_scrape.items import ProviderItem, InspectionItem
 import re
+
+import scrapy
+
+from provider_scrape.items import ProviderItem
 
 
 class AlabamaSpider(scrapy.Spider):
@@ -194,7 +196,8 @@ class AlabamaSpider(scrapy.Spider):
             # Find the b tag
             # Get all following siblings until we hit <br><br> or another bold tag?
             # Actually, looking at the HTML:
-            # <span ...>Mailing Address:</span><br /><span ...>Line 1</span><br /><span ...>City</span>, <span ...>State</span> <span ...>Zip</span><br /><br />
+            # <span ...>Mailing Address:</span><br /><span ...>Line 1</span><br />
+            # <span ...>City</span>, <span ...>State</span> <span ...>Zip</span><br /><br />
 
             # We can select the following-sibling::span nodes until we hit <br><br>
             # Or just grab the text.

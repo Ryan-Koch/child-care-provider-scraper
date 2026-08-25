@@ -21,9 +21,9 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
-from provider_scrape import normalization as norm  # noqa: E402
-from provider_scrape.field_docs import FIELD_DOCS  # noqa: E402
-from provider_scrape.items import InspectionItem, ProviderItem  # noqa: E402
+from provider_scrape import normalization as norm
+from provider_scrape.field_docs import FIELD_DOCS
+from provider_scrape.items import InspectionItem, ProviderItem
 
 OUTPUT_PATH = os.path.join(REPO_ROOT, "state_pipeline_details.md")
 
@@ -102,7 +102,7 @@ def explanation_for(field, transformation):
     doc = FIELD_DOCS.get(field)
     if doc:
         return doc
-    return "%s. **TODO:** add a curated explanation to `provider_scrape/field_docs.py`." % transformation
+    return f"{transformation}. **TODO:** add a curated explanation to `provider_scrape/field_docs.py`."
 
 
 def md_escape(value):
@@ -141,16 +141,17 @@ def build_markdown():
     for field in common_provider_fields():
         transformation = transformation_for(field)
         explanation = explanation_for(field, transformation)
-        add("| `%s` | %s | %s |" % (field, md_escape(transformation), md_escape(explanation)))
+        add(f"| `{field}` | {md_escape(transformation)} | {md_escape(explanation)} |")
     add("")
+    date_fields = ", ".join(f"`{f}`" for f in norm.INSPECTION_DATE_FIELDS)
     add(
         "> Inspections are normalized too: every string value gets whitespace "
-        "cleanup, and the date fields (%s) are converted to ISO 8601. The "
+        f"cleanup, and the date fields ({date_fields}) are converted to ISO 8601. The "
         "`status` vocabulary does not apply to inspections."
-        % ", ".join("`%s`" % f for f in norm.INSPECTION_DATE_FIELDS)
     )
     add("")
-    add("> Tracking fields (%s) are passed through unchanged." % ", ".join("`%s`" % f for f in TRACKING_FIELDS))
+    tracking = ", ".join(f"`{f}`" for f in TRACKING_FIELDS)
+    add(f"> Tracking fields ({tracking}) are passed through unchanged.")
     add("")
 
     # --- Derived fields ---
@@ -161,8 +162,8 @@ def build_markdown():
     add("| Field | Derived from | Explanation |")
     add("|---|---|---|")
     for field, source in DERIVED_FIELDS:
-        explanation = explanation_for(field, "Derived from %s" % source)
-        add("| `%s` | `%s` | %s |" % (field, source, md_escape(explanation)))
+        explanation = explanation_for(field, f"Derived from {source}")
+        add(f"| `{field}` | `{source}` | {md_escape(explanation)} |")
     add("")
 
     # --- Field-collapse map ---
@@ -177,8 +178,8 @@ def build_markdown():
     add("| Common field | Source state-specific fields |")
     add("|---|---|")
     for common in sorted(norm.FIELD_COLLAPSE_MAP):
-        sources = ", ".join("`%s`" % s for s in sorted(norm.FIELD_COLLAPSE_MAP[common]))
-        add("| `%s` | %s |" % (common, sources))
+        sources = ", ".join(f"`{s}`" for s in sorted(norm.FIELD_COLLAPSE_MAP[common]))
+        add(f"| `{common}` | {sources} |")
     add("")
 
     # --- Controlled-vocabulary appendices ---
@@ -189,8 +190,8 @@ def build_markdown():
     add("| Canonical | Raw values |")
     add("|---|---|")
     for canonical in sorted(norm.STATUS_BUCKETS):
-        raws = ", ".join("`%s`" % md_escape(r) for r in sorted(norm.STATUS_BUCKETS[canonical]))
-        add("| `%s` | %s |" % (canonical, raws))
+        raws = ", ".join(f"`{md_escape(r)}`" for r in sorted(norm.STATUS_BUCKETS[canonical]))
+        add(f"| `{canonical}` | {raws} |")
     add("")
 
     add("## Controlled vocabulary: `facility_category`")
@@ -200,8 +201,8 @@ def build_markdown():
     add("| Canonical | Raw provider_type values |")
     add("|---|---|")
     for canonical in sorted(norm.FACILITY_CATEGORY_BUCKETS):
-        raws = ", ".join("`%s`" % md_escape(r) for r in sorted(norm.FACILITY_CATEGORY_BUCKETS[canonical]))
-        add("| `%s` | %s |" % (canonical, raws))
+        raws = ", ".join(f"`{md_escape(r)}`" for r in sorted(norm.FACILITY_CATEGORY_BUCKETS[canonical]))
+        add(f"| `{canonical}` | {raws} |")
     add("")
 
     # --- Per-state section ---
@@ -224,15 +225,15 @@ def build_markdown():
 
     for code in sorted(by_state):
         name = _CODE_TO_NAME.get(code.upper())
-        header = "%s (%s)" % (name.title(), code.upper()) if name else code.upper()
-        add("### %s" % header)
+        header = f"{name.title()} ({code.upper()})" if name else code.upper()
+        add(f"### {header}")
         add("")
         for field in sorted(by_state[code]):
             common = source_to_common.get(field)
             if common:
-                add("- `%s` -> collapses into `%s`" % (field, common))
+                add(f"- `{field}` -> collapses into `{common}`")
             else:
-                add("- `%s` -> pass-through" % field)
+                add(f"- `{field}` -> pass-through")
         add("")
 
     return "\n".join(lines).rstrip("\n") + "\n"
@@ -242,7 +243,7 @@ def main():
     markdown = build_markdown()
     with open(OUTPUT_PATH, "w", encoding="utf-8") as handle:
         handle.write(markdown)
-    print("Wrote %s" % OUTPUT_PATH)
+    print(f"Wrote {OUTPUT_PATH}")
 
 
 if __name__ == "__main__":

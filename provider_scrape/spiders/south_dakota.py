@@ -67,7 +67,7 @@ def _badges(text, form_id):
     ``showBadges('#form_id', 'a~*~b', 'css-class')``. Parse the second,
     ``~*~``-delimited argument -- never the spans themselves.
     """
-    m = re.search(r"showBadges\('#%s',\s*'((?:[^'\\]|\\')*)'" % re.escape(form_id), text)
+    m = re.search(rf"showBadges\('#{re.escape(form_id)}',\s*'((?:[^'\\]|\\')*)'", text)
     if not m:
         return []
     return [unescape(v).strip() for v in m.group(1).split("~*~") if v.strip()]
@@ -80,7 +80,7 @@ def _p_text(response, label):
     Capacity / Nationally Accredited -- fields whose value is a plain text
     node directly inside the ``<p>``, right after the ``<b>`` label.
     """
-    value = response.xpath('//p[b[contains(normalize-space(.), "%s")]]/text()' % label).get()
+    value = response.xpath(f'//p[b[contains(normalize-space(.), "{label}")]]/text()').get()
     value = value.strip() if value else None
     return value or None
 
@@ -93,7 +93,7 @@ def _p_span(response, label):
     use the site's own ``N/A`` placeholder for "no value", which we map to
     ``None``.
     """
-    value = response.xpath('//p[b[contains(normalize-space(.), "%s")]]/span/text()' % label).get()
+    value = response.xpath(f'//p[b[contains(normalize-space(.), "{label}")]]/span/text()').get()
     value = value.strip() if value else None
     if not value or value == "N/A":
         return None

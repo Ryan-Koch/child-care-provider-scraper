@@ -6,7 +6,6 @@ import scrapy
 
 from provider_scrape.items import InspectionItem, ProviderItem
 
-
 BASE_URL = "https://www.scchildcare.org"
 LISTING_URL = f"{BASE_URL}/provider-search/?all=1"
 

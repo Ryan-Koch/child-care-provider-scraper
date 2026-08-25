@@ -1,7 +1,7 @@
 import pytest
 from scrapy.http import HtmlResponse, Request
 
-from provider_scrape.items import InspectionItem, ProviderItem
+from provider_scrape.items import ProviderItem
 from provider_scrape.spiders.ohio import OhdcySpider
 
 # Full HTML content for a provider page
@@ -134,7 +134,7 @@ def test_parse_provider_page_happy_path(spider):
     # There should be one request for inspections and one provider item
     assert len(requests) == 2
 
-    provider_item_request = next(r for r in requests if isinstance(r, ProviderItem))
+    _provider_item_request = next(r for r in requests if isinstance(r, ProviderItem))
     inspection_request = next(r for r in requests if not isinstance(r, ProviderItem))
 
     provider = inspection_request.meta["provider"]
@@ -165,7 +165,7 @@ def test_parse_provider_page_missing_fields(spider):
 
     assert len(requests) == 2
 
-    provider_item_request = next(r for r in requests if isinstance(r, ProviderItem))
+    _provider_item_request = next(r for r in requests if isinstance(r, ProviderItem))
     inspection_request = next(r for r in requests if not isinstance(r, ProviderItem))
 
     provider = inspection_request.meta["provider"]

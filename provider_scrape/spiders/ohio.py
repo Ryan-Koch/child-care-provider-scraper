@@ -1,7 +1,6 @@
 import re
 
 from scrapy import FormRequest, Request, Spider
-from scrapy.utils.trackref import print_live_refs
 
 from ..items import InspectionItem, ProviderItem
 
@@ -56,7 +55,7 @@ class OhdcySpider(Spider):
         if len(links) > 0:
             self.logger.info(f"Found {len(links)} links on page")
             self.logger.info("Extracting data from links...")
-            for i, link in enumerate(links):
+            for _i, link in enumerate(links):
                 self.logger.info(link)
                 yield Request(url=f"{self.base_url}{link}", callback=self.parse_provider_page)
 
@@ -77,7 +76,6 @@ class OhdcySpider(Spider):
             './/div[@class="detailGroupContainer"]/div[@class="detailGroup"]/div[@class="detailRow"]'
         )
 
-        data = {}
         for row in detail_rows:
             label = row.xpath('.//span[@class="detailLabel"]/text()').get()
             info_selector = row.xpath('.//span[@class="detailInfo"]')

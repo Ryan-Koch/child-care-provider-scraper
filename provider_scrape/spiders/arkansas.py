@@ -1,7 +1,9 @@
-import scrapy
-from provider_scrape.items import ProviderItem, InspectionItem
-from provider_scrape.playwright_utils import PlaywrightErrbackMixin
 import re
+
+import scrapy
+
+from provider_scrape.items import InspectionItem, ProviderItem
+from provider_scrape.playwright_utils import PlaywrightErrbackMixin
 
 
 class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
@@ -45,7 +47,7 @@ class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
             self.logger.info("Page loaded, waiting for network idle...")
             try:
                 await page.wait_for_load_state("networkidle", timeout=45000)
-            except:
+            except Exception:
                 self.logger.warning("Network idle timeout, proceeding...")
 
             await page.wait_for_timeout(5000)  # Give it a moment to render
@@ -72,7 +74,8 @@ class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
             try:
                 # Find the 'Select an Option' button specifically for Star Level
                 # We can try to find the button that has 'Select an Option' text.
-                # Since there might be multiple, we grab the one that appears after 'Star Level' text or just try the first one that works.
+                # Since there might be multiple, we grab the one that appears after
+                # 'Star Level' text or just try the first one that works.
                 # However, the log text shows "Star Level ... Select an Option".
 
                 # Try finding the combobox for Star Level
@@ -86,7 +89,8 @@ class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
                     # Select the first option that isn't 'Select an Option' or explicitly 'All Levels'
                     # Usually the dropdown items are in a listbox.
                     # We'll try to find an item with text 'All' or just the first item.
-                    # Let's try to click "All Levels" or "1 Star" if all isn't there, but usually for scrapers we want everything.
+                    # Let's try to click "All Levels" or "1 Star" if all isn't there,
+                    # but usually for scrapers we want everything.
                     # If we can't find specific text, we click the first available option.
 
                     options = page.locator("lightning-base-combobox-item")
@@ -141,7 +145,7 @@ class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
                 try:
                     # Wait for the "View" buttons which contain the record ID in the 'name' attribute
                     await page.wait_for_selector("button[name^='a0k']", timeout=10000)
-                except:
+                except Exception:
                     self.logger.warning("No profile buttons found on this page. Dumping HTML.")
                     content = await page.content()
                     with open("arkansas_debug.html", "w", encoding="utf-8") as f:
@@ -223,13 +227,13 @@ class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
             # Wait for network idle to ensure hydration
             try:
                 await page.wait_for_load_state("networkidle", timeout=30000)
-            except:
+            except Exception:
                 self.logger.warning("Timeout waiting for network idle on detail page")
 
             # Wait for content - "Facility Number" seems to be a reliable label
             try:
                 await page.wait_for_selector("text=Facility Number", timeout=20000)
-            except:
+            except Exception:
                 self.logger.warning(f"Timeout waiting for Facility Number on {response.url}. Waiting a bit more...")
                 await page.wait_for_timeout(5000)
 
@@ -255,7 +259,7 @@ class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
             def get_field_by_label(label):
                 # Strategy 1: Standard Salesforce View (test-id)
                 val = sel.xpath(
-                    f"//span[contains(@class, 'test-id__field-label') and contains(text(), '{label}')]/../../div[contains(@class, 'test-id__field-value')]//text()"
+                    f"//span[contains(@class, 'test-id__field-label') and contains(text(), '{label}')]/../../div[contains(@class, 'test-id__field-value')]//text()"  # noqa: E501
                 ).getall()
                 if val:
                     return val
@@ -322,7 +326,8 @@ class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
             else:
                 # Try counting stars
                 rating_imgs = sel.xpath(
-                    "//div[contains(@class, 'font-bold')][contains(text(), 'Better Beginnings')]/following-sibling::*[1]//img[@alt='star']"
+                    "//div[contains(@class, 'font-bold')][contains(text(), 'Better Beginnings')]"
+                    "/following-sibling::*[1]//img[@alt='star']"
                 )
                 if rating_imgs:
                     item["ar_quality_rating"] = str(len(rating_imgs))

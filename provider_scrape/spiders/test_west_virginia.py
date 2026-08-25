@@ -1,4 +1,3 @@
-import pytest
 from scrapy.http import HtmlResponse, Request
 
 from provider_scrape.items import InspectionItem, ProviderItem

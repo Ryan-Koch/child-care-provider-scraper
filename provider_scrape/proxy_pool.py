@@ -38,7 +38,7 @@ def load_env_file(path):
     values = {}
     if not path or not os.path.exists(path):
         return values
-    with open(path, "r", encoding="utf-8") as handle:
+    with open(path, encoding="utf-8") as handle:
         for line in handle:
             line = line.strip()
             if not line or line.startswith("#") or "=" not in line:

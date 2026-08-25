@@ -103,7 +103,7 @@ def test_start_requests_county_ids_in_meta(spider):
     requests = list(spider.start_requests())
     meta_pairs = [(r.meta["county_id"], r.meta["county_name"]) for r in requests]
     assert meta_pairs == COUNTIES
-    for req, (county_id, county_name) in zip(requests, COUNTIES):
+    for req, (county_id, county_name) in zip(requests, COUNTIES, strict=True):
         assert req.url == _results_url(county_id, county_name)
 
 

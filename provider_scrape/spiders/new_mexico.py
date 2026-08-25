@@ -1,8 +1,8 @@
-import scrapy
-from scrapy_playwright.page import PageMethod
-from ..items import ProviderItem
-import logging
 import re
+
+import scrapy
+
+from ..items import ProviderItem
 
 
 class NewMexicoSpider(scrapy.Spider):
@@ -16,7 +16,10 @@ class NewMexicoSpider(scrapy.Spider):
             "headless": True,
         },
         "ROBOTSTXT_OBEY": False,
-        "USER_AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        "USER_AGENT": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            " (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+        ),
     }
 
     def start_requests(self):
@@ -31,7 +34,7 @@ class NewMexicoSpider(scrapy.Spider):
         )
 
     def __init__(self, max_clicks=None, *args, **kwargs):
-        super(NewMexicoSpider, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.max_clicks = int(max_clicks) if max_clicks else None
 
     async def parse_search_results(self, response):
@@ -91,8 +94,6 @@ class NewMexicoSpider(scrapy.Spider):
                 else:
                     self.logger.info(" 'Show More Results' button no longer visible.")
                     break
-
-                last_count = current_count
 
             # Final check of count
             final_count = await page.locator(".listing-card").count()
@@ -176,10 +177,7 @@ class NewMexicoSpider(scrapy.Spider):
             .get("")
             .strip()
         )
-        if ages_banner:
-            ages_served = ages_banner.replace("Accepting new enrollments:", "").strip()
-        else:
-            ages_served = ""
+        ages_served = ages_banner.replace("Accepting new enrollments:", "").strip() if ages_banner else ""
 
         # Fallback: from pricing tabs
         if not ages_served:
@@ -194,7 +192,7 @@ class NewMexicoSpider(scrapy.Spider):
             # Target text nodes within the container div, excluding those within the label div (font-semibold),
             # tooltips (absolute), and SVGs. Also normalize spaces.
             nodes = response.xpath(
-                f'//div[@id="{id_val}"]//text()[not(ancestor::div[contains(@class, "font-semibold")]) and not(ancestor::div[contains(@class, "absolute")]) and not(ancestor::svg)]'
+                f'//div[@id="{id_val}"]//text()[not(ancestor::div[contains(@class, "font-semibold")]) and not(ancestor::div[contains(@class, "absolute")]) and not(ancestor::svg)]'  # noqa: E501
             ).getall()
             return " ".join([n.strip() for n in nodes if n.strip()]).strip()
 

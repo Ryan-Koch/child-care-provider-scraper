@@ -306,7 +306,7 @@ class KansasSpider(scrapy.Spider):
                 len(tables),
             )
         rows = []
-        for link, table in zip(links, tables):
+        for link, table in zip(links, tables, strict=False):
             token = link.attrib["id"][len("ContentPlaceHolder1_") :]
             values = [v.strip() for v in table.css("label::text").getall()][1::2]
             if len(values) < 6:

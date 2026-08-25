@@ -168,7 +168,7 @@ def test_ages_from_shifts_toddler_preschool_sets_both_flags():
             ]
         }
     ]
-    ages, flags = ages_from_shifts(shifts)
+    _ages, flags = ages_from_shifts(shifts)
     assert flags == {"toddler": True, "preschool": True}
 
 

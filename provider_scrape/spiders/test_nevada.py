@@ -417,7 +417,7 @@ def test_decode_data_shape_golden_path_real_fixture():
     # Window 1 is not the last; it carries a restart token to page the next window.
     assert restart_token is not None
 
-    first = dict(zip((p for p, _, _ in QUALITY_SELECT), rows[0]))
+    first = dict(zip((p for p, _, _ in QUALITY_SELECT), rows[0], strict=False))
     assert first["LicenseNumber"] == "02204-D"
     assert first["ProgramName"] == "Squires ES"
     assert first["ProgramType"] == "School Based"

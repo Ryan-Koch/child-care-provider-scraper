@@ -18,7 +18,6 @@ import scrapy
 
 from ..items import InspectionItem, ProviderItem
 
-
 # --- Azure Logic App endpoints (hardcoded fallbacks; we prefer the live URLs
 # scraped off the landing page so a rotated SAS `sig` token doesn't break us). ---
 AREAS_URL = (
@@ -125,7 +124,7 @@ def extract_embedded_json(html, var_name):
     the literal is absent or unparseable.
     """
     match = re.search(
-        r"const\s+%s\s*=\s*(?:JSON\.parse\()?`(.*?)`" % re.escape(var_name),
+        rf"const\s+{re.escape(var_name)}\s*=\s*(?:JSON\.parse\()?`(.*?)`",
         html,
         re.DOTALL,
     )

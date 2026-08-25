@@ -10,8 +10,8 @@ import copy
 import logging
 
 from provider_scrape import normalization
-from provider_scrape.pipelines import NormalizationPipeline
 from provider_scrape.items import ProviderItem
+from provider_scrape.pipelines import NormalizationPipeline
 
 
 class FakeSettings:
@@ -28,7 +28,7 @@ class FakeSpider:
     def __init__(self, name="test_state", settings_values=None):
         self.name = name
         self.settings = FakeSettings(settings_values)
-        self.logger = logging.getLogger("fake.%s" % name)
+        self.logger = logging.getLogger(f"fake.{name}")
 
 
 # --------------------------------------------------------------------------- #

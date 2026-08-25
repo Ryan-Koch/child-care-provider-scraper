@@ -889,7 +889,7 @@ class ConnecticutSpider(scrapy.Spider):
         self.inspection_detail_failures += 1
         # Same contract as parse_inspection_detail: the logging must never be
         # what strands the parent, so the decrement stays outside the guard.
-        try:
+        try:  # noqa: SIM105
             self.logger.warning(
                 "Connecticut: inspection %s detail request failed for provider %s (%s)",
                 inspection_id,

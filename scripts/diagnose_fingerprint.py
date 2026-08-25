@@ -29,7 +29,6 @@ Exit code: 0 if both levers look good, 1 if a likely-blocking problem is found.
 import asyncio
 import json
 import sys
-import urllib.request
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -37,10 +36,10 @@ from playwright.async_api import async_playwright
 
 # Pull the spider's REAL config so this reflects exactly what will run.
 from provider_scrape.spiders.rhode_island import (
-    RhodeIslandSpider,
-    _STEALTH_SCRIPT,
     _CANVAS_PATCH,
     _HW_PATCH,
+    _STEALTH_SCRIPT,
+    RhodeIslandSpider,
 )
 
 _CS = RhodeIslandSpider.custom_settings
@@ -93,7 +92,7 @@ async def _egress_via_browser(page):
             if data.get("timezone"):
                 data["_source"] = url
                 return data
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             last = f"{url}: {e}"
     return {"_error": f"could not resolve egress ({last})"}
 

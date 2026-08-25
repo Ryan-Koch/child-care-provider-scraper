@@ -34,8 +34,8 @@ if REPO_ROOT not in sys.path:
 # drift-guard test and run_spiders.sh both call this from varying cwds).
 os.environ.setdefault("SCRAPY_SETTINGS_MODULE", "provider_scrape.settings")
 
-from scrapy.spiderloader import SpiderLoader  # noqa: E402
-from scrapy.utils.project import get_project_settings  # noqa: E402
+from scrapy.spiderloader import SpiderLoader
+from scrapy.utils.project import get_project_settings
 
 OUTPUT_PATH = os.path.join(REPO_ROOT, "SOURCES.md")
 
@@ -100,7 +100,7 @@ def md_escape(value):
 def render_sources(hosts):
     if not hosts:
         return "—"
-    return "<br>".join("https://%s/" % md_escape(h) for h in hosts)
+    return "<br>".join(f"https://{md_escape(h)}/" for h in hosts)
 
 
 def build_markdown():
@@ -122,7 +122,7 @@ def build_markdown():
     add("| State | Source(s) |")
     add("|---|---|")
     for label, hosts in collect_rows():
-        add("| %s | %s |" % (md_escape(label), render_sources(hosts)))
+        add(f"| {md_escape(label)} | {render_sources(hosts)} |")
     add("")
 
     return "\n".join(lines).rstrip("\n") + "\n"
@@ -141,7 +141,7 @@ def main(argv=None):
     markdown = build_markdown()
     with open(args.output, "w", encoding="utf-8") as handle:
         handle.write(markdown)
-    print("Wrote %s" % args.output)
+    print(f"Wrote {args.output}")
     return 0
 
 

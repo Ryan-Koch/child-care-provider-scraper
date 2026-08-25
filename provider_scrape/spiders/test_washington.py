@@ -3,7 +3,7 @@ import json
 import pytest
 from scrapy.http import HtmlResponse, Request, TextResponse
 
-from provider_scrape.items import InspectionItem, ProviderItem
+from provider_scrape.items import ProviderItem
 from provider_scrape.spiders.washington import (
     WashingtonSpider,
     extract_field,

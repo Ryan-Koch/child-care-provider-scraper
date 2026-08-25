@@ -4,10 +4,10 @@ from provider_scrape.items import InspectionItem, ProviderItem
 from provider_scrape.spiders.florida import (
     FL_COUNTIES,
     FloridaSpider,
+    _num,
     build_county_url,
     build_spa_search_url,
     response_matches_county,
-    _num,
 )
 
 

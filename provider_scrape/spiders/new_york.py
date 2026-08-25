@@ -1,6 +1,8 @@
-import scrapy
 import csv
 from io import StringIO
+
+import scrapy
+
 from provider_scrape.items import ProviderItem
 
 

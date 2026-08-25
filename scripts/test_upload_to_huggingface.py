@@ -9,9 +9,8 @@ Run with the project virtualenv:
 ``.venv/bin/pytest scripts/test_upload_to_huggingface.py``.
 """
 
-import yaml
-
 import upload_to_huggingface as up
+import yaml
 
 
 # --------------------------------------------------------------------------- #

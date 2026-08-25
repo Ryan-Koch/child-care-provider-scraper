@@ -7,8 +7,8 @@ from scrapy.http import HtmlResponse, Request
 from provider_scrape.items import ProviderItem
 from provider_scrape.spiders.new_jersey import (
     API_PATH,
-    NewJerseySpider,
     SEARCH_URL,
+    NewJerseySpider,
     _build_social_media,
     _empty_to_none,
     _trim_seconds,

@@ -35,7 +35,8 @@ def spider():
 
 
 def test_badges_reads_script_arg_not_spans():
-    text = open(os.path.join(FIXTURES, "detail_center.html")).read()
+    with open(os.path.join(FIXTURES, "detail_center.html")) as f:
+        text = f.read()
     assert _badges(text, "servicesForm") == ["After School"]
     assert _badges(text, "monthsOfOperationForm") == ["12 Months"]
     ages = _badges(text, "agesChildrenForm")
@@ -44,7 +45,8 @@ def test_badges_reads_script_arg_not_spans():
 
 
 def test_badges_empty_script_arg_is_empty_list():
-    text = open(os.path.join(FIXTURES, "detail_informal.html")).read()
+    with open(os.path.join(FIXTURES, "detail_informal.html")) as f:
+        text = f.read()
     assert _badges(text, "servicesForm") == []
     assert _badges(text, "agesChildrenForm") == []
     assert _badges(text, "monthsOfOperationForm") == []
@@ -175,7 +177,8 @@ def test_inactive_badge_absent_despite_span_present(center_item):
     # always rendered), but it is NOT part of the showBadges(...) active
     # list -- only "After School" is. If the spider parsed the spans instead
     # of the script, this would wrongly include "Drop-in".
-    text = open(os.path.join(FIXTURES, "detail_center.html")).read()
+    with open(os.path.join(FIXTURES, "detail_center.html")) as f:
+        text = f.read()
     assert 'value="Drop-in"' in text  # sanity: the span really is present
     assert "Drop-in" not in center_item["sd_services_offered"]
 

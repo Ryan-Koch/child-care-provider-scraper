@@ -26,6 +26,10 @@ allowed-confusables = ["–", "’", "×", "≈"]
 
 [tool.ruff.lint.per-file-ignores]
 "provider_scrape/spiders/*.py" = ["RUF012"]
+"provider_scrape/spiders/test_*.py" = ["E501", "W293"]
+"provider_scrape/spiders/arizona.py" = ["E501"]
+"provider_scrape/spiders/montana.py" = ["E501"]
+"scripts/*.py" = ["E402"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["provider_scrape"]

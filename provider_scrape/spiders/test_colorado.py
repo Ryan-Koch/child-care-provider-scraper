@@ -1,8 +1,10 @@
 import unittest
 from urllib.parse import parse_qs
-from scrapy.http import TextResponse, Request, FormRequest
-from provider_scrape.spiders.colorado import ColoradoSpider
+
+from scrapy.http import FormRequest, Request, TextResponse
+
 from provider_scrape.items import ProviderItem
+from provider_scrape.spiders.colorado import ColoradoSpider
 
 
 class ColoradoSpiderTest(unittest.TestCase):

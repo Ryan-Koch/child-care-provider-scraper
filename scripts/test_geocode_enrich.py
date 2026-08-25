@@ -11,10 +11,9 @@ Run with the project virtualenv: ``.venv/bin/pytest scripts/test_geocode_enrich.
 import csv
 import json
 
+import geocode_enrich
 import pytest
 import requests
-
-import geocode_enrich
 
 
 # --------------------------------------------------------------------------- #
@@ -148,7 +147,7 @@ class _FakeResponse:
 
     def raise_for_status(self):
         if self.status_code >= 400:
-            raise requests.HTTPError("status %s" % self.status_code)
+            raise requests.HTTPError(f"status {self.status_code}")
 
 
 _WAF_HTML = (

@@ -14,8 +14,8 @@ import pytest
 import scrapy
 from scrapy.http import Request, TextResponse
 
-from provider_scrape.items import ProviderItem
 import provider_scrape.spiders.delaware as delaware
+from provider_scrape.items import ProviderItem
 from provider_scrape.spiders.delaware import (
     PORTAL_LIST_URL,
     DelawareSpider,
