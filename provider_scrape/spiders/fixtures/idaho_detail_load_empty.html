@@ -1,0 +1,36 @@
+
+
+<div id="dnn16101root" ng-controller="ActionFormCtrl" ng-init="load('16101')" has-repeaters
+     class="container-fluid form-root bootstrap5" style="padding: 0px; color: inherit;" data-rootclass="bootstrap5">
+<div class="row">
+    <div class="c-form container loose label-align-default col-12">
+        <div class="form-group" style="grid-row: 1; grid-column: 1 / 13; --width-scale: 1;">
+            <div class="field-container af-slide btnc-left">
+                <input type="text" id="dnn16101StaticText" name="dnn16101StaticText"
+                       data-fieldid="5184" data-af-field="StaticText" aria-hidden="true"
+                       ng-model="form.fields.StaticText.value"
+                       value="{{$sce.trustAsHtml(form.fields.StaticText.value)}}" />
+                <p class="" name="dnn16101StaticText" af-bind-html="form.fields.StaticText.value" ng-bind-html="afBoundHtml"></p>
+            </div>
+        </div>
+    </div>
+    <div class="alert alert-danger server-error" style="display: none;"></div>
+    <div class="alert alert-info submit-confirm" style="display: none; text-align: center;"></div>
+</div>
+</div>
+
+<script type="text/javascript">
+    // HtmlResult.cshtml
+    (function () {
+        var loadResult = {
+            Settings: {"ModuleId":16101,"TabId":5308,"PortalId":61},
+            Data: {"baseId":"dnn16101","fields":{"StaticText":{"id":"dnn16101StaticText","name":"StaticText","type":"static-text","hasValue":true,"fieldId":5184,"actionCount":0,"value":"<strong></strong>\n<div class=\"row\">\n    <div class=\"col-6\">\n        <br>\n        , ID <br>\n        <br>\n        <a href=\"mailto:\"></a>\n    </div>\n    <div class=\"col-6\">\n        <a href=\"https://www.idahochildcarecheck.org/provider/\" target=\"_blank\">View this facility's Health &amp; Safety Reports</a><br>\n        <strong>Website:</strong> <a href=\"http://\" target=\"_blank\"></a><br>\n        <strong>Facebook:</strong> <a href=\"http://\" target=\"_blank\"></a>\n    </div>\n</div>\n<hr>\n<div class=\"class row\">\n    <div class=\"col-6\">\n<strong>Director Name:</strong> <br>\n<strong>Facility Type:</strong> <br>\n<strong>National Accreditation:</strong> <br>\n<strong>Comment on Accreditation:</strong> \n    </div>\n    <div class=\"col-6\">\n<strong>Quality Achiever Status:</strong> <br>\n<strong>Quality Achievement(s):</strong> <br>\n<strong>ICCP Status:</strong>  <br>\n<strong>License Status:</strong> <br>\n<strong>Program Philosophy:</strong> <br>\n<strong>Philosophy Comment:</strong> <br>\n<strong>Philosophy Description:</strong> \n    </div>\n</div>\n<hr>\n<div class=\"class row\">\n    <div class=\"col-6\">\n<strong>Program Description:</strong> <br>\n    </div>\n    <div class=\"col-6\">\n<strong>Participating in USDA Food Program:</strong> <br>\n<strong>Family Style Dining:</strong>  <br>\n<strong>Other Opportunities at this Center:</strong> <br>\n<strong>Opportunities Comment:</strong> \n    </div>\n</div>\n<hr>\n<div class=\"class row\">\n    <div class=\"col-6\">\n<strong>Consistent Daily Schedule:</strong> <br>\n<strong>Consistent Daily Schedule Comment:</strong> \n    </div>\n    <div class=\"col-6\">\n<strong>Policy on Pets:</strong> <br>\n<strong>Policy on Pets Comment:</strong> \n    </div>\n</div>\n"}}},
+            Localization: {},
+            ActionResult: {},
+            ResultType: "HtmlResult",
+            JsIncludes: [],
+            CssIncludes: [],
+        };
+        events.onLoadComplete(loadResult);
+    })();
+</script>

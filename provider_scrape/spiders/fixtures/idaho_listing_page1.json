@@ -1,0 +1,64 @@
+{
+    "query": {
+        "PageIndex": 1,
+        "PageSize": 24,
+        "SortField": null,
+        "SortAsc": true,
+        "Search": "",
+        "Filters": [],
+        "RangeFilters": [],
+        "RawFilters": "",
+        "ViewRangeStart": null,
+        "ViewRangeEnd": null
+    },
+    "totalResults": 461,
+    "totalPages": 20,
+    "firstResult": 0,
+    "results": [
+        {
+            "id": "4619",
+            "fields": [
+                {"Name": "BusinessName", "Value": "Ability Early Learning Center"},
+                {"Name": "AddressLine", "Value": "3323 4th St"},
+                {"Name": "City", "Value": "Lewiston"},
+                {"Name": "ZipCode", "Value": 83501},
+                {"Name": "AlternateRiseId", "Value": 21403},
+                {"Name": "OperatorName", "Value": "Charlene Ricard"},
+                {"Name": "FacilityAddressPhone", "Value": "(208) 553-8650"},
+                {"Name": "WebsiteURL", "Value": "https://abilityelc.com/"},
+                {"Name": "ICCPStatus", "Value": "Certified"},
+                {"Name": "Id", "Value": 4619}
+            ]
+        },
+        {
+            "id": "803",
+            "fields": [
+                {"Name": "BusinessName", "Value": "ACUARELA LLC"},
+                {"Name": "AddressLine", "Value": "1234 W Main St"},
+                {"Name": "City", "Value": "Boise"},
+                {"Name": "ZipCode", "Value": 83702},
+                {"Name": "AlternateRiseId", "Value": 13814},
+                {"Name": "OperatorName", "Value": "Maria Acuarela"},
+                {"Name": "FacilityAddressPhone", "Value": "(208) 555-0123"},
+                {"Name": "WebsiteURL", "Value": "https://www.wonderschool.com/id/boise/acuarela-spanish-preschool-llc-17098"},
+                {"Name": "ICCPStatus", "Value": "Closed"},
+                {"Name": "Id", "Value": 803}
+            ]
+        },
+        {
+            "id": "71",
+            "fields": [
+                {"Name": "BusinessName", "Value": "ADVANCE CHILD CARE"},
+                {"Name": "AddressLine", "Value": "555 N 5th St"},
+                {"Name": "City", "Value": "Coeur d'Alene"},
+                {"Name": "ZipCode", "Value": 83864},
+                {"Name": "AlternateRiseId", "Value": 643},
+                {"Name": "OperatorName", "Value": "Pat Advance"},
+                {"Name": "FacilityAddressPhone", "Value": "(208) 555-0199"},
+                {"Name": "WebsiteURL", "Value": ""},
+                {"Name": "ICCPStatus", "Value": "Certified"},
+                {"Name": "Id", "Value": 71}
+            ]
+        }
+    ]
+}

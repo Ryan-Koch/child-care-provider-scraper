@@ -19,6 +19,7 @@ To regenerate: `.venv/bin/python scripts/generate_sources.py`.
 | Florida | https://caressearch.myflfamilies.com/<br>https://caresapi.myflfamilies.com/ |
 | Georgia | https://families.decal.ga.gov/<br>https://dcle2-decalapiprd.azurewebsites.net/ |
 | Hawaii | https://childcareprovidersearch.dhs.hawaii.gov/<br>https://usgovtexas.logic.azure.us/ |
+| Idaho | https://idahostars.org/<br>https://www.idahochildcarecheck.org/ |
 | Illinois | https://sunshine.dcfs.illinois.gov/ |
 | Indiana | https://secure.in.gov/ |
 | Iowa | https://search.iachildcareconnect.org/<br>https://secureapp.dhs.state.ia.us/ |

@@ -162,8 +162,10 @@ _MONTH_NUMBERS = {
     "december": 12,
 }
 
-# "Sept. 23, 2025" / "January 5, 2024" / "Dec 1, 2025".
-_MONTH_NAME_DATE_RE = re.compile(r"^([A-Za-z]+)\.?\s+(\d{1,2}),\s+(\d{4})$")
+# "Sept. 23, 2025" / "January 5, 2024" / "Dec 1, 2025" / "May 29th, 2026"
+# (Idaho's idahochildcarecheck.org renders inspection dates with an ordinal
+# suffix on the day -- st/nd/rd/th -- which this optionally consumes).
+_MONTH_NAME_DATE_RE = re.compile(r"^([A-Za-z]+)\.?\s+(\d{1,2})(?:st|nd|rd|th)?,\s+(\d{4})$")
 
 
 def _parse_month_name_date(value: str):
@@ -323,6 +325,11 @@ STATUS_BUCKETS = {
         "A",
         # Kentucky (kynect.ky.gov): the only status on an operating provider.
         "APPROVED",
+        # Idaho (idahostars.org ICCPStatus): a provider mid-renewal, or with a
+        # pending facility-type change, is still operating -- `Certified`
+        # above already covers the steady-state value.
+        "Pending Renewal",
+        "Pending Facility Type Change",
     ],
     "provisional": [
         "PROVISIONAL LICENSE",
@@ -406,6 +413,9 @@ STATUS_BUCKETS = {
         # listing is the best reading. This is an inference, not a published
         # status. Approved Ryan 2026-08-20.
         "Not Listed",
+        # Idaho (idahostars.org ICCPStatus): opted out of the ICCP program --
+        # "Closed" above already covers the provider's shutdown status.
+        "Not Participating",
     ],
 }
 
@@ -514,6 +524,9 @@ FACILITY_CATEGORY_BUCKETS = {
         # DCEX (license-exempt) records also carry this same "Child Care
         # Center" -> center mapping (see ct_license_type doc, items.py).
         "Nursery School",
+        # Idaho (idahostars.org detail page "Facility Type"): the largest of
+        # Idaho's three facility-size tiers.
+        "Large Child Care Center (26 or more children)",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME",
@@ -585,6 +598,9 @@ FACILITY_CATEGORY_BUCKETS = {
         # residence -- matches the "Family Child Care Home" / "Family Day
         # Home" precedents above.
         "Licensed Family Child Care",
+        # Idaho (idahostars.org detail page "Facility Type"): the smallest of
+        # Idaho's three facility-size tiers, care in the provider's residence.
+        "Family Child Care Facility (up to 6 children)",
     ],
     "group_home": [
         "GFDC",
@@ -603,6 +619,11 @@ FACILITY_CATEGORY_BUCKETS = {
         # rung -- matches the "Group Child Care Home" / "CDX" precedents
         # above.
         "Licensed Large Family Child Care",
+        # Idaho (idahostars.org detail page "Facility Type"): the mid-size
+        # tier -- matches the "Group Child Care Home" / "Licensed Group Home"
+        # precedents above (capacity band, not a residence, but still
+        # smaller/less institutional than the "Large Child Care Center" tier).
+        "Group Child Care Facility (up to 12 children)",
     ],
     "school_age": [
         "SACC",

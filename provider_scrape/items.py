@@ -155,6 +155,21 @@ class InspectionItem(scrapy.Item):
     #   how_corrected}]
     de_investigation_conclusion = scrapy.Field()  # complaint narrative; absent on IA Investigations
 
+    # Idaho specific inspection fields (www.idahochildcarecheck.org, a
+    # separate Drupal 10 site). Two discriminated kinds share the
+    # `inspections` list:
+    #   * Health inspections -- `type` is the inspection activity (e.g.
+    #     "Investigation", "Follow-Up", "Annual"), `original_status` is
+    #     "Passed"/"Failed", and every one of the ~20-31 numbered inspection
+    #     criteria is captured in `id_criteria`.
+    #   * Incidents -- `type` = "Incident", `original_status` carries the
+    #     incident category (e.g. "Supervision Concern").
+    id_investigation_resolved = scrapy.Field()  # "Resolved" / "Not Resolved"; only on investigations
+    id_criteria = scrapy.Field()  # [{name, passed, comment}]
+    id_incident_title = scrapy.Field()
+    id_incident_description = scrapy.Field()
+    id_incident_resolution = scrapy.Field()
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
@@ -837,6 +852,41 @@ class ProviderItem(scrapy.Item):
     # records, 22 of which are newer than anything it lists. Treat as a
     # display hint, never as a licensure signal. See delaware_plan.md Sec 4.
     de_portal_listed = scrapy.Field()
+
+    # Idaho specific fields (idahostars.org ActionGrid listing API +
+    # DnnSharp ActionForm detail API -- see tasks/idaho_story/idaho_plan.md).
+    # Idaho publishes no license number, so the internal facility `Id` is
+    # emitted as the common `license_number` (DC/VT/Indiana precedent) and
+    # duplicated as the AlternateRiseId join key used by the separate Idaho
+    # Child Care Check (inspections) site. The Quality Achiever Status is
+    # Idaho's QRIS-style designation and stays state-specific per the
+    # field-mapping playbook.
+    id_alternate_rise_id = scrapy.Field()  # AlternateRiseId -- idahochildcarecheck.org join key
+    id_license_status = scrapy.Field()  # "State Licensed" / "License Exempt" / "Pending Renewal"
+    id_national_accreditation = scrapy.Field()
+    id_quality_achiever_status = scrapy.Field()  # "Eligible" / "Growing Star" / "Star Achiever" / ...
+    id_quality_achievements = scrapy.Field()
+    # "Are there openings available" / "Number of Openings" / "Is there a
+    # waitlist" are always present in the detail HTML template but, as of the
+    # 2026-08-25/26 live check, wrapped in an HTML comment on every sampled
+    # provider (i.e. disabled site-wide, not a per-provider gap). The parser
+    # strips comments before extracting fields, so these stay unset today;
+    # kept in the schema in case the site re-enables the feature.
+    id_openings_available = scrapy.Field()
+    id_number_of_openings = scrapy.Field()
+    id_waitlist = scrapy.Field()
+    id_program_philosophy = scrapy.Field()
+    id_philosophy_comment = scrapy.Field()
+    id_philosophy_description = scrapy.Field()
+    id_program_description = scrapy.Field()
+    id_usda_food_program = scrapy.Field()
+    id_family_style_dining = scrapy.Field()
+    id_other_opportunities = scrapy.Field()
+    id_opportunities_comment = scrapy.Field()
+    id_consistent_schedule = scrapy.Field()
+    id_consistent_schedule_comment = scrapy.Field()
+    id_pet_policy = scrapy.Field()
+    id_pet_policy_comment = scrapy.Field()
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()
