@@ -113,7 +113,7 @@ The project uses pytest, so one can simply run `pytest` to go through the whole 
 | Florida                  | [x]     | 
 | Georgia                  | [x]     | 
 | Hawaii                   | [x]     | 
-| Idaho                    | [ ]     | 
+| Idaho                    | [x]     | 
 | Illinois                 | [x]     | 
 | Indiana                  | [x]     | 
 | Iowa                     | [x]     | 
