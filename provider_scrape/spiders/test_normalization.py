@@ -178,6 +178,15 @@ def test_normalize_date_ap_abbreviated_month():
     assert normalization.normalize_date("Dec. 10, 2025") == "2025-12-10"
 
 
+def test_normalize_date_ordinal_day_suffix():
+    # Idaho (idahochildcarecheck.org) renders inspection/incident dates with
+    # an ordinal suffix on the day -- st/nd/rd/th -- for every day of month.
+    assert normalization.normalize_date("May 29th, 2026") == "2026-05-29"
+    assert normalization.normalize_date("March 1st, 2026") == "2026-03-01"
+    assert normalization.normalize_date("December 22nd, 2025") == "2025-12-22"
+    assert normalization.normalize_date("August 3rd, 2025") == "2025-08-03"
+
+
 def test_normalize_date_garbage_unchanged_and_logged(caplog):
     with caplog.at_level("WARNING"):
         assert normalization.normalize_date("N/A") == "N/A"
