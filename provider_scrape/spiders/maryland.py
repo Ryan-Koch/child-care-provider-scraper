@@ -294,8 +294,8 @@ class MarylandSpider(scrapy.Spider):
         # rate-limited — so shed load by pausing the slot instead of re-firing
         # RETRY_TIMES-deep (which is congestion collapse). Bounded low; pagination
         # is NOT opted in and keeps the patient 180s + full retry budget.
-        "RATELIMIT_BACKOFF_TIMEOUT_COOLDOWN": 45,
-        "RATELIMIT_BACKOFF_TIMEOUT_MAX_RETRIES": 4,
+        "RATELIMIT_BACKOFF_TIMEOUT_COOLDOWN": 60,
+        "RATELIMIT_BACKOFF_TIMEOUT_MAX_RETRIES": 8,
     }
 
     @classmethod
