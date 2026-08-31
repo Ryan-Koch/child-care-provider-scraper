@@ -1,4 +1,6 @@
 import re
+import tempfile
+from pathlib import Path
 
 import scrapy
 
@@ -35,10 +37,67 @@ class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
             meta={
                 "playwright": True,
                 "playwright_include_page": True,
+                # If the initial page.goto times out, retry the whole search
+                # page rather than finishing the run with zero items.
+                "playwright_retry": True,
             },
             callback=self.parse_search_page,
             errback=self.errback_close_page,
         )
+
+    def _dump_debug_html(self, content, name="arkansas_debug.html"):
+        """Best-effort debug dump that never raises.
+
+        The previous inline ``open("arkansas_debug.html", ...)`` wrote to the
+        process CWD, which is not always writable (e.g. a scheduled/containerised
+        run). A ``PermissionError`` there propagated up and was misreported as a
+        parse failure -- and the HTML we actually wanted for diagnosis was lost.
+        Try the CWD first, fall back to the temp dir, and swallow any failure.
+        """
+        for base in (Path.cwd(), Path(tempfile.gettempdir())):
+            try:
+                path = base / name
+                path.write_text(content, encoding="utf-8")
+                self.logger.warning("Wrote debug HTML to %s", path)
+                return
+            except OSError as e:
+                self.logger.debug("Could not write debug HTML to %s: %s", base, e)
+        self.logger.warning("Could not write debug HTML anywhere; skipping dump.")
+
+    async def _wait_for_first_results(self, page, attempts=4):
+        """Wait for the first page of results, re-triggering Search on a miss.
+
+        The search and its first render happen inside a single callback with no
+        download-layer retry, so a single slow render used to finish the run
+        with zero items. Give the site a generous wait and, if the result rows
+        still are not present, click Search again a few times before giving up.
+
+        Returns ``True`` once ``button[name^='a0k']`` rows are present, else
+        ``False`` after ``attempts`` tries.
+        """
+        for attempt in range(1, attempts + 1):
+            try:
+                await page.wait_for_selector("button[name^='a0k']", timeout=20000)
+                return True
+            except Exception:
+                self.logger.warning(
+                    "No results yet (attempt %d/%d); re-triggering Search...",
+                    attempt,
+                    attempts,
+                )
+                try:
+                    search_btn = page.locator("button:has-text('Search')").first
+                    if await search_btn.count() > 0:
+                        await search_btn.click(force=True, timeout=5000)
+                        await page.wait_for_timeout(4000)
+                    # Re-assert List View so results render in the shape we parse.
+                    list_view_btn = page.locator("text='List View'")
+                    if await list_view_btn.count() > 0:
+                        await list_view_btn.first.click(force=True)
+                        await page.wait_for_timeout(2000)
+                except Exception as e:
+                    self.logger.warning("Search re-trigger failed: %s", e)
+        return False
 
     async def parse_search_page(self, response):
         page = response.meta["playwright_page"]
@@ -138,28 +197,29 @@ class ArkansasSpider(PlaywrightErrbackMixin, scrapy.Spider):
             except Exception as e:
                 self.logger.warning(f"List View toggle failed: {e}")
 
+            # Wait for the first page of results, retrying the Search if the
+            # render is slow. Without this a single slow render finished the
+            # whole run with zero items and no retry.
+            if not await self._wait_for_first_results(page):
+                self.logger.error("Search returned no results after retries; aborting search page.")
+                self._dump_debug_html(await page.content())
+                return
+
             # Pagination Loop
             self.logger.info("Starting pagination loop...")
             while True:
                 # Wait for results
                 try:
                     # Wait for the "View" buttons which contain the record ID in the 'name' attribute
-                    await page.wait_for_selector("button[name^='a0k']", timeout=10000)
+                    await page.wait_for_selector("button[name^='a0k']", timeout=15000)
                 except Exception:
                     self.logger.warning("No profile buttons found on this page. Dumping HTML.")
-                    content = await page.content()
-                    with open("arkansas_debug.html", "w", encoding="utf-8") as f:
-                        f.write(content)
+                    self._dump_debug_html(await page.content())
                     break
 
                 # Extract links
                 content = await page.content()
                 sel = scrapy.Selector(text=content)
-
-                # Unconditional debug dump
-                # self.logger.info("Dumping HTML for inspection...")
-                # with open("arkansas_debug.html", "w", encoding="utf-8") as f:
-                #     f.write(content)
 
                 # Extract IDs from the "View" buttons
                 # The buttons have name="a0k..."
