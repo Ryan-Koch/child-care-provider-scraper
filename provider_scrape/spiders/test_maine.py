@@ -8,8 +8,7 @@ from provider_scrape.spiders.maine import (
     EXEMPT_DETAIL,
     LICENSED_DETAIL,
     MaineSpider,
-    _normalize_date_2digit_year,
-    _parse_capacity,
+    _normalize_date,
     _parse_plot_addresses,
 )
 
@@ -58,7 +57,7 @@ Openings last updated: 09/11/2025<br />
     assert results[0]["latitude"] == "44.7994"
     assert results[0]["longitude"] == "-68.77532"
     assert results[0]["star_rating"] == "4"
-    assert results[0]["provider_type"] == "CENTER<br />"
+    assert results[0]["provider_type"] == "CENTER"
     assert results[0]["license_number"] == "208907"
 
     # Second provider
@@ -126,25 +125,19 @@ Openings last updated: Never<br />
     assert results[0]["ages_raw"] == expected
 
 
-def test_normalize_date_2digit_year():
-    """Test date normalization from MM/DD/YY to YYYY-MM-DD."""
-    assert _normalize_date_2digit_year("01/15/25") == "2025-01-15"
-    assert _normalize_date_2digit_year("12/31/99") == "1999-12-31"
-    assert _normalize_date_2digit_year("06/15/50") == "2050-06-15"
-    assert _normalize_date_2digit_year("06/15/51") == "1951-06-15"
-    assert _normalize_date_2digit_year(None) is None
-    assert _normalize_date_2digit_year("2025-01-15") == "2025-01-15"
-
-
-def test_parse_capacity():
-    """Test capacity parsing."""
-    assert _parse_capacity(163) == 163
-    assert _parse_capacity("163") == 163
-    # Non-numeric strings are returned as-is
-    assert _parse_capacity("unlimited") == "unlimited"
-    assert _parse_capacity(None) is None
-    # Strings with numbers at the start are converted to int
-    assert _parse_capacity("163 beds") == 163
+def test_normalize_date():
+    """Test date normalization for both MM/DD/YYYY and MM/DD/YY formats."""
+    # 2-digit year (detail page: status_date)
+    assert _normalize_date("01/15/25") == "2025-01-15"
+    assert _normalize_date("12/31/99") == "1999-12-31"
+    assert _normalize_date("06/15/50") == "2050-06-15"
+    assert _normalize_date("06/15/51") == "1951-06-15"
+    # 4-digit year (search page: me_openings_updated) must NOT be mangled
+    # into a 2-digit-year match (e.g. "2020-09-11")
+    assert _normalize_date("09/11/2025") == "2025-09-11"
+    assert _normalize_date(None) is None
+    # Unrecognized format falls back to the original value unchanged
+    assert _normalize_date("2025-01-15") == "2025-01-15"
 
 
 # --------------------------------------------------------------------------- #
@@ -214,14 +207,22 @@ def test_parse_detail_licensed(spider):
     url = LICENSED_DETAIL.format(id="208907")
     resp = _response("detail_licensed.html", url, item=ProviderItem())
     resp.meta["item"]["provider_name"] = "Test Provider"
-    
+
     result = list(spider.parse_detail(resp))
     assert len(result) == 1
-    
+
     item = result[0]
     assert item["provider_name"] == "Test Provider"
-    assert "status" in item
-    assert "capacity" in item
+    assert item["status"] == "Active"
+    assert item["capacity"] == 163
+    assert item["license_holder"] == "Matthew Faragher Houghton"
+    assert item["me_licensing_specialist"] == "Deanna Miles"
+    assert item["me_temporarily_closed"] == "No"
+    assert item["me_times_renewed"] == 22
+    assert item["provider_type"] == "Child Care Facility"
+    assert item["status_date"] == "2025-03-04"
+    assert item["inspections"] is not None
+    assert len(item["inspections"]) == 26
 
 
 def test_parse_detail_exempt(spider):
@@ -229,23 +230,44 @@ def test_parse_detail_exempt(spider):
     url = EXEMPT_DETAIL.format(id="762403")
     resp = _response("detail_exempt.html", url, item=ProviderItem())
     resp.meta["item"]["provider_name"] = "Exempt Test"
-    
+
     result = list(spider.parse_detail(resp))
     assert len(result) == 1
 
+    item = result[0]
+    assert item["status"] == "Exempt"
+    assert item["provider_type"] == "License Exempt"
+    assert item["me_licensing_specialist"] == "Jennifer Fisher"
+    assert item["me_temporarily_closed"] == "No"
+    assert item["me_times_renewed"] == 0
+    assert item["status_date"] == "2023-03-15"
+    # The exempt fixture uses MainContent_OwnerNameLabel, not
+    # MainContent_ProgramOwnerLabel, so license_holder is not populated
+    # for exempt providers -- this is expected, not a bug.
+    assert item.get("license_holder") is None
+
 
 def test_parse_licensing_history():
-    """Verify licensing history table is parsed into InspectionItems."""
+    """Verify licensing history table is parsed into InspectionItems.
+
+    The fixture has exactly 25 licensing history rows plus 1 DocuWare
+    link, for a total of 26 InspectionItems.
+    """
     url = LICENSED_DETAIL.format(id="208907")
     resp = _response("detail_licensed.html", url, item=ProviderItem())
-    
+
     spider = MaineSpider()
     inspections = spider._parse_licensing_history(resp)
-    
-    # Should have at least some inspection data if available in fixture
-    # or at least the DocuWare link
-    if inspections:
-        assert isinstance(inspections, list)
-        if len(inspections) > 0:
-            first = inspections[0]
-            assert "date" in first or "type" in first
+
+    assert inspections is not None
+    assert len(inspections) == 26
+
+    first = inspections[0]
+    assert first["date"] == "01/10/2025"
+    assert first["type"] == "Full"
+    assert first["me_licensed_from"] == "02/08/2025"
+    assert first["me_licensed_to"] == "02/08/2027"
+
+    last = inspections[-1]
+    assert last["type"] == "Licensing Documents"
+    assert last["report_url"].startswith("https://docuware.maine.gov")

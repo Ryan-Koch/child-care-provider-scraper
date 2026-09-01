@@ -21,7 +21,6 @@ request MUST use its own unique `cookiejar` to avoid session collisions.
 """
 
 import re
-from urllib.parse import urljoin
 
 from scrapy import FormRequest, Request, Spider
 
@@ -195,9 +194,10 @@ def _parse_plot_addresses(text):
         provider["longitude"] = longitude if longitude.strip() else None
         provider["star_rating"] = star_rating
 
-        # Parse provider type
+        # Parse provider type (strip stray <br /> tags left over from the
+        # source markup, then whitespace)
         type_raw = type_entries[i].strip() if i < len(type_entries) else ""
-        provider["provider_type"] = type_raw.strip() or None
+        provider["provider_type"] = re.sub(r"<br\s*/?>", "", type_raw).strip() or None
 
         # Parse ages and slots
         age_raw = age_entries[i] if i < len(age_entries) else ""
@@ -212,25 +212,28 @@ def _parse_plot_addresses(text):
     return providers
 
 
-def _parse_capacity(value):
-    """Convert capacity to int, or return as-is if not numeric."""
-    if value is None:
-        return None
-    if isinstance(value, int):
-        return value
-    if isinstance(value, str):
-        stripped = value.strip()
-        match = re.match(r"\d+", stripped)
-        if match:
-            return int(match.group())
-    return value
+def _normalize_date(value):
+    """Normalize MM/DD/YYYY or MM/DD/YY to YYYY-MM-DD.
 
-
-def _normalize_date_2digit_year(value):
-    """Normalize MM/DD/YY format to YYYY-MM-DD."""
+    The search page (me_openings_updated) uses 4-digit years; the detail
+    page (status_date) uses 2-digit years. Both are routed through this
+    function, so it must handle each format explicitly -- a bare regex
+    without an end anchor would otherwise match the first two digits of a
+    4-digit year and silently mangle the date (e.g. "09/11/2025" ->
+    "2020-09-11").
+    """
     if not value:
         return None
-    match = re.match(r"(\d{2})/(\d{2})/(\d{2})", value.strip())
+    stripped = value.strip()
+
+    # 4-digit year, e.g. "09/11/2025"
+    match = re.match(r"(\d{2})/(\d{2})/(\d{4})$", stripped)
+    if match:
+        month, day, year = match.groups()
+        return f"{year}-{month}-{day}"
+
+    # 2-digit year, e.g. "01/15/25"
+    match = re.match(r"(\d{2})/(\d{2})/(\d{2})$", stripped)
     if match:
         month, day, year = match.groups()
         # 2-digit year: >50 → 1900s, ≤50 → 2000s
@@ -240,6 +243,7 @@ def _normalize_date_2digit_year(value):
         else:
             year_full = 2000 + year_int
         return f"{year_full}-{month}-{day}"
+
     return value
 
 
@@ -435,7 +439,7 @@ class MaineSpider(Spider):
             if date_val == "Never":
                 item["me_openings_updated"] = None
             else:
-                item["me_openings_updated"] = _normalize_date_2digit_year(date_val)
+                item["me_openings_updated"] = _normalize_date(date_val)
 
         # CCAP acceptance
         ccap_match = re.search(r'Accepts CCAP:\s*(\w+)', age_html)
@@ -458,12 +462,17 @@ class MaineSpider(Spider):
         item["status"] = _span("MainContent_ProgramStatusLabel")
         status_date = _span("MainContent_StatusDateLabel")
         if status_date:
-            item["status_date"] = _normalize_date_2digit_year(status_date)
+            item["status_date"] = _normalize_date(status_date)
 
-        # Capacity
+        # Capacity: pass a clean int when possible; otherwise pass the raw
+        # string through so the shared pipeline normalizer can decide how to
+        # handle non-numeric values (e.g. ranges like "6-12").
         capacity = _span("MainContent_CapacityLabel")
         if capacity:
-            item["capacity"] = _parse_capacity(capacity)
+            try:
+                item["capacity"] = int(capacity)
+            except (ValueError, TypeError):
+                item["capacity"] = capacity
 
         # License holder (owner)
         item["license_holder"] = _span("MainContent_ProgramOwnerLabel")
@@ -499,11 +508,14 @@ class MaineSpider(Spider):
         """Parse licensing history table and DocuWare link."""
         inspections = []
 
-        # Find table with "Approval Date" header
-        # The table is NOT inside tbody in raw HTML
+        # Find table with "Approval Date" header. Use "." (string-value of
+        # the node, including descendant text) rather than "text()" -- the
+        # real markup wraps the header text in a <b> tag
+        # (<th><b>Approval Date</b></th>), so a text()-only predicate never
+        # matches and the whole table is silently dropped.
         table = response.xpath(
-            '//table[.//th[contains(text(), "Approval Date")] '
-            'or .//td[contains(text(), "Approval Date")]]'
+            '//table[.//th[contains(., "Approval Date")] '
+            'or .//td[contains(., "Approval Date")]]'
         )
 
         if table:
