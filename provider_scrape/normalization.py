@@ -341,6 +341,9 @@ STATUS_BUCKETS = {
         "Renewed Initial",
         "Initial - Full",
         "Provisional",
+        # Maine: a conditional license is a short-term license issued while
+        # a facility corrects deficiencies, analogous to a provisional license.
+        "Conditional",
     ],
     "pending": [
         "Pending renewal application (RN)",
@@ -406,6 +409,8 @@ STATUS_BUCKETS = {
         # Kansas: the licence lapsed -- no longer licensed, cf. "NOT
         # LICENSED". Approved Ryan 2026-08-20.
         "License Expired",
+        # Maine: license has expired.
+        "Expired",
         # Connecticut (211childcare.org): the directory publishes no licence
         # status. `searchable: false` means CT withholds the provider from its
         # own public search; 62 of 63 sampled such records have zero CT OEC
@@ -519,6 +524,9 @@ FACILITY_CATEGORY_BUCKETS = {
         # Kentucky (kynect.ky.gov): "Licensed" == a Licensed Child Care Center
         # (licence numbers are L-prefixed).
         "Licensed",
+        # Maine: Nursery School (from search form) -> center, matching the
+        # "Nursery School" precedent above.
+        "Nursery",
         # Connecticut (211childcare.org): a preschool program -- matches the
         # "Preschool Program" / "Certified Pre-School" precedents above. Note
         # DCEX (license-exempt) records also carry this same "Child Care
@@ -577,6 +585,8 @@ FACILITY_CATEGORY_BUCKETS = {
         # South Dakota (olapublic.sd.gov) Program Category: registered care
         # provided in the provider's own residence.
         "Family Day Care",
+        # Maine: Family Child Care Provider (from detail page) -> family_home.
+        "Family Child Care Provider",
         # Iowa (Titan TypeOfCareDesc): all four Registered Child Development
         # Home tiers (A/B/C/C1) are one registration scheme scaling
         # capacity/staffing within the provider's own residence -- the
