@@ -120,7 +120,7 @@ The project uses pytest, so one can simply run `pytest` to go through the whole 
 | Kansas                   | [x]     | 
 | Kentucky                 | [x]     | 
 | Louisiana                | [ ]     | 
-| Maine                    | [ ]     | 
+| Maine                    | [x]     | 
 | Maryland                 | [x]     | 
 | Massachusetts            | [ ]     | 
 | Michigan                 | [x]     | 
