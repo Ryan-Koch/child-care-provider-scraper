@@ -25,6 +25,7 @@ To regenerate: `.venv/bin/python scripts/generate_sources.py`.
 | Iowa | https://search.iachildcareconnect.org/<br>https://secureapp.dhs.state.ia.us/ |
 | Kansas | https://khap.kdhe.ks.gov/ |
 | Kentucky | https://kynect.ky.gov/ |
+| Maine | https://search.childcarechoices.me/<br>https://gateway.maine.gov/ |
 | Maryland | https://checkccmd.org/<br>https://findaprogram.marylandexcels.org/ |
 | Michigan | https://cclb.michigan.gov/ |
 | Minnesota | https://licensinglookup.dhs.state.mn.us/ |

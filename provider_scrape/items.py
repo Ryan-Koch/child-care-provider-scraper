@@ -106,6 +106,10 @@ class InspectionItem(scrapy.Item):
     # "Description :" narrative pairs from OIDS_ViewFacilityFindings.aspx.
     ks_findings = scrapy.Field()  # [{regulation, description}]
 
+    # Maine specific inspection fields (gateway.maine.gov licensing history).
+    me_licensed_from = scrapy.Field()
+    me_licensed_to = scrapy.Field()
+
     # Kentucky specific inspection fields (kynect.ky.gov). Each row of the
     # provider's KICCS inspection history; `ky_poc_id` is present only on the
     # subset that produced a plan of correction.
@@ -584,6 +588,18 @@ class ProviderItem(scrapy.Item):
     # These fields help with tracking and debugging.
     provider_url = scrapy.Field()
     source_state = scrapy.Field()
+
+    # Maine specific fields (search.childcarechoices.me + gateway.maine.gov).
+    me_star_rating = scrapy.Field()
+    me_infant_slots = scrapy.Field()
+    me_toddler_slots = scrapy.Field()
+    me_preschool_slots = scrapy.Field()
+    me_school_age_slots = scrapy.Field()
+    me_openings_updated = scrapy.Field()
+    me_licensing_specialist = scrapy.Field()
+    me_licensing_specialist_email = scrapy.Field()
+    me_temporarily_closed = scrapy.Field()
+    me_times_renewed = scrapy.Field()
 
     # Nevada specific fields
     nv_credential_type = scrapy.Field()

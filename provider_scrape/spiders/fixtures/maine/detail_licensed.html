@@ -1,0 +1,246 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><title>
+	Child Care Licensing Details | Maine DHHS
+</title><link href="Styles/Site.css" rel="stylesheet" type="text/css" />
+    <link href="media/css/jquery.dataTables.css" rel="stylesheet" type="text/css" />
+
+    <script type="text/javascript" src="https://www.maine.gov/dhhs/js/jquery.js"></script>
+    <script type="text/javascript" src="https://www.maine.gov/dhhs/js/access.js"></script>
+
+    <style type="text/css">
+        .none {
+            display: inline;
+        }
+
+        .more {
+            display: none;
+        }
+
+        .close {
+            display: none
+        }
+    </style>
+    <style type="text/css">
+        .info-holder {
+            width: 30%;
+            font-size: 14px; 
+            font-weight: normal;
+        }
+        
+        .infotable {
+            width:100%;
+            table-layout: fixed;
+        }
+
+        .infobox {
+            background-color: #ffffcc;
+            border: 1px solid black;
+            padding: 4px;
+            /*width: 375px;*/
+            word-wrap: break-word;
+        }
+
+        .provider-holder {
+            width: 70%;
+        }
+
+        .provider-info {
+            background-color: #F9F9F9;
+            border-collapse: collapse;
+            border: 1px solid black;
+            float: left;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .provider-cell {
+            border-collapse: collapse;
+            border: 1px solid black;
+            padding: 5px;
+            word-wrap:break-word;
+        }
+
+        .licensing-history-body {
+            display: table;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <form method="post" action="./details.aspx" id="ctl01">
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="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" />
+
+<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="9EC73B9F" />
+<input type="hidden" name="__VIEWSTATEENCRYPTED" id="__VIEWSTATEENCRYPTED" value="" />
+        <div class="page">
+            <div class="header">
+                <div class="title" style="width: 100%;">
+                    <h1 style="color: White">Children’s Licensing and Investigation Services</h1>
+                    <hr class="logo" />
+                    <p style="color: White; font-size: 14pt; font-weight: bold;">
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A Division of the Maine Department of Health and Human Services
+                    </p>
+                </div>
+                <!-- <div style="text-align:right">
+                <a class="headsearch" href="http://www.childcarechoices.me/SearchForChildcare.aspx" style="text-align:right;font-size:14pt;font-weight:bold">Start a New Search</a>&nbsp;&nbsp;
+            </div> -->
+                <div class="clear hideSkiplink">
+                </div>
+            </div>
+            <div class="main">
+                
+    <h1>Child Care Licensing Details</h1>
+    <p>
+        This report is published by the Maine Department of Health and Human Services, <a href="https://www.maine.gov/dhhs/ocfs/childrens-licensing-and-investigation/index.shtml">Children's Licensing and Investigation Services</a>. For 
+    a hard copy of documents contained on this site or for additional assistance, contact Children's Licensing and Investigation Services at (207) 287-5020.
+    </p>
+    <h2>Provider Information</h2>
+    <br />
+    <table role="presentation">
+        <tr>
+            <td class="provider-holder">
+                <table class="provider-info" role="presentation">
+                    <tr>
+                        <td class="provider-cell"><b>Program Number:</b></td>
+                        <td class="provider-cell">
+                            <span id="MainContent_ProgramNumberLabel">208907</span></td>
+                    </tr>
+                    <tr>
+                        <td class="provider-cell"><b>Program Name:</b></td>
+                        <td class="provider-cell">
+                            <span id="MainContent_ProgramNameLabel">Bangor Region YMCA</span></td>
+                    </tr>
+                    <tr>
+                        <td class="provider-cell"><b>Business Name:</b></td>
+                        <td class="provider-cell">
+                            <span id="MainContent_BusinessNameLabel"></span></td>
+                    </tr>
+                    <tr>
+                        <td class="provider-cell"><b>Owner Name:</b></td>
+                        <td class="provider-cell">
+                            <span id="MainContent_ProgramOwnerLabel">Matthew Faragher Houghton</span></td>
+                    </tr>
+                    <tr>
+                        <td class="provider-cell"><b>Program Physical Address:</b></td>
+                        <td class="provider-cell">
+                            <span id="MainContent_PhysicalAddressLabel">17 Second St, Bangor, ME 04401</span></td>
+                    </tr>
+                    <tr>
+                        <td class="provider-cell"><b>Program Phone Number:</b></td>
+                        <td class="provider-cell">
+                            <span id="MainContent_ProgramPhoneNumberLabel">(207) 941-2808</span></td>
+                    </tr>
+                    <tr>
+                        <td class="provider-cell"><b>Licensing Specialist Name:</b></td>
+                        <td class="provider-cell">
+                            <span id="MainContent_LicensingSpecialistNameLabel">Deanna Miles</span></td>
+                    </tr>
+                    <tr>
+                        <td class="provider-cell"><b>Licensing Specialist Email:</b></td>
+                        <td class="provider-cell">
+                            <span id="MainContent_LicensingSpecialistEmailLabel">deanna.miles@maine.gov</span></td>
+                    </tr>
+                    <tr>
+                        <td class="provider-cell"><b>Program Status:</b></td>
+                        <td class="provider-cell">
+                            <span id="MainContent_ProgramStatusLabel">Active</span></td>
+                    </tr>
+                    <tr>
+                        <td class="provider-cell"><b>Temporary Closed:</b></td>
+                        <td class="provider-cell">
+                            <span id="MainContent_TemporaryClosedLabel">No</span></td>
+                    </tr>
+                    <tr>
+                        <td class="provider-cell"><b>Status Date:</b></td>
+                        <td class="provider-cell">
+                            <span id="MainContent_StatusDateLabel">03/04/25</span></td>
+                    </tr>
+                    <tr>
+                        <td class="provider-cell"><b># Times Renewed:</b></td>
+                        <td class="provider-cell">
+                            <span id="MainContent_TimesRenewedLabel">22</span></td>
+                    </tr>
+                    <tr>
+                        <td class="provider-cell"><b>Program Type:</b></td>
+                        <td class="provider-cell">
+                            <span id="MainContent_ProgramTypeLabel">Child Care Facility</span></td>
+                    </tr>
+                    <tr>
+                        <td class="provider-cell"><b>Capacity:</b></td>
+                        <td class="provider-cell">
+                            <span id="MainContent_CapacityLabel">163</span></td>
+                    </tr>
+                </table>
+            </td>
+            <td style="width: 4px;">&nbsp;</td>
+            <td valign="top" class="info-holder">
+                <table class="infotable" role="presentation">
+                    <tr style="height: 50%">
+                        <td class="infobox">&nbsp;&nbsp;&nbsp;<a href="https://www.maine.gov/sos/cec/rules/10/148/148c032.doc">Rules for the Licensing of Child Care Facilities</a>&nbsp;&nbsp;<br />
+                            <br />
+                            &nbsp;&nbsp;&nbsp;<a href="https://www.maine.gov/dhhs/mecdc/dlrs/Licensing/children/documents/Rules-for-the-Certification-of-Family-Child-Care-Providers-10-144-Ch-33.docx">Rules for the Certification of Family Child Care Providers</a><br />
+                            <br />
+                            &nbsp;&nbsp;&nbsp;<a href="https://www.maine.gov/sos/cec/rules/10/148/148c036.doc">Rules for the Licensing of Nursery Schools</a><br />
+                            <br />
+                            &nbsp;&nbsp;&nbsp;<a href="https://www.maine.gov/dhhs/ocfs/documents/Frequently-Asked-Questions.pdf" target="_blank">Frequently Asked Questions</a><br />
+                            <br />
+                            &nbsp;&nbsp;&nbsp;<a href="https://www.maine.gov/dhhs/ocfs/documents/Definitions.pdf" target="_blank">Definitions</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>&nbsp;</td>
+                    </tr>
+                </table>
+            </td>
+
+        </tr>
+    </table>
+    <br />
+    <br />
+    <h2>Licensing History</h2>
+    <br />
+    <table id="datatable" class="stripe" border="1" style="width:100%; display: block; overflow-x: auto;">
+        <tbody class="licensing-history-body">
+            <tr>
+                <th><b>Approval Date</b></th>
+                <th><b>License Type</b></th>
+                <th><b>Licensed From</b></th>
+                <th><b>Licensed To</b></th>
+            </tr>
+            <tr><td>01/10/2025</td><td>Full</td><td>02/08/2025</td><td>02/08/2027</td></tr><tr><td>10/18/2024</td><td>Conditional</td><td>10/17/2024</td><td>02/07/2025</td></tr><tr><td>05/17/2024</td><td>Conditional</td><td>02/07/2024</td><td>02/07/2025</td></tr><tr><td>04/14/2023</td><td>Conditional</td><td>02/07/2024</td><td>02/07/2025</td></tr><tr><td>04/27/2021</td><td>Full</td><td>07/05/2021</td><td>07/05/2023</td></tr><tr><td>03/17/2020</td><td>Full</td><td>03/23/2020</td><td>07/04/2021</td></tr><tr><td>06/05/2019</td><td>Full</td><td>07/04/2019</td><td>07/04/2021</td></tr><tr><td>01/17/2019</td><td>Full</td><td>03/01/2019</td><td>07/03/2019</td></tr><tr><td>09/15/2017</td><td>Full</td><td>07/03/2017</td><td>07/03/2019</td></tr><tr><td>07/20/2015</td><td>Full</td><td>07/02/2015</td><td>07/02/2017</td></tr><tr><td>05/05/2015</td><td>Full</td><td>05/12/2015</td><td>07/01/2015</td></tr><tr><td>04/18/2014</td><td>Full</td><td>04/18/2014</td><td>07/01/2015</td></tr><tr><td>10/02/2013</td><td>Full</td><td>07/01/2013</td><td>07/01/2015</td></tr><tr><td>10/31/2011</td><td>Full</td><td>06/30/2011</td><td>06/30/2013</td></tr><tr><td>11/05/2010</td><td>Full</td><td>11/01/2010</td><td>06/29/2011</td></tr><tr><td>09/30/2009</td><td>Full</td><td>06/29/2009</td><td>06/29/2011</td></tr><tr><td>07/08/2008</td><td>Full</td><td>06/28/2008</td><td>06/28/2009</td></tr><tr><td>11/05/2007</td><td>Full</td><td>06/27/2007</td><td>06/27/2008</td></tr><tr><td>05/23/2006</td><td>Full</td><td>06/26/2006</td><td>06/26/2007</td></tr><tr><td>09/29/2005</td><td>Full</td><td>06/25/2005</td><td>06/25/2006</td></tr><tr><td>08/20/2004</td><td>Full</td><td>06/24/2004</td><td>06/24/2005</td></tr><tr><td>04/17/2002</td><td>Full</td><td>04/12/2002</td><td>04/12/2003</td></tr><tr><td>02/08/2001</td><td>Full</td><td>02/07/2001</td><td>02/07/2002</td></tr><tr><td>12/29/1999</td><td>Full</td><td>12/28/1999</td><td>12/28/2000</td></tr><tr><td>08/18/1997</td><td>Full</td><td>08/19/1997</td><td>08/19/1998</td></tr>
+        </tbody>
+    </table>
+    * <strong>Note:</strong> Approval histories only go back to 1998<br />
+    <div>
+        <hr />
+        <div>
+            <p><a href="https://docuware.maine.gov:443/DocuWare/Platform/WebClient/24750358-8e9c-4e5c-be1d-3d781846c471/Integration?&ep=YeT82x8OsUh1pZI5Gz9wvS9IiMwRjUqBIADofilf2udoY3wSv8PTbc6WARlQs_aU1e74o66wTFVR5FvgwepdDHy7RvSusgo4EgwMpjNTzDO0Edaj7Q-iWYDhpIb7YtpPE62OeLs-Su0_Fbs1QLsMYflbbaVu4_CU5FF3X7YJqKSmZXvExsx2tf7vVa58KUPRjq86LpZVuvzVtCxZcv0LuQp3NEdmHJXRzYdX0ynz3Vp_Xzt1rbfuR3NKn1iGQHPfro_1SBUT-dibR8BXimvpC7ks3tJwurRe9_uutdn-6LM1&q=W0xpY2Vuc2VfTnVtYmVyXT0iMjA4OTA3Ig==" id="MainContent_DocuWareListLink" name="actions" tabindex="0" label="licensingDetailsSection">Licensing Details</a></p>
+        </div>
+        <p>* <strong>Note:</strong> Licensing documents only go back to January 1, 2014.</p>
+    </div>
+    <script src="media/js/jquery.js" type="text/javascript"></script>
+    <script src="media/js/jquery.dataTables.min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        $('#datatable').dataTable({
+            "order": [0, 'desc'],
+            bFilter: false,
+        });
+    </script>
+
+            </div>
+            <div class="clear">
+            </div>
+        </div>
+        <div class="footer">
+        </div>
+    </form>
+<script type="text/javascript" src="/_Incapsula_Resource?SWJIYLWA=719d34d31c8e3a6e6fffd425f7e032f3&ns=2&cb=1387504449" async></script></body>
+<script type="text/javascript">
+    if (Request.HttpMethod != "GET")
+        urlvalue = "https://gatewaytest.maine.gov/DHHS/ChildCare-Licensing/errorPage.aspx";
+</script>
+</html>
