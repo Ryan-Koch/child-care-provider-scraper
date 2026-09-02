@@ -22,7 +22,7 @@ request MUST use its own unique `cookiejar` to avoid session collisions.
 
 import re
 
-from scrapy import FormRequest, Request, Spider
+from scrapy import FormRequest, Spider
 
 from provider_scrape.items import InspectionItem, ProviderItem
 
@@ -72,7 +72,7 @@ def _parse_plot_addresses(text):
                 # After closing paren there might be ');' or similar
                 break
         end += 1
-    
+
     # Find the closing quote after the closing paren
     if paren_depth == 0 and end < len(text):
         end += 1
@@ -238,10 +238,7 @@ def _normalize_date(value):
         month, day, year = match.groups()
         # 2-digit year: >50 → 1900s, ≤50 → 2000s
         year_int = int(year)
-        if year_int > 50:
-            year_full = 1900 + year_int
-        else:
-            year_full = 2000 + year_int
+        year_full = 1900 + year_int if year_int > 50 else 2000 + year_int
         return f"{year_full}-{month}-{day}"
 
     return value
