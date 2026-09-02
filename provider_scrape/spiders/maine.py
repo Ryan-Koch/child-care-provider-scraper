@@ -93,7 +93,7 @@ def _parse_plot_addresses(text):
     i = 0
     while i < len(inner):
         c = inner[i]
-        if c == "'" and (i == 0 or inner[i-1] != "\\"):
+        if c == "'" and (i == 0 or inner[i - 1] != "\\"):
             in_quote = not in_quote
             current += c
         elif c == "," and not in_quote:
@@ -281,8 +281,8 @@ class MaineSpider(Spider):
     def parse_search_page(self, response):
         """Extract form tokens and POST with zip code."""
         zipcode = response.meta["zipcode"]
-        viewstate = response.css('input#__VIEWSTATE::attr(value)').get('')
-        event_validation = response.css('input#__EVENTVALIDATION::attr(value)').get('')
+        viewstate = response.css("input#__VIEWSTATE::attr(value)").get("")
+        event_validation = response.css("input#__EVENTVALIDATION::attr(value)").get("")
 
         if not viewstate or not event_validation:
             self.logger.warning("ZIP %s: missing form tokens, skipping", zipcode)
@@ -291,19 +291,19 @@ class MaineSpider(Spider):
         yield FormRequest(
             url=f"{SEARCH_BASE}/?search={zipcode}&dist=",
             callback=self.parse_results,
-            method='POST',
+            method="POST",
             formdata={
-                '__EVENTTARGET': '',
-                '__EVENTARGUMENT': '',
-                '__VIEWSTATE': viewstate,
-                '__VIEWSTATEGENERATOR': 'CA0B0334',
-                '__SCROLLPOSITIONX': '0',
-                '__SCROLLPOSITIONY': '0',
-                '__EVENTVALIDATION': event_validation,
-                'ctl00$MainContent$txtAddress': zipcode,
-                'ctl00$MainContent$ddwnDistance': '',
-                'ctl00$MainContent$ddnlststar': 'ALL PROGRAMS',
-                'ctl00$MainContent$Button1': 'Find Programs',
+                "__EVENTTARGET": "",
+                "__EVENTARGUMENT": "",
+                "__VIEWSTATE": viewstate,
+                "__VIEWSTATEGENERATOR": "CA0B0334",
+                "__SCROLLPOSITIONX": "0",
+                "__SCROLLPOSITIONY": "0",
+                "__EVENTVALIDATION": event_validation,
+                "ctl00$MainContent$txtAddress": zipcode,
+                "ctl00$MainContent$ddwnDistance": "",
+                "ctl00$MainContent$ddnlststar": "ALL PROGRAMS",
+                "ctl00$MainContent$Button1": "Find Programs",
             },
             meta={"zipcode": zipcode, "cookiejar": zipcode},
             dont_filter=True,
@@ -414,10 +414,10 @@ class MaineSpider(Spider):
             return item
 
         # Slot counts
-        infant_match = re.search(r'Open Infant Slots[^:]+:\s*(\d+)', age_html)
-        toddler_match = re.search(r'Open Toddler Slots[^:]+:\s*(\d+)', age_html)
-        preschool_match = re.search(r'Open Preschool Slots[^:]+:\s*(\d+)', age_html)
-        school_match = re.search(r'Open School Age Slots[^:]+:\s*(\d+)', age_html)
+        infant_match = re.search(r"Open Infant Slots[^:]+:\s*(\d+)", age_html)
+        toddler_match = re.search(r"Open Toddler Slots[^:]+:\s*(\d+)", age_html)
+        preschool_match = re.search(r"Open Preschool Slots[^:]+:\s*(\d+)", age_html)
+        school_match = re.search(r"Open School Age Slots[^:]+:\s*(\d+)", age_html)
 
         if infant_match:
             item["me_infant_slots"] = int(infant_match.group(1))
@@ -429,7 +429,7 @@ class MaineSpider(Spider):
             item["me_school_age_slots"] = int(school_match.group(1))
 
         # Openings updated date
-        openings_match = re.search(r'Openings last updated:\s*([^<]+)', age_html)
+        openings_match = re.search(r"Openings last updated:\s*([^<]+)", age_html)
         if openings_match:
             date_val = openings_match.group(1).strip()
             if date_val == "Never":
@@ -438,7 +438,7 @@ class MaineSpider(Spider):
                 item["me_openings_updated"] = _normalize_date(date_val)
 
         # CCAP acceptance
-        ccap_match = re.search(r'Accepts CCAP:\s*(\w+)', age_html)
+        ccap_match = re.search(r"Accepts CCAP:\s*(\w+)", age_html)
         if ccap_match:
             ccap_val = ccap_match.group(1).strip()
             item["scholarships_accepted"] = ccap_val.upper() == "YES"
@@ -451,7 +451,7 @@ class MaineSpider(Spider):
 
         def _span(field_id):
             """Extract span text by ID, or None if blank."""
-            val = response.css(f'span#{field_id}::text').get()
+            val = response.css(f"span#{field_id}::text").get()
             return val.strip() if val and val.strip() else None
 
         # Status and status date
@@ -509,16 +509,13 @@ class MaineSpider(Spider):
         # real markup wraps the header text in a <b> tag
         # (<th><b>Approval Date</b></th>), so a text()-only predicate never
         # matches and the whole table is silently dropped.
-        table = response.xpath(
-            '//table[.//th[contains(., "Approval Date")] '
-            'or .//td[contains(., "Approval Date")]]'
-        )
+        table = response.xpath('//table[.//th[contains(., "Approval Date")] or .//td[contains(., "Approval Date")]]')
 
         if table:
             # Get all rows (skip header)
-            rows = table.xpath('.//tr[count(*) > 1]')
+            rows = table.xpath(".//tr[count(*) > 1]")
             for row in rows:
-                cells = row.xpath('.//td/text()').getall()
+                cells = row.xpath(".//td/text()").getall()
                 if len(cells) >= 4:
                     cells = [c.strip() for c in cells]
                     insp = InspectionItem()
@@ -529,7 +526,7 @@ class MaineSpider(Spider):
                     inspections.append(insp)
 
         # DocuWare link
-        dw_href = response.css('a#MainContent_DocuWareListLink::attr(href)').get()
+        dw_href = response.css("a#MainContent_DocuWareListLink::attr(href)").get()
         if dw_href:
             insp = InspectionItem()
             insp["type"] = "Licensing Documents"

@@ -149,17 +149,18 @@ def test_parse_search_page_extracts_tokens_and_posts(spider):
     """Feed the search page fixture, verify a Request is yielded."""
     url = "https://search.childcarechoices.me/?search=04401&dist="
     resp = _response("search_page.html", url, zipcode="04401")
-    
+
     results = list(spider.parse_search_page(resp))
     assert len(results) == 1
-    
+
     request = results[0]
     assert isinstance(request, Request)
     assert request.method == "POST"
-    
+
     # Check form data is in body (FormRequest encodes data into body)
     from urllib.parse import parse_qs
-    body = request.body.decode('utf-8')
+
+    body = request.body.decode("utf-8")
     assert "__VIEWSTATE" in body
     assert "__EVENTVALIDATION" in body
     form_data = parse_qs(body)
@@ -170,9 +171,9 @@ def test_parse_results_yields_detail_requests(spider):
     """Feed the results fixture, verify detail Requests are yielded."""
     url = "https://search.childcarechoices.me/?search=04401&dist="
     resp = _response("results_04401.html", url, zipcode="04401")
-    
+
     results = list(spider.parse_results(resp))
-    
+
     assert len(results) == 3
     for req in results:
         assert isinstance(req, Request)
@@ -183,10 +184,10 @@ def test_parse_results_deduplicates_by_license_number(spider):
     """Call parse_results twice with overlapping IDs."""
     url = "https://search.childcarechoices.me/?search=04401&dist="
     resp = _response("results_04401.html", url, zipcode="04401")
-    
+
     results1 = list(spider.parse_results(resp))
     assert len(results1) == 3
-    
+
     # Call again with same spider (seen_ids already populated)
     resp2 = _response("results_04401.html", url, zipcode="04401")
     results2 = list(spider.parse_results(resp2))
@@ -197,7 +198,7 @@ def test_parse_results_empty_zip(spider):
     """Feed the empty results fixture, verify no requests yielded."""
     url = "https://search.childcarechoices.me/?search=00000&dist="
     resp = _response("results_empty.html", url, zipcode="00000")
-    
+
     results = list(spider.parse_results(resp))
     assert results == []
 
