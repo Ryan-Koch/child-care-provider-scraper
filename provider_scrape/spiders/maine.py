@@ -179,7 +179,7 @@ def _parse_plot_addresses(text):
         if "^" in lat_lng:
             lat_lng_parts = lat_lng.split("^", 1)
             latitude = lat_lng_parts[0]
-            longitude = lat_lng_parts[1] if len(lat_lng_parts) > 1 else ""
+            longitude = lat_lng_parts[1].split(">")[0] if len(lat_lng_parts) > 1 else ""
         else:
             latitude = lat_lng
             longitude = ""
@@ -400,7 +400,6 @@ class MaineSpider(Spider):
                 meta={
                     "item": item,
                     "cookiejar": f"detail_{license_number}",
-                    "dont_merge_cookies": True,
                 },
                 dont_filter=True,
             )

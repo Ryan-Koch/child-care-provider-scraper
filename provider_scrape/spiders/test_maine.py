@@ -39,7 +39,7 @@ def spider():
 def test_parse_plot_addresses_golden_path():
     """Parse a full plotAddresses call with multiple providers."""
     text = """<script>
-        plotAddresses('17 Second St, Bangor, ME 044014%Bangor Region YMCA<(207) 941-2808~44.7994^-68.77532*123 Main St, Portland, ME 041010%Portland Community Center<(207) 555-1234~43.6578^-70.2593*456 Oak Ave, Lewiston, ME 04240R%Lewiston Family Day Care<(207) 555-9999~44.1234^-70.1234', 'CENTER<br />~CENTER<br />~FAMILY<br />', 'Open Infant Slots, 6 weeks to 1 year old: 5<br />
+        plotAddresses('17 Second St, Bangor, ME 044014%Bangor Region YMCA<(207) 941-2808~44.7994^-68.77532>0*123 Main St, Portland, ME 041010%Portland Community Center<(207) 555-1234~43.6578^-70.2593*456 Oak Ave, Lewiston, ME 04240R%Lewiston Family Day Care<(207) 555-9999~44.1234^-70.1234>0', 'CENTER<br />~CENTER<br />~FAMILY<br />', 'Open Infant Slots, 6 weeks to 1 year old: 5<br />
 Open Toddler Slots, 1-2 years old: 8<br />
 Open Preschool Slots, 3-5 years old: 12<br />
 Open School Age Slots, 5 years or older: 250<br />
