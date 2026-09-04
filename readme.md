@@ -125,7 +125,7 @@ The project uses pytest, so one can simply run `pytest` to go through the whole 
 | Massachusetts            | [x]     | 
 | Michigan                 | [x]     | 
 | Minnesota                | [x]     | 
-| Mississippi              | [ ]     | 
+| Mississippi              | [x]     | 
 | Missouri                 | [ ]     | 
 | Montana                  | [x]     | 
 | Nebraska                 | [ ]     | 

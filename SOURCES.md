@@ -30,6 +30,7 @@ To regenerate: `.venv/bin/python scripts/generate_sources.py`.
 | Massachusetts | https://childcare.mass.gov/ |
 | Michigan | https://cclb.michigan.gov/ |
 | Minnesota | https://licensinglookup.dhs.state.mn.us/ |
+| Mississippi | https://mdhs.provider.webapps.ms.gov/ |
 | Montana | https://mtdphhs.my.site.com/ |
 | Nevada | https://nvdpbh.aithent.com/<br>https://analysis.windows.net/ |
 | New Jersey | https://childcarenj.gov/ |
