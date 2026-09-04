@@ -200,6 +200,15 @@ class InspectionItem(scrapy.Item):
     # statement/plan text is source-redacted ("[REDACTED]") where applicable.
     ma_violations = scrapy.Field()
 
+    # Mississippi specific fields (mdhs.provider.webapps.ms.gov ccsearch.aspx
+    # -- see tasks/mississippi_story/mississippi_plan.md). `type` discriminates
+    # the three MS tables: "Inspection" (License & Services renewal/mid-year/
+    # initial exams), "Investigation" (complaint/serious-occurrence records),
+    # and "Monetary Penalty".
+    ms_exam_type = scrapy.Field()  # Inspection rows only: Renewal/Mid-Year/Initial/...
+    ms_end_date = scrapy.Field()  # Inspection rows only: exam End Date
+    ms_description = scrapy.Field()  # Investigation/Monetary Penalty rows: Description
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
@@ -971,6 +980,17 @@ class ProviderItem(scrapy.Item):
     # Only the populated (non-blank amount) per-age-group fee rows across all
     # schedules: [{schedule_type, age_group, rate_type, amount}]
     ma_cost_table = scrapy.Field()
+
+    # Mississippi specific fields (mdhs.provider.webapps.ms.gov ccsearch.aspx
+    # -- see tasks/mississippi_story/mississippi_plan.md). Every field for
+    # every provider is embedded in the paginated results HTML -- there is no
+    # detail page, so `ms_facility_id` (the container div id, also the
+    # `htJson` feature id) is the durable join key.
+    ms_facility_id = scrapy.Field()
+    ms_services = scrapy.Field()  # list, e.g. ["School Age After School", "Full Day"]
+    ms_months_of_operation = scrapy.Field()  # list, e.g. ["Jan", ..., "Dec"]
+    ms_subsidy = scrapy.Field()  # bool: Accepts MDHS Subsidy Children
+    ms_early_head_start = scrapy.Field()  # bool: Early Head Start in Services (distinct from head_start)
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()

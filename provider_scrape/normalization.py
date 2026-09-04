@@ -127,7 +127,7 @@ DATE_FIELDS = ("status_date", "license_begin_date", "license_expiration")
 # Inspection-level date fields. ``status_updated`` and ``az_date_resolved`` are
 # the other confirmed dates inside an inspection entry; ``in_correction_date`` is
 # Indiana's non-compliance correction date.
-INSPECTION_DATE_FIELDS = ("date", "status_updated", "az_date_resolved", "in_correction_date")
+INSPECTION_DATE_FIELDS = ("date", "status_updated", "az_date_resolved", "in_correction_date", "ms_end_date")
 
 # strptime patterns tried in order for purely numeric dates.
 _NUMERIC_DATE_PATTERNS = ("%Y-%m-%d", "%m/%d/%Y", "%m-%d-%Y", "%Y/%m/%d")
@@ -355,6 +355,10 @@ STATUS_BUCKETS = {
         # Maine: a conditional license is a short-term license issued while
         # a facility corrects deficiencies, analogous to a provisional license.
         "Conditional",
+        # Mississippi (mdhs.provider.webapps.ms.gov): a short-term licence
+        # issued outside the normal annual cycle (e.g. a new/relocated
+        # facility awaiting its first full-year licence). Ryan, 2026-09-04.
+        "TEMPORARY",
     ],
     "pending": [
         "Pending renewal application (RN)",
@@ -363,6 +367,19 @@ STATUS_BUCKETS = {
         "Pending address change application (AD)",
         "Pending/Re-license",
         "Pending - Certified",
+        # Mississippi: a whole PENDING-* family, all -> pending (the vocab
+        # was flagged open in §4.3; each entry below surfaced on a
+        # different full live run, not in the original recon sample -- if
+        # another PENDING-* variant shows up, it almost certainly belongs
+        # here too rather than being a new bucket).
+        # operating while awaiting its licensing inspection -- matches the
+        # bare "PENDING" precedent above. Approved Ryan 2026-09-04.
+        "PENDING-INSPECTION",
+        # operating while awaiting document review ahead of inspection.
+        "PENDING-DOCS-INSPECT",
+        # operating while awaiting document submission/review generally --
+        # surfaced 2026-09-05 on the county-fan-out full run.
+        "PENDING-DOCUMENTS",
     ],
     "enforcement": [
         "Pending Revocation",
@@ -403,6 +420,12 @@ STATUS_BUCKETS = {
         "Intent to Place on Probation Extension",
         "Intent to Place on Warning of Probation",
         "Intent to Place on Warning of Probation Extension",
+        # Mississippi (mdhs.provider.webapps.ms.gov): surfaced once on the
+        # 2026-09-05 full live run, not in the original recon sample -- a
+        # restricted licence is a regulatory limitation, matching the
+        # Probation/Suspended precedents above. Single-occurrence value;
+        # flagged to confirm with Ryan later if more show up.
+        "RESTRICTED",
     ],
     "closed": [
         "CLOSED",
@@ -554,6 +577,10 @@ FACILITY_CATEGORY_BUCKETS = {
         "Large Group",
         "Small Group",
         "Private School",
+        # Mississippi (mdhs.provider.webapps.ms.gov): the facility-based
+        # licence type -- matches the "Child Care Facility" / "Child Care
+        # Center" precedents above. Approved Ryan 2026-09-04.
+        "Center based Child Care Facility",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME",
@@ -630,6 +657,10 @@ FACILITY_CATEGORY_BUCKETS = {
         # Idaho (idahostars.org detail page "Facility Type"): the smallest of
         # Idaho's three facility-size tiers, care in the provider's residence.
         "Family Child Care Facility (up to 6 children)",
+        # Mississippi (mdhs.provider.webapps.ms.gov): licensed care in the
+        # provider's own residence -- matches the "Family Home" precedents
+        # above. Approved Ryan 2026-09-04.
+        "Home based Child Care Facility",
     ],
     "group_home": [
         "GFDC",
@@ -740,6 +771,10 @@ FACILITY_CATEGORY_BUCKETS = {
         # Massachusetts (childcare.mass.gov): license-exempt FFN-style home
         # care -- matches the "Informal" / "In-Home" precedents above.
         "Informal Child Care",
+        # Mississippi (mdhs.provider.webapps.ms.gov): a licensed youth camp --
+        # matches the "Resident Camp" / "Summer Day Camp" / "Licensed Camp"
+        # precedents above. Approved Ryan 2026-09-04.
+        "Youth Camp",
     ],
 }
 
