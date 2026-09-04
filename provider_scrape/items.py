@@ -174,6 +174,32 @@ class InspectionItem(scrapy.Item):
     id_incident_description = scrapy.Field()
     id_incident_resolution = scrapy.Field()
 
+    # Massachusetts specific inspection fields (childcare.mass.gov Salesforce
+    # Aura Apex API -- EEC_ProviderDetailsController.getProviderDetails). Two
+    # discriminated kinds share the `inspections` list, told apart by `type`:
+    #   * a monitoring visit -- `type` is the visit type (e.g. "Renewal -
+    #     Monitoring Visit"); D-1 keeps EVERY per-domain compliance row from
+    #     `visitDomainList`, not just the non-compliant subset.
+    #   * an investigation/complaint -- `type` is the literal "Investigation"
+    #     discriminator; the outcome lives in `original_status` and D-2 keeps
+    #     the (source-redacted) violation narratives in `ma_violations`.
+    ma_visit_id = scrapy.Field()  # visit `id`
+    ma_announcement_type = scrapy.Field()  # "Unannounced" / "Announced"
+    ma_visit_reason = scrapy.Field()  # `isPreLicensing` -- misnamed by the
+    # source; actually the visit reason, e.g. "Renewal - Monitoring"
+    ma_level_of_compliance = scrapy.Field()  # e.g. "41/42"
+    ma_licensor = scrapy.Field()  # licensor assigned to this visit
+    # Every visitDomainList row (D-1): [{domain, indicator, description,
+    # level_of_compliance, is_key_indicator, regulation_name,
+    # regulations: [{name, article_text}]}]
+    ma_domains = scrapy.Field()
+    ma_investigation_id = scrapy.Field()  # investigation `id`
+    ma_investigator = scrapy.Field()  # investigator assigned
+    ma_noncompliance_identified = scrapy.Field()  # bool
+    # D-2: [{regulation, result, statement, corrective_action_plan}] -- the
+    # statement/plan text is source-redacted ("[REDACTED]") where applicable.
+    ma_violations = scrapy.Field()
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
@@ -903,6 +929,48 @@ class ProviderItem(scrapy.Item):
     id_consistent_schedule_comment = scrapy.Field()
     id_pet_policy = scrapy.Field()
     id_pet_policy_comment = scrapy.Field()
+
+    # Massachusetts specific fields (childcare.mass.gov Salesforce Aura Apex
+    # API -- see tasks/massachusettes_story/massachusettes_plan.md). Two Apex
+    # methods: the search (ZIP-exact, one request per ZIP, no cap) supplies
+    # the core record; the detail call (keyed by `Encrypted_Id__c`) supplies
+    # the rich D-5 provider-reported extras plus the full inspection history.
+    # MA publishes no county (only city + CC R&R region), so `county` is left
+    # unset (plan §4). Per D-4, informal/exempt records have no public licence
+    # number -- `license_number` falls back to the `P-######` program number,
+    # which is always kept here too.
+    ma_account_id = scrapy.Field()  # Salesforce accountId -- the dedupe key
+    ma_encrypted_id = scrapy.Field()  # Encrypted_Id__c -- the detail-call key
+    ma_program_number = scrapy.Field()  # providerNumber, e.g. "P-176763"
+    ma_last_issue_date = scrapy.Field()  # most-recent licence issuance (D-3
+    # keeps the FIRST issuance on the common `license_begin_date`)
+    ma_temporary_status = scrapy.Field()  # Temporary_Status__c, e.g. "Reopened"
+    ma_capacity_by_age = scrapy.Field()  # dict of the non-zero per-age-group counts
+    ma_availability = scrapy.Field()  # raw availability text
+    ma_schedule_options = scrapy.Field()  # list, e.g. ["Full day", "Full week"]
+    ma_environment = scrapy.Field()  # list, e.g. ["Fenced Yard", "Smoke Free"]
+    ma_financial_assistance = scrapy.Field()  # list, e.g. ["EEC Subsidies"]
+    ma_special_needs = scrapy.Field()
+    ma_special_skills = scrapy.Field()
+    ma_licensor = scrapy.Field()  # currently assigned EEC licensor
+    ma_regional_office_address = scrapy.Field()
+    ma_regional_website = scrapy.Field()
+    ma_umbrella_name = scrapy.Field()  # parent/umbrella organization name
+    ma_is_informal = scrapy.Field()  # bool: license-exempt informal care
+    ma_is_gsa = scrapy.Field()  # bool
+    ma_dph_summer_camp = scrapy.Field()  # bool (isUnderDphSummerCamp Yes/No)
+    ma_contact_redacted = scrapy.Field()  # bool: owner opted out of public contact info
+    ma_ccrr_name = scrapy.Field()  # assigned CC R&R agency name
+    ma_ccrr_phone = scrapy.Field()
+    ma_ccrr_website = scrapy.Field()
+    ma_ccrr_city = scrapy.Field()
+    # Every schedule (Temporary/Summer/Full Year), not just the one collapsed
+    # into the common `hours`: [{schedule_type, drop_in, extended_day,
+    # days: [{day, start, end}]}]
+    ma_schedules = scrapy.Field()
+    # Only the populated (non-blank amount) per-age-group fee rows across all
+    # schedules: [{schedule_type, age_group, rate_type, amount}]
+    ma_cost_table = scrapy.Field()
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()

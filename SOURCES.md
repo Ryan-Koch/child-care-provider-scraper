@@ -27,6 +27,7 @@ To regenerate: `.venv/bin/python scripts/generate_sources.py`.
 | Kentucky | https://kynect.ky.gov/ |
 | Maine | https://search.childcarechoices.me/<br>https://gateway.maine.gov/ |
 | Maryland | https://checkccmd.org/<br>https://findaprogram.marylandexcels.org/ |
+| Massachusetts | https://childcare.mass.gov/ |
 | Michigan | https://cclb.michigan.gov/ |
 | Minnesota | https://licensinglookup.dhs.state.mn.us/ |
 | Montana | https://mtdphhs.my.site.com/ |
