@@ -411,10 +411,7 @@ def test_pager_stops_cleanly_when_last_disabled():
     # Exercises _parse_pager directly against the real page-59 pager markup
     # (Sec 5.2 regression guard): current==59, no current+1 link, Last
     # disabled -> no next target.
-    from scrapy.http import HtmlResponse as _HtmlResponse
-
-    body = open(os.path.join(FIXTURES, "ms_pager_last.html"), "rb").read()
-    response = _HtmlResponse(url=SEARCH_URL, body=body, encoding="utf-8", request=Request(SEARCH_URL))
+    response = _response("ms_pager_last.html")
     pager_html = response.css("#lvProvider_lvDataPager").get()
     current, next_target, last_disabled = _parse_pager(pager_html)
     assert current == 59
@@ -423,8 +420,7 @@ def test_pager_stops_cleanly_when_last_disabled():
 
 
 def test_pager_first_page_targets_page_two():
-    body = open(os.path.join(FIXTURES, "ms_results_page.html"), "rb").read()
-    response = HtmlResponse(url=SEARCH_URL, body=body, encoding="utf-8", request=Request(SEARCH_URL))
+    response = _response("ms_results_page.html")
     pager_html = response.css("#lvProvider_lvDataPager").get()
     current, next_target, last_disabled = _parse_pager(pager_html)
     assert current == 1
