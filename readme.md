@@ -122,7 +122,7 @@ The project uses pytest, so one can simply run `pytest` to go through the whole 
 | Louisiana                | [ ]     | 
 | Maine                    | [x]     | 
 | Maryland                 | [x]     | 
-| Massachusetts            | [ ]     | 
+| Massachusetts            | [x]     | 
 | Michigan                 | [x]     | 
 | Minnesota                | [x]     | 
 | Mississippi              | [ ]     | 

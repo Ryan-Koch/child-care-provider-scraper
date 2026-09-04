@@ -330,6 +330,17 @@ STATUS_BUCKETS = {
         # above already covers the steady-state value.
         "Pending Renewal",
         "Pending Facility Type Change",
+        # Massachusetts (childcare.mass.gov): providerStatus values observed
+        # across recon + a live smoke run (2026-09-04, ZIP 02301). "Renewal
+        # in progress"/"Funding Renewal In Progress" are providers still
+        # appearing in the public search while their licence/funding renews
+        # -- still operating, matching the Idaho "Pending Renewal" precedent
+        # above. Other values (Closed/enforcement stages) are likely but
+        # unseen -- an unmapped value falls through to "unknown" with a
+        # logged warning (the spider's closed() also flags any new raw value).
+        "Current",
+        "Renewal in progress",
+        "Funding Renewal In Progress",
     ],
     "provisional": [
         "PROVISIONAL LICENSE",
@@ -535,6 +546,14 @@ FACILITY_CATEGORY_BUCKETS = {
         # Idaho (idahostars.org detail page "Facility Type"): the largest of
         # Idaho's three facility-size tiers.
         "Large Child Care Center (26 or more children)",
+        # Massachusetts (childcare.mass.gov) recordTypeName values: Large/Small
+        # Group are facility-based center licenses (capacity-tiered, not a
+        # residence); Private School matches the "Public School" precedent
+        # already mapped above. ("Family Child Care" -> family_home is already
+        # present in the family_home bucket below.)
+        "Large Group",
+        "Small Group",
+        "Private School",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME",
@@ -718,6 +737,9 @@ FACILITY_CATEGORY_BUCKETS = {
         # the "Resident Camp" / "Summer Day Camp" / "Licensed Camp" precedents
         # above (license numbers are YCYC-prefixed).
         "Summer Camp/Program",
+        # Massachusetts (childcare.mass.gov): license-exempt FFN-style home
+        # care -- matches the "Informal" / "In-Home" precedents above.
+        "Informal Child Care",
     ],
 }
 

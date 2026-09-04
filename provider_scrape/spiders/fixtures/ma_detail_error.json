@@ -1,0 +1,106 @@
+{
+  "actions": [
+    {
+      "id": "5;a",
+      "state": "ERROR",
+      "returnValue": {
+        "cacheable": false
+      },
+      "error": [
+        {
+          "message": "invalid ID field: null line number >> 312"
+        }
+      ]
+    }
+  ],
+  "context": {
+    "mode": "PROD",
+    "app": "c:EEC_ChildCareProviderDetailApp",
+    "pathPrefix": "",
+    "fwuid": "MzNzN1lSdDZQRXpUcEpsWHBlZGd5UWtVMjdnTGFERUU2S3FfSVdrcU92bkExNC4xOTIuODM4ODYwOA",
+    "mlr": 1,
+    "uad": 1,
+    "coos": 1,
+    "loaded": {
+      "APPLICATION@markup://c:EEC_ChildCareProviderDetailApp": "1067_YCBURgewcp0ozxQGJaEklA"
+    },
+    "globalValueProviders": [
+      {
+        "type": "$Global",
+        "values": {
+          "eswConfigDeveloperName": {
+            "writable": true,
+            "defaultValue": ""
+          },
+          "isVoiceOver": {
+            "writable": true,
+            "defaultValue": false
+          },
+          "setupAppContextId": {
+            "writable": true,
+            "defaultValue": ""
+          },
+          "density": {
+            "writable": true,
+            "defaultValue": ""
+          },
+          "srcdoc": {
+            "writable": false,
+            "defaultValue": false
+          },
+          "appContextId": {
+            "writable": true,
+            "defaultValue": ""
+          },
+          "dynamicTypeSize": {
+            "writable": true,
+            "defaultValue": ""
+          }
+        }
+      }
+    ],
+    "enableAccessChecks": true,
+    "apce": 1,
+    "dns": "c",
+    "ls": 1,
+    "lairn": [],
+    "laerc": [],
+    "lav": "67",
+    "csp": 1,
+    "lgef": [
+      "com.salesforce.locker.enableImmediateGlobalObjectPatching",
+      "com.salesforce.locker.walkRangeProtoChainForMethods",
+      "com.salesforce.locker.enableTrustedTypesScript",
+      "com.salesforce.locker.changesSince.258",
+      "com.salesforce.locker.changesSince.256",
+      "com.salesforce.locker.enabledChangesSince.256",
+      "com.salesforce.locker.temporaryGate",
+      "com.salesforce.locker.changesSince.262",
+      "com.salesforce.locker.enableSfdcLiveObject"
+    ],
+    "mna": {
+      "lightning": "interop"
+    },
+    "arse": 1,
+    "acaf": 1,
+    "services": [
+      "markup://lightning:configProvider",
+      "markup://force:salesforceScopedModuleResolver",
+      "markup://force:ldsEngineCreator",
+      "markup://instrumentation:locatorService",
+      "markup://force:lwcScopedModuleResolver"
+    ]
+  },
+  "perfSummary": {
+    "version": "core",
+    "request": 47,
+    "actions": {
+      "5;a": {
+        "total": 29,
+        "db": 2
+      }
+    },
+    "actionsTotal": 29,
+    "overhead": 0
+  }
+}

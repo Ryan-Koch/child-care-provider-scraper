@@ -1,0 +1,166 @@
+{
+ "actions": [
+  {
+   "id": "4;a",
+   "state": "SUCCESS",
+   "returnValue": {
+    "returnValue": {
+     "availability": "",
+     "availableScheduleOptions": "",
+     "capacity": "",
+     "ccrrRecord": {
+      "ccrrCity": "New Bedford",
+      "ccrrPhone": "(508) 999-9930",
+      "ccrrWebsite": "https://childcarema.org/childcareworks/",
+      "name": "Child Care Works"
+     },
+     "eecLicensor": "Erin Craft",
+     "eecRegionalOfficeAddress": "500 Victory Road, Suite 2100, Quincy, MA, 02171",
+     "environment": "",
+     "firstIssueDate": "",
+     "fundedProviderStatus": "Current",
+     "iccVisitList": [],
+     "infantBirth": 0,
+     "infantToddler": 0,
+     "investigationList": [],
+     "isGSA": false,
+     "isInformalChildCare": true,
+     "kindergarten": 0,
+     "languageSpoken": "",
+     "lastIssueDate": "",
+     "mapMarkers": [
+      {
+       "title": "Delverna Hibbert",
+       "description": "Brockton, MA 02301",
+       "icon": "standard:account",
+       "location": {
+        "City": "Brockton",
+        "PostalCode": "02301",
+        "State": "MA",
+        "Latitude": "42.057387700000000",
+        "Longitude": "-71.024820600000000"
+       }
+      }
+     ],
+     "meals": "",
+     "multiAge": 0,
+     "name": "Delverna Hibbert",
+     "preschool": 0,
+     "preschoolSA": 0,
+     "providerAccreditation": "",
+     "providerAddress": "Brockton,MA, 02301",
+     "providerEmail": "",
+     "providerNumber": "P-260503",
+     "providerPhone": "",
+     "providerStatus": "Current",
+     "recordTypeDeveloperName": "Informal_Child_Care",
+     "recordTypeName": "Informal Child Care",
+     "regionalWebsite": "https://www.mass.gov/locations/department-of-early-education-and-care-metro-boston-office-region-6",
+     "scheduleWrapperList": [],
+     "schoolAge": 0,
+     "specialNeeds": "",
+     "specialSkills": "",
+     "toddler": 0,
+     "toddlerPreschool": 0,
+     "transportation": "",
+     "typeOfCare": "Informal Child Care",
+     "typesOfFinancialAssistance": "",
+     "visitAfterDate": "June 15, 2024",
+     "visitList": []
+    },
+    "cacheable": false
+   },
+   "error": []
+  }
+ ],
+ "context": {
+  "mode": "PROD",
+  "app": "c:EEC_ChildCareProviderDetailApp",
+  "pathPrefix": "",
+  "fwuid": "MzNzN1lSdDZQRXpUcEpsWHBlZGd5UWtVMjdnTGFERUU2S3FfSVdrcU92bkExNC4xOTIuODM4ODYwOA",
+  "mlr": 1,
+  "uad": 1,
+  "coos": 1,
+  "loaded": {
+   "APPLICATION@markup://c:EEC_ChildCareProviderDetailApp": "1067_YCBURgewcp0ozxQGJaEklA"
+  },
+  "globalValueProviders": [
+   {
+    "type": "$Global",
+    "values": {
+     "eswConfigDeveloperName": {
+      "writable": true,
+      "defaultValue": ""
+     },
+     "isVoiceOver": {
+      "writable": true,
+      "defaultValue": false
+     },
+     "setupAppContextId": {
+      "writable": true,
+      "defaultValue": ""
+     },
+     "density": {
+      "writable": true,
+      "defaultValue": ""
+     },
+     "srcdoc": {
+      "writable": false,
+      "defaultValue": false
+     },
+     "appContextId": {
+      "writable": true,
+      "defaultValue": ""
+     },
+     "dynamicTypeSize": {
+      "writable": true,
+      "defaultValue": ""
+     }
+    }
+   }
+  ],
+  "enableAccessChecks": true,
+  "apce": 1,
+  "dns": "c",
+  "ls": 1,
+  "lairn": [],
+  "laerc": [],
+  "lav": "67",
+  "csp": 1,
+  "lgef": [
+   "com.salesforce.locker.enableImmediateGlobalObjectPatching",
+   "com.salesforce.locker.walkRangeProtoChainForMethods",
+   "com.salesforce.locker.enableTrustedTypesScript",
+   "com.salesforce.locker.changesSince.258",
+   "com.salesforce.locker.changesSince.256",
+   "com.salesforce.locker.enabledChangesSince.256",
+   "com.salesforce.locker.temporaryGate",
+   "com.salesforce.locker.changesSince.262",
+   "com.salesforce.locker.enableSfdcLiveObject"
+  ],
+  "mna": {
+   "lightning": "interop"
+  },
+  "arse": 1,
+  "acaf": 1,
+  "services": [
+   "markup://lightning:configProvider",
+   "markup://force:salesforceScopedModuleResolver",
+   "markup://force:ldsEngineCreator",
+   "markup://instrumentation:locatorService",
+   "markup://force:lwcScopedModuleResolver"
+  ]
+ },
+ "perfSummary": {
+  "version": "core",
+  "request": 20,
+  "actions": {
+   "4;a": {
+    "total": 18,
+    "db": 7
+   }
+  },
+  "actionsTotal": 18,
+  "overhead": 0
+ }
+}
