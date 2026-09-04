@@ -337,7 +337,9 @@ def test_all_three_inspection_types_on_one_provider(spider_with_cities):
     assert insp["ms_end_date"]
     assert insp["ms_exam_type"]
     assert insp["original_status"]
-    assert insp["report_url"].startswith("https://www.mdhs.provider.webapps.ms.gov/PublicViewInspectionDocument.aspx?pdf=")
+    assert insp["report_url"].startswith(
+        "https://www.mdhs.provider.webapps.ms.gov/PublicViewInspectionDocument.aspx?pdf="
+    )
 
     inv = by_type["Investigation"][0]
     assert inv["date"]
@@ -438,17 +440,17 @@ def test_pager_falls_back_to_ellipsis_at_window_edge():
         '<span id="lvProvider_lvDataPager">'
         '<input type="submit" name="lvProvider$lvDataPager$ctl00$ctl00" value="First" class="btn btn-default">'
         "\xa0"
-        '<a href="javascript:__doPostBack(\'lvProvider$lvDataPager$ctl01$ctl00\',\'\')">...</a>'
+        "<a href=\"javascript:__doPostBack('lvProvider$lvDataPager$ctl01$ctl00','')\">...</a>"
         "\xa0"
-        '<a href="javascript:__doPostBack(\'lvProvider$lvDataPager$ctl01$ctl01\',\'\')">5</a>'
+        "<a href=\"javascript:__doPostBack('lvProvider$lvDataPager$ctl01$ctl01','')\">5</a>"
         "\xa0"
-        '<a href="javascript:__doPostBack(\'lvProvider$lvDataPager$ctl01$ctl02\',\'\')">6</a>'
+        "<a href=\"javascript:__doPostBack('lvProvider$lvDataPager$ctl01$ctl02','')\">6</a>"
         "\xa0"
-        '<a href="javascript:__doPostBack(\'lvProvider$lvDataPager$ctl01$ctl03\',\'\')">7</a>'
+        "<a href=\"javascript:__doPostBack('lvProvider$lvDataPager$ctl01$ctl03','')\">7</a>"
         "\xa0"
-        '<a href="javascript:__doPostBack(\'lvProvider$lvDataPager$ctl01$ctl04\',\'\')">8</a>'
+        "<a href=\"javascript:__doPostBack('lvProvider$lvDataPager$ctl01$ctl04','')\">8</a>"
         "\xa0<span>9</span>\xa0"
-        '<a href="javascript:__doPostBack(\'lvProvider$lvDataPager$ctl01$ctl05\',\'\')">...</a>'
+        "<a href=\"javascript:__doPostBack('lvProvider$lvDataPager$ctl01$ctl05','')\">...</a>"
         "\xa0"
         '<input type="submit" name="lvProvider$lvDataPager$ctl02$ctl00" value="Last" class="btn btn-default">'
         "\xa0</span>"
@@ -518,9 +520,7 @@ def test_nested_pager_with_page_two_link_warns_but_still_emits_first_page(spider
     # v1 still emits the first (only fetched) page's rows.
     assert len(item["inspections"]) == 5
 
-    assert any(
-        "20005047 Inspections table has more than one page" in r.message for r in caplog.records
-    )
+    assert any("20005047 Inspections table has more than one page" in r.message for r in caplog.records)
 
 
 # --------------------------------------------------------------------------- #

@@ -828,8 +828,7 @@ class MississippiSpider(scrapy.Spider):
         for pager in pane.css('span[id*="lvDataPager"]'):
             if pager.css("a"):
                 self.logger.warning(
-                    "mississippi: id=%s %s table has more than one page -- "
-                    "later rows are NOT scraped (v1 limitation)",
+                    "mississippi: id=%s %s table has more than one page -- later rows are NOT scraped (v1 limitation)",
                     pid,
                     kind,
                 )
