@@ -99,7 +99,7 @@ Raw `provider_type` values mapped to each canonical category (additive; unmapped
 
 | Canonical | Raw provider_type values |
 |---|---|
-| `center` | `CDC (Child Development Center)`, `CTR`, `Center`, `Center Based Child Care and Preschool Program`, `Center Based Child Care and Preschool Program - Non-Recurring`, `Center based Child Care Facility`, `Certified Pre-School`, `Child Care`, `Child Care Center`, `Child Care Commercial Preschool`, `Child Care Facility`, `Child Care Hourly Center`, `Child Care Learning Center`, `Child Care Registered Center Based Program`, `Child Day Center`, `DAY CARE CENTER`, `DAY CARE CENTER - ILL CENTER`, `DCC`, `DOE`, `Department of Defense`, `GA Early Head Start`, `GA Head Start`, `HHS Four-Year Old Program`, `HHS-Licensed Child Care Center`, `HHS-Licensed Group Child Care Facility`, `HHS-Licensed Preschool`, `Head Start Child Care Center`, `Head Start Site`, `INFANT CENTER`, `Infant and Toddler Center`, `LOC`, `Large Child Care Center (26 or more children)`, `Large Group`, `Licensed`, `Licensed Center`, `Licensed Child Care Center`, `Licensed Group`, `Licensed School-Based Preschool`, `Local School System`, `Nursery`, `Nursery School`, `Outdoor Nature Based Program`, `Preschool`, `Preschool Center`, `Preschool Program`, `Private School`, `Public School`, `SDCC`, `SINGLE LICENSED CHILD CARE CENTER`, `Short Term Child Day Center`, `Small Employer Based Child Care`, `Small Group`, `University` |
+| `center` | `CDC (Child Development Center)`, `CTR`, `Center`, `Center Based Child Care and Preschool Program`, `Center Based Child Care and Preschool Program - Non-Recurring`, `Center based Child Care Facility`, `Certified Pre-School`, `Child Care`, `Child Care Center`, `Child Care Commercial Preschool`, `Child Care Facility`, `Child Care Hourly Center`, `Child Care Learning Center`, `Child Care Registered Center Based Program`, `Child Day Center`, `DAY CARE CENTER`, `DAY CARE CENTER - ILL CENTER`, `DCC`, `DOE`, `Department of Defense`, `GA Early Head Start`, `GA Head Start`, `HHS Four-Year Old Program`, `HHS-Licensed Child Care Center`, `HHS-Licensed Group Child Care Facility`, `HHS-Licensed Preschool`, `Head Start Child Care Center`, `Head Start Site`, `INFANT CENTER`, `Infant and Toddler Center`, `LOC`, `Large Child Care Center (26 or more children)`, `Large Group`, `Licensed`, `Licensed Center`, `Licensed Child Care Center`, `Licensed Group`, `Licensed School-Based Preschool`, `Local School System`, `Nursery`, `Nursery School`, `Outdoor Nature Based Program`, `Preschool`, `Preschool Center`, `Preschool Program`, `Private School`, `Public School`, `SDCC`, `SINGLE LICENSED CHILD CARE CENTER`, `Short Term Child Day Center`, `Small Employer Based Child Care`, `Small Group`, `Type I`, `Type II`, `Type III`, `University` |
 | `exempt` | `CCAP Certified/Accredited`, `Child Care Exempt Program`, `DWS Approved, Exempt Center`, `DWS Approved, Exempt School Age Program`, `Exempt`, `Exempt Child Care Center`, `Exempt Only`, `Exempt from Licensing`, `License Exempt`, `Religious Exempt Child Day Center`, `Self-Declared Provider`, `Unlicensed CCDF Certified Center/School`, `Unlicensed CCDF Certified Home`, `Unlicensed Registered Ministry`, `Voluntary Registration` |
 | `family_home` | `CDH (Child Development Home)`, `Certified`, `Child Care Licensed Family`, `Child Care Residential Certificate`, `FAMILY DAY CARE HOME`, `FCCH`, `FDC`, `Family`, `Family Child Care`, `Family Child Care Facility (up to 6 children)`, `Family Child Care Home`, `Family Child Care Learning Home`, `Family Child Care Provider`, `Family Day Care`, `Family Day Care Home`, `Family Day Home`, `Family Home`, `Family Home Child Care`, `HHS-Licensed Family Child Care`, `Home based Child Care Facility`, `LFCCH`, `Large Family Child Care Home`, `Licensed Child-Care Home`, `Licensed Family`, `Licensed Family Child Care`, `Licensed Family Child Care Home`, `Licensed Family Home`, `Licensed Home`, `Licensed Type A Family Child Care Home`, `Licensed Type B Family Child Care Home`, `Listed Family Home`, `Non-Registered Child Care Home`, `Provisional Certified`, `Registered Child Development Home A`, `Registered Child Development Home B`, `Registered Child Development Home C`, `Registered Child Development Home C1`, `Registered Child-Care Home`, `Registered Family Child Care Home`, `Registered Home`, `Regular Certified`, `System Approved FDH`, `Unlicensed/Unregistered FDH` |
 | `group_home` | `CDX (Child Development Home Expanded)`, `GFDC`, `Group`, `Group Child Care Facility (up to 12 children)`, `Group Child Care Home`, `Group Home`, `Group Home Child Care`, `HHS-Licensed Group Child Care Home`, `Licensed Group Home`, `Licensed Large Family Child Care` |
@@ -456,6 +456,23 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ky_report_name` -> pass-through
 - `ky_service_costs` -> pass-through
 - `ky_stars_rating` -> pass-through
+
+### Louisiana (LA)
+
+- `la_after_care` -> pass-through
+- `la_before_care` -> pass-through
+- `la_inspection_url` -> pass-through
+- `la_licensed` -> pass-through
+- `la_night_care` -> pass-through
+- `la_performance_rating` -> pass-through
+- `la_performance_report_url` -> pass-through
+- `la_performance_score` -> pass-through
+- `la_profile_type` -> pass-through
+- `la_public_school_status` -> pass-through
+- `la_serious_injuries_url` -> pass-through
+- `la_star_rating` -> pass-through
+- `la_tips_number` -> pass-through
+- `la_unique_id` -> pass-through
 
 ### Massachusetts (MA)
 

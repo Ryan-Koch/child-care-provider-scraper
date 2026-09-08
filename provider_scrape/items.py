@@ -992,5 +992,31 @@ class ProviderItem(scrapy.Item):
     ms_subsidy = scrapy.Field()  # bool: Accepts MDHS Subsidy Children
     ms_early_head_start = scrapy.Field()  # bool: Early Head Start in Services (distinct from head_start)
 
+    # Louisiana specific fields (louisianaschools.com -- see
+    # tasks/louisiana_story/louisiana_plan.md). The site mixes public K12
+    # schools into the same dataset as child care providers; we keep
+    # `profileType` EE (standalone early-ed) + BOTH (a school that also runs an
+    # early-ed program) and skip K12, but emit ALL EE+BOTH records rather than
+    # dropping the ~85% of BOTH that are unlicensed public-school pre-K -- the
+    # search summary carries no license info, so a licensed/unlicensed split
+    # can only be read from the fields below, not by pre-filtering (Sec 4.1).
+    la_unique_id = scrapy.Field()  # uniqueId (== entityId); always present --
+    # the durable join key even when there's no license number.
+    la_tips_number = scrapy.Field()  # LA "TIPS" provider id; "0"/"" -> unset
+    la_licensed = scrapy.Field()  # "Licensed" / "License Exempt"; empty on
+    # unlicensed public-school pre-K -- the licensed-vs-unlicensed flag.
+    la_profile_type = scrapy.Field()  # "EE" / "BOTH"
+    la_public_school_status = scrapy.Field()  # e.g. "Public School"; set on
+    # school-based records (with or without a licensed early-ed program)
+    la_star_rating = scrapy.Field()  # LA Quality Rating stars, e.g. "4 Stars"
+    la_performance_rating = scrapy.Field()  # e.g. "High Proficient"
+    la_performance_score = scrapy.Field()  # e.g. "5.70"
+    la_before_care = scrapy.Field()  # bool
+    la_after_care = scrapy.Field()  # bool
+    la_night_care = scrapy.Field()  # bool
+    la_inspection_url = scrapy.Field()  # external carefacility.doe.louisiana.gov report
+    la_serious_injuries_url = scrapy.Field()  # external; often empty
+    la_performance_report_url = scrapy.Field()  # site performance-profile PDF
+
     # This will hold the list of inspections.
     inspections = scrapy.Field()

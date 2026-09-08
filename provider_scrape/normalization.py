@@ -581,6 +581,12 @@ FACILITY_CATEGORY_BUCKETS = {
         # licence type -- matches the "Child Care Facility" / "Child Care
         # Center" precedents above. Approved Ryan 2026-09-04.
         "Center based Child Care Facility",
+        # Louisiana (louisianaschools.com): Type I (church/nonprofit),
+        # Type II (for-profit), Type III (publicly-funded) are all
+        # facility-based centers. Approved Ryan 2026-09-08.
+        "Type I",
+        "Type II",
+        "Type III",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME",
