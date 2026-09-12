@@ -25,7 +25,7 @@ id (``proxy_id``) instead.
 import itertools
 import os
 import re
-from urllib.parse import quote, urlsplit, urlunsplit
+from urllib.parse import quote, unquote, urlsplit, urlunsplit
 
 
 def load_env_file(path):
@@ -74,6 +74,34 @@ def redact(proxy_url):
     return urlunsplit((parts.scheme, netloc, parts.path, parts.query, parts.fragment))
 
 
+def playwright_proxy(proxy_url):
+    """Convert a ``http://user:pass@host:port`` proxy URL into the dict shape
+    Playwright's ``browser.new_context(proxy=...)`` expects.
+
+    Playwright wants the credentials split out of the server URL::
+
+        {"server": "http://host:port", "username": "...", "password": "..."}
+
+    Returns ``None`` if the URL has no host. Credentials are URL-decoded (they
+    were percent-encoded into the URL by :func:`build_pool`).
+    """
+    try:
+        parts = urlsplit(proxy_url)
+    except ValueError:
+        return None
+    if not parts.hostname:
+        return None
+    server = f"{parts.scheme or 'http'}://{parts.hostname}"
+    if parts.port:
+        server = f"{server}:{parts.port}"
+    proxy = {"server": server}
+    if parts.username:
+        proxy["username"] = unquote(parts.username)
+    if parts.password:
+        proxy["password"] = unquote(parts.password)
+    return proxy
+
+
 class ProxyPool:
     """An ordered set of proxy endpoints with sticky and rotating assignment."""
 
@@ -94,6 +122,14 @@ class ProxyPool:
     @property
     def ids(self):
         return list(self._ids)
+
+    def entries(self):
+        """Return ``(proxy_id, proxy_url)`` pairs in pool order.
+
+        Handy for callers (e.g. the Rhode Island spider) that probe or launch
+        each proxy individually rather than via the sticky/rotating assignment.
+        """
+        return list(zip(self._ids, self._urls, strict=True))
 
     def next_rotating(self):
         """Return ``(proxy_id, proxy_url)`` for the next proxy, round-robin."""

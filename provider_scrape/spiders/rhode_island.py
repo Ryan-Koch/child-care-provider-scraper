@@ -1,19 +1,143 @@
 import asyncio
 import json
+import os
 import platform
 import random
-from urllib.parse import quote, urlencode
+from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, datetime
+from urllib.parse import quote, urlencode, urlsplit
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+import requests
 import scrapy
 import scrapy.signals
 from playwright_stealth import Stealth
 from scrapy_playwright.page import PageMethod
 
 from provider_scrape.items import InspectionItem, ProviderItem
+from provider_scrape.proxy_pool import load_pool, playwright_proxy
 
 SEARCH_PAGE_URL = "https://earlylearningprograms.dhs.ri.gov/s/?language=en_US"
 AURA_ENDPOINT_PATH = "/s/sfsites/aura?r=1&aura.ApexAction.execute=1"
 DETAIL_PAGE_URL_TEMPLATE = "https://earlylearningprograms.dhs.ri.gov/s/program-detail?language=en_US&pid={pid}&lang=en"
+
+# Default location of the (git-ignored) proxy-pool env file, at the repo root —
+# same convention as maryland.py / huggingface.env. Absent ⇒ host-only mode.
+DEFAULT_PROXY_ENV = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "webshare.env",
+)
+
+# Free, keyless IP-geolocation endpoint. We hit it *through* each proxy so the
+# reported timezone/country reflect the proxy's egress point (and the call
+# doubles as a liveness check). `status` is "success"/"fail"; `timezone` is an
+# IANA name like "America/New_York"; `country` is a display name.
+GEO_IP_URL = "http://ip-api.com/json/?fields=status,message,timezone,country,query"
+
+
+def is_eastern_timezone(tz_name):
+    """True when ``tz_name`` is currently at the same UTC offset as US Eastern.
+
+    Compared by *current* offset (not string equality) so it stays correct
+    across DST and also accepts the other US Eastern zone names
+    (America/Detroit, America/Indiana/Indianapolis, …), not just
+    America/New_York. Same-offset non-US zones (e.g. America/Toronto) also
+    pass this check — the US gate lives in :func:`classify_eastern`.
+    """
+    if not tz_name:
+        return False
+    try:
+        tz = ZoneInfo(tz_name)
+    except (ZoneInfoNotFoundError, ValueError):
+        return False
+    now = datetime.now(UTC)
+    return now.astimezone(tz).utcoffset() == now.astimezone(ZoneInfo("America/New_York")).utcoffset()
+
+
+def classify_eastern(geo):
+    """True when a :func:`probe_egress` result is a live US Eastern-time egress.
+
+    We require the US specifically (not just an Eastern *offset*): the browser
+    context advertises ``America/New_York``, and RI's reCAPTCHA v3 weighs a
+    timezone-vs-IP-geo mismatch heavily (a US-Eastern browser clock behind a
+    Canadian IP is exactly that kind of inconsistency). So America/Toronto,
+    though Eastern time, is deliberately excluded.
+    """
+    if not geo or geo.get("status") != "success":
+        return False
+    if (geo.get("country") or "").strip() not in ("United States", "USA", "US"):
+        return False
+    return is_eastern_timezone(geo.get("timezone"))
+
+
+def probe_egress(proxy_url, timeout=12):
+    """Fetch the egress geolocation seen *through* ``proxy_url``.
+
+    Returns the parsed geo dict (with an added ``proxy_url`` key), or ``None``
+    if the proxy is unreachable or the response can't be parsed. Never raises —
+    a dead proxy is simply not a candidate.
+    """
+    proxies = {"http": proxy_url, "https": proxy_url}
+    try:
+        resp = requests.get(GEO_IP_URL, proxies=proxies, timeout=timeout)
+        return resp.json()
+    except Exception:
+        return None
+
+
+def select_eastern_proxies(pool, timeout=12, probe=probe_egress, max_workers=10, logger=None):
+    """Probe every proxy in ``pool`` and return the US Eastern-time ones.
+
+    Returns a list of ``(proxy_id, proxy_url, geo)`` in the pool's own order,
+    keeping only proxies whose egress :func:`classify_eastern` accepts. Probes
+    run concurrently (they're independent network round-trips) so a 20-proxy
+    pool resolves in a couple of seconds rather than serially. ``probe`` is
+    injectable so the selection logic is unit-testable without the network.
+    """
+    entries = pool.entries()
+    if not entries:
+        return []
+    geos = {}
+    with ThreadPoolExecutor(max_workers=min(max_workers, len(entries))) as pool_ex:
+        probed = pool_ex.map(lambda pu: probe(pu[1], timeout), entries)
+        for (pid, _url), geo in zip(entries, probed, strict=True):
+            geos[pid] = geo
+    eastern = []
+    for pid, url in entries:
+        geo = geos.get(pid)
+        if classify_eastern(geo):
+            eastern.append((pid, url, geo))
+            if logger:
+                logger.info(
+                    "RI egress probe: %s (%s) is Eastern — %s / %s",
+                    pid,
+                    _proxy_host(url),
+                    (geo or {}).get("timezone"),
+                    (geo or {}).get("country"),
+                )
+        elif logger:
+            if geo is None:
+                logger.info("RI egress probe: %s (%s) unreachable — skipping", pid, _proxy_host(url))
+            else:
+                logger.info(
+                    "RI egress probe: %s (%s) not US-Eastern (%s / %s) — skipping",
+                    pid,
+                    _proxy_host(url),
+                    geo.get("timezone"),
+                    geo.get("country"),
+                )
+    return eastern
+
+
+def _proxy_host(proxy_url):
+    """Credential-free ``host:port`` for logging a proxy URL (never log creds)."""
+    try:
+        parts = urlsplit(proxy_url)
+    except ValueError:
+        return "?"
+    host = parts.hostname or "?"
+    return f"{host}:{parts.port}" if parts.port else host
+
 
 # Search pre-filters: ticking every age group satisfies the "at least one
 # criteria" requirement and matches the form's behavior of returning the
@@ -482,6 +606,23 @@ class StealthContextMiddleware:
         handler._create_browser_context = patched_create_context
 
 
+# Browser-context arguments shared by every egress attempt. The startup
+# "default" context (host/direct egress) is built from this, and each per-proxy
+# attempt reuses it verbatim with a `proxy` key layered on — so a proxied
+# attempt is fingerprint-identical to the direct one except for the egress IP.
+# 1440x900 @ DPR 2 is the canonical macOS-laptop viewport; timezone is pinned
+# to America/New_York (RI reCAPTCHA v3 wants the clock to match an Eastern IP).
+_BASE_CONTEXT_ARGS = {
+    "ignore_https_errors": True,
+    # No user_agent override — let real Chrome's native UA flow through
+    # unchanged. See _STEALTH_SCRIPT comment.
+    "viewport": {"width": 1440, "height": 900},
+    "device_scale_factor": 2,
+    "locale": "en-US",
+    "timezone_id": "America/New_York",
+}
+
+
 class RhodeIslandSpider(scrapy.Spider):
     """Spider for https://earlylearningprograms.dhs.ri.gov/s/.
 
@@ -558,21 +699,9 @@ class RhodeIslandSpider(scrapy.Spider):
         # — there is NO `PLAYWRIGHT_CONTEXT_ARGS` setting. The fingerprint
         # audit revealed our viewport/locale/timezone were being silently
         # dropped because we wrote them to the wrong key. The handler
-        # creates the default context at startup from this dict.
-        "PLAYWRIGHT_CONTEXTS": {
-            "default": {
-                "ignore_https_errors": True,
-                # No user_agent override — let real Chrome's native UA
-                # flow through unchanged. See _STEALTH_SCRIPT comment.
-                #
-                # 1440x900 is the canonical macOS laptop viewport.
-                # device_scale_factor=2 makes the page render as Retina.
-                "viewport": {"width": 1440, "height": 900},
-                "device_scale_factor": 2,
-                "locale": "en-US",
-                "timezone_id": "America/New_York",
-            }
-        },
+        # creates the default context at startup from this dict. Per-proxy
+        # attempts layer a `proxy` onto the same args (see _BASE_CONTEXT_ARGS).
+        "PLAYWRIGHT_CONTEXTS": {"default": dict(_BASE_CONTEXT_ARGS)},
     }
 
     def __init__(
@@ -584,6 +713,11 @@ class RhodeIslandSpider(scrapy.Spider):
         manual_timeout=300,
         audit=False,
         search_retries=5,
+        proxies=None,
+        proxy_env=None,
+        proxy_search_retries=1,
+        proxy_probe_timeout=12,
+        max_proxy_attempts=None,
         *args,
         **kwargs,
     ):
@@ -615,85 +749,212 @@ class RhodeIslandSpider(scrapy.Spider):
         else:
             self.audit = bool(audit)
         self.search_retries = int(search_retries)
+        # Per-proxy retry budget. Proxies are tried before the host but only get
+        # a short shot each (default 1 retry → 2 attempts) so a dead/blocked one
+        # is abandoned quickly; the host fallback keeps the full search_retries.
+        self.proxy_search_retries = int(proxy_search_retries)
+        self.proxy_probe_timeout = float(proxy_probe_timeout)
+        # Cap on how many Eastern proxies to try before the host (None = all).
+        self.max_proxy_attempts = int(max_proxy_attempts) if max_proxy_attempts else None
+        # Optional proxy pool (opt-in, mirrors maryland.py). Off (host-only)
+        # when there's no webshare.env and no ``-a proxies=``, or explicitly
+        # with ``-a proxies=off``. When present, start_requests probes each
+        # proxy's egress timezone and tries the Eastern-time ones first,
+        # falling back to the host IP only if they all fail.
+        if proxies is not None and str(proxies).lower() in ("off", "none", "false", "0", "no", ""):
+            self.proxy_pool = None
+        else:
+            self.proxy_pool = load_pool(
+                env_path=proxy_env or DEFAULT_PROXY_ENV,
+                endpoints=None if proxies is None else proxies,
+                id_prefix="webshare",
+            )
+        # Ordered egress attempts, built lazily in start_requests: Eastern
+        # proxies first, host last. None until then; a direct parse_search_page
+        # call in tests (no start_requests) therefore has no fallback chain.
+        self._attempts = None
 
-    def start_requests(self):
-        yield scrapy.Request(
+    def _search_page_methods(self):
+        return [
+            PageMethod("wait_for_load_state", "domcontentloaded", timeout=60000),
+            # Give the LWC + reCAPTCHA v3 script time to settle so the score
+            # window is open by the time we click Search.
+            PageMethod("wait_for_timeout", 6000),
+        ]
+
+    def _build_attempts(self):
+        """Resolve the ordered egress-attempt list: Eastern proxies, then host.
+
+        Probes the pool (if any) once at startup. Each attempt is a dict with a
+        Playwright context name, optional per-context kwargs (the proxy), a
+        retry budget, and a log label. Audit runs host-only.
+        """
+        attempts = []
+        if self.proxy_pool and not self.audit:
+            eastern = select_eastern_proxies(
+                self.proxy_pool,
+                timeout=self.proxy_probe_timeout,
+                logger=self.logger,
+            )
+            if self.max_proxy_attempts is not None:
+                eastern = eastern[: self.max_proxy_attempts]
+            for i, (pid, url, _geo) in enumerate(eastern):
+                attempts.append(
+                    {
+                        "label": f"proxy {pid} ({_proxy_host(url)})",
+                        "context": f"ri_egress_{i}",
+                        "context_kwargs": {**_BASE_CONTEXT_ARGS, "proxy": playwright_proxy(url)},
+                        "search_retries": self.proxy_search_retries,
+                        "is_proxy": True,
+                    }
+                )
+            self.logger.info(
+                "RI egress plan: %d Eastern-time proxy attempt(s), then host fallback",
+                len(attempts),
+            )
+        elif self.proxy_pool and self.audit:
+            self.logger.info("RI: audit mode — skipping proxy pool, using host egress only")
+        # Host (direct) fallback: the startup "default" context, full retries.
+        attempts.append(
+            {
+                "label": "host (direct)",
+                "context": "default",
+                "context_kwargs": None,
+                "search_retries": self.search_retries,
+                "is_proxy": False,
+            }
+        )
+        return attempts
+
+    def _build_attempt_request(self, index):
+        """Build the search Request for attempt ``index``, or None if past the
+        end of the chain (all egresses exhausted)."""
+        if not self._attempts or index >= len(self._attempts):
+            return None
+        attempt = self._attempts[index]
+        meta = {
+            "playwright": True,
+            "playwright_include_page": True,
+            "playwright_page_methods": self._search_page_methods(),
+            "playwright_context": attempt["context"],
+            "ri_attempt_index": index,
+            "ri_search_retries": attempt["search_retries"],
+            "ri_egress_label": attempt["label"],
+            "ri_is_proxy": attempt["is_proxy"],
+        }
+        if attempt["context_kwargs"] is not None:
+            meta["playwright_context_kwargs"] = attempt["context_kwargs"]
+        # dont_filter: every attempt targets the same search URL, which the
+        # dupefilter would otherwise drop after the first.
+        return scrapy.Request(
             SEARCH_PAGE_URL,
             callback=self.parse_search_page,
-            meta={
-                "playwright": True,
-                "playwright_include_page": True,
-                "playwright_page_methods": [
-                    PageMethod(
-                        "wait_for_load_state",
-                        "domcontentloaded",
-                        timeout=60000,
-                    ),
-                    # Give the LWC + reCAPTCHA v3 script time to settle so
-                    # the score window is open by the time we click Search.
-                    PageMethod("wait_for_timeout", 6000),
-                ],
-            },
+            meta=meta,
+            dont_filter=True,
         )
+
+    def start_requests(self):
+        self._attempts = self._build_attempts()
+        yield self._build_attempt_request(0)
 
     async def parse_search_page(self, response):
         page = response.meta["playwright_page"]
+        attempt_index = response.meta.get("ri_attempt_index", 0)
+        label = response.meta.get("ri_egress_label", "host (direct)")
+        is_proxy = response.meta.get("ri_is_proxy", False)
+        search_retries = response.meta.get("ri_search_retries", self.search_retries)
+        search_ok = False
         try:
             if self.audit:
                 await self._dump_fingerprint(page)
                 return
+            self.logger.info("RI: attempting search via %s", label)
             await self._humanize_warmup(page)
             await self._tick_age_groups(page)
             # A short idle after the checkbox interactions, plus a couple of
             # mouse moves, gives reCAPTCHA v3 a few more behavior samples.
             await self._post_form_jitter(page)
-            search_results, aura_context = await self._submit_search(page)
+            # Manual captcha solve only makes sense on the host attempt (an
+            # operator watching one window), never mid proxy-chain.
+            search_results, aura_context = await self._submit_search(
+                page, search_retries=search_retries, allow_manual=not is_proxy
+            )
 
             if not search_results:
                 self.logger.error(
-                    "RI search returned no results — possible reCAPTCHA block or response shape change. Aborting."
+                    "RI search via %s returned no results — possible reCAPTCHA block or response shape change.",
+                    label,
                 )
-                return
-            if not aura_context:
+            elif not aura_context:
                 self.logger.error(
-                    "RI search captured but aura.context could not be extracted — cannot fetch detail pages."
+                    "RI search via %s captured but aura.context could not be extracted — cannot fetch details.",
+                    label,
                 )
-                return
-
-            total = len(search_results)
-            if self.max_providers and self.max_providers < total:
-                self.logger.info(
-                    "RI search: limiting %d → %d providers (max_providers)",
-                    total,
-                    self.max_providers,
-                )
-                search_results = search_results[: self.max_providers]
+            else:
+                search_ok = True
                 total = len(search_results)
-
-            self.logger.info("RI search succeeded: %d providers", total)
-
-            detail_url = "https://earlylearningprograms.dhs.ri.gov" + AURA_ENDPOINT_PATH
-            for idx, summary in enumerate(search_results, start=1):
-                pid = summary.get("id")
-                detail = None
-                if pid:
-                    detail = await self._fetch_detail(page, detail_url, pid, aura_context)
-                else:
-                    self.logger.warning(
-                        "Search result missing id; yielding summary-only item: %r",
-                        summary.get("accName"),
+                if self.max_providers and self.max_providers < total:
+                    self.logger.info(
+                        "RI search: limiting %d → %d providers (max_providers)",
+                        total,
+                        self.max_providers,
                     )
+                    search_results = search_results[: self.max_providers]
+                    total = len(search_results)
 
-                yield build_item(summary, detail)
+                self.logger.info("RI search via %s succeeded: %d providers", label, total)
 
-                if idx == 1 or idx % 25 == 0 or idx == total:
-                    self.logger.info("RI detail progress: %d/%d", idx, total)
+                detail_url = "https://earlylearningprograms.dhs.ri.gov" + AURA_ENDPOINT_PATH
+                for idx, summary in enumerate(search_results, start=1):
+                    pid = summary.get("id")
+                    detail = None
+                    if pid:
+                        detail = await self._fetch_detail(page, detail_url, pid, aura_context)
+                    else:
+                        self.logger.warning(
+                            "Search result missing id; yielding summary-only item: %r",
+                            summary.get("accName"),
+                        )
 
-                # Stay polite between detail calls.
-                if idx < total:
-                    await asyncio.sleep(random.uniform(self.detail_delay_min, self.detail_delay_max))
+                    yield build_item(summary, detail)
+
+                    if idx == 1 or idx % 25 == 0 or idx == total:
+                        self.logger.info("RI detail progress: %d/%d", idx, total)
+
+                    # Stay polite between detail calls.
+                    if idx < total:
+                        await asyncio.sleep(random.uniform(self.detail_delay_min, self.detail_delay_max))
         finally:
+            await self._teardown(page, close_context=is_proxy)
+
+        # Failed egress: fall back to the next attempt in the chain (the next
+        # Eastern proxy, or finally the host). Nothing left ⇒ give up loudly.
+        if not search_ok and not self.audit:
+            next_request = self._build_attempt_request(attempt_index + 1)
+            if next_request is not None:
+                self.logger.warning("RI: egress via %s failed; falling back to next egress point", label)
+                yield next_request
+            else:
+                self.logger.error("RI: all egress attempts exhausted (proxies + host) — giving up with no data.")
+
+    async def _teardown(self, page, close_context):
+        """Close the page (always) and, for a per-proxy attempt, its context.
+
+        Proxy attempts run in their own named context; closing it frees the
+        browser context and its proxy connections and lets scrapy-playwright's
+        on-close bookkeeping reclaim the slot. The host attempt uses the shared
+        startup "default" context, which we leave for the handler to close.
+        """
+        context = page.context if close_context else None
+        try:
             await page.close()
+        except Exception as e:
+            self.logger.debug("RI: page.close failed: %s", e)
+        if context is not None:
+            try:
+                await context.close()
+            except Exception as e:
+                self.logger.debug("RI: context.close failed: %s", e)
 
     async def _dump_fingerprint(self, page):
         """Print the bot-detection signals reCAPTCHA v3 cares about.
@@ -896,7 +1157,7 @@ class RhodeIslandSpider(scrapy.Spider):
                 "Could not tick any ageGroup checkboxes — search would fail the 'at least one criteria' validation."
             )
 
-    async def _submit_search(self, page):
+    async def _submit_search(self, page, search_retries=None, allow_manual=True):
         """Click Search, retrying on v3-failure responses, and return
         (searchResults, aura_context).
 
@@ -909,12 +1170,17 @@ class RhodeIslandSpider(scrapy.Spider):
         Search again would invoke v2 (which requires a manual solve),
         not a fresh v3 token.
 
+        `search_retries` overrides `self.search_retries` for this call — the
+        egress chain gives each proxy attempt a smaller budget (fail fast) than
+        the host fallback. Defaults to `self.search_retries`.
+
         On the final v3 failure, if `manual_captcha` is enabled we fall
         through to the v2 wait loop so the operator can solve it by hand.
         """
         aura_context = None
         v3_failed = False
-        max_attempts = self.search_retries + 1
+        retries = self.search_retries if search_retries is None else int(search_retries)
+        max_attempts = retries + 1
         for attempt in range(1, max_attempts + 1):
             results, aura_context, v3_failed = await self._click_and_capture(page)
             if results:
@@ -937,7 +1203,7 @@ class RhodeIslandSpider(scrapy.Spider):
             )
             await self._reset_and_warm_up(page)
 
-        if v3_failed and self.manual_captcha:
+        if v3_failed and self.manual_captcha and allow_manual:
             self.logger.warning("=" * 70)
             self.logger.warning(
                 "reCAPTCHA v3 failed after %d attempts. SOLVE THE VISIBLE",
