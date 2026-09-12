@@ -6,8 +6,37 @@ from provider_scrape.proxy_pool import (
     load_env_file,
     load_pool,
     parse_endpoints,
+    playwright_proxy,
     redact,
 )
+
+
+def test_entries_pairs_ids_with_urls_in_order():
+    pool = ProxyPool(["http://a:1", "http://b:2"], ["p0", "p1"])
+    assert pool.entries() == [("p0", "http://a:1"), ("p1", "http://b:2")]
+
+
+def test_playwright_proxy_splits_server_and_credentials():
+    assert playwright_proxy("http://user:pass@1.2.3.4:8080") == {
+        "server": "http://1.2.3.4:8080",
+        "username": "user",
+        "password": "pass",
+    }
+
+
+def test_playwright_proxy_url_decodes_credentials():
+    # build_pool percent-encodes creds into the URL; playwright wants them raw.
+    proxy = playwright_proxy("http://us%40er:p%40ss@1.2.3.4:8080")
+    assert proxy["username"] == "us@er"
+    assert proxy["password"] == "p@ss"
+
+
+def test_playwright_proxy_without_credentials():
+    assert playwright_proxy("http://1.2.3.4:8080") == {"server": "http://1.2.3.4:8080"}
+
+
+def test_playwright_proxy_returns_none_without_host():
+    assert playwright_proxy("not-a-url") is None
 
 
 def test_parse_endpoints_splits_on_comma_and_whitespace():

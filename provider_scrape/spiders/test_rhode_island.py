@@ -5,22 +5,28 @@ import pytest
 from scrapy.http import HtmlResponse, Request
 
 from provider_scrape.items import InspectionItem, ProviderItem
+from provider_scrape.proxy_pool import ProxyPool
+from provider_scrape.spiders import rhode_island as ri_mod
 from provider_scrape.spiders.rhode_island import (
     SEARCH_PAGE_URL,
     RhodeIslandSpider,
     _empty_to_none,
     _extract_form_field,
+    _proxy_host,
     _summarize_compliance,
     build_detail_message,
     build_detail_post_body,
     build_inspections,
     build_item,
+    classify_eastern,
     extract_detail_payload,
     extract_search_results,
     format_age_group_capacity,
     format_ages_served,
     format_availability,
     format_hours,
+    is_eastern_timezone,
+    select_eastern_proxies,
 )
 
 # ---- Sample search summary (real shape from providerSearch response) ----
@@ -802,7 +808,9 @@ async def test_parse_search_page_full_flow(spider):
     assert items[1]["inspections"] == []
 
     spider._tick_age_groups.assert_awaited_once_with(page)
-    spider._submit_search.assert_awaited_once_with(page)
+    # search_retries falls back to self.search_retries (2) when meta omits it;
+    # a direct (non-proxy) attempt allows the manual-captcha fallthrough.
+    spider._submit_search.assert_awaited_once_with(page, search_retries=2, allow_manual=True)
     assert spider._fetch_detail.await_count == 2
     page.close.assert_awaited_once()
 
@@ -1001,3 +1009,295 @@ def test_spider_search_retries_default_bumped():
     # Default retry budget was raised (2 -> 5) so the marginal v3 score clears
     # within the loop more reliably.
     assert RhodeIslandSpider().search_retries == 5
+
+
+# ---- Eastern-proxy egress selection ----
+
+
+def test_is_eastern_timezone_accepts_us_eastern_names():
+    assert is_eastern_timezone("America/New_York")
+    assert is_eastern_timezone("America/Detroit")
+    assert is_eastern_timezone("America/Indiana/Indianapolis")
+
+
+def test_is_eastern_timezone_rejects_other_us_zones():
+    assert not is_eastern_timezone("America/Los_Angeles")
+    assert not is_eastern_timezone("America/Chicago")
+    assert not is_eastern_timezone("America/Denver")
+
+
+def test_is_eastern_timezone_handles_garbage_and_empty():
+    assert not is_eastern_timezone("")
+    assert not is_eastern_timezone(None)
+    assert not is_eastern_timezone("Not/A/Zone")
+
+
+def test_classify_eastern_accepts_us_eastern_success():
+    geo = {"status": "success", "country": "United States", "timezone": "America/New_York"}
+    assert classify_eastern(geo)
+
+
+def test_classify_eastern_rejects_canada_even_if_eastern_offset():
+    # America/Toronto shares New York's offset but is Canada — excluded so the
+    # America/New_York browser clock isn't paired with a non-US IP geo.
+    geo = {"status": "success", "country": "Canada", "timezone": "America/Toronto"}
+    assert not classify_eastern(geo)
+
+
+def test_classify_eastern_rejects_non_eastern_us():
+    geo = {"status": "success", "country": "United States", "timezone": "America/Los_Angeles"}
+    assert not classify_eastern(geo)
+
+
+def test_classify_eastern_rejects_failed_or_missing_probe():
+    assert not classify_eastern(None)
+    assert not classify_eastern({"status": "fail", "message": "private range"})
+
+
+def test_proxy_host_never_leaks_credentials():
+    host = _proxy_host("http://user:secret@1.2.3.4:8080")
+    assert host == "1.2.3.4:8080"
+    assert "secret" not in host and "user" not in host
+
+
+def test_select_eastern_proxies_keeps_only_eastern_in_pool_order():
+    pool = ProxyPool(
+        [
+            "http://u:p@1.1.1.1:80",  # west
+            "http://u:p@2.2.2.2:81",  # east
+            "http://u:p@3.3.3.3:82",  # dead
+            "http://u:p@4.4.4.4:83",  # east
+        ],
+        ["p0", "p1", "p2", "p3"],
+    )
+    geos = {
+        "http://u:p@1.1.1.1:80": {"status": "success", "country": "United States", "timezone": "America/Los_Angeles"},
+        "http://u:p@2.2.2.2:81": {"status": "success", "country": "United States", "timezone": "America/New_York"},
+        "http://u:p@3.3.3.3:82": None,
+        "http://u:p@4.4.4.4:83": {"status": "success", "country": "United States", "timezone": "America/New_York"},
+    }
+
+    def fake_probe(url, timeout):
+        return geos[url]
+
+    eastern = select_eastern_proxies(pool, probe=fake_probe)
+    assert [pid for pid, _url, _geo in eastern] == ["p1", "p3"]
+    assert [url for _pid, url, _geo in eastern] == ["http://u:p@2.2.2.2:81", "http://u:p@4.4.4.4:83"]
+
+
+# ---- Egress attempt chain ----
+
+
+def test_build_attempts_host_only_when_no_pool():
+    spider = RhodeIslandSpider(proxies="off")
+    assert spider.proxy_pool is None
+    attempts = spider._build_attempts()
+    assert len(attempts) == 1
+    host = attempts[0]
+    assert host["is_proxy"] is False
+    assert host["context"] == "default"
+    assert host["context_kwargs"] is None
+    assert host["search_retries"] == spider.search_retries
+
+
+def test_build_attempts_eastern_proxies_first_then_host(monkeypatch):
+    spider = RhodeIslandSpider(
+        proxies="1.1.1.1:80,2.2.2.2:81",
+        proxy_env="/nonexistent.env",
+        proxy_search_retries=1,
+    )
+    # Pretend both configured proxies probe as Eastern.
+    fake_eastern = [
+        ("webshare-0", "http://user:pw@1.1.1.1:80", {"timezone": "America/New_York"}),
+        ("webshare-1", "http://user:pw@2.2.2.2:81", {"timezone": "America/New_York"}),
+    ]
+    monkeypatch.setattr(ri_mod, "select_eastern_proxies", lambda *a, **k: fake_eastern)
+
+    attempts = spider._build_attempts()
+    assert len(attempts) == 3
+    assert [a["is_proxy"] for a in attempts] == [True, True, False]
+    assert [a["context"] for a in attempts] == ["ri_egress_0", "ri_egress_1", "default"]
+    # Proxy attempts get the short per-proxy budget; host keeps the full one.
+    assert attempts[0]["search_retries"] == 1
+    assert attempts[2]["search_retries"] == spider.search_retries
+    # Proxy context carries the egress proxy + shared fingerprint args.
+    pk = attempts[0]["context_kwargs"]
+    assert pk["proxy"] == {"server": "http://1.1.1.1:80", "username": "user", "password": "pw"}
+    assert pk["timezone_id"] == "America/New_York"
+    # Credentials never appear in the log label.
+    assert attempts[0]["label"] == "proxy webshare-0 (1.1.1.1:80)"
+    assert "pw" not in attempts[0]["label"]
+
+
+def test_build_attempts_respects_max_proxy_attempts(monkeypatch):
+    spider = RhodeIslandSpider(
+        proxies="1.1.1.1:80,2.2.2.2:81",
+        proxy_env="/nonexistent.env",
+        max_proxy_attempts=1,
+    )
+    fake_eastern = [
+        ("webshare-0", "http://user:pw@1.1.1.1:80", {}),
+        ("webshare-1", "http://user:pw@2.2.2.2:81", {}),
+    ]
+    monkeypatch.setattr(ri_mod, "select_eastern_proxies", lambda *a, **k: fake_eastern)
+    attempts = spider._build_attempts()
+    # capped at 1 proxy + host
+    assert [a["is_proxy"] for a in attempts] == [True, False]
+
+
+def test_build_attempts_audit_is_host_only(monkeypatch):
+    spider = RhodeIslandSpider(
+        proxies="1.1.1.1:80",
+        proxy_env="/nonexistent.env",
+        audit="1",
+    )
+    # select should never be consulted in audit mode.
+    monkeypatch.setattr(
+        ri_mod,
+        "select_eastern_proxies",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("probed in audit mode")),
+    )
+    attempts = spider._build_attempts()
+    assert len(attempts) == 1
+    assert attempts[0]["is_proxy"] is False
+
+
+def test_build_attempt_request_meta_for_proxy_and_host():
+    spider = RhodeIslandSpider(proxies="off")
+    spider._attempts = [
+        {
+            "label": "proxy webshare-0 (1.1.1.1:80)",
+            "context": "ri_egress_0",
+            "context_kwargs": {**ri_mod._BASE_CONTEXT_ARGS, "proxy": {"server": "http://1.1.1.1:80"}},
+            "search_retries": 1,
+            "is_proxy": True,
+        },
+        {
+            "label": "host (direct)",
+            "context": "default",
+            "context_kwargs": None,
+            "search_retries": 5,
+            "is_proxy": False,
+        },
+    ]
+    proxy_req = spider._build_attempt_request(0)
+    assert proxy_req.meta["playwright_context"] == "ri_egress_0"
+    assert proxy_req.meta["playwright_context_kwargs"]["proxy"] == {"server": "http://1.1.1.1:80"}
+    assert proxy_req.meta["ri_is_proxy"] is True
+    assert proxy_req.meta["ri_search_retries"] == 1
+    assert proxy_req.dont_filter is True
+
+    host_req = spider._build_attempt_request(1)
+    assert host_req.meta["playwright_context"] == "default"
+    assert "playwright_context_kwargs" not in host_req.meta
+    assert host_req.meta["ri_is_proxy"] is False
+
+    # Past the end of the chain → no more requests.
+    assert spider._build_attempt_request(2) is None
+
+
+def _make_attempt_response(fake_page, index, is_proxy, search_retries=1):
+    request = Request(
+        url=SEARCH_PAGE_URL,
+        meta={
+            "playwright_page": fake_page,
+            "ri_attempt_index": index,
+            "ri_is_proxy": is_proxy,
+            "ri_search_retries": search_retries,
+            "ri_egress_label": "proxy webshare-0 (1.1.1.1:80)" if is_proxy else "host (direct)",
+        },
+        dont_filter=True,
+    )
+    return HtmlResponse(url=SEARCH_PAGE_URL, request=request, body=b"<html></html>", encoding="utf-8")
+
+
+@pytest.mark.asyncio
+async def test_parse_search_page_failed_proxy_falls_back_to_next_attempt(spider):
+    """A failed proxy attempt tears down its context and yields the next
+    egress request instead of any items."""
+    page = MagicMock()
+    page.close = AsyncMock()
+    page.context.close = AsyncMock()
+
+    spider._attempts = [
+        {"label": "proxy", "context": "ri_egress_0", "context_kwargs": {}, "search_retries": 1, "is_proxy": True},
+        {
+            "label": "host (direct)",
+            "context": "default",
+            "context_kwargs": None,
+            "search_retries": 5,
+            "is_proxy": False,
+        },
+    ]
+    spider._tick_age_groups = AsyncMock()
+    spider._submit_search = AsyncMock(return_value=([], None))
+    spider._fetch_detail = AsyncMock()
+
+    response = _make_attempt_response(page, index=0, is_proxy=True)
+    out = await _collect(spider.parse_search_page(response))
+
+    assert len(out) == 1
+    next_req = out[0]
+    assert isinstance(next_req, Request)
+    assert next_req.meta["playwright_context"] == "default"
+    assert next_req.meta["ri_attempt_index"] == 1
+    spider._fetch_detail.assert_not_awaited()
+    # Proxy attempt closes both the page and its dedicated context.
+    page.close.assert_awaited_once()
+    page.context.close.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_parse_search_page_host_failure_gives_up_without_next(spider):
+    page = MagicMock()
+    page.close = AsyncMock()
+
+    spider._attempts = [
+        {
+            "label": "host (direct)",
+            "context": "default",
+            "context_kwargs": None,
+            "search_retries": 5,
+            "is_proxy": False,
+        },
+    ]
+    spider._tick_age_groups = AsyncMock()
+    spider._submit_search = AsyncMock(return_value=([], None))
+
+    response = _make_attempt_response(page, index=0, is_proxy=False)
+    out = await _collect(spider.parse_search_page(response))
+
+    assert out == []
+    page.close.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_parse_search_page_proxy_success_yields_items_no_fallback(spider):
+    """A proxy attempt that succeeds yields items and does NOT fall back."""
+    page = MagicMock()
+    page.close = AsyncMock()
+    page.context.close = AsyncMock()
+
+    spider._attempts = [
+        {"label": "proxy", "context": "ri_egress_0", "context_kwargs": {}, "search_retries": 1, "is_proxy": True},
+        {
+            "label": "host (direct)",
+            "context": "default",
+            "context_kwargs": None,
+            "search_retries": 5,
+            "is_proxy": False,
+        },
+    ]
+    spider._tick_age_groups = AsyncMock()
+    spider._submit_search = AsyncMock(return_value=([CHILD_INC_SUMMARY, QUEST_SUMMARY], "ctx"))
+    spider._fetch_detail = AsyncMock(side_effect=[CHILD_UNIVERSITY_DETAIL, None])
+
+    response = _make_attempt_response(page, index=0, is_proxy=True)
+    out = await _collect(spider.parse_search_page(response))
+
+    assert len(out) == 2
+    assert all(isinstance(o, ProviderItem) for o in out)
+    # is_proxy attempt passes allow_manual=False to _submit_search.
+    _args, kwargs = spider._submit_search.await_args
+    assert kwargs["allow_manual"] is False
+    page.context.close.assert_awaited_once()
