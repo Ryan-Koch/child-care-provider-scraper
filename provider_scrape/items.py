@@ -1018,5 +1018,23 @@ class ProviderItem(scrapy.Item):
     la_serious_injuries_url = scrapy.Field()  # external; often empty
     la_performance_report_url = scrapy.Field()  # site performance-profile PDF
 
+    # Nebraska specific fields. Two public sources merged in-memory
+    # (nrrs.ne.gov -- the spine, cookieless JSON; stepuptoquality.ne.gov --
+    # the quality overlay, HTML + an embedded `searchResults` JS blob). See
+    # tasks/nebraska/nebraska_plan.md. NRRS publishes a license number on
+    # only ~24% of records, so matching is tiered (license, then exact
+    # name+ZIP) rather than license-only (Sec 3 D-1); unmatched Step Up
+    # records are emitted standalone (D-2, `ne_stepup_only`).
+    ne_resource_id = scrapy.Field()  # NRRS resource id (dedupe/provenance)
+    ne_from_licensure = scrapy.Field()  # bool: NRRS is_from_licensure
+    ne_step_rating = scrapy.Field()  # Step Up to Quality rating, 1-5 (quality rating)
+    ne_step_participating = scrapy.Field()  # bool: carries any Step Up data
+    ne_stepup_only = scrapy.Field()  # bool: Step Up record with no NRRS match
+    ne_stepup_url = scrapy.Field()  # Step Up detail URL (when matched)
+    ne_full_time_staff = scrapy.Field()  # int (Step Up)
+    ne_part_time_staff = scrapy.Field()  # int (Step Up)
+    ne_serves_special_needs = scrapy.Field()  # bool (Step Up)
+    ne_match_method = scrapy.Field()  # "license" | "name_zip" | "nrrs_only" | "stepup_only"
+
     # This will hold the list of inspections.
     inspections = scrapy.Field()

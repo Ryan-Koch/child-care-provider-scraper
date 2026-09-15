@@ -33,6 +33,7 @@ To regenerate: `.venv/bin/python scripts/generate_sources.py`.
 | Minnesota | https://licensinglookup.dhs.state.mn.us/ |
 | Mississippi | https://mdhs.provider.webapps.ms.gov/ |
 | Montana | https://mtdphhs.my.site.com/ |
+| Nebraska | https://nrrs.ne.gov/<br>https://stepuptoquality.ne.gov/ |
 | Nevada | https://nvdpbh.aithent.com/<br>https://analysis.windows.net/ |
 | New Jersey | https://childcarenj.gov/ |
 | New Mexico | https://childcare.ececd.nm.gov/ |

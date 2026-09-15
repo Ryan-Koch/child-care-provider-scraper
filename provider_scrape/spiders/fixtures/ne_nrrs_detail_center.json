@@ -1,0 +1,96 @@
+{
+  "id": 15450,
+  "name1": "4 VIEWS ACADEMY",
+  "name2": "",
+  "url": "",
+  "email": "",
+  "contact_person": "",
+  "contact_title": "",
+  "license_no": "CCC9237",
+  "is_from_licensure": true,
+  "addressPhysical": {
+    "address1": "4330 CORNHUSKER HWY",
+    "address2": "",
+    "city": "Lincoln",
+    "state": "NE",
+    "zip": "68504",
+    "address_type": "physical",
+    "relation_type": "App\\Resource",
+    "relation_id": 15450,
+    "modificationDetails": null
+  },
+  "addressMailing": {
+    "address1": "4330 CORNHUSKER HWY",
+    "address2": "",
+    "city": "Lincoln",
+    "state": "NE",
+    "zip": "68504",
+    "address_type": "mailing",
+    "relation_type": "App\\Resource",
+    "relation_id": 15450,
+    "modificationDetails": null
+  },
+  "phoneNumberPrimary": {
+    "phone_number": "4024640174",
+    "phone_type": "primary",
+    "relation_id": 15450,
+    "modifications": [],
+    "modificationDetails": null
+  },
+  "categoryFieldResponses": {
+    "16": {
+      "response": {
+        "lower": 6,
+        "upper": 13
+      },
+      "categoryField": {
+        "label": "Ages Served"
+      }
+    },
+    "20": {
+      "response": {
+        "Monday": {
+          "open": "6:00 am",
+          "close": "6:00 pm"
+        },
+        "Tuesday": {
+          "open": "6:00 am",
+          "close": "6:00 pm"
+        },
+        "Wednesday": {
+          "open": "6:00 am",
+          "close": "6:00 pm"
+        },
+        "Thursday": {
+          "open": "6:00 am",
+          "close": "6:00 pm"
+        },
+        "Friday": {
+          "open": "6:00 am",
+          "close": "6:00 pm"
+        }
+      },
+      "categoryField": {
+        "label": "Hours"
+      }
+    }
+  },
+  "resourceCategoryCounty": [
+    {
+      "county_number": 2,
+      "is_from_licensure": true,
+      "category": {
+        "id": 13,
+        "category_name": "Child Care Center"
+      }
+    },
+    {
+      "county_number": 2,
+      "is_from_licensure": true,
+      "category": {
+        "id": 12,
+        "category_name": "Child Care"
+      }
+    }
+  ]
+}

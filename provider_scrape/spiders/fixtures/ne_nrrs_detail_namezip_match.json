@@ -1,0 +1,59 @@
+{
+  "id": 15076,
+  "name1": "Trinity Child Care At Village Gardens",
+  "name2": "",
+  "url": "",
+  "email": "",
+  "contact_person": "",
+  "contact_title": "",
+  "license_no": null,
+  "is_from_licensure": true,
+  "addressPhysical": {
+    "address1": "7130 KENTWELL LANE",
+    "address2": "",
+    "city": "Lincoln",
+    "state": "NE",
+    "zip": "685160000",
+    "address_type": "physical",
+    "relation_type": "App\\Resource",
+    "relation_id": 15076,
+    "modificationDetails": null
+  },
+  "addressMailing": {
+    "address1": "7130 KENTWELL LANE",
+    "address2": "",
+    "city": "Lincoln",
+    "state": "NE",
+    "zip": "685160000",
+    "address_type": "mailing",
+    "relation_type": "App\\Resource",
+    "relation_id": 15076,
+    "modificationDetails": null
+  },
+  "phoneNumberPrimary": {
+    "phone_number": "4024352946",
+    "phone_type": "primary",
+    "relation_id": 15076,
+    "modifications": [],
+    "modificationDetails": null
+  },
+  "categoryFieldResponses": {},
+  "resourceCategoryCounty": [
+    {
+      "county_number": 2,
+      "is_from_licensure": false,
+      "category": {
+        "id": 13,
+        "category_name": "Child Care Center"
+      }
+    },
+    {
+      "county_number": 2,
+      "is_from_licensure": false,
+      "category": {
+        "id": 12,
+        "category_name": "Child Care"
+      }
+    }
+  ]
+}
