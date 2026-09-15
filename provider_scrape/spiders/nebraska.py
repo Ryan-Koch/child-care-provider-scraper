@@ -134,21 +134,38 @@ PARENT_CHILD_CARE_CATEGORY_ID = 12
 NON_PROVIDER_SUBCATEGORIES = {"Child Care Locators"}
 
 # The known child-care provider vocabulary (Sec 5.1's "Observed provider
-# sub-category vocabulary" list; the trailing-space variant is matched after
-# .strip()). Live-verified (2026-09-15, resource 9670: "Sarpy Community
-# YMCA") that some NRRS resources are multi-service community agencies whose
-# resourceCategoryCounty rows mix several unrelated registry categories
-# (e.g. "Social Development", "Recreation-Children/Youth") in with a
-# genuine "Child Care Center" row -- when at least one of a record's
-# candidate sub-categories is in this known vocabulary, the tie-break below
-# restricts the pick to that subset first, so a real child-care category
-# is never shadowed by an unrelated one that merely happened to sort first.
+# sub-category vocabulary" list, extended with the further child-care
+# sub-categories a full run surfaced -- 2026-09-15; the trailing-space
+# variant is matched after .strip()). Live-verified (resource 9670: "Sarpy
+# Community YMCA") that some NRRS resources are multi-service community
+# agencies whose resourceCategoryCounty rows mix several unrelated registry
+# categories (e.g. "Social Development", "Recreation-Children/Youth") in
+# with a genuine child-care row. This set does two jobs (both in
+# derive_provider_type): (1) tie-break -- when at least one of a record's
+# candidate sub-categories is in it, the pick is restricted to that subset
+# first, so a real child-care category is never shadowed by an unrelated one
+# that merely sorted first; (2) non-provider gate -- a record with no license
+# and no sub-category in this set is a social-service/referral agency that
+# merely appears in the category-12 results (a 211 resource list, an Adult
+# Education/GED program, etc.) and is skipped, generalizing the plan's
+# original single-entry "Child Care Locators" denylist to a provider
+# allowlist (Ryan 2026-09-15). Every entry here also maps to a
+# facility_category bucket in normalization.py (verified by
+# test_facility_category_mapping_for_nebraska_provider_types).
 KNOWN_CHILDCARE_SUBCATEGORIES = {
     "Child Care Center",
+    "Provisional Child Care Center",
     "Family Child Care Home I",
     "Family Child Care Home II",
     "Provisional Family Child Care Home I",
     "Provisional Family Child Care Home II",
+    "Preschool",
+    "Provisional Preschool",
+    "Private School",
+    "Public School",
+    "Head Start",
+    "Child Care for Children with Disabilities",
+    "In Home Provider",
 }
 
 # categoryFieldResponses field ids used (Sec 5, field catalog verified
@@ -292,6 +309,14 @@ NE_COUNTY_NAMES = {
     93: "Hooker",
 }
 
+# NRRS county_number values that are not real counties but sentinels for
+# "statewide / unknown / all counties" (99 seen live on statewide referral-ish
+# rows, e.g. resources 9697/9851/9822). They carry no locatable county, so
+# derive_county drops them silently rather than logging an "unmapped county
+# number" warning for a value that is working as intended. 0 is included
+# defensively as the other conventional no-value sentinel.
+NE_COUNTY_SENTINELS = {0, 99}
+
 
 # --------------------------------------------------------------------------- #
 # Pure helpers (unit tested directly)
@@ -414,19 +439,32 @@ def derive_provider_type(license_number, resource_category_county, logger=None, 
         if row.get("is_from_licensure"):
             licensure_names.append(name)
 
-    if not provider_names:
-        return None, True  # every non-parent sub-category is a known referral/registry entry
-
     distinct = list(dict.fromkeys(licensure_names or provider_names))
+    if not distinct:
+        # every non-parent sub-category is an explicit referral/registry entry
+        # (e.g. "Child Care Locators") -- a non-provider record, skip it.
+        return None, True
+
     # Restrict to the known child-care vocabulary first when at least one
     # candidate is in it (e.g. resource 9670's ['Social Development',
     # 'Recreation', ..., 'Child Care Center'] resolves to 'Child Care
     # Center', not the unrelated registry category that happened to sort
-    # first) -- only fall back to the full candidate list when none of them
-    # are a recognized child-care term.
+    # first).
     known = [name for name in distinct if name in KNOWN_CHILDCARE_SUBCATEGORIES]
     if known:
         distinct = known
+    elif not (license_number and str(license_number).strip()):
+        # No recognized child-care sub-category AND no license -> a
+        # social-service / referral agency (a 211 resource list, an Adult
+        # Education/GED or Parenting Education program, etc.) that merely
+        # appears in the category-12 results. Not a provider -- skip it
+        # (Sec 5.1, generalized from the Child Care Locators denylist to the
+        # KNOWN_CHILDCARE_SUBCATEGORIES allowlist; Ryan 2026-09-15). A
+        # licensed record is always kept even when its only sub-category is
+        # outside the vocabulary (a license is authoritative evidence of a
+        # provider).
+        return None, True
+
     if len(distinct) > 1 and logger:
         logger.warning(
             "Nebraska: resource %s has ambiguous provider sub-categories %s -- using %r",
@@ -473,7 +511,7 @@ def derive_county(resource_category_county, provider_type, county_names, logger=
         if _strip_provisional(name) != target:
             continue
         number = row.get("county_number")
-        if number is not None:
+        if number is not None and number not in NE_COUNTY_SENTINELS:
             numbers.add(number)
     if len(numbers) != 1:
         if len(numbers) > 1 and logger:
@@ -1196,7 +1234,7 @@ class NebraskaSpider(scrapy.Spider):
         if is_non_provider:
             self.nrrs_skipped_non_provider += 1
             self.logger.info(
-                "Nebraska: resource %s (%r) is a non-provider locator/registry record -- skipped",
+                "Nebraska: resource %s (%r) is a non-provider (referral/registry or social-service) record -- skipped",
                 resource_id,
                 summary.get("name1"),
             )

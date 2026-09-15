@@ -591,6 +591,16 @@ FACILITY_CATEGORY_BUCKETS = {
         # Head Start marker -- facility-based institutional care, matching
         # the "Head Start Site" / "GA Head Start" precedents above.
         "Head Start",
+        # Nebraska (nrrs.ne.gov) resourceCategoryCounty sub-categories seen in
+        # a full run beyond the license-prefix vocabulary: "Provisional Child
+        # Care Center" is the provisional-status flavor of "Child Care Center"
+        # (cf. the "Provisional Family Child Care Home" -> family_home entries
+        # below), "Provisional Preschool" the same for "Preschool" (already
+        # above), and "Child Care for Children with Disabilities" is
+        # specialized facility-based care -> center (Ryan 2026-09-15).
+        "Provisional Child Care Center",
+        "Provisional Preschool",
+        "Child Care for Children with Disabilities",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME",
@@ -680,6 +690,9 @@ FACILITY_CATEGORY_BUCKETS = {
         "Family Child Care Home II",
         "Provisional Family Child Care Home I",
         "Provisional Family Child Care Home II",
+        # Nebraska (nrrs.ne.gov) sub-category for care delivered in the
+        # provider's own home -> family_home (Ryan 2026-09-15).
+        "In Home Provider",
     ],
     "group_home": [
         "GFDC",

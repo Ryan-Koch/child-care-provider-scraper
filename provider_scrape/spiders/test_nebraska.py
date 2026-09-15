@@ -237,6 +237,95 @@ def test_derive_provider_type_locator_is_skipped():
     assert is_non_provider is True
 
 
+def test_derive_provider_type_provisional_child_care_center_is_kept():
+    # Full-run miss (2026-09-15): "Provisional Child Care Center" is the
+    # provisional-status flavor of a center and must be kept + mapped, not
+    # dropped to facility_category "other".
+    rcc = [
+        {"is_from_licensure": True, "category": {"id": 20, "category_name": "Provisional Child Care Center"}},
+        {"is_from_licensure": True, "category": {"id": 21, "category_name": "Provisional Preschool"}},
+        {"is_from_licensure": False, "category": {"id": 30, "category_name": "Education"}},
+        {"is_from_licensure": False, "category": {"id": 12, "category_name": "Child Care"}},
+    ]
+    provider_type, is_non_provider = derive_provider_type(None, rcc, resource_id=46581)
+    assert provider_type == "Provisional Child Care Center"
+    assert is_non_provider is False
+    assert norm.facility_category_from_type(provider_type) == "center"
+
+
+def test_derive_provider_type_prefers_buried_preschool_over_non_childcare():
+    # Resource 69082 shape: a real child-care term ("Preschool") sits after
+    # non-child-care rows -- the tie-break must resolve to it, not "Education".
+    rcc = [
+        {"is_from_licensure": False, "category": {"id": 30, "category_name": "Education"}},
+        {"is_from_licensure": False, "category": {"id": 31, "category_name": "Family Resource and Support"}},
+        {"is_from_licensure": False, "category": {"id": 22, "category_name": "Preschool"}},
+        {"is_from_licensure": False, "category": {"id": 12, "category_name": "Child Care"}},
+    ]
+    provider_type, is_non_provider = derive_provider_type(None, rcc, resource_id=69082)
+    assert provider_type == "Preschool"
+    assert is_non_provider is False
+    assert norm.facility_category_from_type(provider_type) == "center"
+
+
+def test_derive_provider_type_in_home_provider_kept_as_family_home():
+    # Resource 25063 shape: "In Home Provider" is in-home child care -> kept
+    # and mapped to family_home (Ryan 2026-09-15), even unlicensed.
+    rcc = [
+        {"is_from_licensure": False, "category": {"id": 900, "category_name": "In Home Provider"}},
+        {"is_from_licensure": False, "category": {"id": 901, "category_name": "Respite Services"}},
+        {"is_from_licensure": False, "category": {"id": 12, "category_name": "Child Care"}},
+    ]
+    provider_type, is_non_provider = derive_provider_type(None, rcc, resource_id=25063)
+    assert provider_type == "In Home Provider"
+    assert is_non_provider is False
+    assert norm.facility_category_from_type(provider_type) == "family_home"
+
+
+def test_derive_provider_type_child_care_for_disabilities_kept_as_center():
+    rcc = [
+        {
+            "is_from_licensure": False,
+            "category": {"id": 902, "category_name": "Child Care for Children with Disabilities"},
+        },
+        {"is_from_licensure": False, "category": {"id": 903, "category_name": "Disability Service"}},
+        {"is_from_licensure": False, "category": {"id": 12, "category_name": "Child Care"}},
+    ]
+    provider_type, is_non_provider = derive_provider_type(None, rcc, resource_id=75000)
+    assert provider_type == "Child Care for Children with Disabilities"
+    assert is_non_provider is False
+    assert norm.facility_category_from_type(provider_type) == "center"
+
+
+def test_derive_provider_type_social_service_agency_no_license_is_skipped():
+    # Resource 34999 shape (trimmed): a 211-style multi-service agency whose
+    # category-12 sub-categories are ALL non-child-care and which carries no
+    # license -> skipped as a non-provider (Sec 5.1, generalized allowlist).
+    rcc = [
+        {"is_from_licensure": False, "category": {"id": 40, "category_name": "Emergency"}},
+        {"is_from_licensure": False, "category": {"id": 41, "category_name": "Transportation"}},
+        {"is_from_licensure": False, "category": {"id": 42, "category_name": "Social Development"}},
+        {"is_from_licensure": False, "category": {"id": 43, "category_name": "Housing"}},
+        {"is_from_licensure": False, "category": {"id": 12, "category_name": "Child Care"}},
+    ]
+    provider_type, is_non_provider = derive_provider_type(None, rcc, resource_id=34999)
+    assert provider_type is None
+    assert is_non_provider is True
+
+
+def test_derive_provider_type_licensed_non_vocab_subcategory_is_kept():
+    # A licensed record whose only sub-category is outside the vocabulary is
+    # still a provider (the license is authoritative) -- kept, not skipped,
+    # even though it maps to "other".
+    rcc = [
+        {"is_from_licensure": True, "category": {"id": 44, "category_name": "Respite Services"}},
+        {"is_from_licensure": True, "category": {"id": 12, "category_name": "Child Care"}},
+    ]
+    provider_type, is_non_provider = derive_provider_type("ZZZ100", rcc, resource_id=55555)
+    assert provider_type == "Respite Services"
+    assert is_non_provider is False
+
+
 @pytest.mark.parametrize(
     "value,expected",
     [
@@ -366,6 +455,35 @@ def test_derive_county_no_provider_type_is_unset():
     assert derive_county([{"is_from_licensure": True, "county_number": 1}], None, {1: "Douglas"}) is None
 
 
+def test_derive_county_sentinel_99_left_unset_without_warning():
+    # county_number 99 is a "statewide / unknown" sentinel (resources
+    # 9697/9851/9822), not a real county -- dropped silently, and it must not
+    # block a real county number on the same record either.
+    class _Rec:
+        def __init__(self):
+            self.warnings = []
+
+        def warning(self, *args):
+            self.warnings.append(args)
+
+        def info(self, *args):
+            pass
+
+    logger = _Rec()
+    rcc = [
+        {"is_from_licensure": True, "county_number": 99, "category": {"id": 13, "category_name": "Child Care Center"}},
+    ]
+    assert derive_county(rcc, "Child Care Center", {1: "Douglas"}, logger=logger, resource_id=9697) is None
+    assert logger.warnings == []  # no "unmapped county_number" noise for a sentinel
+
+    # A sentinel alongside a real county still yields the real county.
+    rcc2 = [
+        {"is_from_licensure": True, "county_number": 99, "category": {"id": 13, "category_name": "Child Care Center"}},
+        {"is_from_licensure": True, "county_number": 1, "category": {"id": 13, "category_name": "Child Care Center"}},
+    ]
+    assert derive_county(rcc2, "Child Care Center", {1: "Douglas"}) == "Douglas"
+
+
 def test_facility_category_mapping_for_nebraska_provider_types():
     assert norm.facility_category_from_type("Child Care Center") == "center"
     assert norm.facility_category_from_type("Family Child Care Home I") == "family_home"
@@ -376,6 +494,21 @@ def test_facility_category_mapping_for_nebraska_provider_types():
     assert norm.facility_category_from_type("Public School") == "center"
     assert norm.facility_category_from_type("Preschool") == "center"
     assert norm.facility_category_from_type("Head Start") == "center"
+    # Sub-categories a full run surfaced beyond the license-prefix vocabulary
+    # (Ryan 2026-09-15) -- every entry in KNOWN_CHILDCARE_SUBCATEGORIES must
+    # map to a real bucket, never fall to the logged "other" bucket.
+    assert norm.facility_category_from_type("Provisional Child Care Center") == "center"
+    assert norm.facility_category_from_type("Provisional Preschool") == "center"
+    assert norm.facility_category_from_type("Child Care for Children with Disabilities") == "center"
+    assert norm.facility_category_from_type("In Home Provider") == "family_home"
+
+
+def test_known_childcare_vocabulary_all_map_to_a_real_bucket():
+    # Guardrail: no member of the provider allowlist may fall to "other".
+    from provider_scrape.spiders.nebraska import KNOWN_CHILDCARE_SUBCATEGORIES
+
+    for name in KNOWN_CHILDCARE_SUBCATEGORIES:
+        assert norm.facility_category_from_type(name) != "other", name
 
 
 # --- case 1: NRRS search pagination -------------------------------------- #
