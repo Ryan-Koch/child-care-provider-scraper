@@ -1,0 +1,96 @@
+{
+  "id": 73989,
+  "name1": "2.0 ob Little Pups Daycare LLC",
+  "name2": null,
+  "url": null,
+  "email": null,
+  "contact_person": "",
+  "contact_title": null,
+  "license_no": "FII10096",
+  "is_from_licensure": true,
+  "addressPhysical": {
+    "address1": "310 Walnut ST",
+    "address2": null,
+    "city": "Pleasanton",
+    "state": "NE",
+    "zip": "68866",
+    "address_type": "physical",
+    "relation_type": "App\\Resource",
+    "relation_id": 73989,
+    "modificationDetails": null
+  },
+  "addressMailing": {
+    "address1": "310 Walnut ST",
+    "address2": null,
+    "city": "Pleasanton",
+    "state": "NE",
+    "zip": "68866",
+    "address_type": "mailing",
+    "relation_type": "App\\Resource",
+    "relation_id": 73989,
+    "modificationDetails": null
+  },
+  "phoneNumberPrimary": {
+    "phone_number": "3086275103",
+    "phone_type": "primary",
+    "relation_id": 73989,
+    "modifications": [],
+    "modificationDetails": null
+  },
+  "categoryFieldResponses": {
+    "16": {
+      "response": {
+        "lower": 6,
+        "upper": 11
+      },
+      "categoryField": {
+        "label": "Ages Served"
+      }
+    },
+    "20": {
+      "response": {
+        "Monday": {
+          "open": "7:30 am",
+          "close": "5:30 pm"
+        },
+        "Tuesday": {
+          "open": "7:30 am",
+          "close": "5:30 pm"
+        },
+        "Wednesday": {
+          "open": "7:30 am",
+          "close": "5:30 pm"
+        },
+        "Thursday": {
+          "open": "7:30 am",
+          "close": "5:30 pm"
+        },
+        "Friday": {
+          "open": "7:30 am",
+          "close": "5:30 pm"
+        }
+      },
+      "categoryField": {
+        "label": "Hours"
+      }
+    }
+  },
+  "resourceCategoryCounty": [
+    {
+      "county_number": 9,
+      "is_from_licensure": true,
+      "category": {
+        "id": 22,
+        "category_name": "Provisional Family Child Care Home II "
+      }
+    },
+    {
+      "county_number": 9,
+      "is_from_licensure": true,
+      "category": {
+        "id": 12,
+        "category_name": "Child Care"
+      }
+    }
+  ]
+}

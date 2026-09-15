@@ -1,0 +1,83 @@
+{
+  "resources": {
+    "current_page": 2,
+    "data": [
+      {
+        "id": 73989,
+        "name1": "2.0 ob Little Pups Daycare LLC",
+        "name2": null,
+        "url": null,
+        "email": null,
+        "contact_person": "",
+        "contact_title": null,
+        "status": "visible",
+        "license_no": "FII10096",
+        "is_from_licensure": true,
+        "is_almatch_licensed": false,
+        "resource_id": 73989,
+        "addressPhysical": {
+          "address1": "310 Walnut ST",
+          "address2": null,
+          "city": "Pleasanton",
+          "state": "NE",
+          "zip": "68866",
+          "address_type": "physical",
+          "relation_type": "App\\Resource",
+          "relation_id": 73989,
+          "modificationDetails": null
+        },
+        "phoneNumberPrimary": {
+          "phone_number": "3086275103",
+          "phone_type": "primary",
+          "relation_id": 73989,
+          "modifications": [],
+          "modificationDetails": null
+        }
+      },
+      {
+        "id": 62707,
+        "name1": "AARON NORMAN DAYCARE owned by AARON L NORMAN",
+        "name2": null,
+        "url": null,
+        "email": null,
+        "contact_person": null,
+        "contact_title": null,
+        "status": "visible",
+        "license_no": "FI12610",
+        "is_from_licensure": true,
+        "is_almatch_licensed": false,
+        "resource_id": 62707,
+        "addressPhysical": {
+          "address1": "10929 HARDWOOD DR",
+          "address2": null,
+          "city": "Papillion",
+          "state": "NE",
+          "zip": "68046",
+          "address_type": "physical",
+          "relation_type": "App\\Resource",
+          "relation_id": 62707,
+          "modificationDetails": null
+        },
+        "phoneNumberPrimary": {
+          "phone_number": "4023101680",
+          "phone_type": "primary",
+          "relation_id": 62707,
+          "modifications": [],
+          "modificationDetails": null
+        }
+      }
+    ],
+    "first_page_url": "https://nrrs.ne.gov/resources/search?page=1",
+    "last_page": 2,
+    "last_page_url": "https://nrrs.ne.gov/resources/search?page=2",
+    "next_page_url": null,
+    "path": "https://nrrs.ne.gov/resources/search",
+    "per_page": 3,
+    "prev_page_url": "https://nrrs.ne.gov/resources/search?page=1",
+    "to": 5,
+    "total": 5
+  },
+  "groupedByCategory": [],
+  "locationResolved": null,
+  "category": null
+}

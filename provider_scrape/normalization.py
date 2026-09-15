@@ -587,6 +587,10 @@ FACILITY_CATEGORY_BUCKETS = {
         "Type I",
         "Type II",
         "Type III",
+        # Nebraska (stepuptoquality.ne.gov) detail h2 facility type for a
+        # Head Start marker -- facility-based institutional care, matching
+        # the "Head Start Site" / "GA Head Start" precedents above.
+        "Head Start",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME",
@@ -667,6 +671,15 @@ FACILITY_CATEGORY_BUCKETS = {
         # provider's own residence -- matches the "Family Home" precedents
         # above. Approved Ryan 2026-09-04.
         "Home based Child Care Facility",
+        # Nebraska (nrrs.ne.gov) license-prefix / sub-category vocabulary:
+        # FI/FII license holders and their unlicensed "Provisional" status
+        # variant (the trailing space nrrs.ne.gov emits on "Provisional
+        # Family Child Care Home II " is stripped at parse time, in the
+        # spider, before this lookup runs).
+        "Family Child Care Home I",
+        "Family Child Care Home II",
+        "Provisional Family Child Care Home I",
+        "Provisional Family Child Care Home II",
     ],
     "group_home": [
         "GFDC",
