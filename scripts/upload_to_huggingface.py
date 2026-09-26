@@ -40,6 +40,7 @@ Invoked automatically at the end of a run by ``run_spiders.sh -u``.
 Before uploading, validates the input directory's JSON files.
 If any fail, no data is uploaded and a report is sent to the incoming webhook
 configured as ``webhook_url`` in the repo-root ``discord.env``.
+After a successful commit, the final upload summary is sent to the same webhook.
 """
 
 import argparse
@@ -213,7 +214,7 @@ def discord_messages(failures):
     return messages
 
 
-def send_discord_alert(webhook_url, failures):
+def send_discord_messages(webhook_url, messages):
     """Send confirmed Discord messages, never including the secret in errors."""
     try:
         parts = urlsplit(webhook_url)
@@ -229,7 +230,7 @@ def send_discord_alert(webhook_url, failures):
         raise ValueError("discord.env has no valid Discord incoming webhook URL")
     query = urlencode([(key, value) for key, value in parse_qsl(parts.query) if key != "wait"] + [("wait", "true")])
     url = urlunsplit((parts.scheme, parts.netloc, parts.path, query, ""))
-    for content in discord_messages(failures):
+    for content in messages:
         payload = json.dumps({"content": content, "allowed_mentions": {"parse": []}}).encode("utf-8")
         # Discord's Cloudflare layer rejects urllib's default Python-urllib UA (403 / 1010).
         request = Request(
@@ -256,6 +257,11 @@ def send_discord_alert(webhook_url, failures):
                 raise RuntimeError(f"Discord returned HTTP {error.code}") from None
             except (URLError, OSError):
                 raise RuntimeError("Could not connect to Discord") from None
+
+
+def send_discord_alert(webhook_url, failures):
+    """Send the state-grouped validation report to Discord."""
+    send_discord_messages(webhook_url, discord_messages(failures))
 
 
 def build_operations(files, path_in_repo):
@@ -538,7 +544,16 @@ def main(argv=None):
         return 1
 
     commit_url = getattr(commit, "commit_url", None) or repo
-    logger.info("Uploaded %d file(s) to %s (%s)", len(operations), repo, commit_url)
+    success_message = f"Uploaded {len(operations)} file(s) to {repo} ({commit_url})"
+    logger.info("%s", success_message)
+    try:
+        webhook_url = load_env_file(args.discord_env_file).get(WEBHOOK_KEY)
+        if not webhook_url:
+            logger.warning("Upload succeeded, but Discord success notification was not sent: missing %s", WEBHOOK_KEY)
+        else:
+            send_discord_messages(webhook_url, [success_message])
+    except (OSError, ValueError, RuntimeError) as error:
+        logger.warning("Upload succeeded, but Discord success notification was not sent: %s", error)
     return 0
 
 

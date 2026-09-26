@@ -9,6 +9,7 @@ Run with the project virtualenv:
 ``.venv/bin/pytest scripts/test_upload_to_huggingface.py``.
 """
 
+import json
 import os
 from datetime import UTC, datetime, timedelta
 from urllib.error import HTTPError, URLError
@@ -240,6 +241,31 @@ def test_discord_sends_json_with_confirmation_and_no_mentions(monkeypatch):
     assert b"ohio: empty JSON" in request.data
 
 
+def test_discord_success_message_uses_same_transport(monkeypatch):
+    requests = []
+
+    class Response:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            pass
+
+    def fake_urlopen(request, timeout):
+        requests.append(request)
+        return Response()
+
+    monkeypatch.setattr(up, "urlopen", fake_urlopen)
+    message = "Uploaded 1 file(s) to owner/data (https://huggingface.co/owner/data)"
+    up.send_discord_messages("https://discord.com/api/webhooks/123/secret", [message])
+
+    assert len(requests) == 1
+    assert json.loads(requests[0].data) == {"content": message, "allowed_mentions": {"parse": []}}
+    assert requests[0].get_header("User-agent") == up.DISCORD_USER_AGENT
+
+
 def test_discord_retries_429_after_retry_after(monkeypatch):
     calls = []
     waits = []
@@ -326,13 +352,16 @@ def test_missing_or_failing_discord_does_not_allow_upload(tmp_path, monkeypatch)
 def test_clean_dry_run_does_not_contact_discord_or_hugging_face(tmp_path, monkeypatch):
     (tmp_path / "ohio.json").write_text("[{}]", encoding="utf-8")
     monkeypatch.setattr(up, "send_discord_alert", lambda *_args: pytest.fail("unexpected alert"))
+    monkeypatch.setattr(up, "send_discord_messages", lambda *_args: pytest.fail("unexpected success notification"))
     monkeypatch.setattr(up, "HfApi", lambda **_kwargs: pytest.fail("unexpected upload"))
 
     assert up.main(["--dry-run", "--repo", "owner/dataset", str(tmp_path)]) == 0
 
 
-def test_clean_upload_commits_after_validation(tmp_path, monkeypatch):
+def test_clean_upload_notifies_discord_after_commit(tmp_path, monkeypatch, caplog):
     (tmp_path / "ohio.json").write_text("[{}]", encoding="utf-8")
+    discord_env = tmp_path / "discord.env"
+    discord_env.write_text("webhook_url=https://discord.com/api/webhooks/123/secret\n", encoding="utf-8")
     calls = []
 
     class Api:
@@ -345,6 +374,40 @@ def test_clean_upload_commits_after_validation(tmp_path, monkeypatch):
 
     monkeypatch.setattr(up, "HfApi", Api)
     monkeypatch.setattr(up, "send_discord_alert", lambda *_args: pytest.fail("unexpected alert"))
-    assert up.main(["--repo", "owner/data", "--token", "fake", "--no-readme", str(tmp_path)]) == 0
+    monkeypatch.setattr(up, "send_discord_messages", lambda url, messages: calls.append(("discord", url, messages)))
+    args = ["--repo", "owner/data", "--token", "fake", "--no-readme", "--discord-env-file", str(discord_env)]
+    with caplog.at_level("INFO", logger="upload_to_huggingface"):
+        assert up.main([*args, str(tmp_path)]) == 0
     assert calls[0] == ("token", "fake")
     assert calls[1][1]["operations"][0].path_in_repo == "ohio.json"
+    message = "Uploaded 1 file(s) to owner/data (https://huggingface.co/owner/data)"
+    assert calls[2] == ("discord", "https://discord.com/api/webhooks/123/secret", [message])
+    assert message in caplog.text
+
+
+@pytest.mark.parametrize("notification_issue", ["missing", "delivery failed"])
+def test_success_notification_failure_does_not_fail_completed_upload(tmp_path, monkeypatch, caplog, notification_issue):
+    (tmp_path / "ohio.json").write_text("[{}]", encoding="utf-8")
+    discord_env = tmp_path / "discord.env"
+    if notification_issue == "delivery failed":
+        discord_env.write_text("webhook_url=https://discord.com/api/webhooks/123/secret\n", encoding="utf-8")
+
+    class Api:
+        def __init__(self, token):
+            pass
+
+        def create_commit(self, **kwargs):
+            return type("Commit", (), {"commit_url": "https://huggingface.co/owner/data"})()
+
+    monkeypatch.setattr(up, "HfApi", Api)
+    if notification_issue == "delivery failed":
+
+        def fail_delivery(_url, _messages):
+            raise RuntimeError("Discord returned HTTP 403")
+
+        monkeypatch.setattr(up, "send_discord_messages", fail_delivery)
+    args = ["--repo", "owner/data", "--token", "fake", "--no-readme", "--discord-env-file", str(discord_env)]
+    with caplog.at_level("WARNING", logger="upload_to_huggingface"):
+        assert up.main([*args, str(tmp_path)]) == 0
+    assert "Upload succeeded, but Discord success notification was not sent" in caplog.text
+    assert "secret" not in caplog.text
