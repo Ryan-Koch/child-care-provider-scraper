@@ -37,13 +37,23 @@ Usage:
     .venv/bin/python scripts/upload_to_huggingface.py --extra-file SOURCES.md out/
 
 Invoked automatically at the end of a run by ``run_spiders.sh -u``.
+Before uploading, validates the input directory's JSON files.
+If any fail, no data is uploaded and a report is sent to the incoming webhook
+configured as ``webhook_url`` in the repo-root ``discord.env``.
+After a successful commit, the final upload summary is sent to the same webhook.
 """
 
 import argparse
+import json
 import logging
 import os
+import re
 import sys
-from datetime import UTC, datetime
+import time
+from datetime import UTC, datetime, timedelta
+from urllib.error import HTTPError, URLError
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+from urllib.request import Request, urlopen
 
 import yaml
 from huggingface_hub import CommitOperationAdd, HfApi
@@ -55,8 +65,13 @@ from huggingface_hub.errors import (
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_ENV_FILE = os.path.join(REPO_ROOT, "huggingface.env")
+DEFAULT_DISCORD_ENV_FILE = os.path.join(REPO_ROOT, "discord.env")
 TOKEN_KEY = "hugging_face_token"
 REPO_KEY = "hugging_face_repo"
+WEBHOOK_KEY = "webhook_url"
+MAX_AGE = timedelta(days=5)
+DISCORD_CONTENT_LIMIT = 2000
+DISCORD_USER_AGENT = "Mozilla/5.0 (compatible; ChildCareProviderScraper/1.0)"
 
 # The dataset card lives at the repo root (HF only reads config metadata there).
 README_FILENAME = "README.md"
@@ -124,6 +139,129 @@ def collect_files(inputs, fmt):
             seen.add(real)
             unique.append(path)
     return unique
+
+
+def validation_paths(inputs):
+    """Collect top-level JSON files from directories and explicitly selected files."""
+    json_files = set()
+    for item in inputs:
+        if os.path.isdir(item):
+            for name in os.listdir(item):
+                path = os.path.join(item, name)
+                if os.path.isfile(path) and name.endswith(".json"):
+                    json_files.add(os.path.realpath(path))
+        elif os.path.isfile(item) and item.endswith(".json"):
+            json_files.add(os.path.realpath(item))
+    return sorted(json_files)
+
+
+def is_empty_json(path):
+    """Only 0-byte files and whitespace-wrapped [] count as empty."""
+    if os.path.getsize(path) == 0:
+        return True
+    with open(path, "rb") as handle:
+        # Avoid loading potentially huge scrape output into memory.
+        content = b""
+        for chunk in iter(lambda: handle.read(4096), b""):
+            content += b"".join(chunk.split())
+            if len(content) > 2:
+                return False
+        return content == b"[]"
+
+
+def validate_inputs(inputs, now=None):
+    """Return {state: [issues]} for all failures in the selected directories."""
+    now = now or datetime.now(UTC)
+    failures = {}
+    for path in validation_paths(inputs):
+        state = os.path.splitext(os.path.basename(path))[0]
+        issues = []
+        if is_empty_json(path):
+            issues.append(f"{path}: empty JSON (0 bytes or [])")
+        modified = datetime.fromtimestamp(os.path.getmtime(path), UTC)
+        if now - modified > MAX_AGE:
+            issues.append(f"{path}: JSON is older than 5 days (modified {modified:%Y-%m-%d %H:%M UTC})")
+        if issues:
+            failures.setdefault(state, []).extend(issues)
+    return failures
+
+
+def format_failures(failures):
+    """Human-readable, state-grouped report for stderr and Discord."""
+    lines = ["Hugging Face upload blocked by state output validation:"]
+    for state, issues in sorted(failures.items()):
+        lines.append(f"{state}:")
+        lines.extend(f"  - {issue}" for issue in issues)
+    return "\n".join(lines)
+
+
+def discord_messages(failures):
+    """Split the full report into messages under Discord's content limit."""
+    heading = "Hugging Face upload blocked by state output validation:"
+    messages = []
+    current = heading
+    for state, issues in sorted(failures.items()):
+        for issue in issues:
+            # Each issue gets its state label, even across message boundaries.
+            line = f"{state}: {issue}"
+            if len(line) > DISCORD_CONTENT_LIMIT - len(heading) - 2:
+                line = line[: DISCORD_CONTENT_LIMIT - len(heading) - 5] + "..."
+            if len(current) + len(line) + 1 > DISCORD_CONTENT_LIMIT:
+                messages.append(current)
+                current = heading
+            current += "\n" + line
+    messages.append(current)
+    return messages
+
+
+def send_discord_messages(webhook_url, messages):
+    """Send confirmed Discord messages, never including the secret in errors."""
+    try:
+        parts = urlsplit(webhook_url)
+        valid_host = parts.hostname in {"discord.com", "discordapp.com"} and parts.port is None
+    except ValueError:
+        raise ValueError("discord.env has no valid Discord incoming webhook URL") from None
+    if (
+        parts.scheme != "https"
+        or not valid_host
+        or parts.username is not None
+        or not re.fullmatch(r"/api(?:/v\d+)?/webhooks/\d+/[^/]+", parts.path)
+    ):
+        raise ValueError("discord.env has no valid Discord incoming webhook URL")
+    query = urlencode([(key, value) for key, value in parse_qsl(parts.query) if key != "wait"] + [("wait", "true")])
+    url = urlunsplit((parts.scheme, parts.netloc, parts.path, query, ""))
+    for content in messages:
+        payload = json.dumps({"content": content, "allowed_mentions": {"parse": []}}).encode("utf-8")
+        # Discord's Cloudflare layer rejects urllib's default Python-urllib UA (403 / 1010).
+        request = Request(
+            url,
+            data=payload,
+            headers={"Content-Type": "application/json", "User-Agent": DISCORD_USER_AGENT},
+            method="POST",
+        )
+        for attempt in range(3):
+            try:
+                with urlopen(request, timeout=10) as response:
+                    if response.status != 200:
+                        raise RuntimeError(f"Discord returned HTTP {response.status}")
+                break
+            except HTTPError as error:
+                if error.code == 429 and attempt < 2:
+                    try:
+                        delay = float((error.headers or {}).get("Retry-After", ""))
+                    except (TypeError, ValueError):
+                        delay = 0
+                    if 0 < delay <= 5:
+                        time.sleep(delay)
+                        continue
+                raise RuntimeError(f"Discord returned HTTP {error.code}") from None
+            except (URLError, OSError):
+                raise RuntimeError("Could not connect to Discord") from None
+
+
+def send_discord_alert(webhook_url, failures):
+    """Send the state-grouped validation report to Discord."""
+    send_discord_messages(webhook_url, discord_messages(failures))
 
 
 def build_operations(files, path_in_repo):
@@ -265,6 +403,11 @@ def build_arg_parser():
         "--env-file", default=DEFAULT_ENV_FILE, help="key=value file with token/repo (default: %(default)s)"
     )
     parser.add_argument(
+        "--discord-env-file",
+        default=DEFAULT_DISCORD_ENV_FILE,
+        help="key=value file with webhook_url (default: %(default)s)",
+    )
+    parser.add_argument(
         "--path-in-repo", default="", help="subdirectory in the repo to upload into (default: repo root)"
     )
     parser.add_argument(
@@ -286,7 +429,9 @@ def build_arg_parser():
         help="also write a README.md declaring one dataset config per state file (default: on for json)",
     )
     parser.add_argument("--no-readme", dest="readme", action="store_false", help="don't touch the dataset README.md")
-    parser.add_argument("--dry-run", action="store_true", help="list what would be uploaded; no network, no push")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="list what would be uploaded; no Hugging Face push (alerts still send)"
+    )
     parser.add_argument("-v", "--verbose", action="store_true", help="debug-level logging")
     return parser
 
@@ -296,6 +441,20 @@ def main(argv=None):
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
     )
+
+    webhook_url = load_env_file(args.discord_env_file).get(WEBHOOK_KEY)
+    if not webhook_url:
+        logger.info("No Discord webhook URL configured in %s; skipping Discord notifications.", args.discord_env_file)
+
+    failures = validate_inputs(args.inputs)
+    if failures:
+        report = format_failures(failures)
+        if webhook_url:
+            try:
+                send_discord_alert(webhook_url, failures)
+            except (ValueError, RuntimeError) as error:
+                raise RuntimeError(f"{report}\nDiscord alert not sent: {error}") from None
+        raise RuntimeError(report)
 
     env = load_env_file(args.env_file)
     token = args.token or env.get(TOKEN_KEY)
@@ -387,7 +546,13 @@ def main(argv=None):
         return 1
 
     commit_url = getattr(commit, "commit_url", None) or repo
-    logger.info("Uploaded %d file(s) to %s (%s)", len(operations), repo, commit_url)
+    success_message = f"Uploaded {len(operations)} file(s) to {repo} ({commit_url})"
+    logger.info("%s", success_message)
+    if webhook_url:
+        try:
+            send_discord_messages(webhook_url, [success_message])
+        except (ValueError, RuntimeError) as error:
+            logger.warning("Upload succeeded, but Discord success notification was not sent: %s", error)
     return 0
 
 
