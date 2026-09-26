@@ -334,11 +334,26 @@ def test_failed_validation_alerts_and_prevents_upload(tmp_path, monkeypatch, for
     assert alerts[0][1]["ohio"][0].endswith("empty JSON (0 bytes or [])")
 
 
-def test_missing_or_failing_discord_does_not_allow_upload(tmp_path, monkeypatch):
+@pytest.mark.parametrize("config", ["absent", "blank"])
+def test_missing_webhook_skips_alert_but_still_blocks_invalid_json(tmp_path, monkeypatch, caplog, config):
     (tmp_path / "ohio.json").touch()
-    missing = tmp_path / "no-discord.env"
-    with pytest.raises(RuntimeError, match="Discord alert not sent: missing webhook_url"):
-        up.main(["--dry-run", "--discord-env-file", str(missing), str(tmp_path)])
+    discord_env = tmp_path / "discord.env"
+    if config == "blank":
+        discord_env.write_text("webhook_url=\n", encoding="utf-8")
+    monkeypatch.setattr(up, "send_discord_alert", lambda *_args: pytest.fail("unexpected alert"))
+    monkeypatch.setattr(up, "HfApi", lambda **_kwargs: pytest.fail("Hugging Face must not be called"))
+
+    with (
+        caplog.at_level("INFO", logger="upload_to_huggingface"),
+        pytest.raises(RuntimeError, match="empty JSON") as failure,
+    ):
+        up.main(["--repo", "owner/data", "--token", "fake", "--discord-env-file", str(discord_env), str(tmp_path)])
+    assert "Discord alert not sent" not in str(failure.value)
+    assert "No Discord webhook URL configured" in caplog.text
+
+
+def test_failing_discord_still_blocks_invalid_json(tmp_path, monkeypatch):
+    (tmp_path / "ohio.json").touch()
 
     discord_env = tmp_path / "discord.env"
     discord_env.write_text("webhook_url=https://discord.com/api/webhooks/123/secret\n", encoding="utf-8")
@@ -385,11 +400,39 @@ def test_clean_upload_notifies_discord_after_commit(tmp_path, monkeypatch, caplo
     assert message in caplog.text
 
 
-@pytest.mark.parametrize("notification_issue", ["missing", "delivery failed"])
-def test_success_notification_failure_does_not_fail_completed_upload(tmp_path, monkeypatch, caplog, notification_issue):
+def test_absent_discord_url_allows_clean_upload_without_notifications(tmp_path, monkeypatch, caplog):
+    (tmp_path / "ohio.json").write_text("[{}]", encoding="utf-8")
+    missing_env = tmp_path / "missing-discord.env"
+    commits = []
+
+    class Api:
+        def __init__(self, token):
+            assert token == "fake"
+
+        def create_commit(self, **kwargs):
+            commits.append(kwargs)
+            return type("Commit", (), {"commit_url": "https://huggingface.co/owner/data"})()
+
+    monkeypatch.setattr(up, "HfApi", Api)
+    monkeypatch.setattr(up, "send_discord_alert", lambda *_args: pytest.fail("unexpected alert"))
+    monkeypatch.setattr(up, "send_discord_messages", lambda *_args: pytest.fail("unexpected success notification"))
+
+    args = ["--repo", "owner/data", "--token", "fake", "--no-readme", "--discord-env-file", str(missing_env)]
+    with caplog.at_level("INFO", logger="upload_to_huggingface"):
+        assert up.main([*args, str(tmp_path)]) == 0
+
+    assert len(commits) == 1
+    assert "No Discord webhook URL configured" in caplog.text
+    assert "Uploaded 1 file(s) to owner/data (https://huggingface.co/owner/data)" in caplog.text
+
+
+@pytest.mark.parametrize("config", ["absent", "blank", "delivery failed"])
+def test_success_without_webhook_or_with_delivery_failure(tmp_path, monkeypatch, caplog, config):
     (tmp_path / "ohio.json").write_text("[{}]", encoding="utf-8")
     discord_env = tmp_path / "discord.env"
-    if notification_issue == "delivery failed":
+    if config == "blank":
+        discord_env.write_text("webhook_url=\n", encoding="utf-8")
+    elif config == "delivery failed":
         discord_env.write_text("webhook_url=https://discord.com/api/webhooks/123/secret\n", encoding="utf-8")
 
     class Api:
@@ -400,14 +443,20 @@ def test_success_notification_failure_does_not_fail_completed_upload(tmp_path, m
             return type("Commit", (), {"commit_url": "https://huggingface.co/owner/data"})()
 
     monkeypatch.setattr(up, "HfApi", Api)
-    if notification_issue == "delivery failed":
+    if config == "delivery failed":
 
         def fail_delivery(_url, _messages):
             raise RuntimeError("Discord returned HTTP 403")
 
         monkeypatch.setattr(up, "send_discord_messages", fail_delivery)
+    else:
+        monkeypatch.setattr(up, "send_discord_messages", lambda *_args: pytest.fail("unexpected notification"))
     args = ["--repo", "owner/data", "--token", "fake", "--no-readme", "--discord-env-file", str(discord_env)]
-    with caplog.at_level("WARNING", logger="upload_to_huggingface"):
+    with caplog.at_level("INFO", logger="upload_to_huggingface"):
         assert up.main([*args, str(tmp_path)]) == 0
-    assert "Upload succeeded, but Discord success notification was not sent" in caplog.text
+    if config == "delivery failed":
+        assert "Upload succeeded, but Discord success notification was not sent" in caplog.text
+    else:
+        assert "No Discord webhook URL configured" in caplog.text
+        assert "success notification was not sent" not in caplog.text
     assert "secret" not in caplog.text

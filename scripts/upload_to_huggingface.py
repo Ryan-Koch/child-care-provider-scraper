@@ -442,16 +442,18 @@ def main(argv=None):
         level=logging.DEBUG if args.verbose else logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
     )
 
+    webhook_url = load_env_file(args.discord_env_file).get(WEBHOOK_KEY)
+    if not webhook_url:
+        logger.info("No Discord webhook URL configured in %s; skipping Discord notifications.", args.discord_env_file)
+
     failures = validate_inputs(args.inputs)
     if failures:
         report = format_failures(failures)
-        webhook_url = load_env_file(args.discord_env_file).get(WEBHOOK_KEY)
-        if not webhook_url:
-            raise RuntimeError(f"{report}\nDiscord alert not sent: missing {WEBHOOK_KEY} in {args.discord_env_file}")
-        try:
-            send_discord_alert(webhook_url, failures)
-        except (ValueError, RuntimeError) as error:
-            raise RuntimeError(f"{report}\nDiscord alert not sent: {error}") from None
+        if webhook_url:
+            try:
+                send_discord_alert(webhook_url, failures)
+            except (ValueError, RuntimeError) as error:
+                raise RuntimeError(f"{report}\nDiscord alert not sent: {error}") from None
         raise RuntimeError(report)
 
     env = load_env_file(args.env_file)
@@ -546,14 +548,11 @@ def main(argv=None):
     commit_url = getattr(commit, "commit_url", None) or repo
     success_message = f"Uploaded {len(operations)} file(s) to {repo} ({commit_url})"
     logger.info("%s", success_message)
-    try:
-        webhook_url = load_env_file(args.discord_env_file).get(WEBHOOK_KEY)
-        if not webhook_url:
-            logger.warning("Upload succeeded, but Discord success notification was not sent: missing %s", WEBHOOK_KEY)
-        else:
+    if webhook_url:
+        try:
             send_discord_messages(webhook_url, [success_message])
-    except (OSError, ValueError, RuntimeError) as error:
-        logger.warning("Upload succeeded, but Discord success notification was not sent: %s", error)
+        except (ValueError, RuntimeError) as error:
+            logger.warning("Upload succeeded, but Discord success notification was not sent: %s", error)
     return 0
 
 

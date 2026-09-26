@@ -56,7 +56,7 @@ Set up an incoming webhook for a standard Discord text channel and save its URL 
 ```
 webhook_url=https://discord.com/api/webhooks/ID/TOKEN
 ```
-This URL is a secret: anyone with it can post to that channel. No Discord bot or separate API key is required. The webhook must remain active, and the machine or container must be able to reach Discord over HTTPS. Alerts are split into messages when necessary to fit Discord's message limit; validation failures still block the upload even if alert delivery fails. After a successful Hugging Face commit, Discord also receives the final upload summary (file count, repo, and commit URL). If that success notification cannot be delivered, the script warns but still reports the already-completed upload as successful. Do not add `/github` to this URL; that endpoint is for GitHub-formatted notifications.
+This URL is a secret: anyone with it can post to that channel. No Discord bot or separate API key is required. The webhook must remain active, and the machine or container must be able to reach Discord over HTTPS. Alerts are split into messages when necessary to fit Discord's message limit; validation failures still block the upload even if alert delivery fails. After a successful Hugging Face commit, Discord also receives the final upload summary (file count, repo, and commit URL). If that success notification cannot be delivered, the script warns but still reports the already-completed upload as successful. If `webhook_url` is missing or blank, the script logs an informational message and skips all Discord notifications; JSON validation still runs and can block unsafe uploads. Do not add `/github` to this URL; that endpoint is for GitHub-formatted notifications.
 
 Because each state file has its own set of columns, loading them as one table fails Hugging Face's "all files must have the same columns" check. So a JSON upload also writes a `README.md` whose YAML frontmatter declares one dataset **configuration** per state file (`config_name` = the file's stem, e.g. `alabama`). Hugging Face then parses each state independently — pick a state in the dataset viewer, or `load_dataset("owner/dataset-name", "alabama")`. The card's body and any other frontmatter keys you've written are preserved; only the `configs` key is regenerated each upload. This is on by default for JSON and off for CSV; use `--no-readme` / `--readme` to override.
 
@@ -76,7 +76,7 @@ You can run the scrapers as a containerized job without installing Python, the P
 ### One-time setup
 
 1. Install Docker and the Docker Compose plugin.
-2. Copy the config templates. Compose mounts both files, so they must exist even if you don't use `-u`; fill them in before enabling uploads:
+2. Copy the config templates. Compose mounts both files, so they must exist even if you don't use `-u`; fill in `huggingface.env` before enabling uploads. Leave `webhook_url` blank if you don't want Discord notifications:
     ```bash
     cp huggingface.env.example huggingface.env
     cp discord.env.example discord.env
@@ -94,7 +94,7 @@ Use `docker compose run` and pass the same arguments you'd give `run_spiders.sh`
 docker compose run --rm scraper -g -c 3 -f json,csv ohio texas alabama
 ```
 
-Output files and logs land in `./state_output/` on the host, and the geocode cache persists there too, so re-runs only geocode new records. A bare `docker compose run --rm scraper` prints the usage help rather than running every spider. To upload to Hugging Face at the end, add `-u` (requires filled-in `huggingface.env` and `discord.env`).
+Output files and logs land in `./state_output/` on the host, and the geocode cache persists there too, so re-runs only geocode new records. A bare `docker compose run --rm scraper` prints the usage help rather than running every spider. To upload to Hugging Face at the end, add `-u` (requires a filled-in `huggingface.env`; `discord.env` can be blank).
 
 ### How the container is wired up
 
