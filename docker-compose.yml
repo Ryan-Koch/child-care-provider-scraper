@@ -44,6 +44,9 @@ services:
       # Hugging Face token/repo, read-only, only used with -u. Kept out of the
       # image; mounted at runtime. The file must exist (see huggingface.env.example).
       - ./huggingface.env:/app/huggingface.env:ro,z
+      # Upload validation alerts; never copy the webhook credential into the image.
+      # The host file must exist for this bind mount, even for runs without -u.
+      - ./discord.env:/app/discord.env:ro,z
       # Maryland proxy-pool credentials (see webshare.env.example). Mounted
       # WRITABLE (no `ro`) so the REFRESH_PROXIES startup step can rewrite it in
       # place with the account's current ip:port list; the refreshed file lands

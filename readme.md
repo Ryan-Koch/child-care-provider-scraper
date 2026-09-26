@@ -50,6 +50,14 @@ hugging_face_repo=owner/dataset-name
 ```
 Use a **write** token, and create the dataset repo on the Hugging Face website first — the script uploads to an existing repo and does not create one.
 
+Before any upload (including CSV uploads), the uploader checks top-level JSON files in the input directory for 0-byte or `[]` output and modification times more than five days old. It does not inspect `.log` files or treat missing files as failures: individual spider errors can occur even when a crawl completes. When a check fails, **nothing is uploaded**, the script raises an error listing each affected state and condition, and it sends the findings to Discord. For standalone uploads, use a directory to check all states; a file input checks only that file. `--dry-run` runs the checks and sends an alert on failure too. `run_spiders.sh` reports the upload failure but still exits successfully after the scrape.
+
+Set up an incoming webhook for a standard Discord text channel and save its URL in `discord.env` at the repo root (or use `--discord-env-file` for a different location):
+```
+webhook_url=https://discord.com/api/webhooks/ID/TOKEN
+```
+This URL is a secret: anyone with it can post to that channel. No Discord bot or separate API key is required. The webhook must remain active, and the machine or container must be able to reach Discord over HTTPS. Alerts are split into messages when necessary to fit Discord's message limit; notification failures still block the upload and are reported locally. Do not add `/github` to this URL; that endpoint is for GitHub-formatted notifications.
+
 Because each state file has its own set of columns, loading them as one table fails Hugging Face's "all files must have the same columns" check. So a JSON upload also writes a `README.md` whose YAML frontmatter declares one dataset **configuration** per state file (`config_name` = the file's stem, e.g. `alabama`). Hugging Face then parses each state independently — pick a state in the dataset viewer, or `load_dataset("owner/dataset-name", "alabama")`. The card's body and any other frontmatter keys you've written are preserved; only the `configs` key is regenerated each upload. This is on by default for JSON and off for CSV; use `--no-readme` / `--readme` to override.
 
 The `-u` upload also ships a `SOURCES.md` provenance table (state → source website(s)), regenerated at upload time from each spider's `allowed_domains`/`start_urls` by `scripts/generate_sources.py`. To refresh the committed copy after adding or changing a spider's source, run `.venv/bin/python scripts/generate_sources.py` (a pytest drift-guard enforces it stays current). Standalone uploads can include it with `--extra-file SOURCES.md` (repeatable for any extra file).
@@ -59,7 +67,7 @@ You can also run it standalone on a directory or specific files:
 .venv/bin/python scripts/upload_to_huggingface.py state_output/
 .venv/bin/python scripts/upload_to_huggingface.py --dry-run state_output/alabama.json
 ```
-Useful flags: `--dry-run` (list what would be uploaded without pushing), `--repo owner/name` and `--token …` (override the env file), `-f csv` (upload CSVs instead of JSON), `--path-in-repo subdir/` (upload into a subdirectory of the repo), and `--no-readme` (skip the per-state dataset card).
+Useful flags: `--dry-run` (list what would be uploaded without pushing; validation failures still send Discord alerts), `--repo owner/name` and `--token …` (override the env file), `-f csv` (upload CSVs instead of JSON), `--path-in-repo subdir/` (upload into a subdirectory of the repo), and `--no-readme` (skip the per-state dataset card).
 
 ## Running with Docker
 
@@ -68,9 +76,10 @@ You can run the scrapers as a containerized job without installing Python, the P
 ### One-time setup
 
 1. Install Docker and the Docker Compose plugin.
-2. (Optional) Copy the Hugging Face config template. The compose file mounts this file, so it must exist even if you leave it blank; fill it in only if you plan to upload with `-u`:
-   ```bash
-   cp huggingface.env.example huggingface.env
+2. Copy the config templates. Compose mounts both files, so they must exist even if you don't use `-u`; fill them in before enabling uploads:
+    ```bash
+    cp huggingface.env.example huggingface.env
+    cp discord.env.example discord.env
    ```
 3. Build the image (the first build downloads the browsers and Tesseract model, so give it a few minutes):
    ```bash
@@ -85,12 +94,12 @@ Use `docker compose run` and pass the same arguments you'd give `run_spiders.sh`
 docker compose run --rm scraper -g -c 3 -f json,csv ohio texas alabama
 ```
 
-Output files and logs land in `./state_output/` on the host, and the geocode cache persists there too, so re-runs only geocode new records. A bare `docker compose run --rm scraper` prints the usage help rather than running every spider. To upload to Hugging Face at the end, add `-u` (requires a filled-in `huggingface.env`).
+Output files and logs land in `./state_output/` on the host, and the geocode cache persists there too, so re-runs only geocode new records. A bare `docker compose run --rm scraper` prints the usage help rather than running every spider. To upload to Hugging Face at the end, add `-u` (requires filled-in `huggingface.env` and `discord.env`).
 
 ### How the container is wired up
 
 - **Output & cache** — `./state_output/` on the host is mounted into the container and is the default output directory, so scraped files, logs, and `geocode_cache.sqlite` all persist there. Override the in-container path with `-d` as usual.
-- **Secret** — `huggingface.env` is bind-mounted read-only at runtime and is never copied into the image, so the token stays on the host.
+- **Secrets** — `huggingface.env` and `discord.env` are bind-mounted read-only at runtime and excluded from the Docker build context, so their credentials stay on the host.
 - **Permissions** — the container runs as your host user (UID 1000 by default), so files written to `./state_output/` are owned by you. If you aren't UID 1000 on your host, pass your own IDs, e.g. `DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose run --rm scraper ...` (or set `DOCKER_UID`/`DOCKER_GID` in a `.env` file next to the compose file).
 - **Chrome** — the Cloudflare-sensitive spiders (`new_jersey`, `rhode_island`, `arizona`, `minnesota`) use real Google Chrome under a virtual display (xvfb); both are in the image and used automatically. The container gets a 2 GB `/dev/shm` so Chrome doesn't crash.
 
