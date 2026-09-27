@@ -1,15 +1,17 @@
+import logging
 import os
 import urllib.parse
 
 import pytest
 from scrapy.http import HtmlResponse, Request
+from twisted.python.failure import Failure
 
 from provider_scrape import normalization as norm
 from provider_scrape.items import InspectionItem, ProviderItem
 from provider_scrape.spiders.mississippi import (
     SEARCH_URL,
     MississippiSpider,
-    _parse_pager,
+    _parse_record_count,
     split_city,
 )
 
@@ -23,6 +25,18 @@ def _response(name, meta=None, url=SEARCH_URL):
     return HtmlResponse(url=url, body=body, encoding="utf-8", request=req)
 
 
+def _html_response(html, meta=None, url=SEARCH_URL):
+    """A response built from a hand-written snippet (fallback-path cases)."""
+    req = Request(url, meta=meta or {})
+    return HtmlResponse(url=url, body=html.encode(), encoding="utf-8", request=req)
+
+
+def _fixture_text(name):
+    """A fixture's raw HTML, for the tests that mutate it before parsing."""
+    with open(os.path.join(FIXTURES, name)) as fh:
+        return fh.read()
+
+
 def _formdata(request):
     """Decode a FormRequest's urlencoded body into a flat dict."""
     body = request.body.decode() if isinstance(request.body, bytes) else request.body
@@ -31,10 +45,17 @@ def _formdata(request):
 
 
 def split_requests(outputs):
-    """Partition parse_results output into (items, next-page requests)."""
+    """Partition parse_results output into (items, detail requests, pager requests).
+
+    With the 2026-09 redesign a results row no longer carries its own detail
+    data (module docstring item 2), so parse_results normally yields a detail
+    postback per provider and the provider itself is emitted at the end of
+    that chain. Only ``-a details=off`` yields items straight out of here.
+    """
     items = [o for o in outputs if isinstance(o, ProviderItem)]
-    requests = [o for o in outputs if not isinstance(o, ProviderItem)]
-    return items, requests
+    details = [o for o in outputs if not isinstance(o, ProviderItem) and "item" in o.meta]
+    pager = [o for o in outputs if not isinstance(o, ProviderItem) and "item" not in o.meta]
+    return items, details, pager
 
 
 @pytest.fixture
@@ -43,19 +64,51 @@ def spider():
 
 
 @pytest.fixture
-def spider_with_cities():
+def ms():
     """A spider that's already been through parse_search_page.
 
-    Gives real access to the site's own 487-city ddlCity dictionary, which
-    parse_results' address split (split_city, Sec 5.4) depends on.
+    Gives real access to the site's own 488-city ddlCity dictionary, which the
+    address fallback split (split_city) depends on.
     """
     s = MississippiSpider()
     list(s.parse_search_page(_response("ms_search_page.html")))
     return s
 
 
-def _item_by_id(items, facility_id):
-    return next(i for i in items if i["ms_facility_id"] == facility_id)
+def _hinds_page_one(spider_obj, county="HINDS", county_value="25", page=1):
+    return list(
+        spider_obj.parse_results(
+            _response("ms_results_page.html", meta={"page": page, "county": county, "county_value": county_value})
+        )
+    )
+
+
+def _clarke_last_page(spider_obj, county="CLARKE", county_value="12"):
+    return list(
+        spider_obj.parse_results(
+            _response("ms_results_last_page.html", meta={"page": 1, "county": county, "county_value": county_value})
+        )
+    )
+
+
+def _detail_by_id(details, facility_id):
+    return next(r for r in details if r.meta["item"]["ms_facility_id"] == facility_id)
+
+
+def _advance(spider_obj, request, fixture=None, html=None):
+    """Feed a detail fixture to the pending request and return parse_detail's output."""
+    meta = dict(request.meta)
+    response = _response(fixture, meta=meta) if fixture else _html_response(html, meta=meta)
+    return list(spider_obj.parse_detail(response))
+
+
+def _walk_chain(spider_obj, request, fixtures):
+    """Walk a provider's whole detail chain, returning the finished item."""
+    output = None
+    for fixture in fixtures:
+        output = _advance(spider_obj, request, fixture)
+        request = output[0]
+    return output[0]
 
 
 # --------------------------------------------------------------------------- #
@@ -63,15 +116,14 @@ def _item_by_id(items, facility_id):
 # --------------------------------------------------------------------------- #
 
 
-def test_parse_search_page_harvests_cities_and_posts_one_search_per_county(spider):
-    # Replaces the single statewide empty search (module docstring item 7:
-    # that result set has an unrenderable "poison" offset around row
-    # 901-925) with one search per county, so no individual query is ever
-    # deep enough to reach it.
+def test_parse_search_page_harvests_dropdowns_and_posts_one_search_per_county(spider):
+    # One search per county, not one statewide search: the county fan-out is
+    # both the v1 poison-page workaround and the only source of the `county`
+    # field (module docstring item 6).
     response = _response("ms_search_page.html")
     requests = list(spider.parse_search_page(response))
 
-    assert len(spider.known_cities) == 487
+    assert len(spider.known_cities) == 488
     assert "YAZOO CITY" in spider.known_cities
     assert "STARKVILLE" in spider.known_cities
 
@@ -82,110 +134,510 @@ def test_parse_search_page_harvests_cities_and_posts_one_search_per_county(spide
     assert len(requests) == 82
     counties_seen = {r.meta["county"] for r in requests}
     assert counties_seen == set(spider.counties.values())
-    assert len(counties_seen) == 82  # every county gets exactly one search
 
-    # Every county's own, distinct cookiejar (module docstring item 8):
-    # concurrent counties sharing one session corrupted each other's
-    # server-side pagination state (live-verified 2026-09-05) -- mandatory,
-    # not a nicety, exactly like Kansas Sec 5.1.
-    cookiejars = {r.meta["cookiejar"] for r in requests}
-    assert cookiejars == counties_seen
+    # Every county's own, distinct cookiejar: concurrent counties sharing one
+    # session corrupted each other's server-side pagination state on the v1
+    # site -- mandatory, not a nicety, exactly like Kansas Sec 5.1.
+    assert {r.meta["cookiejar"] for r in requests} == counties_seen
 
     sample = next(r for r in requests if r.meta["county"] == "HINDS")
     assert sample.method == "POST"
     assert sample.meta["page"] == 1
-    assert sample.meta["cookiejar"] == "HINDS"
+    assert sample.meta["county_value"] == "25"
     formdata = _formdata(sample)
     assert formdata["btnFind"] == "Search"
     assert formdata["__EVENTTARGET"] == ""
-    assert formdata["__EVENTARGUMENT"] == ""
     assert formdata["ddlCounty"] == "25"
+    # The full hidden-field set has to be echoed back -- a partial one bounces
+    # to the empty search page or 500s (module docstring item 3).
+    assert formdata["hdnFocusControl"] == ""
+    assert "__VIEWSTATE" in formdata and "__EVENTVALIDATION" in formdata
     # No OTHER filter fields sent -- county is the only scoping applied.
-    assert "txtProviderName" not in formdata
-    assert "btnReset" not in formdata
+    assert "ddlCity" not in formdata
+    assert "ddlProviderType" not in formdata
+
+
+def test_counties_argument_restricts_the_fan_out(caplog):
+    s = MississippiSpider(counties="hinds, clarke, nowhere")
+    requests = list(s.parse_search_page(_response("ms_search_page.html")))
+    assert sorted(r.meta["county"] for r in requests) == ["CLARKE", "HINDS"]
+    assert any("NOWHERE" in r.message for r in caplog.records)
+
+
+@pytest.mark.parametrize(
+    "mode,expected_tabs",
+    [("all", 4), ("license", 1), ("off", 0)],
+)
+def test_details_argument_selects_the_tabs_walked(mode, expected_tabs):
+    assert len(MississippiSpider(details=mode).detail_tabs) == expected_tabs
+
+
+def test_details_argument_rejects_an_unknown_mode():
+    with pytest.raises(ValueError):
+        MississippiSpider(details="everything")
 
 
 # --------------------------------------------------------------------------- #
-# 2. parse_results -- provider extraction (the single-quoted-id selector)
+# 2. parse_results -- provider rows (the selector the redesign broke)
 # --------------------------------------------------------------------------- #
 
 
-def test_parse_results_extracts_all_providers(spider_with_cities):
-    response = _response("ms_results_page.html", meta={"page": 1, "county": "Attala", "county_value": "04"})
-    items, _requests = split_requests(list(spider_with_cities.parse_results(response)))
+def test_parse_results_finds_every_provider_row(ms):
+    # The regression this rebuild fixes: the redesign renamed the row wrapper,
+    # so the v1 selector matched nothing and every county logged "0 providers"
+    # (module docstring item 1).
+    _items, details, _pager = split_requests(_hinds_page_one(ms))
 
-    # The fixture is trimmed to the first 4 of a real 25-provider page (Sec
-    # 8) -- the single-quoted div id (Sec 5.1) must still find all 4.
-    assert len(items) == 4
-    assert {i["ms_facility_id"] for i in items} == {"20006183", "20012910", "20005047", "7001416"}
+    assert len(details) == 20  # the redesign puts 20 rows on a page (was 25)
+    ids = [r.meta["item"]["ms_facility_id"] for r in details]
+    # The div id gained a "div_" prefix; stripping it keeps ms_facility_id
+    # comparable with the v1 corpus.
+    assert ids[:3] == ["20012896", "20006102", "20014742"]
+    assert all(not i.startswith("div_") for i in ids)
 
-    item = _item_by_id(items, "20006183")
-    assert isinstance(item, ProviderItem)
+
+def test_results_row_fields(ms):
+    _items, details, _pager = split_requests(_hinds_page_one(ms))
+    item = _detail_by_id(details, "20012896").meta["item"]
+
+    assert item["provider_name"] == "A PLACE TO GROW"
     assert item["source_state"] == "Mississippi"
-    assert item["provider_url"] == SEARCH_URL
-    assert item["provider_name"] == "3 STEP DAYCARE"
-    assert item["license_number"] == "04CBPFA-6901"
-    assert item["provider_type"] == "Center based Child Care Facility"
-    assert item["status"] == "ACTIVE"
-    assert item["license_begin_date"] == "09/01/2026"
-    assert item["license_expiration"] == "08/31/2027"
-    assert item["capacity"] == 30
-    assert item["phone"] == "662-792-4180"
-    assert item["email"] == "brendajzollicoffer@gmail.com"
-    assert item["zip"] == "39090"
     assert item["state"] == "MS"
-    assert item["city"] == "Kosciusko"
-    assert item["address"] == "1129 N NATCHEZ ST, Kosciusko, MS 39090"
-    # Populated because the county filter value maps 1:1 to a known county
-    # name -- the statewide search this replaced had no per-record county.
-    assert item["county"] == "Attala"
-
-
-def test_golden_item_has_no_undefined_fields(spider_with_cities):
-    response = _response("ms_results_page.html", meta={"page": 1, "county": "Attala", "county_value": "04"})
-    items, _requests = split_requests(list(spider_with_cities.parse_results(response)))
-    for item in items:
-        assert dict(item)  # constructing/serializing raises on an undefined field
-
-
-# --------------------------------------------------------------------------- #
-# 3. Coordinates from htJson
-# --------------------------------------------------------------------------- #
-
-
-def test_coordinates_from_htjson_by_id(spider_with_cities):
-    response = _response("ms_results_page.html", meta={"page": 1, "county": "Attala", "county_value": "04"})
-    items, _requests = split_requests(list(spider_with_cities.parse_results(response)))
-
-    item = _item_by_id(items, "20006183")
-    # htJson coordinates are [lng, lat] -- swapped into our lat/lon (Sec 5.7).
-    assert item["latitude"] == pytest.approx(33.074193)
-    assert item["longitude"] == pytest.approx(-89.58441)
-    assert item["geocode_source"] == "state"
-
-    item2 = _item_by_id(items, "7001416")
-    assert item2["latitude"] == pytest.approx(33.17639)
-    assert item2["longitude"] == pytest.approx(-90.488952)
-
-
-def test_provider_missing_from_htjson_gets_no_coordinates(spider_with_cities, caplog):
-    response = _response("ms_results_missing_coords.html", meta={"page": 1, "county": "Attala", "county_value": "04"})
-    items, _requests = split_requests(list(spider_with_cities.parse_results(response)))
-
-    assert len(items) == 1
-    item = items[0]
-    assert item["ms_facility_id"] == "20005047"
+    assert item["county"] == "Hinds"
+    assert item["provider_url"] == SEARCH_URL
+    assert item["phone"] == "601-981-3133"
+    assert item["email"] == "shunwhi@yahoo.com"
+    assert item["provider_type"] == "Center based Child Care Facility"
+    # The row's own subsidy banner (the License page repeats the fact).
+    assert item["ms_subsidy"] is True
+    assert item["scholarships_accepted"] is True
+    # Coordinates are no longer published anywhere on the site.
     assert "latitude" not in item
     assert "longitude" not in item
     assert "geocode_source" not in item
-    assert any("no htJson coordinates" in r.message for r in caplog.records)
-    # the rest of the item still built fine -- a missing coordinate never
-    # crashes or blanks out the whole row.
-    assert item["license_number"] == "53CBPFWA-6827"
+
+
+def test_address_is_split_on_the_citystatezip_line(ms):
+    _items, details, _pager = split_requests(_hinds_page_one(ms))
+    item = _detail_by_id(details, "20012896").meta["item"]
+
+    # "2607 MEDGAR EVERS BLVD" / "JACKSON, MS 39213-7271" -- the redesign
+    # delimits the two (module docstring item 7), and zip/address keep v1's
+    # 5-digit form.
+    assert item["address"] == "2607 MEDGAR EVERS BLVD, Jackson, MS 39213"
+    assert item["city"] == "Jackson"
+    assert item["zip"] == "39213"
+
+
+def test_address_falls_back_to_the_ddlcity_split_without_a_zip_line(ms):
+    # A row shaped like the v1 site (no city/state/zip line) still parses via
+    # the ddlCity longest-suffix dictionary rather than being dropped.
+    html = """
+    <div id="div_999" class="row border border-1 rounded-3">
+      <dl class="row">
+        <dt class="col-4">Provider Name:</dt><dd class="col-8"><strong>LEGACY SHAPE</strong></dd>
+        <dt class="col-4">Address:</dt><dd class="col-8">875 E FIFTEENTH ST YAZOO CITY, MS</dd>
+      </dl>
+    </div>
+    """
+    response = _html_response(html, meta={"page": 1, "county": "YAZOO", "county_value": "82"})
+    item = ms._build_item(response.css('div.row.border[id^="div_"]')[0], response, "YAZOO")
+    assert item["city"] == "Yazoo City"
+    assert item["address"] == "875 E FIFTEENTH ST, Yazoo City, MS"
+    assert "zip" not in item
+
+
+def test_address_without_a_state_line_warns_and_keeps_the_raw_text(ms, caplog):
+    html = """
+    <div id="div_998" class="row border border-1 rounded-3">
+      <dl class="row">
+        <dt class="col-4">Provider Name:</dt><dd class="col-8"><strong>NO STATE</strong></dd>
+        <dt class="col-4">Address:</dt><dd class="col-8">123 MAIN ST</dd>
+      </dl>
+    </div>
+    """
+    response = _html_response(html)
+    item = ms._build_item(response.css('div.row.border[id^="div_"]')[0], response, "HINDS")
+    assert item["address"] == "123 MAIN ST"
+    assert "city" not in item
+    assert any("no ', MS' line" in r.message for r in caplog.records)
+
+
+def test_row_without_id_or_name_is_skipped_with_an_error(ms, caplog):
+    html = '<div id="div_" class="row border border-1 rounded-3"><dl class="row"></dl></div>'
+    response = _html_response(html)
+    assert ms._build_item(response.css('div.row.border[id^="div_"]')[0], response, "HINDS") is None
+    assert any("missing its id/name" in r.message for r in caplog.records)
+
+
+def test_golden_items_have_no_undefined_fields(ms):
+    _items, details, _pager = split_requests(_hinds_page_one(ms))
+    for request in details:
+        assert dict(request.meta["item"])  # raises on an undefined field
 
 
 # --------------------------------------------------------------------------- #
-# 4. facility_category mapping for the 3 Mississippi provider types
+# 3. The record-count label + pagination
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize(
+    "label,expected",
+    [
+        ("201 records found - Page 1 of 11", (201, 1, 11)),
+        ("6 records found - Page 1 of 1", (6, 1, 1)),
+        ("1,204 records found - Page 3 of 61", (1204, 3, 61)),
+        ("1 record found - Page 1 of 1", (1, 1, 1)),
+        ("", None),
+        ("Something else entirely", None),
+        (None, None),
+    ],
+)
+def test_parse_record_count(label, expected):
+    assert _parse_record_count(label) == expected
+
+
+def test_pagination_mid_run_chains_the_next_page(ms):
+    _items, _details, pager = split_requests(_hinds_page_one(ms))
+    assert len(pager) == 1
+    request = pager[0]
+    assert request.meta["page"] == 2
+    assert request.meta["county"] == "HINDS"
+    assert request.meta["cookiejar"] == "HINDS"
+    formdata = _formdata(request)
+    assert formdata["__EVENTTARGET"] == "dtPgProviders$ctl01$lnkNextPage"
+    # No btnFind on a page turn, and ddlCounty re-sent anyway (item 6).
+    assert "btnFind" not in formdata
+    assert formdata["ddlCounty"] == "25"
+    # The county's expected total is recorded off the label for the closed()
+    # reconciliation.
+    assert ms.county_expected_total["HINDS"] == 201
+
+
+def test_pagination_stops_on_the_last_page(ms):
+    # Clarke: "6 records found - Page 1 of 1", and the redesign renders no
+    # pager markup at all on a final page (module docstring item 5).
+    _items, details, pager = split_requests(_clarke_last_page(ms))
+    assert len(details) == 6
+    assert pager == []
+    assert "CLARKE" not in ms.failed_counties
+
+
+def test_page_number_mismatch_fails_just_that_county(ms, caplog):
+    # We asked for page 3, the site answered "Page 1 of 11": our place in the
+    # chain is lost, so stop this county rather than double-count.
+    outputs = _hinds_page_one(ms, page=3)
+    assert outputs == []
+    assert "page mismatch" in ms.failed_counties["HINDS"]
+    assert any("asked for page 3" in r.message for r in caplog.records)
+
+    # Another county is entirely unaffected -- no shared state beyond dedupe.
+    _items, details, _pager = split_requests(_clarke_last_page(ms))
+    assert len(details) == 6
+    assert "CLARKE" not in ms.failed_counties
+
+
+def test_missing_label_falls_back_to_the_next_page_link(ms, caplog):
+    html = _fixture_text("ms_results_page.html").replace("lblRecordCount", "lblGone")
+    outputs = list(ms.parse_results(_html_response(html, meta={"page": 1, "county": "HINDS", "county_value": "25"})))
+    _items, details, pager = split_requests(outputs)
+    assert len(details) == 20
+    assert len(pager) == 1  # the Next Page link alone still drives the chain
+    assert any("no parseable record-count label" in r.message for r in caplog.records)
+
+
+def test_truncation_is_reported_when_the_pager_link_disappears_early(ms, caplog):
+    # Label says 11 pages, but page 1 has no Next Page link: the county is
+    # short and that must be loud, not a silent clean stop.
+    html = _fixture_text("ms_results_page.html").replace("lnkNextPage", "lnkGone")
+    outputs = list(ms.parse_results(_html_response(html, meta={"page": 1, "county": "HINDS", "county_value": "25"})))
+    _items, _details, pager = split_requests(outputs)
+    assert pager == []
+    assert "no next-page link on page 1 of 11" in ms.failed_counties["HINDS"]
+    assert any("TRUNCATED" in r.message for r in caplog.records)
+
+
+def test_empty_county_on_page_one_is_a_warning_not_a_failure(ms, caplog):
+    # The bare search page stands in for a county whose search returns nothing:
+    # no rows, no pager. On page 1 that reads as "possibly a genuinely tiny
+    # county", not a failure.
+    outputs = list(
+        ms.parse_results(
+            _response("ms_search_page.html", meta={"page": 1, "county": "ISSAQUENA", "county_value": "28"})
+        )
+    )
+    assert outputs == []
+    assert "ISSAQUENA" not in ms.failed_counties
+    assert any("may genuinely have none" in r.message for r in caplog.records)
+
+
+def test_zero_rows_with_a_live_pager_fails_that_county(ms, caplog):
+    # 0 rows while the pager still offers a next page is the "we lost the
+    # result set" symptom -- fail this county, keep the other 81.
+    html = (
+        _fixture_text("ms_results_page.html")
+        .replace('class="row border border-1 rounded-3', 'class="row renamed')
+        .replace("Page 1 of 11", "Page 2 of 11")
+    )
+    outputs = list(ms.parse_results(_html_response(html, meta={"page": 2, "county": "HINDS", "county_value": "25"})))
+    assert outputs == []
+    assert "0 providers with a live next-page link" in ms.failed_counties["HINDS"]
+    assert any("unexplained 0-provider page" in r.message for r in caplog.records)
+
+
+def test_cross_county_duplicate_facility_id_is_skipped(ms):
+    # Defensive guard: every provider belongs to exactly one county, so a
+    # repeated ms_facility_id across two county responses must not
+    # double-count or double-emit.
+    _items, details, _pager = split_requests(_clarke_last_page(ms))
+    assert len(details) == 6
+    assert ms.duplicate_facility_ids == 0
+
+    _items2, details2, pager2 = split_requests(_clarke_last_page(ms, county="LAUDERDALE", county_value="38"))
+    assert details2 == []
+    assert ms.duplicate_facility_ids == 6
+    # Dedupe affects which providers are scheduled, never the stop rule.
+    assert pager2 == []
+
+
+# --------------------------------------------------------------------------- #
+# 4. The detail chain (License -> Site Visits -> Investigations -> Penalties)
+# --------------------------------------------------------------------------- #
+
+
+def test_detail_chain_walks_all_four_tabs_in_order(ms):
+    _items, details, _pager = split_requests(_hinds_page_one(ms))
+    request = _detail_by_id(details, "20012896")
+
+    assert request.meta["tab_label"] == "License"
+    formdata = _formdata(request)
+    # The postback target is read off the row's own link, and the body echoes
+    # the results page's hidden fields (items 3/4).
+    assert formdata["__EVENTTARGET"] == "lstProviders$ctrl0$lbkBtnViewLicense"
+    assert "__VIEWSTATE" in formdata and "hdnFocusControl" in formdata
+    assert "btnFind" not in formdata
+    # Details outrank page turns so a page's chains drain before the pager
+    # advances -- otherwise the scheduler holds one ~600 KB viewstate body per
+    # provider in the state at once.
+    assert request.priority == 1
+
+    after_license = _advance(ms, request, "ms_license.html")
+    assert after_license[0].meta["tab_label"] == "Site Visits"
+    after_visits = _advance(ms, after_license[0], "ms_site_visits.html")
+    assert after_visits[0].meta["tab_label"] == "Investigations"
+    after_investigations = _advance(ms, after_visits[0], "ms_investigations_empty.html")
+    assert after_investigations[0].meta["tab_label"] == "Monetary Penalties"
+    # Reusing the empty-investigations page for the last tab: no penalty grid
+    # on it either, so the chain ends and the provider is emitted.
+    final = _advance(ms, after_investigations[0], "ms_investigations_empty.html")
+    assert isinstance(final[0], ProviderItem)
+    assert final[0]["ms_facility_id"] == "20012896"
+
+
+def test_license_page_fields(ms):
+    _items, details, _pager = split_requests(_hinds_page_one(ms))
+    request = _detail_by_id(details, "20012896")
+    item = _advance(ms, request, "ms_license.html")[0].meta["item"]
+
+    assert item["license_number"] == "25CCPFWA-7507"
+    assert item["capacity"] == 44
+    assert item["status"] == "ACTIVE"
+    assert item["license_begin_date"] == "12/01/2025"
+    assert item["license_expiration"] == "11/30/2026"
+    # "Accepts MDHS Subsidy Children" is listed as a service now; it is lifted
+    # out into the boolean rather than left in ms_services.
+    assert item["ms_services"] == ["School Age After School", "Full Day", "Special Needs"]
+    assert item["ms_subsidy"] is True
+    assert item["head_start"] is False
+    assert item["ms_early_head_start"] is False
+    # Ages Served is a <ul> now; the ids drive the coarse flags.
+    assert (item["infant"], item["toddler"], item["preschool"], item["school"]) == (True, True, True, True)
+    assert item["ages_served"].startswith("Infant Care, 1 year old")
+    assert item["ages_served"].endswith("10 to 12 year old")
+    # Months come back spelled out and are mapped to v1's short form.
+    assert item["ms_months_of_operation"] == [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
+    assert item["hours"] == "Mon-Fri 06:30 AM-11:00 PM"
+
+
+def test_license_page_handles_a_partial_card(ms, caplog):
+    item = ProviderItem()
+    html = """
+    <span id="ucProviderInfo_lblProviderInfo">License and Service Details of <br/>X</span>
+    <span id="ucProviderInfo_lblCapacityLabel">not a number</span>
+    <span id="ucProviderInfo_lblServicesLabel">Full Day, Head Start, Early Head Start</span>
+    """
+    ms._apply_license(item, _html_response(html), "999")
+    assert "capacity" not in item
+    assert any("non-integer capacity" in r.message for r in caplog.records)
+    # Fallback for a comma-joined services string (the v1 shape).
+    assert item["ms_services"] == ["Full Day", "Head Start", "Early Head Start"]
+    assert item["head_start"] is True
+    assert item["ms_early_head_start"] is True
+
+
+def test_site_visits_include_nested_follow_up_inspections(ms):
+    _items, details, _pager = split_requests(_hinds_page_one(ms))
+    request = _detail_by_id(details, "20012896")
+    after_license = _advance(ms, request, "ms_license.html")
+    after_visits = _advance(ms, after_license[0], "ms_site_visits.html")
+    inspections = after_visits[0].meta["inspections"]
+
+    # 9 site visits + 4 follow-ups nested under them.
+    assert len(inspections) == 13
+    assert sum(1 for i in inspections if i.get("ms_exam_type") == "Follow Up") == 4
+
+    first = inspections[0]
+    assert first["type"] == "Inspection"
+    assert first["date"] == "9/17/2026"
+    assert first["ms_end_date"] == "9/17/2026"
+    assert first["original_status"] == "Pass"
+    # The redesign stopped publishing the exam type for a regular visit.
+    assert "ms_exam_type" not in first
+    # The token is percent-encoded on the way out: the markup now holds it raw,
+    # and a bare "+" would reach the server as a space.
+    assert first["report_url"].startswith(
+        "https://www.mdhs.provider.webapps.ms.gov/PublicViewInspectionDocument.aspx?pdf="
+    )
+    assert "%2B" in first["report_url"]
+
+    followup = next(i for i in inspections if i.get("ms_exam_type") == "Follow Up")
+    # A follow-up's own dates, not its parent visit's (the lblFollowup* ids are
+    # what keep the nested block apart).
+    assert followup["date"] == "6/13/2025"
+    assert followup["original_status"] == "Pass Pending"
+
+
+def test_investigation_and_penalty_grids(ms):
+    _items, details, _pager = split_requests(_clarke_last_page(ms))
+    request = _detail_by_id(details, "20010336")  # THE SHEPHERD'S STAFF
+    # Jump the chain to the Investigations tab -- the fixtures for this
+    # provider are the two grid pages.
+    meta = dict(request.meta)
+    meta.update({"tab_index": 2, "tab_label": "Investigations", "tab_handler": "_parse_investigations"})
+    after_investigations = list(ms.parse_detail(_response("ms_investigations.html", meta=meta)))
+    investigations = after_investigations[0].meta["inspections"]
+    assert len(investigations) == 1
+    assert investigations[0]["type"] == "Investigation"
+    assert investigations[0]["date"] == "3/13/2023"
+    assert investigations[0]["ms_description"] == "Investigation – Complaint"
+    assert "PublicViewInspectionDocument.aspx?pdf=" in investigations[0]["report_url"]
+
+    final = _advance(ms, after_investigations[0], "ms_monetary_penalties.html")
+    item = final[0]
+    assert isinstance(item, ProviderItem)
+    penalties = [i for i in item["inspections"] if i["type"] == "Monetary Penalty"]
+    assert len(penalties) == 1
+    assert penalties[0]["date"] == "4/7/2026"
+    assert penalties[0]["ms_description"] == "Monetary Penalty Letter"
+
+
+def test_absent_grid_yields_no_records(ms):
+    # The common case: most providers have no investigation or penalty at all,
+    # and the whole table is simply absent. Not a failure.
+    assert ms._parse_investigations(_response("ms_investigations_empty.html"), "20012896") == []
+    assert ms._parse_monetary_penalties(_response("ms_investigations_empty.html"), "20012896") == []
+    assert ms.detail_failures == {}
+
+
+def test_detail_page_for_the_wrong_provider_is_dropped_not_merged(ms, caplog):
+    # The postback is positional (module docstring item 4): if the server
+    # resolves an index against a different page, merging would corrupt the
+    # item, so the tab's data is dropped instead.
+    _items, details, _pager = split_requests(_clarke_last_page(ms))
+    request = _detail_by_id(details, "20008682")  # FIRST UNITED METHODIST PRESCHOOL
+    after = _advance(ms, request, "ms_license.html")  # A PLACE TO GROW's page
+
+    assert after[0].meta["tab_label"] == "Site Visits"  # chain continues
+    item = after[0].meta["item"]
+    assert "license_number" not in item
+    assert "capacity" not in item
+    assert ms.detail_failures == {"License": 1}
+    assert any("tab dropped rather than merged" in r.message for r in caplog.records)
+
+
+def test_bounced_postback_is_reported_and_the_chain_continues(ms, caplog):
+    # A body the server rejects lands back on the bare search page, which has
+    # no provider header at all.
+    _items, details, _pager = split_requests(_clarke_last_page(ms))
+    request = _detail_by_id(details, "20008682")
+    after = _advance(ms, request, "ms_search_page.html")
+
+    assert after[0].meta["tab_label"] == "Site Visits"
+    assert ms.detail_failures == {"License": 1}
+    assert any("did not return a detail page" in r.message for r in caplog.records)
+
+
+def test_failed_detail_request_still_emits_the_partial_provider(ms, caplog):
+    _items, details, _pager = split_requests(_clarke_last_page(ms))
+    request = _detail_by_id(details, "20008682")
+    try:
+        raise ConnectionRefusedError("connection lost")
+    except ConnectionRefusedError:
+        failure = Failure()
+    failure.request = request
+
+    emitted = ms.detail_errback(failure)
+    assert len(emitted) == 1
+    item = emitted[0]
+    assert isinstance(item, ProviderItem)
+    # Everything the row gave is still there; only the tab's data is missing.
+    assert item["provider_name"] == "FIRST UNITED METHODIST PRESCHOOL"
+    assert "license_number" not in item
+    assert ms.detail_failures == {"License": 1}
+    assert any("emitting the provider without it" in r.message for r in caplog.records)
+
+
+def test_details_off_emits_rows_without_any_postback():
+    s = MississippiSpider(details="off")
+    list(s.parse_search_page(_response("ms_search_page.html")))
+    items, details, pager = split_requests(_clarke_last_page(s))
+    assert len(items) == 6
+    assert details == [] and pager == []
+    assert all("provider_name" in i for i in items)
+
+
+def test_details_license_stops_after_the_license_tab():
+    s = MississippiSpider(details="license")
+    list(s.parse_search_page(_response("ms_search_page.html")))
+    _items, details, _pager = split_requests(_hinds_page_one(s))
+    request = _detail_by_id(details, "20012896")
+    assert request.meta["tab_label"] == "License"
+    final = _advance(s, request, "ms_license.html")
+    assert isinstance(final[0], ProviderItem)  # no Site Visits postback
+    assert "inspections" not in final[0]
+
+
+def test_row_missing_its_detail_links_still_emits(ms, caplog):
+    html = """
+    <div id="div_997" class="row border border-1 rounded-3">
+      <dl class="row">
+        <dt class="col-4">Provider Name:</dt><dd class="col-8"><strong>NO LINKS</strong></dd>
+      </dl>
+    </div>
+    """
+    response = _html_response(html, meta={"page": 1, "county": "HINDS", "county_value": "25"})
+    container = response.css('div.row.border[id^="div_"]')[0]
+    item = ms._build_item(container, response, "HINDS")
+    outputs = list(ms._start_detail_chain(item, container, {"__VIEWSTATE": "x"}, "HINDS"))
+    assert outputs == [item]
+    assert any("has no postback link" in r.message for r in caplog.records)
+
+
+# --------------------------------------------------------------------------- #
+# 5. facility_category mapping for the 3 Mississippi provider types
 # --------------------------------------------------------------------------- #
 
 
@@ -202,18 +654,8 @@ def test_mississippi_facility_category_mapping(provider_type, category):
 
 
 # --------------------------------------------------------------------------- #
-# 5. status extraction + canonical mapping
+# 6. status extraction + canonical mapping
 # --------------------------------------------------------------------------- #
-
-
-def test_status_extraction_from_results_page(spider_with_cities):
-    response = _response("ms_results_page.html", meta={"page": 1, "county": "Attala", "county_value": "04"})
-    items, _requests = split_requests(list(spider_with_cities.parse_results(response)))
-    for item in items:
-        # every sampled provider on this page is ACTIVE
-        assert item["status"] == "ACTIVE"
-        assert "/" in item["license_begin_date"]
-        assert "/" in item["license_expiration"]
 
 
 @pytest.mark.parametrize(
@@ -222,21 +664,13 @@ def test_status_extraction_from_results_page(spider_with_cities):
         ("ACTIVE", "active"),
         ("PENDING", "pending"),
         ("PENDING-INSPECTION", "pending"),
-        # Surfaced on the 2026-09-04 full live run -- not in the original
-        # recon sample, but the vocab was flagged open (plan §4.3).
         ("PENDING-DOCS-INSPECT", "pending"),
-        # The PENDING-* family keeps growing across live runs -- each new
-        # variant surfaced so far has belonged in `pending` (see the
-        # STATUS_BUCKETS comment).
         ("PENDING-DOCUMENTS", "pending"),
         ("TEMPORARY", "provisional"),
-        # Surfaced on the 2026-09-05 full live run -- a single occurrence,
-        # not in the original recon sample; treated as a regulatory
-        # limitation (cf. Probation/Suspended), to confirm with Ryan later.
         ("RESTRICTED", "enforcement"),
     ],
 )
-def test_new_mississippi_statuses_are_mapped(raw_word, canonical):
+def test_mississippi_statuses_are_mapped(raw_word, canonical):
     assert norm.canonical_status(raw_word) == canonical
 
 
@@ -257,208 +691,27 @@ def test_apply_status_fallback_on_unparsed_text(spider, caplog):
 
 
 # --------------------------------------------------------------------------- #
-# 6. Age flags / ages_served / hours
+# 7. closed() reconciliation against the site's own counter
 # --------------------------------------------------------------------------- #
 
 
-def test_age_flags_and_hours(spider_with_cities):
-    response = _response("ms_results_page.html", meta={"page": 1, "county": "Attala", "county_value": "04"})
-    items, _requests = split_requests(list(spider_with_cities.parse_results(response)))
-    item = _item_by_id(items, "20006183")
+def test_closed_flags_a_county_short_of_the_sites_own_count(ms, caplog):
+    caplog.set_level(logging.INFO)
+    _hinds_page_one(ms)  # 20 of the 201 the label promises, and we stop there
+    ms.closed("finished")
+    assert any("captured 20 providers but the site's own counter said 201" in r.message for r in caplog.records)
+    # And it says out loud that coordinates now come from geocode_enrich.
+    assert any("geocode_enrich" in r.message for r in caplog.records)
 
-    assert item["infant"] is True
-    assert item["toddler"] is True
-    assert item["preschool"] is True
-    assert item["school"] is True
-    assert item["ages_served"] == "Infant Care, 1 yr old, 2 yr old, 3 yr old, 4 yr old, 5 yr old Pre-Sch, 5-9 yr old"
-    assert item["hours"] == "Mon-Fri 06:00 AM-06:00 PM; Sat 08:00 AM-03:00 PM; Sun 08:30 AM-03:00 PM"
-    assert item["ms_months_of_operation"] == [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-    ]
+
+def test_closed_is_quiet_when_a_county_matches_its_counter(ms, caplog):
+    _clarke_last_page(ms)  # 6 rows, label says 6
+    ms.closed("finished")
+    assert not any("but the site's own counter said" in r.message for r in caplog.records)
 
 
 # --------------------------------------------------------------------------- #
-# 7. Services / subsidy / head start
-# --------------------------------------------------------------------------- #
-
-
-def test_services_subsidy_and_head_start(spider_with_cities):
-    response = _response("ms_results_page.html", meta={"page": 1, "county": "Attala", "county_value": "04"})
-    items, _requests = split_requests(list(spider_with_cities.parse_results(response)))
-
-    item = _item_by_id(items, "20006183")
-    assert item["ms_services"] == ["School Age After School", "Full Day"]
-    assert item["scholarships_accepted"] is True
-    assert item["ms_subsidy"] is True
-    assert item["head_start"] is False
-    assert item["ms_early_head_start"] is False
-
-    # A Bright Start's services list includes "Special Needs" -- confirms the
-    # split doesn't drop entries beyond the first two.
-    item2 = _item_by_id(items, "20005047")
-    assert "Special Needs" in item2["ms_services"]
-
-
-# --------------------------------------------------------------------------- #
-# 8. Inspections / Investigations / Monetary Penalties
-# --------------------------------------------------------------------------- #
-
-
-def test_all_three_inspection_types_on_one_provider(spider_with_cities):
-    # 20012910 has all three tables populated (Sec 8).
-    response = _response("ms_results_page.html", meta={"page": 1, "county": "Attala", "county_value": "04"})
-    items, _requests = split_requests(list(spider_with_cities.parse_results(response)))
-    item = _item_by_id(items, "20012910")
-
-    inspections = item["inspections"]
-    assert inspections and all(isinstance(i, InspectionItem) for i in inspections)
-
-    by_type = {}
-    for i in inspections:
-        by_type.setdefault(i["type"], []).append(i)
-
-    assert len(by_type["Inspection"]) == 14
-    assert len(by_type["Investigation"]) == 3
-    assert len(by_type["Monetary Penalty"]) == 3
-
-    insp = by_type["Inspection"][0]
-    assert insp["date"]
-    assert insp["ms_end_date"]
-    assert insp["ms_exam_type"]
-    assert insp["original_status"]
-    assert insp["report_url"].startswith(
-        "https://www.mdhs.provider.webapps.ms.gov/PublicViewInspectionDocument.aspx?pdf="
-    )
-
-    inv = by_type["Investigation"][0]
-    assert inv["date"]
-    assert inv["ms_description"]
-    assert inv["report_url"]
-
-    mp = by_type["Monetary Penalty"][0]
-    assert mp["date"]
-    assert mp["ms_description"] == "Monetary Penalty Letter"
-    assert mp["report_url"]
-
-
-def test_empty_tables_yield_no_items(spider_with_cities):
-    # 20005047 has inspections but NO investigations and NO monetary
-    # penalties -- the "No ... were found." placeholder must not become
-    # phantom InspectionItems.
-    response = _response("ms_results_page.html", meta={"page": 1, "county": "Attala", "county_value": "04"})
-    items, _requests = split_requests(list(spider_with_cities.parse_results(response)))
-    item = _item_by_id(items, "20005047")
-
-    inspections = item["inspections"]
-    assert len(inspections) == 5
-    assert all(i["type"] == "Inspection" for i in inspections)
-    assert not any(i["type"] == "Investigation" for i in inspections)
-    assert not any(i["type"] == "Monetary Penalty" for i in inspections)
-
-
-# --------------------------------------------------------------------------- #
-# 9-11. Pagination
-# --------------------------------------------------------------------------- #
-
-
-def test_pagination_mid_run_chains_next_page(spider_with_cities):
-    # ms_results_page.html is trimmed to 4 of the real page's 25 providers,
-    # but the stop rule is entirely pager-driven (never a row-count check --
-    # unlike Kansas), so this still exercises the real continuation logic.
-    response = _response("ms_results_page.html", meta={"page": 1, "county": "Attala", "county_value": "04"})
-    items, requests = split_requests(list(spider_with_cities.parse_results(response)))
-
-    assert len(items) == 4
-    assert len(requests) == 1
-    next_request = requests[0]
-    assert next_request.meta["page"] == 2
-    assert next_request.meta["cookiejar"] == "Attala"  # same jar as this county's every other request
-    assert next_request.meta["county_value"] == "04"
-    formdata = _formdata(next_request)
-    assert formdata["__EVENTTARGET"] == "lvProvider$lvDataPager$ctl01$ctl01"
-    assert formdata["__EVENTARGUMENT"] == ""
-    # ddlCounty MUST be re-sent on every pager postback -- live-verified
-    # 2026-09-05 that omitting it drops the county filter from page 2 on,
-    # reverting the server to the full statewide (poison-page-prone) set.
-    assert formdata["ddlCounty"] == "04"
-    assert "btnFind" not in formdata  # never sent on a pager postback
-
-
-def test_pagination_last_page_stops(spider_with_cities):
-    # ms_pager_last.html is just the page-59 pager (window 56 57 58 [59],
-    # Last disabled) -- no provider containers at all, so parse_results must
-    # recognize this as a CLEAN stop (the pager itself confirms Last is
-    # disabled with no next target) rather than flagging it as the
-    # poison-page failure symptom, even though the row count is 0.
-    response = _response("ms_pager_last.html", meta={"page": 59, "county": "Attala", "county_value": "04"})
-    outputs = list(spider_with_cities.parse_results(response))
-    assert outputs == []
-    assert "Attala" not in spider_with_cities.failed_counties
-
-
-def test_pager_stops_cleanly_when_last_disabled():
-    # Exercises _parse_pager directly against the real page-59 pager markup
-    # (Sec 5.2 regression guard): current==59, no current+1 link, Last
-    # disabled -> no next target.
-    response = _response("ms_pager_last.html")
-    pager_html = response.css("#lvProvider_lvDataPager").get()
-    current, next_target, last_disabled = _parse_pager(pager_html)
-    assert current == 59
-    assert next_target is None
-    assert last_disabled is True
-
-
-def test_pager_first_page_targets_page_two():
-    response = _response("ms_results_page.html")
-    pager_html = response.css("#lvProvider_lvDataPager").get()
-    current, next_target, last_disabled = _parse_pager(pager_html)
-    assert current == 1
-    assert next_target == "lvProvider$lvDataPager$ctl01$ctl01"
-    assert last_disabled is False
-
-
-def test_pager_falls_back_to_ellipsis_at_window_edge():
-    # A synthesized mid-crawl window "... 5 6 7 8 [9] ..." -- current+1 (10)
-    # isn't a direct numeric link in this window, so the trailing "..."
-    # (next group jump) must be chosen instead (Sec 2.3 case 11).
-    pager_html = (
-        '<span id="lvProvider_lvDataPager">'
-        '<input type="submit" name="lvProvider$lvDataPager$ctl00$ctl00" value="First" class="btn btn-default">'
-        "\xa0"
-        "<a href=\"javascript:__doPostBack('lvProvider$lvDataPager$ctl01$ctl00','')\">...</a>"
-        "\xa0"
-        "<a href=\"javascript:__doPostBack('lvProvider$lvDataPager$ctl01$ctl01','')\">5</a>"
-        "\xa0"
-        "<a href=\"javascript:__doPostBack('lvProvider$lvDataPager$ctl01$ctl02','')\">6</a>"
-        "\xa0"
-        "<a href=\"javascript:__doPostBack('lvProvider$lvDataPager$ctl01$ctl03','')\">7</a>"
-        "\xa0"
-        "<a href=\"javascript:__doPostBack('lvProvider$lvDataPager$ctl01$ctl04','')\">8</a>"
-        "\xa0<span>9</span>\xa0"
-        "<a href=\"javascript:__doPostBack('lvProvider$lvDataPager$ctl01$ctl05','')\">...</a>"
-        "\xa0"
-        '<input type="submit" name="lvProvider$lvDataPager$ctl02$ctl00" value="Last" class="btn btn-default">'
-        "\xa0</span>"
-    )
-    current, next_target, last_disabled = _parse_pager(pager_html)
-    assert current == 9
-    assert next_target == "lvProvider$lvDataPager$ctl01$ctl05"
-    assert last_disabled is False
-
-
-# --------------------------------------------------------------------------- #
-# 12. split_city
+# 8. split_city (the address fallback path)
 # --------------------------------------------------------------------------- #
 
 
@@ -474,8 +727,8 @@ KNOWN_CITIES = {"KOSCIUSKO", "STARKVILLE", "YAZOO CITY", "BAY ST LOUIS", "OCEAN 
         ("875 E FIFTEENTH ST YAZOO CITY", "875 E FIFTEENTH ST", "Yazoo City"),
         # another multi-word city, three tokens
         ("100 OAK ST BAY ST LOUIS", "100 OAK ST", "Bay St Louis"),
-        # city name that is itself a suffix-collision risk ("Springs" alone
-        # is not a known city, so this must match the full "OCEAN SPRINGS").
+        # city name that is itself a suffix-collision risk ("Springs" alone is
+        # not a known city, so this must match the full "OCEAN SPRINGS").
         ("42 GULF AVE OCEAN SPRINGS", "42 GULF AVE", "Ocean Springs"),
     ],
 )
@@ -486,100 +739,20 @@ def test_split_city_success_cases(addr_head, expected_street, expected_city):
 
 
 def test_split_city_fallback_when_no_known_city_matches():
-    # the head doesn't end with any known city -> never guess.
     street, city = split_city("123 MAIN ST SOMEWHERE", KNOWN_CITIES)
     assert street == "123 MAIN ST SOMEWHERE"
     assert city is None
 
 
 def test_split_city_word_boundary_guard():
-    # "KOSCIUSKO" must not match inside a longer word with no space before it
-    # (e.g. a hypothetical "...NKOSCIUSKO" glued run) -- the boundary check
-    # requires the character before the match to be a space or the start.
+    # "KOSCIUSKO" must not match inside a longer word with no space before it.
     street, city = split_city("100 MAIN STNKOSCIUSKO", KNOWN_CITIES)
     assert city is None
     assert street == "100 MAIN STNKOSCIUSKO"
 
 
 # --------------------------------------------------------------------------- #
-# 13. Nested pager guard
-# --------------------------------------------------------------------------- #
-
-
-def test_nested_pager_with_page_two_link_warns_but_still_emits_first_page(spider_with_cities, caplog):
-    response = _response("ms_results_nested_pager.html", meta={"page": 1, "county": "Attala", "county_value": "04"})
-    items, _requests = split_requests(list(spider_with_cities.parse_results(response)))
-
-    assert len(items) == 1
-    item = items[0]
-    assert item["ms_facility_id"] == "20005047"
-    # v1 still emits the first (only fetched) page's rows.
-    assert len(item["inspections"]) == 5
-
-    assert any("20005047 Inspections table has more than one page" in r.message for r in caplog.records)
-
-
-# --------------------------------------------------------------------------- #
-# 14. Per-county robustness: dedupe + poison-page failure isolation
-# --------------------------------------------------------------------------- #
-
-
-def test_cross_county_duplicate_facility_id_is_skipped(spider_with_cities):
-    # Defensive guard: every provider should belong to exactly one county,
-    # so a repeated ms_facility_id across two county responses must not
-    # double-count or double-yield.
-    first = _response("ms_results_page.html", meta={"page": 1, "county": "Attala", "county_value": "04"})
-    first_items, _ = split_requests(list(spider_with_cities.parse_results(first)))
-    assert len(first_items) == 4
-    assert spider_with_cities.duplicate_facility_ids == 0
-
-    # Same fixture again, "in" a different county -- every id was already seen.
-    second = _response("ms_results_page.html", meta={"page": 1, "county": "Oktibbeha", "county_value": "53"})
-    second_items, second_requests = split_requests(list(spider_with_cities.parse_results(second)))
-    assert second_items == []
-    assert spider_with_cities.duplicate_facility_ids == 4
-    # The (empty) county still gets a next-page request if its own pager says
-    # so -- the dedupe only affects which items are yielded, not pagination.
-    assert len(second_requests) == 1
-
-
-def test_poison_page_symptom_fails_just_that_county_and_continues(spider_with_cities, caplog):
-    # ms_search_page.html stands in for what Scrapy's RedirectMiddleware
-    # hands parse_results after the poison-page 302 (module docstring item
-    # 7): it auto-follows to the bare search page, which the live
-    # reproduction confirmed has neither a results pager nor any provider
-    # containers. Landing here on page > 1 (i.e. after at least one earlier
-    # page succeeded) must fail ONLY this county, not raise or otherwise
-    # disrupt the spider.
-    poisoned = _response("ms_search_page.html", meta={"page": 3, "county": "Hinds", "county_value": "25"})
-    outputs = list(spider_with_cities.parse_results(poisoned))
-    assert outputs == []
-    assert "Hinds" in spider_with_cities.failed_counties
-    assert "page 3" in spider_with_cities.failed_counties["Hinds"]
-    assert any("Hinds" in r.message and "poison-page" in r.message for r in caplog.records)
-
-    # A different county's chain is completely unaffected -- no shared state
-    # between counties beyond the dedupe set.
-    healthy = _response("ms_results_page.html", meta={"page": 1, "county": "DeSoto", "county_value": "17"})
-    items, _requests = split_requests(list(spider_with_cities.parse_results(healthy)))
-    assert len(items) == 4
-    assert "DeSoto" not in spider_with_cities.failed_counties
-
-
-def test_empty_county_on_page_one_is_a_warning_not_a_failure(spider_with_cities, caplog):
-    # ms_pager_last.html has a pager (First/Last both disabled -- a
-    # legitimate single/last-page shape) but 0 provider containers. On page
-    # 1 this must read as "possibly a genuinely tiny/empty county", not the
-    # poison-page failure path.
-    response = _response("ms_pager_last.html", meta={"page": 1, "county": "Issaquena", "county_value": "28"})
-    outputs = list(spider_with_cities.parse_results(response))
-    assert outputs == []
-    assert "Issaquena" not in spider_with_cities.failed_counties
-    assert any("Issaquena" in r.message and "may genuinely have none" in r.message for r in caplog.records)
-
-
-# --------------------------------------------------------------------------- #
-# 15. No undefined item fields (guards ms_* typos)
+# 9. No undefined item fields (guards ms_* typos)
 # --------------------------------------------------------------------------- #
 
 
