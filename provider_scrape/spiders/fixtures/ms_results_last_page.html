@@ -14,10 +14,9 @@
 <body>
     <form method="post" action="./ccsearch.aspx" id="frmSearchProvider">
 <div class="aspNetHidden">
-<input type="hidden" name="__LASTFOCUS" id="__LASTFOCUS" value="" />
 <input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
 <input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
-<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="__VIEWSTATE-TRIMMED-search" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="__VIEWSTATE-TRIMMED-clarke-p1" />
 </div>
 
 <script type="text/javascript">
@@ -45,12 +44,11 @@ function __doPostBack(eventTarget, eventArgument) {
 <script src="/ScriptResource.axd?d=iWfudBN2gs0f1BG-OJaVn8GnBNlqmLAYXqKW847MWklgEm1SK35XGzlMOXMknQNxUhX7TJa6c21zrkDhjtCZyzwejoFNVXE-48_oGZTuCb5eZNB7pjsWogEUesWZHWEDeeDymaJoAXFlN7Q219D6cPNZyr0SguKY5KEBFY4Wm4k1&amp;t=ffffffff9b7d03cf" type="text/javascript"></script>
 <script src="/ScriptResource.axd?d=I3oNFTeh9VikRgSt58KlofntozUhdwejlRm68sWVX9lcdMFW7hxfAP-RlFkEQnwwvj418JprtiUzBVWPdY0NQwPwSt9R0FWJvk0TbJ3HKX-myyMwVvhprMJTkFlwumUrgwWiN-bcOs4su_AdoUCHU09jdgn_ciCTkp0mD9LCWZw1&amp;t=ffffffff9b7d03cf" type="text/javascript"></script>
 <script src="/ScriptResource.axd?d=p6u3mm14yeNUs3SEAz72eqemZqyj_fcFISeoJEcYjPxqYK_Twcdut6P38BEASLqVwyM70Ew7oNJXrLQoYQ-KbiQosx91pBw8aGoUfTMRVesYXhziBpwrxQB99De4QWhsMX7a-_cCMThLj1uKqL-oiFlVfplVzzY5qN5U_ZqjqufLujpbGKfoURTlrsdybLNs0&amp;t=ffffffff9b7d03cf" type="text/javascript"></script>
-<script src="/WebResource.axd?d=TzBnKT0yyeZbDSLJhjtsBkrJpt62_HYJlZtPQBSXQENg6pI_H83H_waS8sfTXpRSKxAJRvkV0ArJlmeJ-y35lBzCXkf_DqYJ_yZ9YmD0Ho81&amp;t=639190653332169432" type="text/javascript"></script>
 <div class="aspNetHidden">
 
 	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="0217FD38" />
 	<input type="hidden" name="__VIEWSTATEENCRYPTED" id="__VIEWSTATEENCRYPTED" value="" />
-	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="__EVENTVALIDATION-TRIMMED-search" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="__EVENTVALIDATION-TRIMMED-clarke-p1" />
 </div>
         <script type="text/javascript">
 //<![CDATA[
@@ -94,7 +92,7 @@ Sys.WebForms.PageRequestManager._initialize('ScriptManager1', 'frmSearchProvider
                                         <div class="col text-start form-group">
                                             <label for="ddlProviderType" id="lblProviderType" class="fw-bold cssLabelColor">Provider Type:</label>
                                             <select name="ddlProviderType" id="ddlProviderType" class="form-select">
-		<option value="">Select One</option>
+		<option selected="selected" value="">Select One</option>
 		<option value="HOMECC">Home based Child Care Facility</option>
 		<option value="CENTERCC">Center based Child Care Facility</option>
 		<option value="YOUTHCAMP">Youth Camp</option>
@@ -106,7 +104,7 @@ Sys.WebForms.PageRequestManager._initialize('ScriptManager1', 'frmSearchProvider
                                         <div class="col text-start form-group">
                                             <label for="ddlCity" id="lblCity" class="fw-bold cssLabelColor">City:</label>
                                             <select name="ddlCity" id="ddlCity" class="form-select">
-		<option value="">Select One</option>
+		<option selected="selected" value="">Select One</option>
 		<option value="ABBEVILLE">ABBEVILLE</option>
 		<option value="ABERDEEN">ABERDEEN</option>
 		<option value="ACKERMAN">ACKERMAN</option>
@@ -615,7 +613,7 @@ Sys.WebForms.PageRequestManager._initialize('ScriptManager1', 'frmSearchProvider
 		<option value="09">CHICKASAW</option>
 		<option value="10">CHOCTAW</option>
 		<option value="11">CLAIBORNE</option>
-		<option value="12">CLARKE</option>
+		<option selected="selected" value="12">CLARKE</option>
 		<option value="13">CLAY</option>
 		<option value="14">COAHOMA</option>
 		<option value="15">COPIAH</option>
@@ -765,11 +763,497 @@ Sys.WebForms.PageRequestManager._initialize('ScriptManager1', 'frmSearchProvider
                     <!-- Results -->
 
                     <div class="container-fluid pb-3" aria-live="polite">
+                        <div id="pnlRecordCount" class="row mt-2">
+		
+                            <div class="col-12 text-center">
+                                <div class="alert alert-info">
+                                    <span id="lblCriteria">All providers with county equals 'CLARKE'</span>
+                                </div>
+                                <h2 id="hRecordCount" tabindex="-1">
+                                    <span id="lblRecordCount" class="text-success" role="status">6 records found - Page 1 of 1</span>
+                                    
+                                </h2>
+                            </div>
                         
+	</div>
 
                         <div id="divSearchResults" class="row mt-2">
                             <div class="col-12 text-center">
                                 
+                                        <div class="row">
+                                            <div class="col">
+                                                
+                                        <div id='div_20008682' tabindex="-1" class="row border border-1 rounded-3 mt-2 pt-2 pb-2 text-start">
+                                            <div class="col-md-6">
+                                                <dl class="row">
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Provider Name:</div>
+                                                    </dt>
+                                                    <dd class="col-8 text-start">
+                                                        <strong>FIRST UNITED METHODIST PRESCHOOL</strong>
+                                                        
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Address:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        203 E FRANKLIN ST <br />
+                                                        QUITMAN, MS 39355-2507
+                                                        <br />
+                                                        <a id="lstProviders_hlnkGoogleMap_0" class="link-primary fw-bold" aria-describedby="lstProviders_spnGoogleMap_0" href="https://www.google.com/maps/search/?api=1&amp;query=203+E+FRANKLIN+ST%2cQUITMAN%2cMS+39355-2507" target="_blank">View on Google Maps<span class="visually-hidden"> (opens in new window)</span></a>
+                                                        <span id="lstProviders_spnGoogleMap_0" class="visually-hidden">Map for FIRST UNITED METHODIST PRESCHOOL</span>
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Phone Number:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        601-776-2637
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Email:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        jesswalaneta@aol.com
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Type:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        Center based Child Care Facility
+                                                    </dd>
+                                                </dl>
+                                                
+                                            </div>
+                                            <div class="col-md-3 text-center">
+                                                <ul class="list-unstyled">
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lbkBtnViewLicense_0" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewLicense_0" href="javascript:__doPostBack(&#39;lstProviders$ctrl0$lbkBtnViewLicense&#39;,&#39;&#39;)">License and Services</a>
+                                                        <span id="lstProviders_spnViewLicense_0" class="visually-hidden">Details for FIRST UNITED METHODIST PRESCHOOL</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewInspection_0" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewInspection_0" href="javascript:__doPostBack(&#39;lstProviders$ctrl0$lnkBtnViewInspection&#39;,&#39;&#39;)">Site Visits</a>
+                                                        <span id="lstProviders_spnViewInspection_0" class="visually-hidden">Details for FIRST UNITED METHODIST PRESCHOOL</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewInvestigation_0" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewInvestigation_0" href="javascript:__doPostBack(&#39;lstProviders$ctrl0$lnkBtnViewInvestigation&#39;,&#39;&#39;)">Investigations</a>
+                                                        <span id="lstProviders_spnViewInvestigation_0" class="visually-hidden">Details for FIRST UNITED METHODIST PRESCHOOL</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewMonetaryPenalty_0" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewMonetaryPenalty_0" href="javascript:__doPostBack(&#39;lstProviders$ctrl0$lnkBtnViewMonetaryPenalty&#39;,&#39;&#39;)">Monetary Penalties</a>
+                                                        <span id="lstProviders_spnViewMonetaryPenalty_0" class="visually-hidden">Details for FIRST UNITED METHODIST PRESCHOOL</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-3">
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                            </div>
+                                        </div>
+                                    
+                                        <div id='div_20008776' tabindex="-1" class="row border border-1 rounded-3 mt-2 pt-2 pb-2 text-start">
+                                            <div class="col-md-6">
+                                                <dl class="row">
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Provider Name:</div>
+                                                    </dt>
+                                                    <dd class="col-8 text-start">
+                                                        <strong>MANUEL GOFF HEADSTART CENTER</strong>
+                                                        
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Address:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        207 E CHESTNUT ST <br />
+                                                        QUITMAN, MS 39355-2405
+                                                        <br />
+                                                        <a id="lstProviders_hlnkGoogleMap_1" class="link-primary fw-bold" aria-describedby="lstProviders_spnGoogleMap_1" href="https://www.google.com/maps/search/?api=1&amp;query=207+E+CHESTNUT+ST%2cQUITMAN%2cMS+39355-2405" target="_blank">View on Google Maps<span class="visually-hidden"> (opens in new window)</span></a>
+                                                        <span id="lstProviders_spnGoogleMap_1" class="visually-hidden">Map for MANUEL GOFF HEADSTART CENTER</span>
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Phone Number:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        601-776-6016
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Email:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        manuel_goff@fcmi-ms.us
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Type:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        Center based Child Care Facility
+                                                    </dd>
+                                                </dl>
+                                                
+                                            </div>
+                                            <div class="col-md-3 text-center">
+                                                <ul class="list-unstyled">
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lbkBtnViewLicense_1" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewLicense_1" href="javascript:__doPostBack(&#39;lstProviders$ctrl1$lbkBtnViewLicense&#39;,&#39;&#39;)">License and Services</a>
+                                                        <span id="lstProviders_spnViewLicense_1" class="visually-hidden">Details for MANUEL GOFF HEADSTART CENTER</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewInspection_1" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewInspection_1" href="javascript:__doPostBack(&#39;lstProviders$ctrl1$lnkBtnViewInspection&#39;,&#39;&#39;)">Site Visits</a>
+                                                        <span id="lstProviders_spnViewInspection_1" class="visually-hidden">Details for MANUEL GOFF HEADSTART CENTER</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewInvestigation_1" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewInvestigation_1" href="javascript:__doPostBack(&#39;lstProviders$ctrl1$lnkBtnViewInvestigation&#39;,&#39;&#39;)">Investigations</a>
+                                                        <span id="lstProviders_spnViewInvestigation_1" class="visually-hidden">Details for MANUEL GOFF HEADSTART CENTER</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewMonetaryPenalty_1" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewMonetaryPenalty_1" href="javascript:__doPostBack(&#39;lstProviders$ctrl1$lnkBtnViewMonetaryPenalty&#39;,&#39;&#39;)">Monetary Penalties</a>
+                                                        <span id="lstProviders_spnViewMonetaryPenalty_1" class="visually-hidden">Details for MANUEL GOFF HEADSTART CENTER</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-3">
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                            </div>
+                                        </div>
+                                    
+                                        <div id='div_20014310' tabindex="-1" class="row border border-1 rounded-3 mt-2 pt-2 pb-2 text-start">
+                                            <div class="col-md-6">
+                                                <dl class="row">
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Provider Name:</div>
+                                                    </dt>
+                                                    <dd class="col-8 text-start">
+                                                        <strong>MILES LEARNING CENTER LLC</strong>
+                                                        
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Address:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        112 ANDERSON ST <br />
+                                                        QUITMAN, MS 39355-2748
+                                                        <br />
+                                                        <a id="lstProviders_hlnkGoogleMap_2" class="link-primary fw-bold" aria-describedby="lstProviders_spnGoogleMap_2" href="https://www.google.com/maps/search/?api=1&amp;query=112+ANDERSON+ST%2cQUITMAN%2cMS+39355-2748" target="_blank">View on Google Maps<span class="visually-hidden"> (opens in new window)</span></a>
+                                                        <span id="lstProviders_spnGoogleMap_2" class="visually-hidden">Map for MILES LEARNING CENTER LLC</span>
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Phone Number:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        601-791-1290
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Email:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        miles2004@att.net
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Type:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        Center based Child Care Facility
+                                                    </dd>
+                                                </dl>
+                                                <div id="lstProviders_divMDHSSubsidy_2" class="row mt-2">
+                                                    <div class="col-4">
+                                                    </div>
+                                                    <div class="col-8 alert alert-info ">
+                                                        <span id="lstProviders_lblMDHSSubsidy_2" class="cssLabelInfo">Accepts MDHS Subsidy Children</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 text-center">
+                                                <ul class="list-unstyled">
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lbkBtnViewLicense_2" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewLicense_2" href="javascript:__doPostBack(&#39;lstProviders$ctrl2$lbkBtnViewLicense&#39;,&#39;&#39;)">License and Services</a>
+                                                        <span id="lstProviders_spnViewLicense_2" class="visually-hidden">Details for MILES LEARNING CENTER LLC</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewInspection_2" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewInspection_2" href="javascript:__doPostBack(&#39;lstProviders$ctrl2$lnkBtnViewInspection&#39;,&#39;&#39;)">Site Visits</a>
+                                                        <span id="lstProviders_spnViewInspection_2" class="visually-hidden">Details for MILES LEARNING CENTER LLC</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewInvestigation_2" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewInvestigation_2" href="javascript:__doPostBack(&#39;lstProviders$ctrl2$lnkBtnViewInvestigation&#39;,&#39;&#39;)">Investigations</a>
+                                                        <span id="lstProviders_spnViewInvestigation_2" class="visually-hidden">Details for MILES LEARNING CENTER LLC</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewMonetaryPenalty_2" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewMonetaryPenalty_2" href="javascript:__doPostBack(&#39;lstProviders$ctrl2$lnkBtnViewMonetaryPenalty&#39;,&#39;&#39;)">Monetary Penalties</a>
+                                                        <span id="lstProviders_spnViewMonetaryPenalty_2" class="visually-hidden">Details for MILES LEARNING CENTER LLC</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <input type="image" name="lstProviders$ctrl2$imgInteraction" id="lstProviders_imgInteraction_2" class="cssBadgeImage" data-bs-toggle="modal" data-bs-target="#interactionModal" src="WELSQSSBadgeImages/136907.png" alt="Educational Interaction Badge for MILES LEARNING CENTER LLC" onclick="return false;" style="cursor:pointer" />
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                            </div>
+                                        </div>
+                                    
+                                        <div id='div_20012884' tabindex="-1" class="row border border-1 rounded-3 mt-2 pt-2 pb-2 text-start">
+                                            <div class="col-md-6">
+                                                <dl class="row">
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Provider Name:</div>
+                                                    </dt>
+                                                    <dd class="col-8 text-start">
+                                                        <strong>SMALL HANDS ACADEMY</strong>
+                                                        
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Address:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        120 NAPP ST <br />
+                                                        QUITMAN, MS 39355-2756
+                                                        <br />
+                                                        <a id="lstProviders_hlnkGoogleMap_3" class="link-primary fw-bold" aria-describedby="lstProviders_spnGoogleMap_3" href="https://www.google.com/maps/search/?api=1&amp;query=120+NAPP+ST%2cQUITMAN%2cMS+39355-2756" target="_blank">View on Google Maps<span class="visually-hidden"> (opens in new window)</span></a>
+                                                        <span id="lstProviders_spnGoogleMap_3" class="visually-hidden">Map for SMALL HANDS ACADEMY</span>
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Phone Number:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        601-776-2961
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Email:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        goodwinc121@gmail.com
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Type:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        Center based Child Care Facility
+                                                    </dd>
+                                                </dl>
+                                                
+                                            </div>
+                                            <div class="col-md-3 text-center">
+                                                <ul class="list-unstyled">
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lbkBtnViewLicense_3" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewLicense_3" href="javascript:__doPostBack(&#39;lstProviders$ctrl3$lbkBtnViewLicense&#39;,&#39;&#39;)">License and Services</a>
+                                                        <span id="lstProviders_spnViewLicense_3" class="visually-hidden">Details for SMALL HANDS ACADEMY</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewInspection_3" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewInspection_3" href="javascript:__doPostBack(&#39;lstProviders$ctrl3$lnkBtnViewInspection&#39;,&#39;&#39;)">Site Visits</a>
+                                                        <span id="lstProviders_spnViewInspection_3" class="visually-hidden">Details for SMALL HANDS ACADEMY</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewInvestigation_3" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewInvestigation_3" href="javascript:__doPostBack(&#39;lstProviders$ctrl3$lnkBtnViewInvestigation&#39;,&#39;&#39;)">Investigations</a>
+                                                        <span id="lstProviders_spnViewInvestigation_3" class="visually-hidden">Details for SMALL HANDS ACADEMY</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewMonetaryPenalty_3" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewMonetaryPenalty_3" href="javascript:__doPostBack(&#39;lstProviders$ctrl3$lnkBtnViewMonetaryPenalty&#39;,&#39;&#39;)">Monetary Penalties</a>
+                                                        <span id="lstProviders_spnViewMonetaryPenalty_3" class="visually-hidden">Details for SMALL HANDS ACADEMY</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-3">
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                            </div>
+                                        </div>
+                                    
+                                        <div id='div_20010336' tabindex="-1" class="row border border-1 rounded-3 mt-2 pt-2 pb-2 text-start">
+                                            <div class="col-md-6">
+                                                <dl class="row">
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Provider Name:</div>
+                                                    </dt>
+                                                    <dd class="col-8 text-start">
+                                                        <strong>THE SHEPHERD'S STAFF</strong>
+                                                        
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Address:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        400 RIVER RD <br />
+                                                        ENTERPRISE, MS 39330-9296
+                                                        <br />
+                                                        <a id="lstProviders_hlnkGoogleMap_4" class="link-primary fw-bold" aria-describedby="lstProviders_spnGoogleMap_4" href="https://www.google.com/maps/search/?api=1&amp;query=400+RIVER+RD%2cENTERPRISE%2cMS+39330-9296" target="_blank">View on Google Maps<span class="visually-hidden"> (opens in new window)</span></a>
+                                                        <span id="lstProviders_spnGoogleMap_4" class="visually-hidden">Map for THE SHEPHERD'S STAFF</span>
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Phone Number:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        601-840-0183
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Email:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        shepherdsstaff@ymail.com
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Type:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        Center based Child Care Facility
+                                                    </dd>
+                                                </dl>
+                                                
+                                            </div>
+                                            <div class="col-md-3 text-center">
+                                                <ul class="list-unstyled">
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lbkBtnViewLicense_4" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewLicense_4" href="javascript:__doPostBack(&#39;lstProviders$ctrl4$lbkBtnViewLicense&#39;,&#39;&#39;)">License and Services</a>
+                                                        <span id="lstProviders_spnViewLicense_4" class="visually-hidden">Details for THE SHEPHERD'S STAFF</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewInspection_4" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewInspection_4" href="javascript:__doPostBack(&#39;lstProviders$ctrl4$lnkBtnViewInspection&#39;,&#39;&#39;)">Site Visits</a>
+                                                        <span id="lstProviders_spnViewInspection_4" class="visually-hidden">Details for THE SHEPHERD'S STAFF</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewInvestigation_4" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewInvestigation_4" href="javascript:__doPostBack(&#39;lstProviders$ctrl4$lnkBtnViewInvestigation&#39;,&#39;&#39;)">Investigations</a>
+                                                        <span id="lstProviders_spnViewInvestigation_4" class="visually-hidden">Details for THE SHEPHERD'S STAFF</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewMonetaryPenalty_4" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewMonetaryPenalty_4" href="javascript:__doPostBack(&#39;lstProviders$ctrl4$lnkBtnViewMonetaryPenalty&#39;,&#39;&#39;)">Monetary Penalties</a>
+                                                        <span id="lstProviders_spnViewMonetaryPenalty_4" class="visually-hidden">Details for THE SHEPHERD'S STAFF</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-3">
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                            </div>
+                                        </div>
+                                    
+                                        <div id='div_2000046' tabindex="-1" class="row border border-1 rounded-3 mt-2 pt-2 pb-2 text-start">
+                                            <div class="col-md-6">
+                                                <dl class="row">
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Provider Name:</div>
+                                                    </dt>
+                                                    <dd class="col-8 text-start">
+                                                        <strong>TODDLERS' DEPOT CHILD CARE</strong>
+                                                        
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Address:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        308 S RAILROAD AVE <br />
+                                                        QUITMAN, MS 39355-2021
+                                                        <br />
+                                                        <a id="lstProviders_hlnkGoogleMap_5" class="link-primary fw-bold" aria-describedby="lstProviders_spnGoogleMap_5" href="https://www.google.com/maps/search/?api=1&amp;query=308+S+RAILROAD+AVE%2cQUITMAN%2cMS+39355-2021" target="_blank">View on Google Maps<span class="visually-hidden"> (opens in new window)</span></a>
+                                                        <span id="lstProviders_spnGoogleMap_5" class="visually-hidden">Map for TODDLERS' DEPOT CHILD CARE</span>
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Phone Number:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        601-776-3335
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Email:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        felishia_jones@yahoo.com
+                                                    </dd>
+
+                                                    <dt class="col-4">
+                                                        <div class="col fw-bold cssLabelColor text-end">Type:</div>
+                                                    </dt>
+                                                    <dd class="col-8">
+                                                        Center based Child Care Facility
+                                                    </dd>
+                                                </dl>
+                                                <div id="lstProviders_divMDHSSubsidy_5" class="row mt-2">
+                                                    <div class="col-4">
+                                                    </div>
+                                                    <div class="col-8 alert alert-info ">
+                                                        <span id="lstProviders_lblMDHSSubsidy_5" class="cssLabelInfo">Accepts MDHS Subsidy Children</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 text-center">
+                                                <ul class="list-unstyled">
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lbkBtnViewLicense_5" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewLicense_5" href="javascript:__doPostBack(&#39;lstProviders$ctrl5$lbkBtnViewLicense&#39;,&#39;&#39;)">License and Services</a>
+                                                        <span id="lstProviders_spnViewLicense_5" class="visually-hidden">Details for TODDLERS' DEPOT CHILD CARE</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewInspection_5" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewInspection_5" href="javascript:__doPostBack(&#39;lstProviders$ctrl5$lnkBtnViewInspection&#39;,&#39;&#39;)">Site Visits</a>
+                                                        <span id="lstProviders_spnViewInspection_5" class="visually-hidden">Details for TODDLERS' DEPOT CHILD CARE</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewInvestigation_5" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewInvestigation_5" href="javascript:__doPostBack(&#39;lstProviders$ctrl5$lnkBtnViewInvestigation&#39;,&#39;&#39;)">Investigations</a>
+                                                        <span id="lstProviders_spnViewInvestigation_5" class="visually-hidden">Details for TODDLERS' DEPOT CHILD CARE</span>
+                                                    </li>
+                                                    <li class="p-2">
+                                                        <a onclick="ShowSubmProgressBar(); return true;" id="lstProviders_lnkBtnViewMonetaryPenalty_5" class="btn btn-primary cssbtnColor btn-sm button w-50" aria-describedby="lstProviders_spnViewMonetaryPenalty_5" href="javascript:__doPostBack(&#39;lstProviders$ctrl5$lnkBtnViewMonetaryPenalty&#39;,&#39;&#39;)">Monetary Penalties</a>
+                                                        <span id="lstProviders_spnViewMonetaryPenalty_5" class="visually-hidden">Details for TODDLERS' DEPOT CHILD CARE</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <input type="image" name="lstProviders$ctrl5$imgInteraction" id="lstProviders_imgInteraction_5" class="cssBadgeImage" data-bs-toggle="modal" data-bs-target="#interactionModal" src="WELSQSSBadgeImages/137032.png" alt="Educational Interaction Badge for TODDLERS&#39; DEPOT CHILD CARE" onclick="return false;" style="cursor:pointer" />
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                            </div>
+                                        </div>
+                                    
+                                            </div>
+                                        </div>
+                                    
 
                                 
                             </div>
@@ -918,10 +1402,10 @@ Sys.WebForms.PageRequestManager._initialize('ScriptManager1', 'frmSearchProvider
 
         <input type="submit" name="btnSubmitFormOnBrowserBack" value="Back" id="btnSubmitFormOnBrowserBack" class="d-none" />
     
-
+<script type='text/javascript'>document.getElementById('hRecordCount').focus();</script>
 <script type="text/javascript">
 //<![CDATA[
-WebForm_AutoFocus('txtProviderName');Sys.Application.add_init(function() {
+Sys.Application.add_init(function() {
     $create(AjaxControlToolkit.FilteredTextBoxBehavior, {"FilterType":2,"id":"ftbetxtZip"}, null, null, $get("txtZip"));
 });
 //]]>
