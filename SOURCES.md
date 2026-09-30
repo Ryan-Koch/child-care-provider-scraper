@@ -35,6 +35,7 @@ To regenerate: `.venv/bin/python scripts/generate_sources.py`.
 | Montana | https://mtdphhs.my.site.com/ |
 | Nebraska | https://nrrs.ne.gov/<br>https://stepuptoquality.ne.gov/ |
 | Nevada | https://nvdpbh.aithent.com/<br>https://analysis.windows.net/ |
+| New Hampshire | https://new-hampshire.my.site.com/ |
 | New Jersey | https://childcarenj.gov/ |
 | New Mexico | https://childcare.ececd.nm.gov/ |
 | New York | https://data.ny.gov/ |

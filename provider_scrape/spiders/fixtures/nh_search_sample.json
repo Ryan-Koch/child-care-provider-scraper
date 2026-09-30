@@ -1,0 +1,388 @@
+[
+  {
+    "statusCode": 200,
+    "type": "rpc",
+    "tid": 2,
+    "ref": true,
+    "action": "NH_ChildCareSearchClass",
+    "method": "retrieveAccountRecords",
+    "result": {
+      "s": 1,
+      "v": [
+        {
+          "s": 2,
+          "v": {
+            "Id": "0018z00000BHnVSAA1",
+            "Name": "100A Middle Child Care",
+            "ShippingStreet": "180 Bridge Street",
+            "ShippingLatitude": 42.995799,
+            "Toddler__c": 3,
+            "Infant__c": 2,
+            "ShippingLongitude": -71.456072,
+            "RecordTypeId": "012t00000004LplAAE",
+            "ShippingCity": "Manchester",
+            "QRIS_Rating__c": "Licensed",
+            "Phone": "(603) 668-6868",
+            "ShippingState": "NH",
+            "Email__c": "ben.noble@homeinstead.com",
+            "ShippingPostalCode": "03104",
+            "ShippingAddress": {
+              "street": "180 Bridge Street",
+              "city": "Manchester",
+              "state": "NH",
+              "postalCode": "03104",
+              "geocodeAccuracy": "Address"
+            },
+            "Capacity__c": 5,
+            "COVID_19_Closure__c": false,
+            "License_Status__c": "Active",
+            "Licensed__c": "Yes",
+            "Enrolled_as_a_Preventive_and_Protective__c": "No",
+            "RecordType": {
+              "s": 3,
+              "v": {
+                "Name": "Licensed Group Child Care Program",
+                "Id": "012t00000004LplAAE"
+              }
+            }
+          }
+        },
+        {
+          "s": 4,
+          "v": {
+            "Id": "001t000000UiY10AAF",
+            "Name": "4 Kids Child Care",
+            "ShippingStreet": "1145 Meaderboro Road",
+            "ShippingLatitude": 43.362269,
+            "Toddler__c": 4,
+            "Infant__c": 2,
+            "ShippingLongitude": -71.131081,
+            "RecordTypeId": "012t00000004LpkAAE",
+            "ShippingCity": "Farmington",
+            "QRIS_Rating__c": "Licensed",
+            "Phone": "(603) 859-0609",
+            "ShippingState": "New Hampshire",
+            "Email__c": "tewis310wh@gmail.com",
+            "ShippingPostalCode": "03835",
+            "ShippingAddress": {
+              "street": "1145 Meaderboro Road",
+              "city": "Farmington",
+              "state": "New Hampshire",
+              "postalCode": "03835",
+              "geocodeAccuracy": "Address"
+            },
+            "Capacity__c": 12,
+            "Qris_GSQ_Approved_Step__c": "Step 2",
+            "COVID_19_Closure__c": false,
+            "Age_Group__c": "Infant;Preschool;School Age;Toddler",
+            "License_Status__c": "Active",
+            "Licensed__c": "Yes",
+            "Enrolled_as_a_Preventive_and_Protective__c": "No",
+            "RecordType": {
+              "s": 5,
+              "v": {
+                "Name": "Licensed Family Child Care Program",
+                "Id": "012t00000004LpkAAE"
+              }
+            }
+          }
+        },
+        {
+          "s": 16,
+          "v": {
+            "Id": "0018z00000ATE1EAAX",
+            "Name": "Ada's Happiness",
+            "ShippingStreet": "123 Russell Street  Apt. #2",
+            "ShippingLatitude": 43.00041,
+            "Toddler__c": 1,
+            "Infant__c": 1,
+            "ShippingLongitude": -71.45147,
+            "RecordTypeId": "012t00000004LpjAAE",
+            "ShippingCity": "Manchester",
+            "Phone": "603-461-1965",
+            "ShippingState": "NH",
+            "Email__c": "dieudonnehabonimana7@gmail.com",
+            "ShippingPostalCode": "03104",
+            "ShippingAddress": {
+              "street": "123 Russell Street  Apt. #2",
+              "city": "Manchester",
+              "state": "NH",
+              "postalCode": "03104",
+              "geocodeAccuracy": "NearAddress"
+            },
+            "Capacity__c": 4,
+            "COVID_19_Closure__c": false,
+            "Age_Group__c": "Infant;Preschool;Toddler",
+            "License_Status__c": "Active",
+            "Enrolled_as_a_Preventive_and_Protective__c": "No",
+            "RecordType": {
+              "s": 17,
+              "v": {
+                "Name": "License Exempt Family Child Care Program",
+                "Id": "012t00000004LpjAAE"
+              }
+            }
+          }
+        },
+        {
+          "s": 73,
+          "v": {
+            "Id": "001t000000ddN6OAAU",
+            "Name": "Boys & Girls Club of Greater Derry",
+            "ShippingStreet": "40 East Derry Road",
+            "ShippingLatitude": 42.89744,
+            "ShippingLongitude": -71.299799,
+            "RecordTypeId": "012t00000004LpiAAE",
+            "ShippingCity": "Derry",
+            "Phone": "(603) 434-6695",
+            "ShippingState": "New Hampshire",
+            "Email__c": "jenc@derrybgclub.org",
+            "ShippingPostalCode": "03038",
+            "ShippingAddress": {
+              "street": "40 East Derry Road",
+              "city": "Derry",
+              "state": "New Hampshire",
+              "postalCode": "03038",
+              "geocodeAccuracy": "Address"
+            },
+            "Capacity__c": 354,
+            "COVID_19_Closure__c": false,
+            "License_Status__c": "Active",
+            "Enrolled_as_a_Preventive_and_Protective__c": "Yes",
+            "RecordType": {
+              "s": 74,
+              "v": {
+                "Name": "License Exempt Facility",
+                "Id": "012t00000004LpiAAE"
+              }
+            }
+          }
+        },
+        {
+          "s": 170,
+          "v": {
+            "Id": "001t000000blI6EAAU",
+            "Name": "Dover Children's Home",
+            "ShippingStreet": "207 Locust Street",
+            "ShippingLatitude": 43.186381,
+            "ShippingLongitude": -70.8767,
+            "RecordTypeId": "012t0000000g2cBAAQ",
+            "ShippingCity": "Dover",
+            "Phone": "(603) 742-4289",
+            "ShippingState": "New Hampshire",
+            "Email__c": "mthurber@doverchildrenshome.org",
+            "ShippingPostalCode": "03820",
+            "ShippingAddress": {
+              "street": "207 Locust Street",
+              "city": "Dover",
+              "state": "New Hampshire",
+              "postalCode": "03820",
+              "geocodeAccuracy": "Address"
+            },
+            "Capacity__c": 19,
+            "COVID_19_Closure__c": false,
+            "License_Status__c": "Active",
+            "Licensed__c": "Yes",
+            "RecordType": {
+              "s": 171,
+              "v": {
+                "Name": "Residential Child Care Program",
+                "Id": "012t0000000g2cBAAQ"
+              }
+            }
+          }
+        },
+        {
+          "s": 42,
+          "v": {
+            "Id": "001cs00001q8LYfAAM",
+            "Name": "BGCCNH - Sara M. Allen Early Learning Center",
+            "ShippingStreet": "60 Concord Street",
+            "ShippingLatitude": 43.436119,
+            "ShippingLongitude": -71.481191,
+            "RecordTypeId": "012t00000004LplAAE",
+            "ShippingCity": "Belmont",
+            "Phone": "(603) 409-6672",
+            "ShippingState": "NH",
+            "Email__c": "ebrough@nhyouth.org",
+            "ShippingPostalCode": "03220",
+            "ShippingAddress": {
+              "street": "60 Concord Street",
+              "city": "Belmont",
+              "state": "NH",
+              "postalCode": "03220",
+              "geocodeAccuracy": "Address"
+            },
+            "Capacity__c": 42,
+            "COVID_19_Closure__c": false,
+            "License_Status__c": "Permit Issued",
+            "Licensed__c": "Yes",
+            "RecordType": {
+              "r": 3
+            }
+          }
+        },
+        {
+          "s": 721,
+          "v": {
+            "Id": "001t000000blHzVAAU",
+            "Name": "Wildlings Family",
+            "ShippingStreet": "40 Jefferson RD",
+            "Toddler__c": 1,
+            "Infant__c": 1,
+            "RecordTypeId": "012t00000004LpjAAE",
+            "ShippingCity": "Whitefield",
+            "Phone": "(603) 937-0514",
+            "ShippingState": "New Hampshire",
+            "Email__c": "freitag.andressa@gmail.com",
+            "ShippingPostalCode": "03598",
+            "ShippingAddress": {
+              "street": "40 Jefferson RD",
+              "city": "Whitefield",
+              "state": "New Hampshire",
+              "postalCode": "03598",
+              "country": "Coos"
+            },
+            "Capacity__c": 4,
+            "COVID_19_Closure__c": false,
+            "Age_Group__c": "Infant;Preschool;School Age;Toddler",
+            "License_Status__c": "Active",
+            "Enrolled_as_a_Preventive_and_Protective__c": "No",
+            "RecordType": {
+              "r": 17
+            }
+          }
+        },
+        {
+          "s": 559,
+          "v": {
+            "Id": "001cs00000yVKBLAA4",
+            "Name": "Seacoast Community School - New Franklin PEAK",
+            "ShippingStreet": "1 Franklin Ave",
+            "ShippingLatitude": 43.077146,
+            "ShippingLongitude": -70.776568,
+            "RecordTypeId": "012t00000004LplAAE",
+            "ShippingCity": "Portsmouth",
+            "QRIS_Rating__c": "Licensed",
+            "ShippingState": "NH",
+            "Email__c": "jdubois@seacoastcommunityschool.org",
+            "ShippingPostalCode": "03801",
+            "ShippingAddress": {
+              "street": "1 Franklin Ave",
+              "city": "Portsmouth",
+              "state": "NH",
+              "postalCode": "03801",
+              "geocodeAccuracy": "Address"
+            },
+            "Capacity__c": 45,
+            "COVID_19_Closure__c": false,
+            "License_Status__c": "Active",
+            "Licensed__c": "Yes",
+            "Enrolled_as_a_Preventive_and_Protective__c": "No",
+            "RecordType": {
+              "r": 3
+            }
+          }
+        },
+        {
+          "s": 176,
+          "v": {
+            "Id": "001cs00001sb7UMAAY",
+            "Name": "Early Care and Education Center at PSU",
+            "ShippingStreet": "35 Langdon Street\u00a0",
+            "ShippingLatitude": 43.756102,
+            "ShippingLongitude": -71.693128,
+            "RecordTypeId": "012t00000004LplAAE",
+            "ShippingCity": "Plymouth",
+            "Phone": "(603) 486-7826",
+            "ShippingState": "NH\u00a0",
+            "Email__c": "rewing@nhyouth.org",
+            "ShippingPostalCode": "03264",
+            "ShippingAddress": {
+              "street": "35 Langdon Street\u00a0",
+              "city": "Plymouth",
+              "state": "NH\u00a0",
+              "postalCode": "03264",
+              "geocodeAccuracy": "Block"
+            },
+            "Capacity__c": 75,
+            "COVID_19_Closure__c": false,
+            "License_Status__c": "Permit Issued",
+            "Licensed__c": "Yes",
+            "RecordType": {
+              "r": 3
+            }
+          }
+        },
+        {
+          "s": 120,
+          "v": {
+            "Id": "001t000000UiY2dAAF",
+            "Name": "Children's Early Learning Center",
+            "ShippingStreet": "673 Weston Road",
+            "ShippingLatitude": 42.962232,
+            "ShippingLongitude": -71.427823,
+            "RecordTypeId": "012t00000004LplAAE",
+            "ShippingCity": "Manchester",
+            "QRIS_Rating__c": "Licensed",
+            "Phone": "(603) 232-3870",
+            "ShippingState": "New Hampshire",
+            "Email__c": "childguidance@comcast.net",
+            "ShippingPostalCode": "03103",
+            "ShippingAddress": {
+              "street": "673 Weston Road",
+              "city": "Manchester",
+              "state": "New Hampshire",
+              "postalCode": "03103",
+              "geocodeAccuracy": "Address"
+            },
+            "Capacity__c": 24,
+            "COVID_19_Closure__c": false,
+            "Age_Group__c": "Infant;Preschool;School Age;Toddler",
+            "License_Status__c": "Active",
+            "Licensed__c": "Yes",
+            "Enrolled_as_a_Preventive_and_Protective__c": "Yes",
+            "RecordType": {
+              "r": 3
+            }
+          }
+        },
+        {
+          "s": 33,
+          "v": {
+            "Id": "0018z000004DUIOAA4",
+            "Name": "Beckam's Childcare",
+            "ShippingStreet": "83 Cate Road",
+            "ShippingLatitude": 43.210384,
+            "Toddler__c": 3,
+            "Infant__c": 2,
+            "ShippingLongitude": -71.010595,
+            "RecordTypeId": "012t00000004LpkAAE",
+            "ShippingCity": "Barrington",
+            "QRIS_Rating__c": "Licensed",
+            "Phone": "(603) 507-8656",
+            "ShippingState": "NH",
+            "Email__c": "beckysantos1977@gmail.com",
+            "ShippingPostalCode": "03825",
+            "ShippingAddress": {
+              "street": "83 Cate Road",
+              "city": "Barrington",
+              "state": "NH",
+              "postalCode": "03825",
+              "geocodeAccuracy": "Address"
+            },
+            "Capacity__c": 11,
+            "Qris_GSQ_Approved_Step__c": "Step 4",
+            "COVID_19_Closure__c": false,
+            "License_Status__c": "Active",
+            "Licensed__c": "Yes",
+            "Enrolled_as_a_Preventive_and_Protective__c": "Yes",
+            "RecordType": {
+              "r": 5
+            }
+          }
+        }
+      ]
+    }
+  }
+]
