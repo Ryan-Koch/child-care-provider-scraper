@@ -139,7 +139,7 @@ The project uses pytest, so one can simply run `pytest` to go through the whole 
 | Montana                  | [x]     | 
 | Nebraska                 | [x]     | 
 | Nevada                   | [x]     | 
-| New Hampshire            | [ ]     | 
+| New Hampshire            | [x]     | 
 | New Jersey               | [x]     | 
 | New Mexico               | [x]     | 
 | New York                 | [x]     | 

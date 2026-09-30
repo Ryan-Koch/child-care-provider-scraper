@@ -359,6 +359,10 @@ STATUS_BUCKETS = {
         # issued outside the normal annual cycle (e.g. a new/relocated
         # facility awaiting its first full-year licence). Ryan, 2026-09-04.
         "TEMPORARY",
+        # New Hampshire (NHCIS License_Status__c): a permit issued ahead of
+        # full licensure -- matches the "Permit issued (IP)" / "Initial
+        # Permit" precedents above.
+        "Permit Issued",
     ],
     "pending": [
         "Pending renewal application (RN)",
@@ -601,6 +605,9 @@ FACILITY_CATEGORY_BUCKETS = {
         "Provisional Child Care Center",
         "Provisional Preschool",
         "Child Care for Children with Disabilities",
+        # New Hampshire (NHCIS RecordType): facility-based center care --
+        # matches the Wisconsin "Licensed Group" precedent above.
+        "Licensed Group Child Care Program",
     ],
     "family_home": [
         "FAMILY DAY CARE HOME",
@@ -693,6 +700,10 @@ FACILITY_CATEGORY_BUCKETS = {
         # Nebraska (nrrs.ne.gov) sub-category for care delivered in the
         # provider's own home -> family_home (Ryan 2026-09-15).
         "In Home Provider",
+        # New Hampshire (NHCIS RecordType): licensed care in the provider's
+        # own residence -- matches the Delaware "Licensed Family Child Care"
+        # precedent above (NH's exact string carries a trailing "Program").
+        "Licensed Family Child Care Program",
     ],
     "group_home": [
         "GFDC",
@@ -763,6 +774,11 @@ FACILITY_CATEGORY_BUCKETS = {
         "Exempt",
         # Iowa (Titan TypeOfCareDesc).
         "Exempt from Licensing",
+        # New Hampshire (NHCIS RecordType): license-exempt family care and a
+        # license-exempt facility -- exempt wins over the underlying setting,
+        # per the existing exempt entries above.
+        "License Exempt Family Child Care Program",
+        "License Exempt Facility",
     ],
     "other": [
         "Other",
@@ -807,6 +823,9 @@ FACILITY_CATEGORY_BUCKETS = {
         # matches the "Resident Camp" / "Summer Day Camp" / "Licensed Camp"
         # precedents above. Approved Ryan 2026-09-04.
         "Youth Camp",
+        # New Hampshire (NHCIS RecordType): group residential child care, not
+        # day care in a private residence -- doesn't fit family_home/group_home.
+        "Residential Child Care Program",
     ],
 }
 
@@ -905,6 +924,7 @@ FIELD_COLLAPSE_MAP = {
         "ri_head_start",
         "fl_is_head_start",
         "ct_head_start",
+        "nh_head_start",
     ],
     "curriculum": ["ga_curriculum", "nj_curriculum"],
 }

@@ -209,6 +209,32 @@ class InspectionItem(scrapy.Item):
     ms_end_date = scrapy.Field()  # Inspection rows only: exam End Date
     ms_description = scrapy.Field()  # Investigation/Monetary Penalty rows: Description
 
+    # New Hampshire specific inspection fields (new-hampshire.my.site.com/nhccis,
+    # a Salesforce Experience Cloud site -- see
+    # tasks/new_hampshire/new_hampshire_plan.md Sec 4). One InspectionItem per
+    # row of the Licensing History table (free, Phase 2); the nh_domains/
+    # nh_violations fields are filled in only by the Phase 3 per-visit
+    # postback fan-out (default on, `-a visits=0` to skip). Per the plan's
+    # option (a): nh_domains is a roll-up only (every domain, two keys each)
+    # and nh_violations carries ONLY the non-compliant item rows -- compliant
+    # item detail is parsed (to build the roll-up and validate the domain ->
+    # item join) but not retained. The common `deficiencies` field (on
+    # ProviderItem, not here) carries the running total across every visit,
+    # matching the Connecticut/Kansas/Wisconsin precedent; each visit's own
+    # count is still recoverable as len(nh_violations).
+    nh_visit_id = scrapy.Field()  # getNonComplianceItem('...') arg
+    nh_level_of_compliance = scrapy.Field()  # e.g. "221 / 222", from the Phase 2 table
+    nh_visit_document_id = scrapy.Field()  # getVisitPublicationRecords('...') arg; older visits only
+    nh_announcement_type = scrapy.Field()  # "Unannounced" / "Announced"
+    nh_licensor = scrapy.Field()  # Licensor Assigned
+    nh_corrective_action_accepted = scrapy.Field()  # Date Corrective Action Accepted
+    # [{domain, level_of_compliance}] -- every domain, roll-up only (no items).
+    nh_domains = scrapy.Field()
+    # Non-compliant items only, tagged with their domain: [{domain, item,
+    # result, regulations: [{citation, text}], observations,
+    # corrective_action_plan}].
+    nh_violations = scrapy.Field()
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
@@ -1035,6 +1061,44 @@ class ProviderItem(scrapy.Item):
     ne_part_time_staff = scrapy.Field()  # int (Step Up)
     ne_serves_special_needs = scrapy.Field()  # bool (Step Up)
     ne_match_method = scrapy.Field()  # "license" | "name_zip" | "nrrs_only" | "stepup_only"
+
+    # New Hampshire specific fields (new-hampshire.my.site.com/nhccis -- NHCIS,
+    # a Salesforce Experience Cloud/Visualforce site -- see
+    # tasks/new_hampshire/new_hampshire_plan.md). No license number is
+    # published, so the Account Id doubles as `provider_url`'s key and is kept
+    # here too; no county is published. The Available Slots numbers are
+    # VACANCIES, not capacity-by-age-group (2/595 records have
+    # Infant__c + Toddler__c == Capacity__c) -- they go to the nh_*_openings
+    # fields below, never the common infant/toddler/preschool/school fields
+    # (plan Sec 3.4a, mirroring Colorado's co_*_openings).
+    nh_account_id = scrapy.Field()  # Salesforce Account Id (18-char)
+    nh_qris_rating = scrapy.Field()  # QRIS_Rating__c: Licensed/Accreditation/Licensed Plus
+    nh_gsq_step = scrapy.Field()  # Granite Step for Quality: "Step 1".."Step 4" | "Licensed"
+    nh_endorsements = scrapy.Field()  # detail page Endorsements (rarely textual -- often a badge image)
+    nh_licensed = scrapy.Field()  # Licensed__c: "Yes" | absent
+    nh_licensed_plus = scrapy.Field()  # Licensed_Plus__c: "Yes" | absent
+    # Accreditation__c is a Yes/No flag, NOT an accreditation name -- the
+    # common `accreditation` field holds names, so this stays state-specific
+    # (plan Sec 3.4b). Endorsements is the closer thing to a name.
+    nh_accreditation = scrapy.Field()
+    nh_preventive_protective = scrapy.Field()  # Enrolled_as_a_Preventive_and_Protective__c
+    nh_covid_closure = scrapy.Field()  # COVID_19_Closure__c: bool
+    nh_infant_openings = scrapy.Field()  # detail page Available Slots Infant (supersedes API's Infant__c)
+    nh_toddler_openings = scrapy.Field()
+    nh_preschool_openings = scrapy.Field()
+    nh_school_age_openings = scrapy.Field()
+    # This is a Head Start Program: routed through nh_head_start (below) so
+    # the FIELD_COLLAPSE_MAP pipeline coerces the common `head_start` to a
+    # boolean, matching every other state's head_start source field.
+    nh_head_start = scrapy.Field()
+    nh_early_head_start = scrapy.Field()  # This is an Early Head Start Program:
+    nh_financial_assistance = scrapy.Field()  # TYPE OF FINANCIAL ASSISTANCE (detail page wins over sparser API field)
+    nh_environment = scrapy.Field()  # ENVIRONMENT:
+    nh_schedule_options = scrapy.Field()  # AVAILABLE SCHEDULE OPTIONS: (";"-delimited)
+    nh_special_needs = scrapy.Field()  # SPECIAL NEEDS:
+    nh_special_skills = scrapy.Field()  # SPECIAL SKILLS:
+    nh_schedule = scrapy.Field()  # Hours of Operation table: [{day, start, end}] (hours holds the formatted string)
+    nh_rates = scrapy.Field()  # Fees table text, usually "Please contact the child care provider for the rates."
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()
