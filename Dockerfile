@@ -15,6 +15,18 @@ ENV DEBIAN_FRONTEND=noninteractive
 #    tesserocr. Its wheel usually bundles libtesseract, but these guarantee the
 #    install works even if it has to build from source. (Trim later with a
 #    multi-stage build if image size matters.)
+#  - python3-dev: REQUIRED ON arm64 (Apple silicon). tesserocr depends on
+#    cysignals, and cysignals 1.12.6 publishes no aarch64 wheel -- only an
+#    sdist -- so pip builds it from source there. Its meson build resolves
+#    `dependency('python3')` via pkg-config, and the base image ships neither
+#    the headers nor python3.pc, which fails the build with:
+#      ../meson.build:1:0: ERROR: Cython requires python3 dependency for link
+#      testing, but it could not be found
+#    Pinning cysignals down to 1.12.5 (which does have an aarch64 wheel) is NOT
+#    a fix: tesserocr 2.11.0's wheel is built against 1.12.6's ABI and then
+#    fails at import with "cysignals.signals does not export expected C
+#    function _do_raise_exception". amd64 is unaffected (wheels exist) but the
+#    package is harmless there.
 #  - python-is-python3: run_spiders.sh and the enrich step call bare `python`.
 #  - curl: fetch the Tesseract model below.
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -23,6 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python-is-python3 \
         build-essential \
         pkg-config \
+        python3-dev \
         tesseract-ocr \
         libtesseract-dev \
         libleptonica-dev \
@@ -41,13 +54,27 @@ WORKDIR /app
 # Install Python deps first (own layer) so code changes don't invalidate the
 # dependency cache.
 COPY requirements.txt ./
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
-    && pip install --no-cache-dir -r requirements.txt
+# --break-system-packages: installing python3-dev above pulls in Debian's
+# PEP 668 marker (/usr/lib/python3.12/EXTERNALLY-MANAGED), which otherwise
+# makes pip refuse to install into the system interpreter. This image IS the
+# environment, so opting out is correct here; a venv would just add a layer.
+RUN pip install --no-cache-dir --break-system-packages --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir --break-system-packages -r requirements.txt
 
 # Browser binaries matching the installed Playwright: bundled Chromium plus
 # real Google Chrome (channel=chrome). --with-deps pulls any OS libs the
 # resolved browser build needs on top of what the base image provides.
-RUN playwright install --with-deps chromium chrome
+#
+# The `chrome` channel is amd64-only here: Playwright's installer hard-refuses
+# it on arm64 ("ERROR: not supported on Linux Arm64") and exits non-zero,
+# which fails the build. That step is redundant on arm64 anyway -- the pinned
+# google-chrome-stable .deb installed below provides the real Chrome that
+# channel=chrome resolves to, and Google does ship that .deb for arm64.
+RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
+        playwright install --with-deps chromium chrome; \
+    else \
+        playwright install --with-deps chromium; \
+    fi
 
 # CHROME VERSION PIN — bumped 2026-08-14 from 150.0.7871.114 to current stable
 # 151.0.7922.137. This is an explicit *version* pin, no longer a *downgrade*.
@@ -84,9 +111,18 @@ RUN playwright install --with-deps chromium chrome
 #     --entrypoint bash cc-test -c 'xvfb-run -a -s "-screen 0 1920x1080x24" \
 #     scrapy crawl rhode_island -a max_providers=3 -s LOG_LEVEL=INFO'
 # No isV3Failed in the log => that version is good; bump CHROME_VERSION to it.
+#
+# ARCHITECTURE: the .deb arch is derived from the build platform rather than
+# hardcoded, so this builds natively on arm64 (Apple silicon) as well as amd64
+# -- Google now ships google-chrome-stable for linux arm64. Hardcoding amd64
+# fails on an arm64 host with "Unable to correct problems, you have held broken
+# packages". NOTE the v3 evidence in the comment above was gathered on amd64;
+# it has NOT been re-verified against the arm64 Chrome build, so treat arm64 as
+# untested for the Rhode Island fingerprinting path specifically.
 ARG CHROME_VERSION=151.0.7922.137-1
-RUN curl -fsSL -o /tmp/chrome.deb \
-        "https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb" \
+RUN DEB_ARCH="$(dpkg --print-architecture)" \
+    && curl -fsSL -o /tmp/chrome.deb \
+        "https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_${DEB_ARCH}.deb" \
     && apt-get update \
     && apt-get install -y --allow-downgrades /tmp/chrome.deb \
     && rm -f /tmp/chrome.deb \
