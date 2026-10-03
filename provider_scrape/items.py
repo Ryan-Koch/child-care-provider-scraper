@@ -235,6 +235,30 @@ class InspectionItem(scrapy.Item):
     # corrective_action_plan}].
     nh_violations = scrapy.Field()
 
+    # Missouri specific inspection fields (healthapps.dhss.mo.gov/childcaresearch
+    # -- see tasks/missouri/missouri_plan.md Sec 3.2). Two kinds of record share
+    # the `inspections` list and `type` (the detail-page row's Type) tells them
+    # apart: "COMPLAINT INVESTIGATION" rows come from ViewInvestigation.aspx and
+    # carry the mo_investigation_id / mo_violations / mo_conclusion /
+    # mo_corrective_measures group (outcome in `original_status`); every other
+    # type is a routine ViewInspection.aspx report and carries the
+    # mo_inspection_id / mo_notice / mo_open_violations / mo_in_compliance /
+    # mo_compliance_list group. Fields in neither group stay unset.
+    mo_specialist = scrapy.Field()  # child care specialist assigned (both kinds)
+    mo_inspection_id = scrapy.Field()  # routine: Inspection ID (string)
+    mo_notice = scrapy.Field()  # routine: "UNANNOUNCED" / "ANNOUNCED"
+    mo_arrival_time = scrapy.Field()  # routine: e.g. "1:25 PM"
+    mo_departure_time = scrapy.Field()  # routine
+    mo_open_violations = scrapy.Field()  # routine: int ("NA" on the page -> 0)
+    mo_in_compliance = scrapy.Field()  # routine: bool from the checked/unchecked image
+    mo_compliance_list = scrapy.Field()  # routine: [{rule, result}] result: Compliance/Violation/Not Observed
+    mo_investigation_id = scrapy.Field()  # investigation: `cid` query parameter
+    mo_disposition_date = scrapy.Field()  # investigation: Disposition Date
+    mo_approving_supervisor = scrapy.Field()  # investigation
+    mo_violations = scrapy.Field()  # investigation: [{rule, description}]
+    mo_conclusion = scrapy.Field()  # investigation: conclusion summary narrative(s)
+    mo_corrective_measures = scrapy.Field()  # investigation: [{measure, completed, completed_date}]
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
@@ -1099,6 +1123,18 @@ class ProviderItem(scrapy.Item):
     nh_special_skills = scrapy.Field()  # SPECIAL SKILLS:
     nh_schedule = scrapy.Field()  # Hours of Operation table: [{day, start, end}] (hours holds the formatted string)
     nh_rates = scrapy.Field()  # Fees table text, usually "Please contact the child care provider for the rates."
+
+    # Missouri specific fields (healthapps.dhss.mo.gov/childcaresearch -- DESE
+    # Office of Childhood; see tasks/missouri/missouri_plan.md). The DVN is the
+    # license_number. The site has no status field, so `status` is not set.
+    # "License Anniversary Date" is a MM/DD renewal anniversary for licensed
+    # providers (kept raw here) but a full MM/DD/YYYY expiry for license-exempt
+    # ones, which is also copied to license_expiration.
+    mo_license_anniversary_date = scrapy.Field()
+    # Mailing address from the inspection report; sits next to the Owner block
+    # (often the owner's home), so it stays state-specific rather than address.
+    mo_mailing_address = scrapy.Field()
+    mo_limitations = scrapy.Field()  # inspection report "Limitations", e.g. "16 CHILDREN UNDER 24 MONTHS"
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()

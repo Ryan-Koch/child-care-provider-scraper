@@ -32,6 +32,7 @@ To regenerate: `.venv/bin/python scripts/generate_sources.py`.
 | Michigan | https://cclb.michigan.gov/ |
 | Minnesota | https://licensinglookup.dhs.state.mn.us/ |
 | Mississippi | https://mdhs.provider.webapps.ms.gov/ |
+| Missouri | https://healthapps.dhss.mo.gov/ |
 | Montana | https://mtdphhs.my.site.com/ |
 | Nebraska | https://nrrs.ne.gov/<br>https://stepuptoquality.ne.gov/ |
 | Nevada | https://nvdpbh.aithent.com/<br>https://analysis.windows.net/ |

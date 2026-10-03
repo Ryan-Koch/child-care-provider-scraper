@@ -1,0 +1,1029 @@
+
+
+<!DOCTYPE html />
+<html lang="en">
+<head id="ctl00_Head1"><title>
+
+</title><meta charset="utf-8" /><meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!-- necessary instead of line above to get rid of Object doesn't support property or method 
+                                                               'addEventListener' and Bootstrap requires jQuery errors when using version2.1 jQuery, with 
+                                                               jQuery 1.11 it worked with out this line, Edge mode tells Internet Explorer to display content 
+                                                               in the highest mode available for that browser version, Starting with IE11, edge mode is the 
+                                                               preferred document mode -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" /><meta http-equiv="Page-Enter" content="blendTrans(Duration=0.2)" /><meta http-equiv="Page-Exit" content="blendTrans(Duration=0.2)" /><script type="text/javascript" src="/ChildCareSearch/ruxitagentjs_ICA7NVfqrux_10343260715123811.js" data-dtconfig="rid=RID_1796192416|rpid=-2057353429|domain=mo.gov|reportUrl=/ChildCareSearch/rb_55eaf2f6-986f-4e73-8fc2-ea2e17ce5637|app=6c13ba5b0ed5da22|cuc=nuvz9kpf|owasp=1|mel=100000|expw=1|featureHash=ICA7NVfqrux|dpvc=1|lastModification=1789769567973|tp=500,50,0|rdnt=1|uxrgce=1|srbbv=2|agentUri=/ChildCareSearch/ruxitagentjs_ICA7NVfqrux_10343260715123811.js"></script><link href="/ChildCareSearch/CSS/bootstrap.min.css" type="text/css" rel="stylesheet" /><link href="/ChildCareSearch/CSS/style.css" type="text/css" rel="stylesheet" />
+    <script src="/ChildCareSearch/JavaScript/date.js" type="text/javascript"></script>
+    <script src="/ChildCareSearch/JavaScript/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script src="/ChildCareSearch/JavaScript/bootstrap.min.js" type="text/javascript"></script>
+<style type="text/css">
+	.ctl00_masterMenu_0 { background-color:white;visibility:hidden;display:none;position:absolute;left:0px;top:0px; }
+	.ctl00_masterMenu_1 { text-decoration:none; }
+	.ctl00_masterMenu_2 {  }
+	.ctl00_masterMenu_3 { font-weight:bold; }
+	.ctl00_masterMenu_4 {  }
+
+</style></head>
+<body style="background-color: #ffffff">
+    <a href="#mainContent" id="ctl00_skipLink" class="skip-link">Skip to main content</a>
+    <form name="aspnetForm" method="post" action="./ViewInspection.aspx?Inspection_ID=2496346432&amp;LID=002650073" id="aspnetForm" class="form-horizontal" role="form">
+<div>
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="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" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['aspnetForm'];
+if (!theForm) {
+    theForm = document.aspnetForm;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/ChildCareSearch/WebResource.axd?d=jUBeESC60kOSeLKV-bLRFr3-t7EUFmVzBzXtZ4vIzVV2_QceFScuY5Pp5z7rpqfVQg_2PT1F3yUzTOgo40CrmRsfxRhq3YF245tyTfFU3jA1&amp;t=639190664600000000" type="text/javascript"></script>
+
+
+<script src="/ChildCareSearch/ScriptResource.axd?d=kAnGAp8kdstu6yKJxLTLuytdeORAEA2blotpRcGgHcnIwx-_7Y6zRmqBKXciVSE1V0LDyXmc0YtdTQPBpUc9oo2UbUFoxwjii8pUkxVxDGT3Jo5myJ9VVPmmy5RrTitdnk2MVrwIgk7SeQ3dQ1Sgrw2&amp;t=ffffffff9fe38677" type="text/javascript"></script>
+<script src="/ChildCareSearch/ScriptResource.axd?d=BHvsQq4OUPJTuC_UTxzkh3seSw3dUIIBsvMTWW_SmPa5PMz3_qSrrO5itBGkCojDQPPD4dGa_P2diO1MyHFZ4yoCmwghgrcnzEVPbui1rpZ1vu3ji_kaKdNdJr47Zmy5Ylt2PiqhYMoh-En7eeO5cwycWWITmypOc34xgFZsmkJX94g7tf0v1q8v_8sF14Rm0&amp;t=ffffffffbec1863d" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+if (typeof(Sys) === 'undefined') throw new Error('ASP.NET Ajax client-side framework failed to load.');
+//]]>
+</script>
+
+<script src="/ChildCareSearch/ScriptResource.axd?d=vz6m3xnYGfDIlKkXj8a9w2ImtYHKVWRY1SSgvfZoGUR-fV3UsINGM_J7uMeZm5Oj17JNu3XVOzcLci_Y-2If7XjoQ0qGxMr_7g2KC-6McT2Q5HUpvOl8WKzVPgBYAb1miE_K0Ag3_5t-5u_pDKuwhKOIbk7aLqJTL6QLYZbFbinybZF8btxQSzlMJIK5Iz3G0&amp;t=ffffffffbec1863d" type="text/javascript"></script>
+<div>
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="26B410BB" />
+	<input type="hidden" name="__SCROLLPOSITIONX" id="__SCROLLPOSITIONX" value="0" />
+	<input type="hidden" name="__SCROLLPOSITIONY" id="__SCROLLPOSITIONY" value="0" />
+	<input type="hidden" name="__VIEWSTATEENCRYPTED" id="__VIEWSTATEENCRYPTED" value="" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="dYiae9odT8B6d1DA6eN0hSV8Db4gHMeDCqB56fIGfMNjESFRulN6KwwYqytRtj1dpZ7g2Mfq0KNF6XNRVOnYMk7TcgBGEvVy2UDIOYOAzYO0bhY90yidj2kx3YQyefNVMfCYiFxN8rS/zQyLmoZigQ==" />
+</div>
+    <div id="ctl00_navBar" class="navbar navbar-inverse navbar-top" role="navigation">
+        <div class="container-fluid">
+            <div id="branding">
+                <img id="ctl00_imgLogo" class="img-responsive" src="Images/logo.jpg" alt="Missouri Department of Elementary and Secondary Education Logo" align="left" style="border-width:0px;" />
+            </div>
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span><span
+                        class="icon-bar"></span><span class="icon-bar"></span>
+                </button>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="https://dese.mo.gov/childhood" target="_blank">DESE - OOC Home</a></li>
+                    <li><a href="http://www.mo.gov/" target="_blank">State Home</a></li>
+                    <li><a href="http://www.mo.gov/privacy-policy/" target="_blank">Disclaimer</a></li>
+                    <li><a href="https://dese.mo.gov/childhood/child-care/district-offices" target="_blank">Contact Us</a></li>
+                </ul>
+            </div>
+            <!--/.nav-collapse-->
+            <span class="dateTime">
+                <script type="text/javascript">                    todaysdate();
+                </script>
+            </span>
+        </div>
+    </div>
+    <!-- </td> 
+                <td class="dateTime" nowrap="nowrap" align="right">
+                    <script type="text/javascript">                        todaysdate();
+                    </script>  
+                </td> 
+            </tr> 
+        </tbody>
+    </table> -->
+    <div class="container-fluid">
+        <!-- <div class="row"  style="background-color:#003366;"> 
+      
+                <img  alt="DHSS Logo" src="Images/SevenMast_DHSS.gif"  /> -->
+        <!--  <td bgcolor="#003366" rowspan="2" align="right" style="border-color: #003366;">
+                <table cellspacing="0" cellpadding="5" border="0">
+                   <div class="row">
+                        <td colspan="4">
+                            <input type="hidden" value="dhss" name="site" />
+                            <input type="hidden" value="xml_no_dtd" name="output" />
+                            <input type="hidden" value="dhss" name="client" />
+                            <input type="hidden" value="10" name="num" />
+                            <input type="hidden" value="dhss" name="proxystylesheet" />
+                        </td>
+                    </div>
+                    <tbody>
+                        <div class="row">
+                            <td>
+                                
+                            </td>
+                            <td valign="middle"> -->
+        <div class="row">
+            <input type="hidden" value="dhss" name="site" />
+            <input type="hidden" value="xml_no_dtd" name="output" />
+            <input type="hidden" value="dhss" name="client" />
+            <input type="hidden" value="10" name="num" />
+            <input type="hidden" value="dhss" name="proxystylesheet" />
+            <!--
+                                <label for="mw0">
+                                    <input class="navblue" onkeypress="if(this.value=='Search')this.value = '';" id="mw0"
+                                        onclick="this.value = ''" maxlength="40" value="Google™ Search" name="q" />&nbsp;
+                                </label>  -->
+            <!--    </td>
+                            <td valign="middle" align="right">  -->
+            <!--    <input type="image" alt="Go" src="Images/go.gif" name="submit" /> -->
+            <!-- </td>
+                            <td> -->
+            <!--  <a class="nava" href="Logout.aspx?ACTION=LOGOUT" style="color: #FFFFFF">Login</a> -->
+            <!--  </td>  
+                        </div>
+                        
+                    </tbody>
+                </table>
+            </td> 
+        </div>
+        
+        <div class="row">
+            <td bgcolor="#003366"> -->
+            <!--             &nbsp;
+                <span id="ctl00_SiteMapPath1" style="font-family:Verdana;font-size:Small;"><a href="#ctl00_SiteMapPath1_SkipLink"><img alt="Skip Navigation Links" src="/ChildCareSearch/WebResource.axd?d=nSYZl4W0sTd1zkqOtadzcj5SxOn8PgGL1LuVK-CWfw6XNTHDxBWXmijKENeWtw4c18hhAqzEKfCkiUpX1WBB6sc5gVsCJn4wH_OxX-EaW-w1&amp;t=639190664600000000" width="0" height="0" style="border-width:0px;" /></a><span><a title="Search" href="/ChildCareSearch/SearchEngine.aspx" style="color:White;font-weight:bold;">Search</a></span><span style="color:White;font-weight:bold;">&gt;</span><span style="color:Snow;">View Inspection</span><a id="ctl00_SiteMapPath1_SkipLink"></a></span>  -->
+            <!-- </td>  -->
+        </div>
+        <div class="row">
+            <!--    <div class="col-md-2" style="background-color:#003366"> -->
+            <!-- backgound-color="#003366" align="center" bgcolor="#003366" valign="top" style="height: 800px;" scope="col"> -->
+            <!--   &nbsp;
+                <a href="#ctl00_masterMenu_SkipLink"><img alt="Skip Navigation Links" src="/ChildCareSearch/WebResource.axd?d=nSYZl4W0sTd1zkqOtadzcj5SxOn8PgGL1LuVK-CWfw6XNTHDxBWXmijKENeWtw4c18hhAqzEKfCkiUpX1WBB6sc5gVsCJn4wH_OxX-EaW-w1&amp;t=639190664600000000" width="0" height="0" style="border-width:0px;" /></a><table id="ctl00_masterMenu" class="ctl00_masterMenu_2" cellpadding="0" cellspacing="0" border="0">
+	<tr onmouseover="Menu_HoverStatic(this)" onmouseout="Menu_Unhover(this)" onkeyup="Menu_Key(event)" id="ctl00_masterMenun0">
+		<td><table class="ctl00_masterMenu_4" cellpadding="0" cellspacing="0" border="0" width="100%">
+			<tr>
+				<td style="white-space:nowrap;width:100%;"><a class="ctl00_masterMenu_1 ctl00_masterMenu_3" href="http://health.mo.gov/safety/childcare/index.php">Contact Us</a></td>
+			</tr>
+		</table></td>
+	</tr>
+</table><a id="ctl00_masterMenu_SkipLink"></a>  
+            </div>  -->
+            <div id="mainContent" class="col-md-12">
+                <!--colspan="2" valign="top"> -->
+                <span id="ctl00_lblError"></span>
+                <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('ctl00$ScriptManager1', 'aspnetForm', [], [], [], 90, 'ctl00');
+//]]>
+</script>
+
+                
+   
+        <div class="form-group">
+            <div class="col-sm-2">
+                <img src="Images/SealDHSS.bmp" alt="DHSS MO" class="image-responsive"/>
+            </div>
+            <div class="col-sm-8 reportTitleText">
+                <span id="ctl00_ContentPlaceHolder1_Label1">MISSOURI DEPARTMENT OF ELEMENTARY AND SECONDARY EDUCATION</span><br />
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_Label2">OFFICE OF CHILDHOOD</span><br />
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblHeader">LICENSE EXEMPT PROGRAM</span>
+                <span id="ctl00_ContentPlaceHolder1_Label3"> INSPECTION REPORT</span>
+            </div>
+            <div class="col-sm-2 text-right">
+                <a id="ctl00_ContentPlaceHolder1_lnlBacktoInspections" href="javascript:__doPostBack(&#39;ctl00$ContentPlaceHolder1$lnlBacktoInspections&#39;,&#39;&#39;)" style="margin-right:20px; color: rgb(58,123,179)">Back</a>
+                <br />
+                <br />
+                
+            </div>
+        </div>       
+        <div class="form-group sectionHeader">
+           <div class="col-lg-12 h5 sectionHeaderTextLeft">  
+                <span id="ctl00_ContentPlaceHolder1_lblFacilityHeader">Facility Information</span>
+            </div>
+        </div>
+    
+    
+        <div class="form-group">
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblFacilityName" id="ctl00_ContentPlaceHolder1_lblFNHeader">Facility Name </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblFacilityName">THE NEST AT CENTRAL REFORM CONGREGATION</span>
+            </div>
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblDVN" id="ctl00_ContentPlaceHolder1_lblFDVNHeader">Facility DVN</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblDVN">002650073</span>
+            </div>
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblPhone" id="ctl00_ContentPlaceHolder1_lblPhoneHeader">Phone </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblPhone">(314) 361-3919</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblPhysicalAddress" id="ctl00_ContentPlaceHolder1_lblPAHeader">Physical Address </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblPhysicalAddress">5020 WATERMAN BLVD </span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblCity">ST LOUIS</span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblState">MO</span>
+                &nbsp;<span id="ctl00_ContentPlaceHolder1_lblZip">63108-1102</span>
+            </div>
+            <div class="col-sm-8">
+                <label for="ctl00_ContentPlaceHolder1_lblOwner" id="ctl00_ContentPlaceHolder1_lblOwnerHaeder">Owner</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblOwner">CENTRAL REFORM CONGREGATION</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblMailingAddress" id="ctl00_ContentPlaceHolder1_lblMAHeader">Mailing Address</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblMailingAddress"> </span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblMailingCity"></span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblMailingState"></span>
+                &nbsp;<span id="ctl00_ContentPlaceHolder1_lblMailingZip"></span>
+            </div>
+            <div class="col-sm-8">
+                <label for="ctl00_ContentPlaceHolder1_lblProviderorDirector" id="ctl00_ContentPlaceHolder1_lblPDHeader">Provider/Director</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblProviderorDirector">TOLBERT, KIMBERLY ALANDA</span>
+            </div>
+        </div>
+        <div class="form-group">
+            
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblEmail" id="ctl00_ContentPlaceHolder1_lblEmailHeader">E-mail Address</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblEmail">thenest@centralreform.org</span>
+            </div>
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblIncorporated" id="ctl00_ContentPlaceHolder1_lblIHeader">Incorporated </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblIncorporated">Incorporated</span>
+            </div>
+        </div>
+        <div class="form-group">
+            
+            <div class="col-sm-8">
+                <label for="ctl00_ContentPlaceHolder1_lblChildCareSpecialist" id="ctl00_ContentPlaceHolder1_lblCCSHeader">Child Care Specialist </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblChildCareSpecialist">TARA D BURNETT</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblAgeRange" id="ctl00_ContentPlaceHolder1_lblARHeader">Age Range</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblAgeRange">BIRTH - 5 YEARS</span>
+            </div>
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblCapacity" id="ctl00_ContentPlaceHolder1_lblCHeader">Capacity</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblCapacity">37</span>
+            </div>
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblFacilityType" id="ctl00_ContentPlaceHolder1_lblFTHeader">Facility Type</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblFacilityType">LICENSE EXEMPT PROGRAM</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-12">
+                <label for="ctl00_ContentPlaceHolder1_lblLimitations" id="ctl00_ContentPlaceHolder1_lblLHeader">Limitations </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblLimitations">17 CHILDREN IN THE INFANT/TODDLER UNIT</span>
+            </div>            
+        </div>
+        <div class="form-group">
+            <div class="Linebreak">
+                &nbsp;
+            </div>
+        </div>
+    
+
+  
+        <div class="form-group sectionHeader">
+           <div class="col-lg-12 h5 sectionHeaderTextLeft">  
+                <span id="ctl00_ContentPlaceHolder1_lblInspectionHeader">Inspection Information</span>
+            </div>
+        </div>
+   
+    
+        <div class="form-group">
+            <div class="col-sm-2">
+                <label for="ctl00_ContentPlaceHolder1_lblInspectionDate" id="ctl00_ContentPlaceHolder1_lblDHeader">Date </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblInspectionDate">07/03/2025</span>
+            </div>
+            <div class="col-sm-2">
+                <label for="ctl00_ContentPlaceHolder1_lblArrivalTime" id="ctl00_ContentPlaceHolder1_lblATHeader">Arrival Time</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblArrivalTime"> 9:00 AM</span>
+            </div>
+            <div class="col-sm-2">
+                <label for="ctl00_ContentPlaceHolder1_lblDepartureTime" id="ctl00_ContentPlaceHolder1_lblDTHeader">Departure Time </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblDepartureTime">12:25 PM</span>
+            </div>
+            <div class="col-sm-2">
+                <label for="ctl00_ContentPlaceHolder1_lblNotice" id="ctl00_ContentPlaceHolder1_lblNHeader">Notice </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblNotice">ANNOUNCED</span>
+            </div>
+            <div class="col-sm-2">
+                <label for="ctl00_ContentPlaceHolder1_lblInspectionType" id="ctl00_ContentPlaceHolder1_lblITHeader">Inspection Type </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblInspectionType">ANNUAL</span>
+            </div>
+            <div class="col-sm-2">
+                <label for="ctl00_ContentPlaceHolder1_lblInspectionID" id="ctl00_ContentPlaceHolder1_lblInspectionIDHeader">Inspection ID </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblInspectionID">2496346432</span>
+            </div>
+        </div>
+    
+    <br />
+    <br />  
+     <div> 
+                <div>
+	<table class="table table-bordered table-striped table-condensed small" cellspacing="0" cellpadding="3" rules="all" border="1" id="ctl00_ContentPlaceHolder1_dgDocuments" style="border-collapse:collapse;">
+		<tr>
+			<th scope="col">Document</th><th scope="col">Document-Date</th>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl02_lblDocument">NOTICE OF PARENTAL RESPONSIBILITY</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl02_lblDocumentDate">08/22/2024</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl03_lblDocument">FIRE/SAFETY INSPECTION</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl03_lblDocumentDate">05/14/2025</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl04_lblDocument">SANITATION INSPECTION</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl04_lblDocumentDate">05/28/2024</span>
+                            </td>
+		</tr>
+	</table>
+</div>
+    </div>      
+    <br />
+    <div>
+        <div>
+
+</div>
+    </div>
+    <br />
+    <div >
+    
+    </div>
+    <br />
+    <div>
+                <div>
+	<table class="table table-bordered table-striped table-condensed small" cellspacing="0" cellpadding="3" rules="all" border="1" id="ctl00_ContentPlaceHolder1_dgVariance" style="border-collapse:collapse;">
+
+	</table>
+</div>
+    </div>
+    <br />
+    <div id="ctl00_ContentPlaceHolder1_pnlInComplience" class="panel" style="border-width:0px;">
+	
+        <div class="form-group"> 
+                <div class="col-sm-5">
+                    <span id="ctl00_ContentPlaceHolder1_lblComplience" style="font-weight:bold;">Inspection determined facility to be in compliance with rules.</span>
+                </div>
+                <div class="col-sm-2">
+                    <img id="ctl00_ContentPlaceHolder1_imgComplienceLicensingRules" alt="Compliance Licensing Rules" src="Images/InspectionCondition/unchecked.jpg" style="height:24px;width:81px;border-width:0px;" />
+                </div>
+                <div class="col-sm-5">
+                    <span id="ctl00_ContentPlaceHolder1_lblOpenViolationslbl" style="font-weight:bold;">   Open Violations: </span>
+                    <span id="ctl00_ContentPlaceHolder1_lblOpenViolations">13</span>
+                </div>                
+            </div>        
+    
+</div>
+    
+        <div class="form-group h5 sectionHeader">
+            <div class="col-sm-12 sectionHeaderTextLeft">
+                <span id="ctl00_ContentPlaceHolder1_lblAttendanceHeader" style="font-weight:bold;">Attendance at Time of Inspection</span>
+            </div>
+        </div>
+   
+    <div class="form-group">
+            <div class="col-sm-6">
+                <span id="ctl00_ContentPlaceHolder1_lblTStaff">Total Staff </span>
+                <span id="ctl00_ContentPlaceHolder1_lblTotalStaff">9</span>
+            </div>
+            <div class="col-sm-6">
+                <span id="ctl00_ContentPlaceHolder1_lblTChildren">Total Children </span>
+                <span id="ctl00_ContentPlaceHolder1_lblTotalChildren">16</span>
+            </div>
+        </div>
+    
+    <div>
+    <div>
+	<table class="table table-bordered table-striped table-condensed small" cellspacing="0" cellpadding="3" rules="all" border="1" id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup" style="border-collapse:collapse;">
+		<tr>
+			<th scope="col">Staff</th><th scope="col">Child</th><th scope="col">Class Age</th><th scope="col">Note</th>
+		</tr><tr>
+			<td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl02_lblSTAFF">1</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl02_CHILD">4</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl02_CLASS_AGE">INFANTS AND TODDLERS</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl02_NOTE">Teacher, Merav Portman present with four children ages 17-months-old to 21-months-old.</span>
+                </td>
+		</tr><tr>
+			<td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl03_lblSTAFF">2</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl03_CHILD">2</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl03_CLASS_AGE">INFANTS AND TODDLERS</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl03_NOTE">Teacher, Lucy Muant and Teacher, Takieah Thornton present with two children ages 5-months-old to 7-months-old.</span>
+                </td>
+		</tr><tr>
+			<td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl04_lblSTAFF">3</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl04_CHILD">10</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl04_CLASS_AGE">MIXED</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl04_NOTE">Teacher, Sharlene Ehll, Teacher, Michala Lewis and Teacher, Sawyer Stein present with ten children ages 2-years-old to 5-years-old including five children age 2-years-old.</span>
+                </td>
+		</tr><tr>
+			<td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl05_lblSTAFF">3</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl05_CHILD">0</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl05_CLASS_AGE">NO CHILDREN IN ATTENDANCE</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl05_NOTE">Director, Katherine Orwig, Director of Congregational Learning, Maxine Weil and Interim Executive Director, Sarah Kirschner present with no children in attendance.</span>
+                </td>
+		</tr>
+	</table>
+</div>
+    </div>
+    <br />
+    <div>
+                <div>
+	<table class="table table-bordered table-striped table-condensed small" cellspacing="0" cellpadding="3" rules="all" border="1" id="ctl00_ContentPlaceHolder1_dgGroupName" style="border-collapse:collapse;">
+		<tr>
+			<th scope="col">Compliance List</th>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl02_lblGrpName" style="font-weight:normal;">5 CSR 25-300.020 Application for Annual Fire Safety and Health and Sanitation Inspections and Inspection Procedures</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl02_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl03_lblGrpName" style="font-weight:normal;">5 CSR 25-300.040 Staffing Requirements</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl03_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl04_lblGrpName" style="font-weight:normal;">5 CSR 25-300.050 Health Requirements</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl04_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Violation</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl05_lblGrpName" style="font-weight:normal;">5 CSR 25-300.060 Responsibilities of Caregivers</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl05_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl06_lblGrpName" style="font-weight:normal;">5 CSR 25-300.070 Fire Safety Requirements</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl06_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Violation</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl07_lblGrpName" style="font-weight:normal;">5 CSR 25-300.080 Sanitation Requirements</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl07_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl08_lblGrpName" style="font-weight:normal;">5 CSR 25-300.090 Physical Plant, Space, Supplies and Equipment</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl08_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Violation</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl09_lblGrpName" style="font-weight:normal;">5 CSR 25-300.110 Admission Procedures and Required Reports and Records</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl09_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Violation</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl10_lblGrpName" style="font-weight:normal;">5 CSR 25-600.020 General Requirements</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl10_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl11_lblGrpName" style="font-weight:normal;">5 CSR 25-600.040 Background Screening Findings</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl11_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Not Observed</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl12_lblGrpName" style="font-weight:normal;">RSMo 210.003 Immunizations of children required, when, exceptions--duties of administrator, report--notification of parents, when.</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl12_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl13_lblGrpName" style="font-weight:normal;">RSMo 210.115 Reports of abuse, neglect, and under age eighteen deaths--persons required to report--supervisors and administrators not to impede reporting--deaths required to be reported to the division or child fatality review panel, when.</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl13_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl14_lblGrpName" style="font-weight:normal;">RSMo 210.201. Definitions. — As used in sections 210.201 to 210.257, the following terms mean:</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl14_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl15_lblGrpName" style="font-weight:normal;">RSMo 210.254 Religious organization operating facilities exempt under licensing laws required to file parental notice of responsibility and fire, safety inspections annually.</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl15_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl16_lblGrpName" style="font-weight:normal;">RSMo 210.255 Religious organizations operating facility in violation, procedure - noncompliance after notice, prosecutor may act or attorney general.</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl16_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl17_lblGrpName" style="font-weight:normal;">RSMo 252. Fire, safety, health and sanitation inspections, procedures - variances to rules granted when - rules authorized.</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl17_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Violation</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr>
+	</table>
+</div>
+    </div>
+
+            </div>
+        </div>
+        <!--    </table>  -->
+    </div>
+    
+
+<script type="text/javascript">
+//<![CDATA[
+var ctl00_masterMenu_Data = new Object();
+ctl00_masterMenu_Data.disappearAfter = 500;
+ctl00_masterMenu_Data.horizontalOffset = 0;
+ctl00_masterMenu_Data.verticalOffset = 0;
+ctl00_masterMenu_Data.iframeUrl = '/ChildCareSearch/WebResource.axd?d=95j8JPRY5jPkMpJIMrQb8Z8KhD0QykQJL4aNFDjVTpa5sxg-A7tfprkIEqh2lFQqkLugvjA6b7ZiIQ6ddnW1g9xo4ohKJ3FzUlPAssA4K2Y1&t=639190664600000000';
+
+theForm.oldSubmit = theForm.submit;
+theForm.submit = WebForm_SaveScrollPositionSubmit;
+
+theForm.oldOnSubmit = theForm.onsubmit;
+theForm.onsubmit = WebForm_SaveScrollPositionOnSubmit;
+//]]>
+</script>
+</form>
+<script type="text/javascript" src="/_Incapsula_Resource?SWJIYLWA=719d34d31c8e3a6e6fffd425f7e032f3&ns=5&cb=545618937" async></script></body>
+</html>

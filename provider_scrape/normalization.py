@@ -127,7 +127,14 @@ DATE_FIELDS = ("status_date", "license_begin_date", "license_expiration")
 # Inspection-level date fields. ``status_updated`` and ``az_date_resolved`` are
 # the other confirmed dates inside an inspection entry; ``in_correction_date`` is
 # Indiana's non-compliance correction date.
-INSPECTION_DATE_FIELDS = ("date", "status_updated", "az_date_resolved", "in_correction_date", "ms_end_date")
+INSPECTION_DATE_FIELDS = (
+    "date",
+    "status_updated",
+    "az_date_resolved",
+    "in_correction_date",
+    "ms_end_date",
+    "mo_disposition_date",
+)
 
 # strptime patterns tried in order for purely numeric dates.
 _NUMERIC_DATE_PATTERNS = ("%Y-%m-%d", "%m/%d/%Y", "%m-%d-%Y", "%Y/%m/%d")
@@ -779,6 +786,14 @@ FACILITY_CATEGORY_BUCKETS = {
         # per the existing exempt entries above.
         "License Exempt Family Child Care Program",
         "License Exempt Facility",
+        # Missouri (DESE Child Care Search) Facility Type. "6 or Fewer" is a
+        # judgment call: a Missouri home caring for no more than six unrelated
+        # children is license-exempt, so it follows New Hampshire's "License
+        # Exempt Family Child Care Program" above. The raw provider_type is
+        # preserved on the item.
+        "License Exempt Program",
+        "6 or Fewer",
+        "Exempt Program",
     ],
     "other": [
         "Other",

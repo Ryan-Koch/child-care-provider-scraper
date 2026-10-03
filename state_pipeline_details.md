@@ -48,7 +48,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `toddler` | Whitespace cleanup | Toddler care indicator/count, as emitted (whitespace-cleaned). |
 | `transportation` | Whitespace cleanup; Field collapse from state-specific source | Transportation offered, collapsed from a single populated state source. |
 
-> Inspections are normalized too: every string value gets whitespace cleanup, and the date fields (`date`, `status_updated`, `az_date_resolved`, `in_correction_date`, `ms_end_date`) are converted to ISO 8601. The `status` vocabulary does not apply to inspections.
+> Inspections are normalized too: every string value gets whitespace cleanup, and the date fields (`date`, `status_updated`, `az_date_resolved`, `in_correction_date`, `ms_end_date`, `mo_disposition_date`) are converted to ISO 8601. The `status` vocabulary does not apply to inspections.
 
 > Tracking fields (`inspections`, `provider_url`, `source_state`) are passed through unchanged.
 
@@ -100,7 +100,7 @@ Raw `provider_type` values mapped to each canonical category (additive; unmapped
 | Canonical | Raw provider_type values |
 |---|---|
 | `center` | `CDC (Child Development Center)`, `CTR`, `Center`, `Center Based Child Care and Preschool Program`, `Center Based Child Care and Preschool Program - Non-Recurring`, `Center based Child Care Facility`, `Certified Pre-School`, `Child Care`, `Child Care Center`, `Child Care Commercial Preschool`, `Child Care Facility`, `Child Care Hourly Center`, `Child Care Learning Center`, `Child Care Registered Center Based Program`, `Child Care for Children with Disabilities`, `Child Day Center`, `DAY CARE CENTER`, `DAY CARE CENTER - ILL CENTER`, `DCC`, `DOE`, `Department of Defense`, `GA Early Head Start`, `GA Head Start`, `HHS Four-Year Old Program`, `HHS-Licensed Child Care Center`, `HHS-Licensed Group Child Care Facility`, `HHS-Licensed Preschool`, `Head Start`, `Head Start Child Care Center`, `Head Start Site`, `INFANT CENTER`, `Infant and Toddler Center`, `LOC`, `Large Child Care Center (26 or more children)`, `Large Group`, `Licensed`, `Licensed Center`, `Licensed Child Care Center`, `Licensed Group`, `Licensed Group Child Care Program`, `Licensed School-Based Preschool`, `Local School System`, `Nursery`, `Nursery School`, `Outdoor Nature Based Program`, `Preschool`, `Preschool Center`, `Preschool Program`, `Private School`, `Provisional Child Care Center`, `Provisional Preschool`, `Public School`, `SDCC`, `SINGLE LICENSED CHILD CARE CENTER`, `Short Term Child Day Center`, `Small Employer Based Child Care`, `Small Group`, `Type I`, `Type II`, `Type III`, `University` |
-| `exempt` | `CCAP Certified/Accredited`, `Child Care Exempt Program`, `DWS Approved, Exempt Center`, `DWS Approved, Exempt School Age Program`, `Exempt`, `Exempt Child Care Center`, `Exempt Only`, `Exempt from Licensing`, `License Exempt`, `License Exempt Facility`, `License Exempt Family Child Care Program`, `Religious Exempt Child Day Center`, `Self-Declared Provider`, `Unlicensed CCDF Certified Center/School`, `Unlicensed CCDF Certified Home`, `Unlicensed Registered Ministry`, `Voluntary Registration` |
+| `exempt` | `6 or Fewer`, `CCAP Certified/Accredited`, `Child Care Exempt Program`, `DWS Approved, Exempt Center`, `DWS Approved, Exempt School Age Program`, `Exempt`, `Exempt Child Care Center`, `Exempt Only`, `Exempt Program`, `Exempt from Licensing`, `License Exempt`, `License Exempt Facility`, `License Exempt Family Child Care Program`, `License Exempt Program`, `Religious Exempt Child Day Center`, `Self-Declared Provider`, `Unlicensed CCDF Certified Center/School`, `Unlicensed CCDF Certified Home`, `Unlicensed Registered Ministry`, `Voluntary Registration` |
 | `family_home` | `CDH (Child Development Home)`, `Certified`, `Child Care Licensed Family`, `Child Care Residential Certificate`, `FAMILY DAY CARE HOME`, `FCCH`, `FDC`, `Family`, `Family Child Care`, `Family Child Care Facility (up to 6 children)`, `Family Child Care Home`, `Family Child Care Home I`, `Family Child Care Home II`, `Family Child Care Learning Home`, `Family Child Care Provider`, `Family Day Care`, `Family Day Care Home`, `Family Day Home`, `Family Home`, `Family Home Child Care`, `HHS-Licensed Family Child Care`, `Home based Child Care Facility`, `In Home Provider`, `LFCCH`, `Large Family Child Care Home`, `Licensed Child-Care Home`, `Licensed Family`, `Licensed Family Child Care`, `Licensed Family Child Care Home`, `Licensed Family Child Care Program`, `Licensed Family Home`, `Licensed Home`, `Licensed Type A Family Child Care Home`, `Licensed Type B Family Child Care Home`, `Listed Family Home`, `Non-Registered Child Care Home`, `Provisional Certified`, `Provisional Family Child Care Home I`, `Provisional Family Child Care Home II`, `Registered Child Development Home A`, `Registered Child Development Home B`, `Registered Child Development Home C`, `Registered Child Development Home C1`, `Registered Child-Care Home`, `Registered Family Child Care Home`, `Registered Home`, `Regular Certified`, `System Approved FDH`, `Unlicensed/Unregistered FDH` |
 | `group_home` | `CDX (Child Development Home Expanded)`, `GFDC`, `Group`, `Group Child Care Facility (up to 12 children)`, `Group Child Care Home`, `Group Home`, `Group Home Child Care`, `HHS-Licensed Group Child Care Home`, `Licensed Group Home`, `Licensed Large Family Child Care` |
 | `other` | `(FCC)Nanny Individual`, `Certified In Home Aide`, `Family, Friends & Neighbor (FFN) Providers`, `HHS-Licensed Multiple License`, `Illegally Unlicensed`, `In-Home`, `Informal`, `Informal Child Care`, `Licensed Camp`, `Neighborhood Youth Organization`, `Other`, `Outdoor Summer Camp`, `Registered Day Camp or Approved Day Camp`, `Resident Camp`, `Residential Child Care Program`, `Substitute Placement Agency`, `Summer Camp/Program`, `Summer Day Camp`, `Tribal Subsidy Recipient`, `Youth Camp` |
@@ -556,6 +556,26 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `mn_restrictions` -> pass-through
 - `mn_setting` -> pass-through
 - `mn_type_of_license` -> pass-through
+
+### Missouri (MO)
+
+- `mo_approving_supervisor` -> pass-through
+- `mo_arrival_time` -> pass-through
+- `mo_compliance_list` -> pass-through
+- `mo_conclusion` -> pass-through
+- `mo_corrective_measures` -> pass-through
+- `mo_departure_time` -> pass-through
+- `mo_disposition_date` -> pass-through
+- `mo_in_compliance` -> pass-through
+- `mo_inspection_id` -> pass-through
+- `mo_investigation_id` -> pass-through
+- `mo_license_anniversary_date` -> pass-through
+- `mo_limitations` -> pass-through
+- `mo_mailing_address` -> pass-through
+- `mo_notice` -> pass-through
+- `mo_open_violations` -> pass-through
+- `mo_specialist` -> pass-through
+- `mo_violations` -> pass-through
 
 ### Mississippi (MS)
 
