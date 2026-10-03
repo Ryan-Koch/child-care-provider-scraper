@@ -59,5 +59,5 @@ to bring this data together.
 This project uses pytest for testing. To run all tests use `pytest`. To run a specific test file use `pytest <test_file_name>`.
 
 ## Running a spider
-- Use `scrapy crawl <spider_name>` to run a spider.
-- When running a spider don't redirect logging output to a file. Redirecting results to a json file is okay.
+- Use `scrapy crawl <spider_name>` to run a spider directly using scrapy.
+- Use `docker compose run --rm scraper` with arguments to run it within docker.

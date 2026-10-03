@@ -1,0 +1,1440 @@
+
+
+<!DOCTYPE html />
+<html lang="en">
+<head id="ctl00_Head1"><title>
+
+</title><meta charset="utf-8" /><meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!-- necessary instead of line above to get rid of Object doesn't support property or method 
+                                                               'addEventListener' and Bootstrap requires jQuery errors when using version2.1 jQuery, with 
+                                                               jQuery 1.11 it worked with out this line, Edge mode tells Internet Explorer to display content 
+                                                               in the highest mode available for that browser version, Starting with IE11, edge mode is the 
+                                                               preferred document mode -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" /><meta http-equiv="Page-Enter" content="blendTrans(Duration=0.2)" /><meta http-equiv="Page-Exit" content="blendTrans(Duration=0.2)" /><script type="text/javascript" src="/ChildCareSearch/ruxitagentjs_ICA7NVfqrux_10343260715123811.js" data-dtconfig="rid=RID_-1848329669|rpid=1232095152|domain=mo.gov|reportUrl=/ChildCareSearch/rb_55eaf2f6-986f-4e73-8fc2-ea2e17ce5637|app=6c13ba5b0ed5da22|cuc=nuvz9kpf|owasp=1|mel=100000|expw=1|featureHash=ICA7NVfqrux|dpvc=1|lastModification=1789769567973|tp=500,50,0|rdnt=1|uxrgce=1|srbbv=2|agentUri=/ChildCareSearch/ruxitagentjs_ICA7NVfqrux_10343260715123811.js"></script><link href="/ChildCareSearch/CSS/bootstrap.min.css" type="text/css" rel="stylesheet" /><link href="/ChildCareSearch/CSS/style.css" type="text/css" rel="stylesheet" />
+    <script src="/ChildCareSearch/JavaScript/date.js" type="text/javascript"></script>
+    <script src="/ChildCareSearch/JavaScript/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script src="/ChildCareSearch/JavaScript/bootstrap.min.js" type="text/javascript"></script>
+<style type="text/css">
+	.ctl00_masterMenu_0 { background-color:white;visibility:hidden;display:none;position:absolute;left:0px;top:0px; }
+	.ctl00_masterMenu_1 { text-decoration:none; }
+	.ctl00_masterMenu_2 {  }
+	.ctl00_masterMenu_3 { font-weight:bold; }
+	.ctl00_masterMenu_4 {  }
+
+</style></head>
+<body style="background-color: #ffffff">
+    <a href="#mainContent" id="ctl00_skipLink" class="skip-link">Skip to main content</a>
+    <form name="aspnetForm" method="post" action="./ViewInspection.aspx?Inspection_ID=2481428150&amp;LID=002295994" id="aspnetForm" class="form-horizontal" role="form">
+<div>
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="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" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['aspnetForm'];
+if (!theForm) {
+    theForm = document.aspnetForm;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/ChildCareSearch/WebResource.axd?d=jUBeESC60kOSeLKV-bLRFr3-t7EUFmVzBzXtZ4vIzVV2_QceFScuY5Pp5z7rpqfVQg_2PT1F3yUzTOgo40CrmRsfxRhq3YF245tyTfFU3jA1&amp;t=639190664600000000" type="text/javascript"></script>
+
+
+<script src="/ChildCareSearch/ScriptResource.axd?d=kAnGAp8kdstu6yKJxLTLuytdeORAEA2blotpRcGgHcnIwx-_7Y6zRmqBKXciVSE1V0LDyXmc0YtdTQPBpUc9oo2UbUFoxwjii8pUkxVxDGT3Jo5myJ9VVPmmy5RrTitdnk2MVrwIgk7SeQ3dQ1Sgrw2&amp;t=ffffffff9fe38677" type="text/javascript"></script>
+<script src="/ChildCareSearch/ScriptResource.axd?d=BHvsQq4OUPJTuC_UTxzkh3seSw3dUIIBsvMTWW_SmPa5PMz3_qSrrO5itBGkCojDQPPD4dGa_P2diO1MyHFZ4yoCmwghgrcnzEVPbui1rpZ1vu3ji_kaKdNdJr47Zmy5Ylt2PiqhYMoh-En7eeO5cwycWWITmypOc34xgFZsmkJX94g7tf0v1q8v_8sF14Rm0&amp;t=ffffffffbec1863d" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+if (typeof(Sys) === 'undefined') throw new Error('ASP.NET Ajax client-side framework failed to load.');
+//]]>
+</script>
+
+<script src="/ChildCareSearch/ScriptResource.axd?d=vz6m3xnYGfDIlKkXj8a9w2ImtYHKVWRY1SSgvfZoGUR-fV3UsINGM_J7uMeZm5Oj17JNu3XVOzcLci_Y-2If7XjoQ0qGxMr_7g2KC-6McT2Q5HUpvOl8WKzVPgBYAb1miE_K0Ag3_5t-5u_pDKuwhKOIbk7aLqJTL6QLYZbFbinybZF8btxQSzlMJIK5Iz3G0&amp;t=ffffffffbec1863d" type="text/javascript"></script>
+<div>
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="26B410BB" />
+	<input type="hidden" name="__SCROLLPOSITIONX" id="__SCROLLPOSITIONX" value="0" />
+	<input type="hidden" name="__SCROLLPOSITIONY" id="__SCROLLPOSITIONY" value="0" />
+	<input type="hidden" name="__VIEWSTATEENCRYPTED" id="__VIEWSTATEENCRYPTED" value="" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="wmaYruHAPhEVPJtztVRuVNBQo99OJeOXDzluDbUqdPYa0+6c826Qlhd5A1z3FeLPVZMTgIDgfJCDKQDAm17EpCnUxLduw07ddiAp+53mQxaGUL2MbNndh/jZb6FW9JjY5ebKRCcteo4gqmqzBcLvfw==" />
+</div>
+    <div id="ctl00_navBar" class="navbar navbar-inverse navbar-top" role="navigation">
+        <div class="container-fluid">
+            <div id="branding">
+                <img id="ctl00_imgLogo" class="img-responsive" src="Images/logo.jpg" alt="Missouri Department of Elementary and Secondary Education Logo" align="left" style="border-width:0px;" />
+            </div>
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span><span
+                        class="icon-bar"></span><span class="icon-bar"></span>
+                </button>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="https://dese.mo.gov/childhood" target="_blank">DESE - OOC Home</a></li>
+                    <li><a href="http://www.mo.gov/" target="_blank">State Home</a></li>
+                    <li><a href="http://www.mo.gov/privacy-policy/" target="_blank">Disclaimer</a></li>
+                    <li><a href="https://dese.mo.gov/childhood/child-care/district-offices" target="_blank">Contact Us</a></li>
+                </ul>
+            </div>
+            <!--/.nav-collapse-->
+            <span class="dateTime">
+                <script type="text/javascript">                    todaysdate();
+                </script>
+            </span>
+        </div>
+    </div>
+    <!-- </td> 
+                <td class="dateTime" nowrap="nowrap" align="right">
+                    <script type="text/javascript">                        todaysdate();
+                    </script>  
+                </td> 
+            </tr> 
+        </tbody>
+    </table> -->
+    <div class="container-fluid">
+        <!-- <div class="row"  style="background-color:#003366;"> 
+      
+                <img  alt="DHSS Logo" src="Images/SevenMast_DHSS.gif"  /> -->
+        <!--  <td bgcolor="#003366" rowspan="2" align="right" style="border-color: #003366;">
+                <table cellspacing="0" cellpadding="5" border="0">
+                   <div class="row">
+                        <td colspan="4">
+                            <input type="hidden" value="dhss" name="site" />
+                            <input type="hidden" value="xml_no_dtd" name="output" />
+                            <input type="hidden" value="dhss" name="client" />
+                            <input type="hidden" value="10" name="num" />
+                            <input type="hidden" value="dhss" name="proxystylesheet" />
+                        </td>
+                    </div>
+                    <tbody>
+                        <div class="row">
+                            <td>
+                                
+                            </td>
+                            <td valign="middle"> -->
+        <div class="row">
+            <input type="hidden" value="dhss" name="site" />
+            <input type="hidden" value="xml_no_dtd" name="output" />
+            <input type="hidden" value="dhss" name="client" />
+            <input type="hidden" value="10" name="num" />
+            <input type="hidden" value="dhss" name="proxystylesheet" />
+            <!--
+                                <label for="mw0">
+                                    <input class="navblue" onkeypress="if(this.value=='Search')this.value = '';" id="mw0"
+                                        onclick="this.value = ''" maxlength="40" value="Google™ Search" name="q" />&nbsp;
+                                </label>  -->
+            <!--    </td>
+                            <td valign="middle" align="right">  -->
+            <!--    <input type="image" alt="Go" src="Images/go.gif" name="submit" /> -->
+            <!-- </td>
+                            <td> -->
+            <!--  <a class="nava" href="Logout.aspx?ACTION=LOGOUT" style="color: #FFFFFF">Login</a> -->
+            <!--  </td>  
+                        </div>
+                        
+                    </tbody>
+                </table>
+            </td> 
+        </div>
+        
+        <div class="row">
+            <td bgcolor="#003366"> -->
+            <!--             &nbsp;
+                <span id="ctl00_SiteMapPath1" style="font-family:Verdana;font-size:Small;"><a href="#ctl00_SiteMapPath1_SkipLink"><img alt="Skip Navigation Links" src="/ChildCareSearch/WebResource.axd?d=nSYZl4W0sTd1zkqOtadzcj5SxOn8PgGL1LuVK-CWfw6XNTHDxBWXmijKENeWtw4c18hhAqzEKfCkiUpX1WBB6sc5gVsCJn4wH_OxX-EaW-w1&amp;t=639190664600000000" width="0" height="0" style="border-width:0px;" /></a><span><a title="Search" href="/ChildCareSearch/SearchEngine.aspx" style="color:White;font-weight:bold;">Search</a></span><span style="color:White;font-weight:bold;">&gt;</span><span style="color:Snow;">View Inspection</span><a id="ctl00_SiteMapPath1_SkipLink"></a></span>  -->
+            <!-- </td>  -->
+        </div>
+        <div class="row">
+            <!--    <div class="col-md-2" style="background-color:#003366"> -->
+            <!-- backgound-color="#003366" align="center" bgcolor="#003366" valign="top" style="height: 800px;" scope="col"> -->
+            <!--   &nbsp;
+                <a href="#ctl00_masterMenu_SkipLink"><img alt="Skip Navigation Links" src="/ChildCareSearch/WebResource.axd?d=nSYZl4W0sTd1zkqOtadzcj5SxOn8PgGL1LuVK-CWfw6XNTHDxBWXmijKENeWtw4c18hhAqzEKfCkiUpX1WBB6sc5gVsCJn4wH_OxX-EaW-w1&amp;t=639190664600000000" width="0" height="0" style="border-width:0px;" /></a><table id="ctl00_masterMenu" class="ctl00_masterMenu_2" cellpadding="0" cellspacing="0" border="0">
+	<tr onmouseover="Menu_HoverStatic(this)" onmouseout="Menu_Unhover(this)" onkeyup="Menu_Key(event)" id="ctl00_masterMenun0">
+		<td><table class="ctl00_masterMenu_4" cellpadding="0" cellspacing="0" border="0" width="100%">
+			<tr>
+				<td style="white-space:nowrap;width:100%;"><a class="ctl00_masterMenu_1 ctl00_masterMenu_3" href="http://health.mo.gov/safety/childcare/index.php">Contact Us</a></td>
+			</tr>
+		</table></td>
+	</tr>
+</table><a id="ctl00_masterMenu_SkipLink"></a>  
+            </div>  -->
+            <div id="mainContent" class="col-md-12">
+                <!--colspan="2" valign="top"> -->
+                <span id="ctl00_lblError"></span>
+                <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('ctl00$ScriptManager1', 'aspnetForm', [], [], [], 90, 'ctl00');
+//]]>
+</script>
+
+                
+   
+        <div class="form-group">
+            <div class="col-sm-2">
+                <img src="Images/SealDHSS.bmp" alt="DHSS MO" class="image-responsive"/>
+            </div>
+            <div class="col-sm-8 reportTitleText">
+                <span id="ctl00_ContentPlaceHolder1_Label1">MISSOURI DEPARTMENT OF ELEMENTARY AND SECONDARY EDUCATION</span><br />
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_Label2">OFFICE OF CHILDHOOD</span><br />
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblHeader">GROUP HOME AND CENTER</span>
+                <span id="ctl00_ContentPlaceHolder1_Label3"> INSPECTION REPORT</span>
+            </div>
+            <div class="col-sm-2 text-right">
+                <a id="ctl00_ContentPlaceHolder1_lnlBacktoInspections" href="javascript:__doPostBack(&#39;ctl00$ContentPlaceHolder1$lnlBacktoInspections&#39;,&#39;&#39;)" style="margin-right:20px; color: rgb(58,123,179)">Back</a>
+                <br />
+                <br />
+                
+            </div>
+        </div>       
+        <div class="form-group sectionHeader">
+           <div class="col-lg-12 h5 sectionHeaderTextLeft">  
+                <span id="ctl00_ContentPlaceHolder1_lblFacilityHeader">Facility Information</span>
+            </div>
+        </div>
+    
+    
+        <div class="form-group">
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblFacilityName" id="ctl00_ContentPlaceHolder1_lblFNHeader">Facility Name </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblFacilityName">"TRAINING UP A CHILD" LLC</span>
+            </div>
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblDVN" id="ctl00_ContentPlaceHolder1_lblFDVNHeader">Facility DVN</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblDVN">002295994</span>
+            </div>
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblPhone" id="ctl00_ContentPlaceHolder1_lblPhoneHeader">Phone </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblPhone">(314) 839-7731</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblPhysicalAddress" id="ctl00_ContentPlaceHolder1_lblPAHeader">Physical Address </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblPhysicalAddress">390 W SAINT ANTHONY LN </span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblCity">FLORISSANT</span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblState">MO</span>
+                &nbsp;<span id="ctl00_ContentPlaceHolder1_lblZip">63031-6857</span>
+            </div>
+            <div class="col-sm-8">
+                <label for="ctl00_ContentPlaceHolder1_lblOwner" id="ctl00_ContentPlaceHolder1_lblOwnerHaeder">Owner</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblOwner">"TRAINING UP A CHILD" LLC</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblMailingAddress" id="ctl00_ContentPlaceHolder1_lblMAHeader">Mailing Address</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblMailingAddress">727 CEDAR FIELD CT </span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblMailingCity">TOWN AND COUNTRY</span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblMailingState">MO</span>
+                &nbsp;<span id="ctl00_ContentPlaceHolder1_lblMailingZip">63017</span>
+            </div>
+            <div class="col-sm-8">
+                <label for="ctl00_ContentPlaceHolder1_lblProviderorDirector" id="ctl00_ContentPlaceHolder1_lblPDHeader">Provider/Director</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblProviderorDirector">MCAFEE, PRISCILLA ANN</span>
+            </div>
+        </div>
+        <div class="form-group">
+            
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblEmail" id="ctl00_ContentPlaceHolder1_lblEmailHeader">E-mail Address</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblEmail">info@trainingupachild-stl.com</span>
+            </div>
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblIncorporated" id="ctl00_ContentPlaceHolder1_lblIHeader">Incorporated </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblIncorporated"></span>
+            </div>
+        </div>
+        <div class="form-group">
+            
+            <div class="col-sm-8">
+                <label for="ctl00_ContentPlaceHolder1_lblChildCareSpecialist" id="ctl00_ContentPlaceHolder1_lblCCSHeader">Child Care Specialist </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblChildCareSpecialist">CHARMEL WILLIAMS</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblAgeRange" id="ctl00_ContentPlaceHolder1_lblARHeader">Age Range</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblAgeRange">6 WEEKS - 12 YEARS</span>
+            </div>
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblCapacity" id="ctl00_ContentPlaceHolder1_lblCHeader">Capacity</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblCapacity">94</span>
+            </div>
+            <div class="col-sm-4">
+                <label for="ctl00_ContentPlaceHolder1_lblFacilityType" id="ctl00_ContentPlaceHolder1_lblFTHeader">Facility Type</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblFacilityType">GROUP HOME AND CENTER</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-12">
+                <label for="ctl00_ContentPlaceHolder1_lblLimitations" id="ctl00_ContentPlaceHolder1_lblLHeader">Limitations </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblLimitations">16 CHILDREN UNDER 24 MONTHS</span>
+            </div>            
+        </div>
+        <div class="form-group">
+            <div class="Linebreak">
+                &nbsp;
+            </div>
+        </div>
+    
+
+  
+        <div class="form-group sectionHeader">
+           <div class="col-lg-12 h5 sectionHeaderTextLeft">  
+                <span id="ctl00_ContentPlaceHolder1_lblInspectionHeader">Inspection Information</span>
+            </div>
+        </div>
+   
+    
+        <div class="form-group">
+            <div class="col-sm-2">
+                <label for="ctl00_ContentPlaceHolder1_lblInspectionDate" id="ctl00_ContentPlaceHolder1_lblDHeader">Date </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblInspectionDate">11/04/2024</span>
+            </div>
+            <div class="col-sm-2">
+                <label for="ctl00_ContentPlaceHolder1_lblArrivalTime" id="ctl00_ContentPlaceHolder1_lblATHeader">Arrival Time</label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblArrivalTime"> 1:25 PM</span>
+            </div>
+            <div class="col-sm-2">
+                <label for="ctl00_ContentPlaceHolder1_lblDepartureTime" id="ctl00_ContentPlaceHolder1_lblDTHeader">Departure Time </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblDepartureTime"> 3:56 PM</span>
+            </div>
+            <div class="col-sm-2">
+                <label for="ctl00_ContentPlaceHolder1_lblNotice" id="ctl00_ContentPlaceHolder1_lblNHeader">Notice </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblNotice">UNANNOUNCED</span>
+            </div>
+            <div class="col-sm-2">
+                <label for="ctl00_ContentPlaceHolder1_lblInspectionType" id="ctl00_ContentPlaceHolder1_lblITHeader">Inspection Type </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblInspectionType">COMPLIANCE MONITORING</span>
+            </div>
+            <div class="col-sm-2">
+                <label for="ctl00_ContentPlaceHolder1_lblInspectionID" id="ctl00_ContentPlaceHolder1_lblInspectionIDHeader">Inspection ID </label>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblInspectionID">2481428150</span>
+            </div>
+        </div>
+    
+    <br />
+    <br />  
+     <div> 
+                <div>
+	<table class="table table-bordered table-striped table-condensed small" cellspacing="0" cellpadding="3" rules="all" border="1" id="ctl00_ContentPlaceHolder1_dgDocuments" style="border-collapse:collapse;">
+		<tr>
+			<th scope="col">Document</th><th scope="col">Document-Date</th>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl02_lblDocument">SAMPLE WEEKLY MENU</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl02_lblDocumentDate">11/03/2011</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl03_lblDocument">SAMPLE FORMS</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl03_lblDocumentDate">11/03/2011</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl04_lblDocument">POLICIES</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl04_lblDocumentDate">11/03/2011</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl05_lblDocument">LINES OF ADMINISTRATIVE AUTHORITY</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl05_lblDocumentDate">11/18/2011</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl06_lblDocument">LOCAL ZONING APPROVAL</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl06_lblDocumentDate">11/03/2011</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl07_lblDocument">JOB RESPONSIBILITIES</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl07_lblDocumentDate">11/14/2011</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl08_lblDocument">DISCIPLINE POLICIES</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl08_lblDocumentDate">11/03/2011</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl09_lblDocument">DIAGRAM/OUTDOOR</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl09_lblDocumentDate">11/03/2011</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl10_lblDocument">DIAGRAM/INDOOR</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl10_lblDocumentDate">11/03/2011</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl11_lblDocument">DAILY SCHEDULE</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl11_lblDocumentDate">11/03/2011</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl12_lblDocument">CHILD CARE PRACTICES</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl12_lblDocumentDate">11/03/2011</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl13_lblDocument">LLC OPERATING AGREEMENT</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl13_lblDocumentDate">08/21/2015</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl14_lblDocument">LOCAL FIRE DEPARTMENT NOTIFICATION</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl14_lblDocumentDate">11/15/2011</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl15_lblDocument">APPLICATION</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl15_lblDocumentDate">09/09/2019</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl16_lblDocument">SAFE SLEEP POLICY</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl16_lblDocumentDate">09/27/2019</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl17_lblDocument">DIRECTOR'S QUALIFICATIONS</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl17_lblDocumentDate">09/27/2019</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl18_lblDocument">DISASTER AND EMERGENCY PREPAREDNESS PLAN</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl18_lblDocumentDate">10/09/2019</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl19_lblDocument">STAFF SHEET</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl19_lblDocumentDate">11/12/2020</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl20_lblDocument">LISTING OF CHILD CARE STAFF/HOUSEHOLD MEMBERS</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl20_lblDocumentDate">10/11/2024</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl21_lblDocument">ANNUAL DECLARATION</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl21_lblDocumentDate">10/01/2024</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl22_lblDocument">LOCAL BUILDING APPROVAL</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl22_lblDocumentDate">04/11/2024</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl23_lblDocument">CERTIFICATE OF GOOD STANDING</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl23_lblDocumentDate">11/21/2023</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl24_lblDocument">SANITATION INSPECTION</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl24_lblDocumentDate">08/19/2024</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl25_lblDocument">EQUIPMENT LIST</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl25_lblDocumentDate">10/01/2024</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl26_lblDocument">FIRE/SAFETY INSPECTION</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgDocuments_ctl26_lblDocumentDate">07/31/2024</span>
+                            </td>
+		</tr>
+	</table>
+</div>
+    </div>      
+    <br />
+    <div>
+        <div>
+	<table class="table table-bordered table-striped table-condensed small" cellspacing="0" rules="all" border="1" id="ctl00_ContentPlaceHolder1_dgOverLap" style="border-collapse:collapse;">
+		<tr>
+			<th scope="col">Overlap Start Time</th><th scope="col">Overlap End Time</th><th scope="col">Overlap Submit Date</th>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgOverLap_ctl02_lblOLST">&nbsp 4:15PM</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgOverLap_ctl02_lblOLFT">&nbsp 5:15PM</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgOverLap_ctl02_lblOLSB">&nbsp 10/9/2019</span>
+                            </td>
+		</tr><tr>
+			<td>
+                                <span id="ctl00_ContentPlaceHolder1_dgOverLap_ctl03_lblOLST">&nbsp 7:30AM</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgOverLap_ctl03_lblOLFT">&nbsp 8:30AM</span>
+                            </td><td>
+                                <span id="ctl00_ContentPlaceHolder1_dgOverLap_ctl03_lblOLSB">&nbsp 10/9/2019</span>
+                            </td>
+		</tr>
+	</table>
+</div>
+    </div>
+    <br />
+    <div >
+    
+    </div>
+    <br />
+    <div>
+                <div>
+	<table class="table table-bordered table-striped table-condensed small" cellspacing="0" cellpadding="3" rules="all" border="1" id="ctl00_ContentPlaceHolder1_dgVariance" style="border-collapse:collapse;">
+
+	</table>
+</div>
+    </div>
+    <br />
+    <div id="ctl00_ContentPlaceHolder1_pnlInComplience" class="panel" style="border-width:0px;">
+	
+        <div class="form-group"> 
+                <div class="col-sm-5">
+                    <span id="ctl00_ContentPlaceHolder1_lblComplience" style="font-weight:bold;">Inspection determined facility to be in compliance with licensing rules.</span>
+                </div>
+                <div class="col-sm-2">
+                    <img id="ctl00_ContentPlaceHolder1_imgComplienceLicensingRules" alt="Compliance Licensing Rules" src="Images/InspectionCondition/checked.jpg" style="height:24px;width:81px;border-width:0px;" />
+                </div>
+                <div class="col-sm-5">
+                    <span id="ctl00_ContentPlaceHolder1_lblOpenViolationslbl" style="font-weight:bold;">   Open Violations: </span>
+                    <span id="ctl00_ContentPlaceHolder1_lblOpenViolations">NA</span>
+                </div>                
+            </div>        
+    
+</div>
+    <div id="ctl00_ContentPlaceHolder1_pnlNote" class="panel" style="border-width:0px;">
+	
+        
+             <div class="form-group">
+                <div class="col-sm-1">
+                    <span id="ctl00_ContentPlaceHolder1_lblNote2" style="display:inline-block;background-color:#99CCFF;font-size:Large;font-weight:bold;height:20px;width:55px;">NOTE</span>
+                </div>
+                <div class="col-sm-11">
+                    <span id="ctl00_ContentPlaceHolder1_lblNoteText2">The licensee is responsible for compliance 
+            with all licensing rules, including but not limited to the rules listed on 
+            this compliance report form.</span>
+                </div>
+            </div>
+        
+    
+</div>
+        <div class="form-group h5 sectionHeader">
+            <div class="col-sm-12 sectionHeaderTextLeft">
+                <span id="ctl00_ContentPlaceHolder1_lblAttendanceHeader" style="font-weight:bold;">Attendance at Time of Inspection</span>
+            </div>
+        </div>
+   
+    <div class="form-group">
+            <div class="col-sm-6">
+                <span id="ctl00_ContentPlaceHolder1_lblTStaff">Total Staff </span>
+                <span id="ctl00_ContentPlaceHolder1_lblTotalStaff">10</span>
+            </div>
+            <div class="col-sm-6">
+                <span id="ctl00_ContentPlaceHolder1_lblTChildren">Total Children </span>
+                <span id="ctl00_ContentPlaceHolder1_lblTotalChildren">38</span>
+            </div>
+        </div>
+    
+    <div>
+    <div>
+	<table class="table table-bordered table-striped table-condensed small" cellspacing="0" cellpadding="3" rules="all" border="1" id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup" style="border-collapse:collapse;">
+		<tr>
+			<th scope="col">Staff</th><th scope="col">Child</th><th scope="col">Class Age</th><th scope="col">Note</th>
+		</tr><tr>
+			<td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl02_lblSTAFF">2</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl02_CHILD">5</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl02_CLASS_AGE">INFANTS AND TODDLERS</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl02_NOTE">Shena Burrow Teacher and Desiree DeLatorre Teacher were present with five children, ages 6-months-old to 12-months-old</span>
+                </td>
+		</tr><tr>
+			<td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl03_lblSTAFF">2</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl03_CHILD">7</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl03_CLASS_AGE">MIXED</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl03_NOTE">Dianne Powell Teacher and Nylia Idhen Teacher were present with seven children, ages 2-years-old to 3-years-old. The children were napping</span>
+                </td>
+		</tr><tr>
+			<td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl04_lblSTAFF">3</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl04_CHILD">0</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl04_CLASS_AGE">NO CHILDREN IN ATTENDANCE</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl04_NOTE">Kebra Peebles Executive Director, Marvin Peebles Administration, and Kendall Henderson Assistant were present without children</span>
+                </td>
+		</tr><tr>
+			<td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl05_lblSTAFF">1</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl05_CHILD">10</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl05_CLASS_AGE">PRESCHOOL</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl05_NOTE">Katrina Watkins Teacher was present with ten children, ages 3-years-old to 5-years-old</span>
+                </td>
+		</tr><tr>
+			<td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl06_lblSTAFF">1</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl06_CHILD">10</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl06_CLASS_AGE">PRESCHOOL</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl06_NOTE">Anita Bingham Teacher was present with ten children, ages 3-years-old to 4-years-old. The children were napping</span>
+                </td>
+		</tr><tr>
+			<td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl07_lblSTAFF">1</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl07_CHILD">6</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl07_CLASS_AGE">TWO YEAR OLDS</span>
+                </td><td>
+                    <span id="ctl00_ContentPlaceHolder1_gvStaffChildAgeGroup_ctl07_NOTE">MaKayla Prater Teacher was present with six children, ages 2-years-old</span>
+                </td>
+		</tr>
+	</table>
+</div>
+    </div>
+    <br />
+    <div>
+                <div>
+	<table class="table table-bordered table-striped table-condensed small" cellspacing="0" cellpadding="3" rules="all" border="1" id="ctl00_ContentPlaceHolder1_dgGroupName" style="border-collapse:collapse;">
+		<tr>
+			<th scope="col">Compliance List</th>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl02_lblGrpName" style="font-weight:normal;">5 CSR 25-500.032 Organization and Administration</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl02_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl03_lblGrpName" style="font-weight:normal;">5 CSR 25-500.042 Licensing Process</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl03_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl04_lblGrpName" style="font-weight:normal;">5 CSR 25-500.052 Annual Requirements</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl04_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl05_lblGrpName" style="font-weight:normal;">5 CSR 25-500.082 Physical Requirements of Group Day Care Homes and Day Care Centers</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl05_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl06_lblGrpName" style="font-weight:normal;">5 CSR 25-500.087 Fire Safety</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl06_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl07_lblGrpName" style="font-weight:normal;">5 CSR 25-500.090 Disaster and Emergency Preparedness</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl07_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl08_lblGrpName" style="font-weight:normal;">5 CSR 25-500.092 Furniture, Equipment and Materials</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl08_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl09_lblGrpName" style="font-weight:normal;">5 CSR 25-500.102 Personnel</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl09_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl10_lblGrpName" style="font-weight:normal;">5 CSR 25-500.112 Staff/Child Ratios</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl10_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl11_lblGrpName" style="font-weight:normal;">5 CSR 25-500.122 Medical Examination Reports</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl11_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl12_lblGrpName" style="font-weight:normal;">5 CSR 25-500.132 Admission Policies and Procedures</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl12_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl13_lblGrpName" style="font-weight:normal;">5 CSR 25-500.142 Nighttime Care</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl13_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl14_lblGrpName" style="font-weight:normal;">5 CSR 25-500.162 Overlap Care of Children</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl14_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Not Observed</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl15_lblGrpName" style="font-weight:normal;">5 CSR 25-500.172 Emergency School Closings</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl15_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Not Observed</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl16_lblGrpName" style="font-weight:normal;">5 CSR 25-500.182 Child Care Program</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl16_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl17_lblGrpName" style="font-weight:normal;">5 CSR 25-500.192 Health Care</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl17_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl18_lblGrpName" style="font-weight:normal;">5 CSR 25-500.202 Nutrition and Food Service</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl18_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl19_lblGrpName" style="font-weight:normal;">5 CSR 25-500.212 Transportation and Field Trips</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl19_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl20_lblGrpName" style="font-weight:normal;">5 CSR 25-500.222 Records and Reports</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl20_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl21_lblGrpName" style="font-weight:normal;">5 CSR 25-600.020 General Requirements</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl21_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl22_lblGrpName" style="font-weight:normal;">5 CSR 25-600.040 Background Screening Findings</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl22_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl23_lblGrpName" style="font-weight:normal;">RSMo 210.115. Reports of abuse, neglect, and under age eighteen deaths — persons required to report — supervisors and administrators not to impede reporting — deaths required to be reported to the division or child fatality review panel, when — report made to another state, when. —</span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl23_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr><tr>
+			<td>
+                            
+                            <div class="row">
+                              <div class="col-sm-4">
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl24_lblGrpName" style="font-weight:normal;">RSMo 210.211.  License  required - exceptions - written notice of licensure status, when. </span>
+                              </div>
+                               <div class="col-sm-4">
+                                            
+                               </div>
+                                <div class="col-sm-4" align="right">
+                                        
+                                            <span id="ctl00_ContentPlaceHolder1_dgGroupName_ctl24_lblCompliance" style="font-size:XX-Small;font-weight:bold;">Compliance</span>
+                                </div>
+
+                                            
+                             </div>
+                             <div class="row">    
+                                        <div class="col-sm-12">
+                                             
+
+<div >
+            <div>
+
+			</div> 
+</div>
+
+                                         </div>
+                            </div>
+
+                                          
+                            </td>
+		</tr>
+	</table>
+</div>
+    </div>
+
+            </div>
+        </div>
+        <!--    </table>  -->
+    </div>
+    
+
+<script type="text/javascript">
+//<![CDATA[
+var ctl00_masterMenu_Data = new Object();
+ctl00_masterMenu_Data.disappearAfter = 500;
+ctl00_masterMenu_Data.horizontalOffset = 0;
+ctl00_masterMenu_Data.verticalOffset = 0;
+ctl00_masterMenu_Data.iframeUrl = '/ChildCareSearch/WebResource.axd?d=95j8JPRY5jPkMpJIMrQb8Z8KhD0QykQJL4aNFDjVTpa5sxg-A7tfprkIEqh2lFQqkLugvjA6b7ZiIQ6ddnW1g9xo4ohKJ3FzUlPAssA4K2Y1&t=639190664600000000';
+
+theForm.oldSubmit = theForm.submit;
+theForm.submit = WebForm_SaveScrollPositionSubmit;
+
+theForm.oldOnSubmit = theForm.onsubmit;
+theForm.onsubmit = WebForm_SaveScrollPositionOnSubmit;
+//]]>
+</script>
+</form>
+<script type="text/javascript" src="/_Incapsula_Resource?SWJIYLWA=719d34d31c8e3a6e6fffd425f7e032f3&ns=4&cb=1855530776" async></script></body>
+</html>

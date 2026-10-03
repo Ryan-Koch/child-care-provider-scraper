@@ -1,0 +1,397 @@
+
+
+<!DOCTYPE html />
+<html lang="en">
+<head id="ctl00_Head1"><title>
+
+</title><meta charset="utf-8" /><meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!-- necessary instead of line above to get rid of Object doesn't support property or method 
+                                                               'addEventListener' and Bootstrap requires jQuery errors when using version2.1 jQuery, with 
+                                                               jQuery 1.11 it worked with out this line, Edge mode tells Internet Explorer to display content 
+                                                               in the highest mode available for that browser version, Starting with IE11, edge mode is the 
+                                                               preferred document mode -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" /><meta http-equiv="Page-Enter" content="blendTrans(Duration=0.2)" /><meta http-equiv="Page-Exit" content="blendTrans(Duration=0.2)" /><script type="text/javascript" src="/ChildCareSearch/ruxitagentjs_ICA7NVfqrux_10343260715123811.js" data-dtconfig="rid=RID_1484527730|rpid=-489175125|domain=mo.gov|reportUrl=/ChildCareSearch/rb_55eaf2f6-986f-4e73-8fc2-ea2e17ce5637|app=6c13ba5b0ed5da22|cuc=nuvz9kpf|owasp=1|mel=100000|expw=1|featureHash=ICA7NVfqrux|dpvc=1|lastModification=1789769567973|tp=500,50,0|rdnt=1|uxrgce=1|srbbv=2|agentUri=/ChildCareSearch/ruxitagentjs_ICA7NVfqrux_10343260715123811.js"></script><link href="/ChildCareSearch/CSS/bootstrap.min.css" type="text/css" rel="stylesheet" /><link href="/ChildCareSearch/CSS/style.css" type="text/css" rel="stylesheet" />
+    <script src="/ChildCareSearch/JavaScript/date.js" type="text/javascript"></script>
+    <script src="/ChildCareSearch/JavaScript/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script src="/ChildCareSearch/JavaScript/bootstrap.min.js" type="text/javascript"></script>
+<style type="text/css">
+	.ctl00_masterMenu_0 { background-color:white;visibility:hidden;display:none;position:absolute;left:0px;top:0px; }
+	.ctl00_masterMenu_1 { text-decoration:none; }
+	.ctl00_masterMenu_2 {  }
+	.ctl00_masterMenu_3 { font-weight:bold; }
+	.ctl00_masterMenu_4 {  }
+
+</style></head>
+<body style="background-color: #ffffff">
+    <a href="#mainContent" id="ctl00_skipLink" class="skip-link">Skip to main content</a>
+    <form name="aspnetForm" method="post" action="./ViewInvestigation.aspx?cid=116977379349" id="aspnetForm" class="form-horizontal" role="form">
+<div>
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="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" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['aspnetForm'];
+if (!theForm) {
+    theForm = document.aspnetForm;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/ChildCareSearch/WebResource.axd?d=jUBeESC60kOSeLKV-bLRFr3-t7EUFmVzBzXtZ4vIzVV2_QceFScuY5Pp5z7rpqfVQg_2PT1F3yUzTOgo40CrmRsfxRhq3YF245tyTfFU3jA1&amp;t=639190664600000000" type="text/javascript"></script>
+
+
+<script src="/ChildCareSearch/ScriptResource.axd?d=kAnGAp8kdstu6yKJxLTLuytdeORAEA2blotpRcGgHcnIwx-_7Y6zRmqBKXciVSE1V0LDyXmc0YtdTQPBpUc9oo2UbUFoxwjii8pUkxVxDGT3Jo5myJ9VVPmmy5RrTitdnk2MVrwIgk7SeQ3dQ1Sgrw2&amp;t=ffffffff9fe38677" type="text/javascript"></script>
+<script src="/ChildCareSearch/ScriptResource.axd?d=BHvsQq4OUPJTuC_UTxzkh3seSw3dUIIBsvMTWW_SmPa5PMz3_qSrrO5itBGkCojDQPPD4dGa_P2diO1MyHFZ4yoCmwghgrcnzEVPbui1rpZ1vu3ji_kaKdNdJr47Zmy5Ylt2PiqhYMoh-En7eeO5cwycWWITmypOc34xgFZsmkJX94g7tf0v1q8v_8sF14Rm0&amp;t=ffffffffbec1863d" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+if (typeof(Sys) === 'undefined') throw new Error('ASP.NET Ajax client-side framework failed to load.');
+//]]>
+</script>
+
+<script src="/ChildCareSearch/ScriptResource.axd?d=vz6m3xnYGfDIlKkXj8a9w2ImtYHKVWRY1SSgvfZoGUR-fV3UsINGM_J7uMeZm5Oj17JNu3XVOzcLci_Y-2If7XjoQ0qGxMr_7g2KC-6McT2Q5HUpvOl8WKzVPgBYAb1miE_K0Ag3_5t-5u_pDKuwhKOIbk7aLqJTL6QLYZbFbinybZF8btxQSzlMJIK5Iz3G0&amp;t=ffffffffbec1863d" type="text/javascript"></script>
+<div>
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="EC5EA783" />
+	<input type="hidden" name="__SCROLLPOSITIONX" id="__SCROLLPOSITIONX" value="0" />
+	<input type="hidden" name="__SCROLLPOSITIONY" id="__SCROLLPOSITIONY" value="0" />
+	<input type="hidden" name="__VIEWSTATEENCRYPTED" id="__VIEWSTATEENCRYPTED" value="" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="Ztq7gdatvyLyDr0qdKm2VgWO4ddgSyQf3pLup5H0atkQZrr9tP8QWxQ/ZDaw9ZzQ+xFB5rBv12TfhDrUvFsZdZ5lxjv1jP7GQY712oHCNnprmSfoNcL3zT1MFVbgxc0LDID2fav+rfW1Qit3jxQw730UaTacuXIwLfqTZFUMch1V08euBnc3xFIIPa+uzILo" />
+</div>
+    <div id="ctl00_navBar" class="navbar navbar-inverse navbar-top" role="navigation">
+        <div class="container-fluid">
+            <div id="branding">
+                <img id="ctl00_imgLogo" class="img-responsive" src="Images/logo.jpg" alt="Missouri Department of Elementary and Secondary Education Logo" align="left" style="border-width:0px;" />
+            </div>
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span><span
+                        class="icon-bar"></span><span class="icon-bar"></span>
+                </button>
+            </div>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="https://dese.mo.gov/childhood" target="_blank">DESE - OOC Home</a></li>
+                    <li><a href="http://www.mo.gov/" target="_blank">State Home</a></li>
+                    <li><a href="http://www.mo.gov/privacy-policy/" target="_blank">Disclaimer</a></li>
+                    <li><a href="https://dese.mo.gov/childhood/child-care/district-offices" target="_blank">Contact Us</a></li>
+                </ul>
+            </div>
+            <!--/.nav-collapse-->
+            <span class="dateTime">
+                <script type="text/javascript">                    todaysdate();
+                </script>
+            </span>
+        </div>
+    </div>
+    <!-- </td> 
+                <td class="dateTime" nowrap="nowrap" align="right">
+                    <script type="text/javascript">                        todaysdate();
+                    </script>  
+                </td> 
+            </tr> 
+        </tbody>
+    </table> -->
+    <div class="container-fluid">
+        <!-- <div class="row"  style="background-color:#003366;"> 
+      
+                <img  alt="DHSS Logo" src="Images/SevenMast_DHSS.gif"  /> -->
+        <!--  <td bgcolor="#003366" rowspan="2" align="right" style="border-color: #003366;">
+                <table cellspacing="0" cellpadding="5" border="0">
+                   <div class="row">
+                        <td colspan="4">
+                            <input type="hidden" value="dhss" name="site" />
+                            <input type="hidden" value="xml_no_dtd" name="output" />
+                            <input type="hidden" value="dhss" name="client" />
+                            <input type="hidden" value="10" name="num" />
+                            <input type="hidden" value="dhss" name="proxystylesheet" />
+                        </td>
+                    </div>
+                    <tbody>
+                        <div class="row">
+                            <td>
+                                
+                            </td>
+                            <td valign="middle"> -->
+        <div class="row">
+            <input type="hidden" value="dhss" name="site" />
+            <input type="hidden" value="xml_no_dtd" name="output" />
+            <input type="hidden" value="dhss" name="client" />
+            <input type="hidden" value="10" name="num" />
+            <input type="hidden" value="dhss" name="proxystylesheet" />
+            <!--
+                                <label for="mw0">
+                                    <input class="navblue" onkeypress="if(this.value=='Search')this.value = '';" id="mw0"
+                                        onclick="this.value = ''" maxlength="40" value="Google™ Search" name="q" />&nbsp;
+                                </label>  -->
+            <!--    </td>
+                            <td valign="middle" align="right">  -->
+            <!--    <input type="image" alt="Go" src="Images/go.gif" name="submit" /> -->
+            <!-- </td>
+                            <td> -->
+            <!--  <a class="nava" href="Logout.aspx?ACTION=LOGOUT" style="color: #FFFFFF">Login</a> -->
+            <!--  </td>  
+                        </div>
+                        
+                    </tbody>
+                </table>
+            </td> 
+        </div>
+        
+        <div class="row">
+            <td bgcolor="#003366"> -->
+            <!--             &nbsp;
+                <span id="ctl00_SiteMapPath1" style="font-family:Verdana;font-size:Small;"><a href="#ctl00_SiteMapPath1_SkipLink"><img alt="Skip Navigation Links" src="/ChildCareSearch/WebResource.axd?d=nSYZl4W0sTd1zkqOtadzcj5SxOn8PgGL1LuVK-CWfw6XNTHDxBWXmijKENeWtw4c18hhAqzEKfCkiUpX1WBB6sc5gVsCJn4wH_OxX-EaW-w1&amp;t=639190664600000000" width="0" height="0" style="border-width:0px;" /></a><a id="ctl00_SiteMapPath1_SkipLink"></a></span>  -->
+            <!-- </td>  -->
+        </div>
+        <div class="row">
+            <!--    <div class="col-md-2" style="background-color:#003366"> -->
+            <!-- backgound-color="#003366" align="center" bgcolor="#003366" valign="top" style="height: 800px;" scope="col"> -->
+            <!--   &nbsp;
+                <a href="#ctl00_masterMenu_SkipLink"><img alt="Skip Navigation Links" src="/ChildCareSearch/WebResource.axd?d=nSYZl4W0sTd1zkqOtadzcj5SxOn8PgGL1LuVK-CWfw6XNTHDxBWXmijKENeWtw4c18hhAqzEKfCkiUpX1WBB6sc5gVsCJn4wH_OxX-EaW-w1&amp;t=639190664600000000" width="0" height="0" style="border-width:0px;" /></a><table id="ctl00_masterMenu" class="ctl00_masterMenu_2" cellpadding="0" cellspacing="0" border="0">
+	<tr onmouseover="Menu_HoverStatic(this)" onmouseout="Menu_Unhover(this)" onkeyup="Menu_Key(event)" id="ctl00_masterMenun0">
+		<td><table class="ctl00_masterMenu_4" cellpadding="0" cellspacing="0" border="0" width="100%">
+			<tr>
+				<td style="white-space:nowrap;width:100%;"><a class="ctl00_masterMenu_1 ctl00_masterMenu_3" href="http://health.mo.gov/safety/childcare/index.php">Contact Us</a></td>
+			</tr>
+		</table></td>
+	</tr>
+</table><a id="ctl00_masterMenu_SkipLink"></a>  
+            </div>  -->
+            <div id="mainContent" class="col-md-12">
+                <!--colspan="2" valign="top"> -->
+                <span id="ctl00_lblError"></span>
+                <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('ctl00$ScriptManager1', 'aspnetForm', [], [], [], 90, 'ctl00');
+//]]>
+</script>
+
+                
+    <style type="text/css">
+        .preserve-whitespace {
+            white-space: pre-wrap;      
+            word-wrap: break-word;      
+            overflow-wrap: anywhere;    
+        }
+    </style>
+    <h1 class="sr-only">View Investigation</h1>
+    <div id="ctl00_ContentPlaceHolder1_divErrMsg" style="width: 100%; text-align: left">
+        <span id="ctl00_ContentPlaceHolder1_lblErrMsg" class="ErrorMessage" style="display:inline-block;color:Maroon;font-weight:bold;width:100%;"></span>
+    </div>
+        <div class="form-group">
+            <div id="ctl00_ContentPlaceHolder1_divLogo" class="col-sm-2">
+                <img src="Images/SealDHSS.bmp" alt="DHSS MO" class="image-responsive"/>
+            </div>
+            <div class="col-sm-8 reportTitleText">
+                <span id="ctl00_ContentPlaceHolder1_Label1">MISSOURI DEPARTMENT OF ELEMENTARY AND SECONDARY EDUCATION</span><br />
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_Label2">OFFICE OF CHILDHOOD - CHILD CARE COMPLIANCE</span><br />
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblHeader"></span>
+                <span id="ctl00_ContentPlaceHolder1_Label3">COMPLAINT INVESTIGATION OF SUBSTANTIATED STATUTE OR RULE VIOLATIONS</span>
+            </div>
+            <div id="ctl00_ContentPlaceHolder1_divBackButton" class="col-sm-2 text-right">
+                <a id="ctl00_ContentPlaceHolder1_lnlBacktoInspections" href="javascript:__doPostBack(&#39;ctl00$ContentPlaceHolder1$lnlBacktoInspections&#39;,&#39;&#39;)" style="margin-right:20px; color: rgb(58,123,179)">Back</a>
+                <br />
+                <br />
+                
+            </div>
+        </div>  
+        <div class="form-group sectionHeader">
+            <div class="col-lg-12 h5 sectionHeaderTextLeft">  
+                <span id="ctl00_ContentPlaceHolder1_lblFacilityHeader">Facility Information</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-3">
+                <span id="ctl00_ContentPlaceHolder1_lblReportDateHeader" style="font-weight:bold;">Date of Report</span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblReportDate">5/12/2025 12:00:00 AM</span>
+            </div>
+            <div class="col-sm-3">
+                <span id="ctl00_ContentPlaceHolder1_lblFDVNHeader" style="font-weight:bold;">DVN</span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblDVN">001780381</span>
+            </div>
+            <div class="col-sm-3">
+                <span id="ctl00_ContentPlaceHolder1_lblFNHeader" style="font-weight:bold;">Facility Name</span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblFacilityName">KINDERCARE EDUCATION LLC</span>
+            </div>
+            <div class="col-sm-3">
+                <span id="ctl00_ContentPlaceHolder1_lblFacilityAddressHeader" style="font-weight:bold;">Facility Address</span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblFacilityAddress">13550 BIG BEND RD </span>
+            </div>            
+        </div>
+        <div class="form-group">
+            <div class="col-sm-3">
+                <span id="ctl00_ContentPlaceHolder1_lblCityHeader" style="font-weight:bold;">City</span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblCity">ST LOUIS</span>
+            </div>
+            <div class="col-sm-3">
+                <span id="ctl00_ContentPlaceHolder1_lblZipHeader" style="font-weight:bold;">Zip Code</span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblZip">63122</span>
+            </div>
+            <div class="col-sm-3">
+                <span id="ctl00_ContentPlaceHolder1_lblPhoneHeader" style="font-weight:bold;">Phone</span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblPhone">(636) 861-9400</span>
+            </div>
+            <div class="col-sm-3">
+                <span id="ctl00_ContentPlaceHolder1_lblCountyHeader" style="font-weight:bold;">County</span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblCounty">ST LOUIS</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-12">
+                <span id="ctl00_ContentPlaceHolder1_lblAssignedSpecialistHeader" style="font-weight:bold;">Assigned Specialist</span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblAssignedSpecialist">HUGHES, CHRISTINE D</span>
+            </div>
+        </div>
+        <div class="form-group sectionHeader">
+            <div class="col-lg-12 h5 sectionHeaderTextLeft">  
+                <span id="ctl00_ContentPlaceHolder1_lblViolationsHeader">Rule/Statute Violation(s)</span>
+            </div>
+        </div>
+        <div>
+            <div>
+	<table class="table table-bordered table-striped table-condensed small" cellspacing="0" cellpadding="3" rules="all" border="1" id="ctl00_ContentPlaceHolder1_gvViolations" style="border-collapse:collapse;">
+		<tr>
+			<th scope="col">Violation</th><th scope="col">Violation Description</th>
+		</tr><tr>
+			<td>
+                            <span id="ctl00_ContentPlaceHolder1_gvViolations_ctl02_lblDocument">5 CSR 25-500.182(1)(C)1.</span>
+                        </td><td>
+                            <span id="ctl00_ContentPlaceHolder1_gvViolations_ctl02_lblDocumentDate">The provider shall establish simple, understandable rules for children's behavior and shall explain them to the children. </span>
+                        </td>
+		</tr><tr>
+			<td>
+                            <span id="ctl00_ContentPlaceHolder1_gvViolations_ctl03_lblDocument">5 CSR 25-500.182(1)(C)4.</span>
+                        </td><td>
+                            <span id="ctl00_ContentPlaceHolder1_gvViolations_ctl03_lblDocumentDate">Praise and encouragement of good behavior shall be used instead of focusing only upon unacceptable behavior. </span>
+                        </td>
+		</tr><tr>
+			<td>
+                            <span id="ctl00_ContentPlaceHolder1_gvViolations_ctl04_lblDocument">5 CSR 25-500.182(1)(C)8.</span>
+                        </td><td>
+                            <span id="ctl00_ContentPlaceHolder1_gvViolations_ctl04_lblDocumentDate">No discipline technique which is humiliating, threatening, or frightening to children shall be used. Children shall not be shamed, ridiculed, or spoken to harshly, abusively, or with profanity. </span>
+                        </td>
+		</tr>
+	</table>
+</div>
+        </div>
+        <div>
+            <div>
+	<table class="table table-bordered table-striped table-condensed small" cellspacing="0" cellpadding="3" rules="all" border="1" id="ctl00_ContentPlaceHolder1_gvConclusionSummary" style="border-collapse:collapse;">
+		<tr>
+			<th scope="col">Conclusion Summary</th>
+		</tr><tr>
+			<td>
+                            <span id="ctl00_ContentPlaceHolder1_gvConclusionSummary_ctl02_lblConclusionSummary" class="preserve-whitespace">On May 12, 2025, the Office of Childhood (OOC) received an allegation that a teacher, Jamie A has pushed and screamed at Child A (4-years-old) and verbally threatened several children in her care. On May 16, 2025, Compliance Inspector (CI) Christy Hughes conducted an unannounced inspection of the facility and found the allegations to be substantiated based on the following information.  
+
+5 CSR 25-500.182(1)(C)1. which states: "The provider shall establish simple, understandable rules for children's behavior and shall explain them to the children."
+AND
+5 CSR 25-500.182(1)(C)4. which states: "Praise and encouragement of good behavior shall be used instead of focusing only upon unacceptable behavior."
+AND
+5 CSR 25-500.182(1)(C)8. which states: "No discipline technique which is humiliating, threatening, or frightening to children shall be used. Children shall not be shamed, ridiculed, or spoken to harshly, abusively, or with profanity."
+
+On May 16, 2025, (CI) Hughes conducted in person interviews with director Theodore Gansmann, caregivers Jamie Abegg, Ann Kempf, Katherine Neff, Kelsea Roccia and Angela Baughman and Child A, Child B and Child C.
+
+Theodore stated that there was a situation on the playground with Jamie when she removed a child from the play structure and other staff members felt it was too rough.  He was informed from Jamie that the child was falling, and she caught him. There were no marks on the child. He provided additional training for Jamie.
+
+Ann stated that Jamie tends to get onto Child A (4-years-old) for somethings and not others. She tries to step in and deal with Child A instead of Jamie and has heard Jamie use phrases like "I told you so."
+
+Katherine stated that she feels that Jamie picks on Child A and has expressed concerns to the director. Child A's mother has expressed concerns to her about Jamie. Jamie does not have the best communication skills with the parents.
+
+Kelsea stated that Jamie was yelling at Child A about digging in the dirt but allowed other students to dig in the dirt. She has heard Jamie tell a child "Go away, I am done dealing with you." It's always Child A that she is getting on to and yelling at and she feels like she "pokes the bear" with Child A.
+
+Angela stated that Jamie seems to get frustrated with Child A and she heard Jamie tell the children that "she was going to take them away". She has asked Jamie if she needs to walk away and Jamie gets combative.</span>
+                        </td>
+		</tr>
+	</table>
+</div>
+        </div>
+        <div class="form-group sectionHeader">
+            <div class="col-lg-12 h5 sectionHeaderTextLeft">  
+                <span id="ctl00_ContentPlaceHolder1_lblCorrectiveMeasuresHeader">Corrective Measures</span>
+            </div>
+        </div>
+        <div>
+            <div>
+	<table class="table table-bordered table-striped table-condensed small" cellspacing="0" cellpadding="3" rules="all" border="1" id="ctl00_ContentPlaceHolder1_gvCorrectiveMeasures" style="border-collapse:collapse;">
+		<tr>
+			<th scope="col">Corrective Measure</th><th scope="col">Completed (Y/N)</th><th scope="col">Completed Date</th>
+		</tr><tr>
+			<td>
+                            <span id="ctl00_ContentPlaceHolder1_gvCorrectiveMeasures_ctl02_lblDocument">The facility shall notify all staff members of the violations which were substantiated, and specify the actions to be taken by all staff in order to comply with all violations cited. A copy of the memo, letter, or staff meeting agenda shall be submitted to the Office of Childhood.</span>
+                        </td><td>
+                            <span id="ctl00_ContentPlaceHolder1_gvCorrectiveMeasures_ctl02_lblDocumentDate">Y</span>
+                        </td><td>
+                            <span id="ctl00_ContentPlaceHolder1_gvCorrectiveMeasures_ctl02_lblDocumentDate">7/28/2025 12:00:00 AM</span>
+                        </td>
+		</tr>
+	</table>
+</div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-4">
+                <span id="ctl00_ContentPlaceHolder1_lblDispositionHeader" style="font-weight:bold;">Disposition</span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblDisposition">SUBSTANTIATED</span>
+            </div>
+            <div class="col-sm-4">
+                <span id="ctl00_ContentPlaceHolder1_lblDispositionDateHeader" style="font-weight:bold;">Disposition Date</span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblDispositionDate">7/11/2025 12:00:00 AM</span>
+            </div>
+            <div class="col-sm-4">
+                <span id="ctl00_ContentPlaceHolder1_lblApprovingSupervisorHeader" style="font-weight:bold;">Approving Supervisor</span>
+                <br />
+                <span id="ctl00_ContentPlaceHolder1_lblApprovingSupervisor">CHRISCO, MARLA L</span>
+            </div>
+        </div>
+    <div id="ctl00_ContentPlaceHolder1_divButtons">
+        <input type="submit" name="ctl00$ContentPlaceHolder1$btnGeneratePDF" value="Generate PDF" id="ctl00_ContentPlaceHolder1_btnGeneratePDF" />
+        <input type="submit" name="ctl00$ContentPlaceHolder1$btnSaveHTML" value="Save as Accessible HTML Document" id="ctl00_ContentPlaceHolder1_btnSaveHTML" />
+    </div>
+
+            </div>
+        </div>
+        <!--    </table>  -->
+    </div>
+    
+
+<script type="text/javascript">
+//<![CDATA[
+var ctl00_masterMenu_Data = new Object();
+ctl00_masterMenu_Data.disappearAfter = 500;
+ctl00_masterMenu_Data.horizontalOffset = 0;
+ctl00_masterMenu_Data.verticalOffset = 0;
+ctl00_masterMenu_Data.iframeUrl = '/ChildCareSearch/WebResource.axd?d=95j8JPRY5jPkMpJIMrQb8Z8KhD0QykQJL4aNFDjVTpa5sxg-A7tfprkIEqh2lFQqkLugvjA6b7ZiIQ6ddnW1g9xo4ohKJ3FzUlPAssA4K2Y1&t=639190664600000000';
+
+theForm.oldSubmit = theForm.submit;
+theForm.submit = WebForm_SaveScrollPositionSubmit;
+
+theForm.oldOnSubmit = theForm.onsubmit;
+theForm.onsubmit = WebForm_SaveScrollPositionOnSubmit;
+//]]>
+</script>
+</form>
+<script type="text/javascript" src="/_Incapsula_Resource?SWJIYLWA=719d34d31c8e3a6e6fffd425f7e032f3&ns=6&cb=1622451159" async></script></body>
+</html>
