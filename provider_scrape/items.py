@@ -1157,7 +1157,9 @@ class ProviderItem(scrapy.Item):
     wy_registration_fee = scrapy.Field()  # number, only when chargingRegistrationFee
     wy_weekend_care = scrapy.Field()  # search record weekendCare: bool
     wy_evening_care = scrapy.Field()  # search record eveningCare: bool
-    wy_coordinates_approximate = scrapy.Field()  # True when the portal's coordinates were a ZIP centroid and were dropped
+    wy_coordinates_approximate = (
+        scrapy.Field()
+    )  # True when the portal's coordinates were a ZIP centroid and were dropped
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()

@@ -135,7 +135,6 @@ def test_directors_dedupe_and_titlecase():
 def test_mojibake_fixed_and_clean_text_untouched():
     broken = "the â€œtime outâ€\x9d rule"
     assert fix_mojibake(broken) == "the “time out” rule"
-    clean_text = "plain text with “quotes” and Ã© left alone? no, Ã is the trigger"
     assert fix_mojibake("Chapter 4 (b) staff:child ratios") == "Chapter 4 (b) staff:child ratios"
     assert fix_mojibake("curly “ok”") == "curly “ok”"
     assert fix_mojibake(None) is None
@@ -355,7 +354,11 @@ def test_partial_item_from_search_only(search_records, centroids):
 
 @pytest.mark.parametrize(
     "raw,category",
-    [("Child Care Center", "center"), ("Family Child Care Home", "family_home"), ("Family Child Care Center", "group_home")],
+    [
+        ("Child Care Center", "center"),
+        ("Family Child Care Home", "family_home"),
+        ("Family Child Care Center", "group_home"),
+    ],
 )
 def test_facility_category(raw, category):
     assert norm.facility_category_from_type(raw) == category
@@ -430,7 +433,11 @@ def test_count_mismatch_warns(spider, caplog):
     body = {
         "data": {
             "violations": [
-                {"visitDate": "01/01/2024", "numberOfNonComplianceViolations": "4", "violationDetails": [{"regulation": "r"}]}
+                {
+                    "visitDate": "01/01/2024",
+                    "numberOfNonComplianceViolations": "4",
+                    "violationDetails": [{"regulation": "r"}],
+                }
             ]
         }
     }

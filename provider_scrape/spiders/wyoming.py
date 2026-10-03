@@ -124,7 +124,7 @@ def format_ages(age_range):
 
 
 def format_address(address):
-    """"address1[, address2], City, WY 82001"; missing parts are skipped."""
+    """ "address1[, address2], City, WY 82001"; missing parts are skipped."""
     if not isinstance(address, dict):
         return None
     street = ", ".join(p for p in (clean(address.get("address1")), clean(address.get("address2"))) if p)
@@ -143,12 +143,12 @@ def hours_schedule(hours):
 
 
 def format_hours(schedule):
-    """"Monday 06:00-18:00; Tuesday ..." -- closed days are omitted."""
+    """ "Monday 06:00-18:00; Tuesday ..." -- closed days are omitted."""
     return "; ".join(f"{d['day']} {d['start']}-{d['end']}" for d in schedule)
 
 
 def person_name(person):
-    """"First Last", title-cased only when the source is all-lowercase."""
+    """ "First Last", title-cased only when the source is all-lowercase."""
     name = clean(" ".join(p for p in (person.get("firstname"), person.get("lastname")) if p))
     if name and name.islower():
         name = name.title()
