@@ -1,0 +1,137 @@
+{
+ "data": {
+  "memberId": "1",
+  "firstName": "Child 1",
+  "ageInMonths": 4,
+  "applicantEligibilityStatus": false,
+  "facility": {
+   "facilityExternalId": "u246326dwwc2zlh",
+   "facilityName": "Cheyenne Hills Christian Academy",
+   "facilityType": "Child Care Center",
+   "facilityAddress": {
+    "address1": "7505 US Hwy 30",
+    "city": "Cheyenne",
+    "state": "WY",
+    "zip": "82001",
+    "lat": 41.141842,
+    "lon": -104.779188
+   },
+   "facilityWebsite": "",
+   "noOfChildrenServed": 214,
+   "preEnrollmentVisitRequired": true,
+   "facilityAgeRange": {
+    "minAge": 36,
+    "maxAge": 60
+   },
+   "facilityContact": {
+    "phone": "3077786431",
+    "email": "office@chcawy.com"
+   },
+   "accreditations": [],
+   "facilityHours": [
+    {
+     "weekday": "Monday",
+     "startTime": "08:00",
+     "endTime": "15:30"
+    },
+    {
+     "weekday": "Tuesday",
+     "startTime": "08:00",
+     "endTime": "15:30"
+    },
+    {
+     "weekday": "Wednesday",
+     "startTime": "08:00",
+     "endTime": "15:30"
+    },
+    {
+     "weekday": "Thursday",
+     "startTime": "08:00",
+     "endTime": "15:30"
+    },
+    {
+     "weekday": "Friday",
+     "startTime": "08:00",
+     "endTime": "15:30"
+    },
+    {
+     "weekday": "Saturday"
+    },
+    {
+     "weekday": "Sunday"
+    }
+   ],
+   "acceptingSubsidy": false,
+   "chargingRegistrationFee": true,
+   "registrationFee": 50.0,
+   "licenseId": "16952",
+   "facilityDirectors": [
+    {
+     "firstname": "Cheyenne Hills",
+     "lastname": "Christian Academy",
+     "title": "Director"
+    },
+    {
+     "firstname": "heidi",
+     "lastname": "griffin",
+     "title": "Director/Principal"
+    },
+    {
+     "firstname": "jamie",
+     "lastname": "shannon",
+     "title": "Director"
+    },
+    {
+     "firstname": "amanda",
+     "lastname": "pospischil",
+     "title": "Director"
+    },
+    {
+     "firstname": "Front Office",
+     "lastname": "General Contact",
+     "title": "Director"
+    },
+    {
+     "firstname": "jamie",
+     "lastname": "shannon",
+     "title": "Director/Principal"
+    },
+    {
+     "firstname": "jamie",
+     "lastname": "shannon",
+     "title": "Director"
+    }
+   ],
+   "services": [
+    {
+     "serviceName": "Full Day Care",
+     "serviceDescription": ""
+    },
+    {
+     "serviceName": "Half Day Care",
+     "serviceDescription": ""
+    },
+    {
+     "serviceName": "Pet Free Environment",
+     "serviceDescription": ""
+    },
+    {
+     "serviceName": "Meals and Snacks Provided",
+     "serviceDescription": ""
+    },
+    {
+     "serviceName": "Accepts Special Needs",
+     "serviceDescription": ""
+    }
+   ],
+   "facilityPictures": [],
+   "reports": {
+    "violations": [],
+    "visits": [],
+    "inspections": []
+   },
+   "programs": [],
+   "otherPrograms": []
+  }
+ }
+}

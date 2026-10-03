@@ -734,6 +734,11 @@ FACILITY_CATEGORY_BUCKETS = {
         # precedents above (capacity band, not a residence, but still
         # smaller/less institutional than the "Large Child Care Center" tier).
         "Group Child Care Facility (up to 12 children)",
+        # Wyoming: the middle tier -- a home-based provider licensed for more
+        # children than a Family Child Care Home but below a center. Matches
+        # the Delaware "Licensed Large Family Child Care" / North Dakota
+        # "Group Child Care Home" precedents above.
+        "Family Child Care Center",
     ],
     "school_age": [
         "SACC",

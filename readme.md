@@ -161,7 +161,7 @@ The project uses pytest, so one can simply run `pytest` to go through the whole 
 | Washington DC            | [x]     | 
 | West Virginia            | [x]     | 
 | Wisconsin                | [x]     | 
-| Wyoming                  | [ ]     | 
+| Wyoming                  | [x]     | 
 | American Samoa           | [ ]     | 
 | Guam                     | [ ]     | 
 | Northern Mariana Islands | [ ]     | 

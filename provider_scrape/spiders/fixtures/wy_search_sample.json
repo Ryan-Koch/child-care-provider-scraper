@@ -1,0 +1,159 @@
+{
+ "data": {
+  "facilities": [
+   {
+    "facilityId": "n1vovbbml5fc7ng",
+    "facilityName": "ECARES Test Facility 2",
+    "displayImageURL": "",
+    "facilityAddress": {
+     "address1": "2301 Capitol Ave.",
+     "address2": "",
+     "city": "Cheyenne",
+     "state": "WY",
+     "zip": "82001",
+     "lat": 41.141842,
+     "lon": -104.779188
+    },
+    "facilityType": "Family Child Care Home",
+    "acceptingSubsidies": true,
+    "providesTransport": false,
+    "weekendCare": false,
+    "eveningCare": false,
+    "licenseId": "",
+    "distance": 28.22,
+    "hasSiblingInThisFacility": false
+   },
+   {
+    "facilityId": "u246326dwwc2zlh",
+    "facilityName": "Cheyenne Hills Christian Academy",
+    "displayImageURL": "",
+    "facilityAddress": {
+     "address1": "7505 US Hwy 30",
+     "city": "Cheyenne",
+     "state": "WY",
+     "zip": "82001",
+     "lat": 41.141842,
+     "lon": -104.779188
+    },
+    "facilityType": "Child Care Center",
+    "acceptingSubsidies": false,
+    "providesTransport": false,
+    "weekendCare": false,
+    "eveningCare": false,
+    "licenseId": "16952",
+    "distance": 28.22,
+    "hasSiblingInThisFacility": false
+   },
+   {
+    "facilityId": "q2wvm52hfmjzc6x",
+    "facilityName": "Lighthouse Littles",
+    "displayImageURL": "",
+    "facilityAddress": {
+     "address1": "107 E 8th Ave",
+     "address2": "",
+     "city": "Cheyenne",
+     "state": "WY",
+     "zip": "82001",
+     "lat": 41.141842,
+     "lon": -104.779188
+    },
+    "facilityType": "Child Care Center",
+    "acceptingSubsidies": true,
+    "providesTransport": false,
+    "weekendCare": false,
+    "eveningCare": false,
+    "licenseId": "",
+    "distance": 28.22,
+    "hasSiblingInThisFacility": false
+   },
+   {
+    "facilityId": "tgqx0ihnv659tnk",
+    "facilityName": "Treasure Chest",
+    "displayImageURL": "",
+    "facilityAddress": {
+     "address1": "2115 Morrie Ave",
+     "address2": "",
+     "city": "Cheyenne",
+     "state": "WY",
+     "zip": "82001",
+     "lat": 41.141948,
+     "lon": -104.807153
+    },
+    "facilityType": "Child Care Center",
+    "acceptingSubsidies": true,
+    "providesTransport": false,
+    "weekendCare": false,
+    "eveningCare": false,
+    "licenseId": "17686",
+    "distance": 27.27,
+    "hasSiblingInThisFacility": false
+   },
+   {
+    "facilityId": "r9xfwqkn54ngtvg",
+    "facilityName": "The Tiny Schoolhouse",
+    "displayImageURL": "",
+    "facilityAddress": {
+     "address1": "2115 Morrie Ave",
+     "address2": "",
+     "city": "Cheyenne",
+     "state": "WY",
+     "zip": "82001",
+     "lat": 41.141948,
+     "lon": -104.807153
+    },
+    "facilityType": "Child Care Center",
+    "acceptingSubsidies": false,
+    "providesTransport": false,
+    "weekendCare": false,
+    "eveningCare": false,
+    "licenseId": "17807",
+    "distance": 27.27,
+    "hasSiblingInThisFacility": false
+   },
+   {
+    "facilityId": "hmw3i8hym62mz6l",
+    "facilityName": "The Eagle Nest",
+    "displayImageURL": "",
+    "facilityAddress": {
+     "address1": "342 Amoretti St",
+     "address2": "",
+     "city": "Thermopolis",
+     "state": "WY",
+     "zip": "82443",
+     "lat": 43.769759,
+     "lon": -108.454107
+    },
+    "facilityType": "Child Care Center",
+    "acceptingSubsidies": true,
+    "providesTransport": false,
+    "weekendCare": false,
+    "eveningCare": false,
+    "licenseId": "",
+    "distance": 0.0,
+    "hasSiblingInThisFacility": false
+   },
+   {
+    "facilityId": "l1vzxg0abb818mt",
+    "facilityName": "Savannah's Little Bananas",
+    "displayImageURL": "",
+    "facilityAddress": {
+     "address1": "8111 E Pershing Blvd",
+     "address2": "",
+     "city": "Cheyenne",
+     "state": "WY",
+     "zip": "82009",
+     "lat": 41.151504,
+     "lon": -104.710788
+    },
+    "facilityType": "Family Child Care Center",
+    "acceptingSubsidies": false,
+    "providesTransport": false,
+    "weekendCare": false,
+    "eveningCare": false,
+    "licenseId": "16884",
+    "distance": 38.34,
+    "hasSiblingInThisFacility": false
+   }
+  ]
+ }
+}

@@ -257,6 +257,12 @@ class InspectionItem(scrapy.Item):
     mo_approving_supervisor = scrapy.Field()  # investigation
     mo_violations = scrapy.Field()  # investigation: [{rule, description}]
     mo_conclusion = scrapy.Field()  # investigation: conclusion summary narrative(s)
+
+    # Wyoming (see ProviderItem's Wyoming block). One row per visit, inspection
+    # or compliance notice.
+    wy_record_type = scrapy.Field()  # "visit" | "inspection" | "compliance_notice"
+    wy_violation_found = scrapy.Field()  # visit rows: bool
+    wy_violations = scrapy.Field()  # notice rows: [{regulation, compliance_due_date, ...}]
     mo_corrective_measures = scrapy.Field()  # investigation: [{measure, completed, completed_date}]
 
 
@@ -1135,6 +1141,25 @@ class ProviderItem(scrapy.Item):
     # (often the owner's home), so it stays state-specific rather than address.
     mo_mailing_address = scrapy.Field()
     mo_limitations = scrapy.Field()  # inspection report "Limitations", e.g. "16 CHILDREN UNDER 24 MONTHS"
+
+    # Wyoming specific fields (childcare.dfs.wyo.gov Child Care Shopping Portal
+    # JSON API; see tasks/wyoming/wyoming_plan.md). Licensed facilities only --
+    # license-exempt providers are deliberately not scraped. No status, county
+    # or quality rating is published. About a third of facilities carry a ZIP
+    # centroid rather than a geocode; those get no latitude/longitude and
+    # wy_coordinates_approximate = True so the Census geocoder can fix them.
+    wy_facility_id = scrapy.Field()  # portal's opaque facilityId (key for every endpoint)
+    wy_schedule = scrapy.Field()  # facilityHours: [{day, start, end}] (hours holds the formatted string)
+    wy_directors = scrapy.Field()  # [{name, title}], deduped (administrator holds the names)
+    wy_services = scrapy.Field()  # services[].serviceName, raw
+    wy_programs = scrapy.Field()  # programs + otherPrograms: [{name, type, rates, ages, ...}]
+    wy_pre_enrollment_visit_required = scrapy.Field()
+    wy_registration_fee = scrapy.Field()  # number, only when chargingRegistrationFee
+    wy_weekend_care = scrapy.Field()  # search record weekendCare: bool
+    wy_evening_care = scrapy.Field()  # search record eveningCare: bool
+    wy_coordinates_approximate = (
+        scrapy.Field()
+    )  # True when the portal's coordinates were a ZIP centroid and were dropped
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()
