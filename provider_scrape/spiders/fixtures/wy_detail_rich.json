@@ -1,0 +1,488 @@
+{
+ "data": {
+  "memberId": "1",
+  "firstName": "Child 1",
+  "ageInMonths": 4,
+  "applicantEligibilityStatus": false,
+  "facility": {
+   "facilityExternalId": "hmw3i8hym62mz6l",
+   "facilityName": "The Eagle Nest",
+   "facilityType": "Child Care Center",
+   "facilityAddress": {
+    "address1": "342 Amoretti St",
+    "address2": "",
+    "city": "Thermopolis",
+    "state": "WY",
+    "zip": "82443",
+    "lat": 43.769759,
+    "lon": -108.454107
+   },
+   "facilityWebsite": "",
+   "noOfChildrenServed": 96,
+   "preEnrollmentVisitRequired": false,
+   "facilityAgeRange": {
+    "minAge": 0,
+    "maxAge": 60
+   },
+   "facilityContact": {
+    "phone": "3079211880",
+    "email": "candreen78@gmail.com"
+   },
+   "accreditations": [
+    "National Association for the Education of Young Children (NAEYC)"
+   ],
+   "facilityHours": [
+    {
+     "weekday": "Monday",
+     "startTime": "07:00",
+     "endTime": "17:00"
+    },
+    {
+     "weekday": "Tuesday",
+     "startTime": "07:00",
+     "endTime": "17:00"
+    },
+    {
+     "weekday": "Wednesday",
+     "startTime": "07:00",
+     "endTime": "17:00"
+    },
+    {
+     "weekday": "Thursday",
+     "startTime": "07:00",
+     "endTime": "17:00"
+    },
+    {
+     "weekday": "Friday",
+     "startTime": "07:00",
+     "endTime": "17:00"
+    },
+    {
+     "weekday": "Saturday"
+    },
+    {
+     "weekday": "Sunday"
+    }
+   ],
+   "acceptingSubsidy": true,
+   "chargingRegistrationFee": true,
+   "registrationFee": 25.0,
+   "licenseId": "",
+   "facilityDirectors": [
+    {
+     "firstname": "ciley",
+     "lastname": "andreen",
+     "title": "DIRECTOR"
+    }
+   ],
+   "services": [
+    {
+     "serviceName": "Full Day Care",
+     "serviceDescription": ""
+    },
+    {
+     "serviceName": "Meals and Snacks Provided",
+     "serviceDescription": ""
+    },
+    {
+     "serviceName": "Drop-In Care",
+     "serviceDescription": ""
+    },
+    {
+     "serviceName": "Accepts Subsidies",
+     "serviceDescription": ""
+    },
+    {
+     "serviceName": "Accepts Special Needs",
+     "serviceDescription": ""
+    },
+    {
+     "serviceName": "Outdoor Learning Environment",
+     "serviceDescription": ""
+    }
+   ],
+   "facilityPictures": [],
+   "reports": {
+    "violations": [],
+    "visits": [],
+    "inspections": []
+   },
+   "programs": [
+    {
+     "programId": "g1clxbe2k3vdkp8",
+     "programName": "Infant Care",
+     "programLanguages": [],
+     "programRates": [
+      {
+       "rate": 36.96,
+       "period": "DAILY",
+       "type": "FULL_TIME"
+      },
+      {
+       "rate": 18.48,
+       "period": "DAILY",
+       "type": "PART_TIME"
+      }
+     ],
+     "programAvailabilityStartDate": "08/02/2025",
+     "programAvailabilityEndDate": "",
+     "fullTime": false,
+     "ageGroup": {
+      "minAge": 0,
+      "maxAge": 12
+     },
+     "acceptingNewEnrollment": true,
+     "programDescription": "",
+     "programPhilosophy": "",
+     "programType": "Infant Care",
+     "programHours": [
+      {
+       "weekday": "Monday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Tuesday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Wednesday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Thursday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Friday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Saturday"
+      },
+      {
+       "weekday": "Sunday"
+      }
+     ],
+     "typeOfCare": "BOTH"
+    }
+   ],
+   "otherPrograms": [
+    {
+     "programId": "u2rybg3mplhtfre",
+     "programName": "Early Preschool",
+     "programLanguages": [],
+     "programRates": [
+      {
+       "rate": 36.96,
+       "period": "DAILY",
+       "type": "FULL_TIME"
+      },
+      {
+       "rate": 18.48,
+       "period": "DAILY",
+       "type": "PART_TIME"
+      }
+     ],
+     "programAvailabilityStartDate": "08/02/2025",
+     "programAvailabilityEndDate": "",
+     "fullTime": false,
+     "ageGroup": {
+      "minAge": 24,
+      "maxAge": 36
+     },
+     "acceptingNewEnrollment": true,
+     "programDescription": "",
+     "programPhilosophy": "",
+     "programType": "Early Preschool",
+     "programHours": [
+      {
+       "weekday": "Monday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Tuesday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Wednesday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Thursday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Friday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Saturday"
+      },
+      {
+       "weekday": "Sunday"
+      }
+     ],
+     "typeOfCare": "BOTH"
+    },
+    {
+     "programId": "f1c9jqgkdzxxbe8",
+     "programName": "Other",
+     "programLanguages": [],
+     "programRates": [
+      {
+       "rate": 36.96,
+       "period": "DAILY",
+       "type": "FULL_TIME"
+      },
+      {
+       "rate": 18.48,
+       "period": "DAILY",
+       "type": "PART_TIME"
+      }
+     ],
+     "programAvailabilityStartDate": "08/02/2025",
+     "programAvailabilityEndDate": "",
+     "fullTime": false,
+     "ageGroup": {
+      "minAge": 156,
+      "maxAge": 216
+     },
+     "acceptingNewEnrollment": true,
+     "programDescription": "",
+     "programPhilosophy": "",
+     "programType": "Other",
+     "programHours": [
+      {
+       "weekday": "Monday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Tuesday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Wednesday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Thursday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Friday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Saturday"
+      },
+      {
+       "weekday": "Sunday"
+      }
+     ],
+     "typeOfCare": "BOTH"
+    },
+    {
+     "programId": "az6depy3uange6c",
+     "programName": "Preschool",
+     "programLanguages": [],
+     "programRates": [
+      {
+       "rate": 36.96,
+       "period": "DAILY",
+       "type": "FULL_TIME"
+      },
+      {
+       "rate": 18.48,
+       "period": "DAILY",
+       "type": "PART_TIME"
+      }
+     ],
+     "programAvailabilityStartDate": "08/02/2025",
+     "programAvailabilityEndDate": "",
+     "fullTime": false,
+     "ageGroup": {
+      "minAge": 36,
+      "maxAge": 72
+     },
+     "acceptingNewEnrollment": true,
+     "programDescription": "",
+     "programPhilosophy": "",
+     "programType": "Preschool",
+     "programHours": [
+      {
+       "weekday": "Monday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Tuesday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Wednesday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Thursday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Friday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Saturday"
+      },
+      {
+       "weekday": "Sunday"
+      }
+     ],
+     "typeOfCare": "BOTH"
+    },
+    {
+     "programId": "b3cgro757z8na4w",
+     "programName": "School Age",
+     "programLanguages": [],
+     "programRates": [
+      {
+       "rate": 36.96,
+       "period": "DAILY",
+       "type": "FULL_TIME"
+      },
+      {
+       "rate": 18.48,
+       "period": "DAILY",
+       "type": "PART_TIME"
+      }
+     ],
+     "programAvailabilityStartDate": "08/02/2025",
+     "programAvailabilityEndDate": "",
+     "fullTime": false,
+     "ageGroup": {
+      "minAge": 72,
+      "maxAge": 156
+     },
+     "acceptingNewEnrollment": true,
+     "programDescription": "",
+     "programPhilosophy": "",
+     "programType": "School Age",
+     "programHours": [
+      {
+       "weekday": "Monday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Tuesday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Wednesday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Thursday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Friday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Saturday"
+      },
+      {
+       "weekday": "Sunday"
+      }
+     ],
+     "typeOfCare": "BOTH"
+    },
+    {
+     "programId": "rskjb6hpro3slsl",
+     "programName": "Toddler Care",
+     "programLanguages": [],
+     "programRates": [
+      {
+       "rate": 36.96,
+       "period": "DAILY",
+       "type": "FULL_TIME"
+      },
+      {
+       "rate": 18.48,
+       "period": "DAILY",
+       "type": "PART_TIME"
+      }
+     ],
+     "programAvailabilityStartDate": "08/02/2025",
+     "programAvailabilityEndDate": "",
+     "fullTime": false,
+     "ageGroup": {
+      "minAge": 12,
+      "maxAge": 24
+     },
+     "acceptingNewEnrollment": true,
+     "programDescription": "",
+     "programPhilosophy": "",
+     "programType": "Toddler Care",
+     "programHours": [
+      {
+       "weekday": "Monday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Tuesday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Wednesday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Thursday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Friday",
+       "startTime": "07:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Saturday"
+      },
+      {
+       "weekday": "Sunday"
+      }
+     ],
+     "typeOfCare": "BOTH"
+    }
+   ]
+  }
+ }
+}

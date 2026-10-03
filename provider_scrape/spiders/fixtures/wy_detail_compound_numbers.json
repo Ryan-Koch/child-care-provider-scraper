@@ -1,0 +1,152 @@
+{
+ "data": {
+  "memberId": "1",
+  "firstName": "Child 1",
+  "ageInMonths": 4,
+  "applicantEligibilityStatus": false,
+  "facility": {
+   "facilityExternalId": "n1vovbbml5fc7ng",
+   "facilityName": "ECARES Test Facility 2",
+   "facilityType": "Family Child Care Home",
+   "facilityAddress": {
+    "address1": "2301 Capitol Ave.",
+    "address2": "",
+    "city": "Cheyenne",
+    "state": "WY",
+    "zip": "82001",
+    "lat": 41.141842,
+    "lon": -104.779188
+   },
+   "noOfChildrenServed": 15,
+   "preEnrollmentVisitRequired": false,
+   "facilityAgeRange": {
+    "minAge": 0,
+    "maxAge": 144
+   },
+   "facilityContact": {
+    "phone": "5129478001",
+    "email": "ccxtestprovider001b@yopmail.com"
+   },
+   "accreditations": [],
+   "facilityHours": [
+    {
+     "weekday": "Monday",
+     "startTime": "08:00",
+     "endTime": "17:00"
+    },
+    {
+     "weekday": "Tuesday"
+    },
+    {
+     "weekday": "Wednesday"
+    },
+    {
+     "weekday": "Thursday"
+    },
+    {
+     "weekday": "Friday"
+    },
+    {
+     "weekday": "Saturday"
+    },
+    {
+     "weekday": "Sunday"
+    }
+   ],
+   "acceptingSubsidy": true,
+   "chargingRegistrationFee": true,
+   "registrationFee": {
+    "source": "50.0",
+    "parsedValue": 50
+   },
+   "licenseId": "",
+   "facilityDirectors": [
+    {
+     "firstname": "CCXTestProvider",
+     "lastname": "UserOneB",
+     "title": "DIRECTOR"
+    }
+   ],
+   "services": [],
+   "facilityPictures": [],
+   "reports": {
+    "violations": [],
+    "visits": [],
+    "inspections": []
+   },
+   "programs": [
+    {
+     "programId": "m198fpadnuo2saw",
+     "programName": "Preschool Program",
+     "programLanguages": [
+      "English"
+     ],
+     "programRates": [
+      {
+       "rate": {
+        "source": "20.0",
+        "parsedValue": 20
+       },
+       "period": "DAILY",
+       "type": "FULL_TIME"
+      },
+      {
+       "rate": {
+        "source": "10.0",
+        "parsedValue": 10
+       },
+       "period": "DAILY",
+       "type": "PART_TIME"
+      }
+     ],
+     "programAvailabilityStartDate": "08/08/2026",
+     "programAvailabilityEndDate": "",
+     "fullTime": false,
+     "ageGroup": {
+      "minAge": 0,
+      "maxAge": 72
+     },
+     "acceptingNewEnrollment": true,
+     "programDescription": "test ecares",
+     "programPhilosophy": "",
+     "programType": "Preschool",
+     "programHours": [
+      {
+       "weekday": "Monday",
+       "startTime": "09:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Tuesday",
+       "startTime": "09:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Wednesday",
+       "startTime": "09:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Thursday",
+       "startTime": "09:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Friday",
+       "startTime": "09:00",
+       "endTime": "17:00"
+      },
+      {
+       "weekday": "Saturday"
+      },
+      {
+       "weekday": "Sunday"
+      }
+     ],
+     "typeOfCare": "BOTH"
+    }
+   ],
+   "otherPrograms": []
+  }
+ }
+}

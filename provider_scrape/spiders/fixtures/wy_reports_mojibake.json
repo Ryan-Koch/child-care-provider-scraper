@@ -1,0 +1,160 @@
+{
+ "violations": {
+  "data": {
+   "violations": [
+    {
+     "visitDate": "01/27/2025",
+     "complianceNoticeUrl": "https://www.wylicensing.org/Documents/Programs/2036/305RPVPDF.CPL5846.20250318.103528.pdf",
+     "numberOfNonComplianceViolations": "9",
+     "violationDetails": [
+      {
+       "complianceActionPlanDueDate": "03/27/2025",
+       "complianceActionPlanCompletedDate": "05/15/2025",
+       "complianceDueDate": "03/27/2025",
+       "complianceAchievedDate": "04/25/2025",
+       "regulation": "Chapter 4. General Requirements Section 6. Discipline and Guidance. (b) When â€œtime outâ€ is used, it shall:"
+      },
+      {
+       "complianceActionPlanDueDate": "",
+       "complianceActionPlanCompletedDate": "",
+       "complianceDueDate": "",
+       "complianceAchievedDate": "",
+       "regulation": "Chapter 4. General Requirements Section 2. Capacity/Supervision Requirements. (h) In order to be counted in the staff:child ratio, staff shall be attending to the children. Necessary cooking, cleaning, janitorial, or similar tasks performed by a staff person counted in the staff:child ratio may take no longer than a few minutes, shall be done in such a way that the children are within sight and sound of the staff person, and the staff person can quickly and easily leave the task to handle direct child caring duties."
+      },
+      {
+       "complianceActionPlanDueDate": "",
+       "complianceActionPlanCompletedDate": "",
+       "complianceDueDate": "",
+       "complianceAchievedDate": "",
+       "regulation": "Chapter 4. General Requirements Section 6. Discipline and Guidance. (d) The following behavior shall be prohibited in all child care settings:"
+      },
+      {
+       "complianceActionPlanDueDate": "03/27/2025",
+       "complianceActionPlanCompletedDate": "05/15/2025",
+       "complianceDueDate": "03/27/2025",
+       "complianceAchievedDate": "04/25/2025",
+       "regulation": "Chapter 4. General Requirements Section 6. Discipline and Guidance. (d) The following behavior shall be prohibited in all child care settings:"
+      },
+      {
+       "complianceActionPlanDueDate": "03/26/2025",
+       "complianceActionPlanCompletedDate": "05/15/2025",
+       "complianceDueDate": "05/01/2025",
+       "complianceAchievedDate": "04/25/2025",
+       "regulation": "Chapter 4. General Requirements Section 6. Discipline and Guidance. (d) The following behavior shall be prohibited in all child care settings:"
+      },
+      {
+       "complianceActionPlanDueDate": "03/27/2025",
+       "complianceActionPlanCompletedDate": "05/15/2025",
+       "complianceDueDate": "03/27/2025",
+       "complianceAchievedDate": "04/25/2025",
+       "regulation": "Chapter 4. General Requirements Section 6. Discipline and Guidance. (b) When â€œtime outâ€ is used, it shall:"
+      },
+      {
+       "complianceActionPlanDueDate": "03/27/2025",
+       "complianceActionPlanCompletedDate": "05/15/2025",
+       "complianceDueDate": "04/28/2025",
+       "complianceAchievedDate": "04/25/2025",
+       "regulation": "Chapter 4. General Requirements Section 2. Capacity/Supervision Requirements. (c) Staff:child ratios and maximum group size shall be maintained as follows (Table 4-1) during all hours of operation when facilities care for only one (1) age group:"
+      },
+      {
+       "complianceActionPlanDueDate": "03/27/2025",
+       "complianceActionPlanCompletedDate": "05/15/2025",
+       "complianceDueDate": "04/28/2025",
+       "complianceAchievedDate": "04/25/2025",
+       "regulation": "Chapter 7. Child Care Center Section 3. Director/Assistant Director/ Staff Requirements. (a) The director shall:"
+      },
+      {
+       "complianceActionPlanDueDate": "03/27/2025",
+       "complianceActionPlanCompletedDate": "05/15/2025",
+       "complianceDueDate": "03/27/2025",
+       "complianceAchievedDate": "04/25/2025",
+       "regulation": "Chapter 4. General Requirements Section 6. Discipline and Guidance. (b) When â€œtime outâ€ is used, it shall:"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "visits": {
+  "data": {
+   "visits": [
+    {
+     "visitDate": "01/27/2025",
+     "visitType": "",
+     "visitFormURL": "",
+     "violation": true
+    },
+    {
+     "visitDate": "10/19/2023",
+     "visitType": "Facility Visit",
+     "visitFormURL": "https://www.wylicensing.org/documents/programs/2036/signed300PDF.20231019.091903.pdf",
+     "violation": false
+    },
+    {
+     "visitDate": "02/29/2024",
+     "visitType": "Facility Visit",
+     "visitFormURL": "https://www.wylicensing.org/documents/programs/2036/signed300PDF.20240229.091210.pdf",
+     "violation": false
+    },
+    {
+     "visitDate": "04/16/2024",
+     "visitType": "Facility Visit",
+     "visitFormURL": "https://www.wylicensing.org/documents/programs/2036/signed300PDF.20240416.110436.pdf",
+     "violation": false
+    },
+    {
+     "visitDate": "05/02/2024",
+     "visitType": "Renewal/Validation Visit",
+     "visitFormURL": "https://www.wylicensing.org/documents/programs/2036/signed209PDF.20240502.084412.pdf",
+     "violation": false
+    },
+    {
+     "visitDate": "11/21/2024",
+     "visitType": "Facility Visit",
+     "visitFormURL": "https://www.wylicensing.org/documents/programs/2036/signed300PDF.20241121.090005.pdf",
+     "violation": false
+    },
+    {
+     "visitDate": "04/08/2025",
+     "visitType": "Facility Visit",
+     "visitFormURL": "https://www.wylicensing.org/documents/programs/2036/signed300PDF.20250408.060235.pdf",
+     "violation": false
+    },
+    {
+     "visitDate": "05/15/2025",
+     "visitType": "Facility Visit",
+     "visitFormURL": "https://www.wylicensing.org/documents/programs/2036/signed300PDF.20250515.072047.pdf",
+     "violation": false
+    },
+    {
+     "visitDate": "05/28/2025",
+     "visitType": "Renewal/Validation Visit",
+     "visitFormURL": "https://www.wylicensing.org/documents/programs/2036/signed209PDF.20250528.082156.pdf",
+     "violation": false
+    },
+    {
+     "visitDate": "09/23/2025",
+     "visitType": "Facility Visit",
+     "visitFormURL": "https://www.wylicensing.org/documents/programs/2036/signed300PDF.20250923.122639.pdf",
+     "violation": false
+    }
+   ]
+  }
+ },
+ "inspections": {
+  "data": {
+   "inspections": [
+    {
+     "inspectionDate": "05/03/2024",
+     "inspectionType": "Fire Inspection",
+     "inspectionFormURL": "https://www.wylicensing.org/documents/Programs/2036/External Inspections.Fire Inspection.20240503.123617.pdf"
+    },
+    {
+     "inspectionDate": "05/20/2025",
+     "inspectionType": "Fire Inspection",
+     "inspectionFormURL": "https://www.wylicensing.org/documents/Programs/2036/External Inspections.Fire Inspection.20250520.143904.pdf"
+    }
+   ]
+  }
+ }
+}

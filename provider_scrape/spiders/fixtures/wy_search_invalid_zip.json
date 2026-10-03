@@ -1,0 +1,12 @@
+{
+ "resultType": "error",
+ "errorMessage": "Data Validation error, please correct the data and try again",
+ "errorCode": "MS_SHOPPINGPORTAL_400",
+ "validationErrors": [
+  {
+   "path": "zipCode",
+   "errorCode": "ZIP_INVALID",
+   "errorMessage": "Zipcodes unavailable around given zipcode : 82004"
+  }
+ ]
+}
