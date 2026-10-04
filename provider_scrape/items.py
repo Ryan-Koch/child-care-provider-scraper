@@ -265,6 +265,15 @@ class InspectionItem(scrapy.Item):
     wy_violations = scrapy.Field()  # notice rows: [{regulation, compliance_due_date, ...}]
     mo_corrective_measures = scrapy.Field()  # investigation: [{measure, completed, completed_date}]
 
+    # Oklahoma (see ProviderItem's Oklahoma block). One row per monitoring
+    # visit or per (substantiated) complaint.
+    ok_visit_type = scrapy.Field()  # visit rows: raw visitType -- Full | Partial | Attempted
+    ok_visit_purpose = scrapy.Field()  # visit rows: raw purpose -- Periodic, Permit, Complaint, ...
+    ok_compliance_count = scrapy.Field()  # visit rows: areas in compliance (int)
+    ok_compliance_total = scrapy.Field()  # visit rows: areas reviewed (int)
+    ok_noncompliances = scrapy.Field()  # visit rows: [str] noncompliancesObserved (may be [])
+    ok_allegations = scrapy.Field()  # complaint rows: [{requirement, requirement_description, ...}]
+
 
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
@@ -1160,6 +1169,24 @@ class ProviderItem(scrapy.Item):
     wy_coordinates_approximate = (
         scrapy.Field()
     )  # True when the portal's coordinates were a ZIP centroid and were dropped
+
+    # Oklahoma specific fields (childcarefind.okdhs.org, the OKDHS Child Care
+    # Locator -- a Next.js app whose pages embed their data as __NEXT_DATA__
+    # JSON; see tasks/oklahoma/oklahoma_plan.md). `license_number` carries the
+    # vendorId (e.g. "K830057556"). The site has no status field, so `status`
+    # is not set; the three state flags below stay here instead.
+    ok_doing_business_as = scrapy.Field()  # officialDoingBusinessAs; provider_name is the state's `name`
+    ok_detail_unavailable = scrapy.Field()  # True only when the detail page never loaded (search-only item)
+    ok_administrator_title = scrapy.Field()  # directorPosition: "Director", "Primary Caregiver", ...
+    ok_care_types = scrapy.Field()  # hours tags as display labels: ["Year Round", "Daytime Hours", ...]
+    ok_schedule = scrapy.Field()  # hoursOfOperation: [{day, hours}], hours None when closed
+    ok_subsidy_contract_number = scrapy.Field()  # contractNumber, only when non-empty
+    ok_star_level = scrapy.Field()  # starLevelCode as int 1-5 (quality rating: state-specific)
+    ok_licensing_specialist = scrapy.Field()  # workerFullName
+    ok_licensing_specialist_phone = scrapy.Field()  # workerPhoneNumberFormatted
+    ok_denial_sent = scrapy.Field()  # bool (source is the string "True"/"False")
+    ok_revocation_sent = scrapy.Field()  # bool
+    ok_emergency_issued = scrapy.Field()  # bool
 
     # This will hold the list of inspections.
     inspections = scrapy.Field()
