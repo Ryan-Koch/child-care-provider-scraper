@@ -765,6 +765,27 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `oh_sutq_rating` -> pass-through
 
+### Oklahoma (OK)
+
+- `ok_administrator_title` -> pass-through
+- `ok_allegations` -> pass-through
+- `ok_care_types` -> pass-through
+- `ok_compliance_count` -> pass-through
+- `ok_compliance_total` -> pass-through
+- `ok_denial_sent` -> pass-through
+- `ok_detail_unavailable` -> pass-through
+- `ok_doing_business_as` -> pass-through
+- `ok_emergency_issued` -> pass-through
+- `ok_licensing_specialist` -> pass-through
+- `ok_licensing_specialist_phone` -> pass-through
+- `ok_noncompliances` -> pass-through
+- `ok_revocation_sent` -> pass-through
+- `ok_schedule` -> pass-through
+- `ok_star_level` -> pass-through
+- `ok_subsidy_contract_number` -> pass-through
+- `ok_visit_purpose` -> pass-through
+- `ok_visit_type` -> pass-through
+
 ### Pennsylvania (PA)
 
 - `pa_certificate_status` -> pass-through

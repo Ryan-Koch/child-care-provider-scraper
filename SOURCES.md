@@ -43,6 +43,7 @@ To regenerate: `.venv/bin/python scripts/generate_sources.py`.
 | North Carolina | https://ncchildcare.ncdhhs.gov/ |
 | North Dakota | https://search.ec.hhs.nd.gov/ |
 | Ohio | https://childcaresearch.ohio.gov/ |
+| Oklahoma | https://childcarefind.okdhs.org/ |
 | Pennsylvania | https://compass.dhs.pa.gov/ |
 | Rhode Island | https://earlylearningprograms.dhs.ri.gov/ |
 | South Carolina | https://scchildcare.org/ |
