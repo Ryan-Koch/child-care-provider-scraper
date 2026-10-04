@@ -146,7 +146,7 @@ The project uses pytest, so one can simply run `pytest` to go through the whole 
 | North Carolina           | [x]     | 
 | North Dakota             | [x]     | 
 | Ohio                     | [x]     | 
-| Oklahoma                 | [ ]     | 
+| Oklahoma                 | [x]     | 
 | Oregon                   | [ ]     | 
 | Pennsylvania             | [x]     | 
 | Rhode Island             | [x]     | 
