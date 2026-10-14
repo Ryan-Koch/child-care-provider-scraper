@@ -343,9 +343,7 @@ def test_normalize_languages_non_list_non_string_unchanged():
 
 
 def test_title_case_language_leaves_mixed_case_alone():
-    assert normalization.title_case_language("American Sign Language (ASL)") == (
-        "American Sign Language (ASL)"
-    )
+    assert normalization.title_case_language("American Sign Language (ASL)") == ("American Sign Language (ASL)")
 
 
 def test_normalize_item_dedupes_languages():
@@ -755,3 +753,95 @@ def test_normalize_item_skips_already_absent_age_flags():
     out = normalization.normalize_item(item, "montana")
     for field in normalization.AGE_SERVED_FLAG_FIELDS:
         assert field not in out
+
+
+# --------------------------------------------------------------------------- #
+# bug_06 -- scholarships_accepted: bool / Yes-No / Accepted-Not Accepted ->
+# bool-or-None
+# --------------------------------------------------------------------------- #
+def test_coerce_scholarships_accepted_flag_bool_and_none_passthrough():
+    assert normalization.coerce_scholarships_accepted_flag(True) is True
+    assert normalization.coerce_scholarships_accepted_flag(False) is False
+    assert normalization.coerce_scholarships_accepted_flag(None) is None
+
+
+def test_coerce_scholarships_accepted_flag_yes_no():
+    # AK/CO/GA/RI/TN/TX/UT/VT/DC all emit this shape.
+    assert normalization.coerce_scholarships_accepted_flag("Yes") is True
+    assert normalization.coerce_scholarships_accepted_flag("No") is False
+    assert normalization.coerce_scholarships_accepted_flag("yes") is True
+    assert normalization.coerce_scholarships_accepted_flag("no") is False
+
+
+def test_coerce_scholarships_accepted_flag_accepted_not_accepted():
+    # NM's vocabulary. "Not Accepted" is the regression case from bug_06: a
+    # plain _coerce_bool-style fallback would read it as truthy text.
+    assert normalization.coerce_scholarships_accepted_flag("Accepted") is True
+    assert normalization.coerce_scholarships_accepted_flag("Not Accepted") is False
+    assert normalization.coerce_scholarships_accepted_flag("not accepted") is False
+
+
+def test_coerce_scholarships_accepted_flag_not_accepted_never_becomes_true():
+    # Regression test (bug_06 acceptance criterion): across a few casings/
+    # whitespace variants, "Not Accepted" must never slip through as True.
+    for token in ("Not Accepted", "NOT ACCEPTED", " Not Accepted ", "not accepted"):
+        assert normalization.coerce_scholarships_accepted_flag(token) is False
+
+
+def test_coerce_scholarships_accepted_flag_none_and_empty():
+    assert normalization.coerce_scholarships_accepted_flag(None) is None
+    assert normalization.coerce_scholarships_accepted_flag("") is None
+    assert normalization.coerce_scholarships_accepted_flag("   ") is None
+
+
+def test_coerce_scholarships_accepted_flag_unknown_token_logs_debug_and_returns_none(caplog):
+    with caplog.at_level(logging.DEBUG, logger="provider_scrape.normalization"):
+        result = normalization.coerce_scholarships_accepted_flag("Pending Review")
+    assert result is None
+    assert "unparseable flag" in caplog.text
+
+
+def test_coerce_scholarships_accepted_flag_negative_tokens_never_become_true():
+    # Mirrors the age-served-flag regression test (bug_05 criterion 4): none
+    # of these may ever coerce to True.
+    for token in ("No", "no", "0", "false", "False", "", "   ", "n/a", "Not Accepted"):
+        assert normalization.coerce_scholarships_accepted_flag(token) is not True
+
+
+def test_normalize_item_coerces_scholarships_accepted_for_every_state_shape():
+    # One representative item per affected-state shape (bug_06 evidence),
+    # run through the full pipeline.
+    bool_item = {"scholarships_accepted": True}  # e.g. CT/IN/IA/KY/...
+    yes_no_item = {"scholarships_accepted": "Yes"}  # AK/CO/GA/RI/TN/TX/UT/VT/DC
+    no_item = {"scholarships_accepted": "No"}
+    accepted_item = {"scholarships_accepted": "Accepted"}  # NM
+    not_accepted_item = {"scholarships_accepted": "Not Accepted"}  # NM
+    absent_item = {"provider_name": "Example Center"}  # most states never set it
+
+    out_bool = normalization.normalize_item(dict(bool_item), "connecticut")
+    out_yes = normalization.normalize_item(dict(yes_no_item), "alaska")
+    out_no = normalization.normalize_item(dict(no_item), "colorado")
+    out_accepted = normalization.normalize_item(dict(accepted_item), "new_mexico")
+    out_not_accepted = normalization.normalize_item(dict(not_accepted_item), "new_mexico")
+    out_absent = normalization.normalize_item(dict(absent_item), "montana")
+
+    assert out_bool["scholarships_accepted"] is True
+    assert out_yes["scholarships_accepted"] is True
+    assert out_no["scholarships_accepted"] is False
+    assert out_accepted["scholarships_accepted"] is True
+    assert out_not_accepted["scholarships_accepted"] is False
+    assert "scholarships_accepted" not in out_absent
+
+    for out in (out_bool, out_yes, out_no, out_accepted, out_not_accepted):
+        assert isinstance(out["scholarships_accepted"], bool)
+
+
+def test_normalize_item_scholarships_accepted_runs_after_collapse():
+    # scholarships_accepted is not a FIELD_COLLAPSE_MAP target (bug_06
+    # investigation), but guard the ordering contract anyway: even if a
+    # source field for it were ever collapsed in, the final value must still
+    # come out bool-or-None, not the raw collapsed text.
+    assert "scholarships_accepted" not in normalization.FIELD_COLLAPSE_MAP
+    item = {"scholarships_accepted": "Not Accepted"}
+    out = normalization.normalize_item(item, "new_mexico")
+    assert out["scholarships_accepted"] is False

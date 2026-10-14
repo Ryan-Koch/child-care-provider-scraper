@@ -75,7 +75,6 @@ FIELD_DOCS = {
     "county": "County (whitespace-cleaned only).",
     "hours": "Operating hours, as emitted by the state (whitespace-cleaned only).",
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
-    "scholarships_accepted": "Subsidy/scholarship acceptance, as emitted (whitespace-cleaned only).",
     "deficiencies": "Deficiency count/summary, as emitted (whitespace-cleaned only).",
     "infant": "Whether the provider serves infants: bool-or-None. States that "
     'emit a per-age count ("8"), a count string ("Y"/"N"), or "Yes"/absent '
@@ -84,4 +83,8 @@ FIELD_DOCS = {
     "toddler": "Whether the provider serves toddlers: bool-or-None. See infant.",
     "preschool": "Whether the provider serves preschoolers: bool-or-None. See infant.",
     "school": "Whether the provider serves school-age children: bool-or-None. See infant.",
+    "scholarships_accepted": "Whether the provider accepts child-care subsidies/scholarships: "
+    'bool-or-None. States that emit "Yes"/"No" or NM\'s "Accepted"/"Not '
+    'Accepted" are coerced via the shared strict token rule (bug_06); an '
+    "unparseable token becomes None rather than a guessed True.",
 }

@@ -950,6 +950,14 @@ FIELD_COLLAPSE_MAP = {
     ],
     "curriculum": ["ga_curriculum", "nj_curriculum"],
 }
+# NOTE (bug_06): `scholarships_accepted` is deliberately NOT in this map --
+# every state that fills it sets the common field directly in the spider
+# (no xx_* source field to collapse from). Its bool-or-None coercion lives at
+# the end of normalize_item (step 9), after this collapse step runs, via
+# coerce_scholarships_accepted_flag. If a future story (e.g. story 13) adds a
+# collapse source for it here, keep _BOOLEAN_COLLAPSE_FIELDS/_coerce_bool out
+# of that path -- reuse coerce_scholarships_accepted_flag instead, since
+# plain _coerce_bool would misread "Not Accepted"-shaped text as True.
 
 # Common fields whose collapsed value is coerced to a boolean.
 _BOOLEAN_COLLAPSE_FIELDS = {"head_start"}
@@ -1299,6 +1307,46 @@ AGE_SERVED_FLAG_FIELDS = ("infant", "toddler", "preschool", "school")
 _GROUPED_INTEGER_RE = re.compile(r"\d{1,3}(?:,\d{3})+")
 
 
+def _coerce_strict_bool_flag(value, *, func_name, extra_affirmative=frozenset(), extra_negative=frozenset()):
+    """Shared body for the strict bool-or-None flag coercers below.
+
+    Unlike ``_coerce_bool`` (used for ``head_start``'s field collapse), this
+    coercer has **no** "any other non-empty text is affirmative" fallback:
+    an unrecognized token always becomes ``None`` (logged at DEBUG), never a
+    guessed ``True``. ``extra_affirmative``/``extra_negative`` let a caller
+    add field-specific vocabulary (e.g. NM's "Accepted"/"Not Accepted" for
+    ``scholarships_accepted``) on top of the shared ``_AFFIRMATIVE``/
+    ``_NEGATIVE`` token sets, with negative tokens always checked first so a
+    negative phrase can never fall through to True.
+
+    ``func_name`` is only used to label the DEBUG log lines (each public
+    wrapper passes its own name) -- the two log messages below must keep the
+    literal substrings "unparseable flag" / "unexpected type for flag" that
+    existing tests assert on.
+    """
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value > 0
+    if isinstance(value, str):
+        token = value.strip().lower()
+        if token == "":
+            return None
+        if token in _NEGATIVE or token in extra_negative:
+            return False
+        if token in _AFFIRMATIVE or token in extra_affirmative:
+            return True
+        digits = token.replace(",", "") if _GROUPED_INTEGER_RE.fullmatch(token) else token
+        if _INTEGER_RE.fullmatch(digits):
+            return int(digits) > 0
+        logger.debug("%s: unparseable flag %r -> None", func_name, value)
+        return None
+    logger.debug("%s: unexpected type for flag %r -> None", func_name, value)
+    return None
+
+
 def coerce_age_served_flag(value):
     """Coerce one age-served flag (infant/toddler/preschool/school) to bool-or-None.
 
@@ -1328,28 +1376,52 @@ def coerce_age_served_flag(value):
     - anything else unparseable -- becomes ``None`` and is **logged at
       DEBUG**. We never guess
       ``True`` for a token we don't recognize.
+
+    The coercion itself is shared with ``coerce_scholarships_accepted_flag``
+    (bug_06) via ``_coerce_strict_bool_flag``; this wrapper adds no extra
+    tokens.
     """
-    if value is None:
-        return None
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, (int, float)):
-        return value > 0
-    if isinstance(value, str):
-        token = value.strip().lower()
-        if token == "":
-            return None
-        if token in _NEGATIVE:
-            return False
-        if token in _AFFIRMATIVE:
-            return True
-        digits = token.replace(",", "") if _GROUPED_INTEGER_RE.fullmatch(token) else token
-        if _INTEGER_RE.fullmatch(digits):
-            return int(digits) > 0
-        logger.debug("coerce_age_served_flag: unparseable flag %r -> None", value)
-        return None
-    logger.debug("coerce_age_served_flag: unexpected type for flag %r -> None", value)
-    return None
+    return _coerce_strict_bool_flag(value, func_name="coerce_age_served_flag")
+
+
+# Extra vocabulary for scholarships_accepted (bug_06): NM emits "Accepted"/
+# "Not Accepted" rather than the "Yes"/"No" the other nine affected states
+# use. "Not Accepted" is an explicit negative token -- without it, the
+# generic "any other non-empty text is affirmative" reading (the one
+# `_coerce_bool` uses) would misread it as True, which is the bug.
+_SCHOLARSHIPS_ACCEPTED_EXTRA_AFFIRMATIVE = {"accepted"}
+_SCHOLARSHIPS_ACCEPTED_EXTRA_NEGATIVE = {"not accepted"}
+
+
+def coerce_scholarships_accepted_flag(value):
+    """Coerce ``scholarships_accepted`` to bool-or-None (bug_06).
+
+    States emit three shapes for this field (appendix D2):
+
+    - already a plain ``bool`` (most states, e.g. CT, DE, IN, IA, KY, LA, ME,
+      MA, MS, NE, NC, ND) -- returned as-is.
+    - ``"Yes"``/``"No"`` (AK, CO, GA, RI, TN, TX, UT, VT, DC) -- via the
+      shared ``_AFFIRMATIVE``/``_NEGATIVE`` token sets, same as
+      ``coerce_age_served_flag``.
+    - ``"Accepted"``/``"Not Accepted"`` (NM) -- NM's own vocabulary, added via
+      ``extra_affirmative``/``extra_negative``. ``"Not Accepted"`` is checked
+      as a negative token *before* any affirmative fallback, so it can never
+      become ``True``.
+    - ``None`` or an empty string -- ``None`` (no signal; e.g. VT leaves this
+      unset for ~23% of records).
+    - anything else unrecognized -- ``None``, logged at DEBUG. Never guessed
+      as ``True``.
+
+    This is the identical strict bool-or-None rule as
+    ``coerce_age_served_flag`` (Task 10 / bug_05) -- see
+    ``_coerce_strict_bool_flag`` -- with NM's two extra tokens layered on.
+    """
+    return _coerce_strict_bool_flag(
+        value,
+        func_name="coerce_scholarships_accepted_flag",
+        extra_affirmative=_SCHOLARSHIPS_ACCEPTED_EXTRA_AFFIRMATIVE,
+        extra_negative=_SCHOLARSHIPS_ACCEPTED_EXTRA_NEGATIVE,
+    )
 
 
 def normalize_item(item: dict, state: str) -> dict:
@@ -1367,6 +1439,7 @@ def normalize_item(item: dict, state: str) -> dict:
       6. controlled vocabulary (status, facility_category)
       7. address cleanup + component parse
       8. age-served flags -> bool-or-None (bug_05)
+      9. scholarships_accepted -> bool-or-None (bug_06)
     """
     # 1. whitespace / string hygiene on every string/list value. ``inspections``
     #    is handled separately (it is a list of dicts, not strings).
@@ -1434,6 +1507,14 @@ def normalize_item(item: dict, state: str) -> dict:
     for field in AGE_SERVED_FLAG_FIELDS:
         if item.get(field) is not None:
             item[field] = coerce_age_served_flag(item[field])
+
+    # 9. scholarships_accepted (bug_06): coerce bool / "Yes"-"No" /
+    #    "Accepted"-"Not Accepted" to bool-or-None. Not a FIELD_COLLAPSE_MAP
+    #    target today (every state that fills it does so directly in the
+    #    spider, not via collapse of an xx_* source field), so this just
+    #    needs to run after collapse (step 2) -- which it does, being last.
+    if item.get("scholarships_accepted") is not None:
+        item["scholarships_accepted"] = coerce_scholarships_accepted_flag(item["scholarships_accepted"])
 
     return item
 
