@@ -4,6 +4,43 @@ import scrapy
 
 from provider_scrape.items import ProviderItem
 
+# bug_09: AL renders a missing ZIP+4 as a literal "-____" placeholder rather
+# than omitting it. A real ZIP+4 (e.g. "35601-1234") has digits after the
+# dash and will not match this, so it is left untouched.
+_ZIP_PLACEHOLDER_RE = re.compile(r"^(\d{5})-[\s_]*$")
+
+
+def _extract_br_separated_address(label):
+    """Build a "street, city, state zip" string from the four ``<span>``
+    elements that follow an address label on an AL detail page, or ``None``
+    when the address is blank.
+
+    bug_09: the page lays out each address (Mailing Address / Street
+    Address) as a bold label ``<span>`` followed by four flat sibling
+    ``<span>`` elements -- street, city, state, ZIP -- visually separated by
+    ``<br>`` tags. A ``<br>`` produces no text node of its own, so the
+    original code (joining the whole container's text with ``"".join(...)``
+    and regexing across it) silently ran the street and city together with
+    no separator at all, e.g. "1909 CENTRAL PARKWAY SWDECATUR". Walking
+    straight to the four sibling spans and joining them ourselves removes
+    that ambiguity entirely -- no cross-``<br>`` regex involved.
+    """
+    spans = label.xpath("following-sibling::span[position() <= 4]")
+    values = [span.xpath("string(.)").get("").strip() for span in spans]
+    values += [""] * (4 - len(values))  # defensive: tolerate a short/odd page
+    street, city, state, zip_code = values[:4]
+
+    zip_match = _ZIP_PLACEHOLDER_RE.match(zip_code)
+    if zip_match:
+        zip_code = zip_match.group(1)
+
+    locality = ", ".join(part for part in (city, state) if part)
+    if zip_code:
+        locality = f"{locality} {zip_code}".strip()
+
+    pieces = [part for part in (street, locality) if part]
+    return ", ".join(pieces) if pieces else None
+
 
 class AlabamaSpider(scrapy.Spider):
     name = "alabama"
@@ -186,53 +223,19 @@ class AlabamaSpider(scrapy.Spider):
             item["al_nighttime_ages"] = item["al_nighttime_ages"].strip()
 
         # Addresses
-        # Mailing Address
-        # "<b>Mailing Address:</b><br><span>1400 BRISBANE...</span><br>..."
-        # This is hard to grab with simple sibling selectors because of <br>s and spans.
-        # Let's try to grab the text following the label until the next label or double break.
-
-        # Helper to extract address blocks
-        def extract_address(label_text):
-            # Find the b tag
-            # Get all following siblings until we hit <br><br> or another bold tag?
-            # Actually, looking at the HTML:
-            # <span ...>Mailing Address:</span><br /><span ...>Line 1</span><br />
-            # <span ...>City</span>, <span ...>State</span> <span ...>Zip</span><br /><br />
-
-            # We can select the following-sibling::span nodes until we hit <br><br>
-            # Or just grab the text.
-
-            # Let's try to get the parent text content and parse it with regex
-            # Or use xpath string concatenation if possible, but that's hard in Scrapy
-            pass
-
-        # Let's clean up the text extraction for address
-        # Locate the label "Mailing Address:"
+        # bug_09: each address (Mailing Address / Street Address) is a bold
+        # label <span> followed by four flat sibling <span>s -- street,
+        # city, state, ZIP -- so we locate the label and walk its siblings
+        # directly rather than regexing the container's joined text (see
+        # _extract_br_separated_address for why that approach dropped the
+        # street/city separator).
         mailing_label = container.xpath('.//span[contains(text(), "Mailing Address:")]')
         if mailing_label:
-            # Get the following siblings that are spans or text, stop at "Street Address:"
-            # This is getting complicated.
-            # Alternative: Get the full text of the container and parse with Regex.
-            full_text = "".join(container.xpath(".//text()").getall())
+            item["al_mailing_address"] = _extract_br_separated_address(mailing_label[0])
 
-            # Normalize whitespace
-            full_text = re.sub(r"\s+", " ", full_text)
-
-            # Regex for Mailing Address
-            # Mailing Address: (.*?) Street Address:
-            mailing_match = re.search(r"Mailing Address:(.*?)Street Address:", full_text)
-            if mailing_match:
-                item["al_mailing_address"] = mailing_match.group(1).strip()
-
-            # Regex for Street Address
-            # Street Address: (.*?) Click for Interactive Map
-            # Or just end of string (but there is map link after)
-            street_match = re.search(r"Street Address:(.*?)Click for Interactive Map", full_text)
-            if not street_match:
-                street_match = re.search(r"Street Address:(.*)$", full_text)
-
-            if street_match:
-                item["address"] = street_match.group(1).strip()
+        street_label = container.xpath('.//span[contains(text(), "Street Address:")]')
+        if street_label:
+            item["address"] = _extract_br_separated_address(street_label[0])
 
         # Tables extraction
         # Accreditations

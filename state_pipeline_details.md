@@ -33,7 +33,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `license_number` | Whitespace cleanup | State-issued license/registration identifier, kept as emitted (only whitespace-cleaned). |
 | `license_type` | Whitespace cleanup; Field collapse from state-specific source | Type/category of license, collapsed from a single populated state-specific *_license_type field. |
 | `longitude` | Whitespace cleanup; Coordinate -> string | Longitude kept as a trimmed string to avoid float precision drift. |
-| `mailing_address` | Whitespace cleanup; Field collapse from state-specific source | Facility mailing address, collapsed from a single populated state source (owner/licensee addresses are excluded). |
+| `mailing_address` | Whitespace cleanup; Field collapse from state-specific source; Address cleanup | Facility mailing address, collapsed from a single populated state source (owner/licensee addresses are excluded). |
 | `meals` | Whitespace cleanup; Field collapse from state-specific source | Meals / food program, collapsed from a single populated state source. |
 | `phone` | Whitespace cleanup | Contact phone number (whitespace-cleaned only). |
 | `preschool` | Whitespace cleanup | Whether the provider serves preschoolers: bool-or-None. See infant. |

@@ -1,0 +1,28 @@
+<!--
+Captured live from https://apps.dhr.alabama.gov/daycare/daycare_results.aspx?ID=996
+on 2026-10-15 (bug_09). The address block below (Mailing Address / Street
+Address) is byte-for-byte from the live response; it demonstrates both
+symptoms in bug_09:
+  - street and city run together with no separator ("7547 15TH STREET
+    ROAD" + "HUEYTOWN" / "2712 31ST STREET ENSLEY" + "BIRMINGHAM") since the
+    <br> between them produces no text node of its own.
+  - the mailing ZIP+4 placeholder "35023-____" (no ZIP+4 on file).
+The GridView1-4 tables (accreditations/adverse actions/complaints/
+deficiencies) are trimmed to short representative rows -- they are
+unaffected by this bug and are included only so parse_detail's other
+selectors keep working against this fixture.
+-->
+<html>
+<body>
+<div class="container body-content">
+    <span id="MainContent_Label1"><div style='width:100%;clear:both;overflow:hidden;'><div style='width:17%;float:left;margin-right:10px;'><span style='font-size:16px;font-weight:bold;'>Licensee:</span></div><div style='float:left;'><span style='font-size:14px;font-weight:bold;'>MORENO, JOSEPH </span></div></div><div style='width:100%;clear:both;overflow: hidden;'><div style='width:17%;float:left;margin-right:10px;'><span style='font-size:16px;font-weight:bold;'>Facility:</span></div><div style='float:left;'><span style='font-size:14px;font-weight:bold;'>A + ACADEMY #5</span></div></div><br /><b>Status:</b> Licensed<br /><b>MORENO, JOSEPH  - Director</b><br /><b>Phone:</b> (205) 701-5437<br />&nbsp;<br /><span style='font-size:12px;font-weight:bold;'>Alabama Quality Star Rating:   </span><span style='font-size:12px;'> &nbsp;&nbsp; 1 Star</span>&nbsp;&nbsp;<span style='font-size:12px;font-weight:bold; &nbsp;&nbsp;'>     Rating Expiration Date:    </span><span style='font-size:12px;'>&nbsp;&nbsp;&nbsp;<br /><br /></span><span style='font-size:8pt'><table style='padding:1px 1px 5px 1px;border:1px solid #999999;width:100%;border-collapse:collapse;' border='1'><tr><td width='50%'><b>Daytime Hours:</b> &nbsp;06:00 AM - 06:00 PM</td><td width='50%'><b>Nighttime Hours:</b> &nbsp;N/A - N/A</td></tr><tr><td width='50%'><b>Daytime Ages:</b> &nbsp;6 Weeks To 12 Years</td><td width='50%'><b>Nighttime Ages:</b> &nbsp;N/A</td></tr><tr><td width='50%'><b>Daytime Capacity:</b> &nbsp;60</td><td width='50%'><b>Nighttime Capacity:</b> &nbsp;0</td></tr><tr><td width='50%'><b>Daytime Vacancies:</b> &nbsp;25</td><td width='50%'><b>Nighttime Vacancies:</b> &nbsp;0</td></tr></table></span><br/><span style='font-size:12px;font-weight:bold;'>Mailing Address:</span><br /><span style='font-size:12px;'>7547 15TH STREET ROAD</span><br /><span style='font-size:12px;'>HUEYTOWN</span>, <span style='font-size:12px;'>AL</span> <span style='font-size:12px;'>35023-____</span><br /><br /><span style='font-size:12px;font-weight:bold;'>Street Address:</span><br /><span style='font-size:12px;'>2712 31ST STREET ENSLEY</span><br /><span style='font-size:12px;'>BIRMINGHAM</span>, <span style='font-size:12px;'>AL</span> <span style='font-size:12px;'>35228</span></span>
+    <span id="MainContent_LabelMapLink"><br /><br /><a href='http://map.google.com/maps?q=2712+31ST+STREET+ENSLEY,BIRMINGHAM, AL 35228' target='_blank'>Click for Interactive Map</a><br><br/></span>
+    <span id="MainContent_LabelMapImage"></span>
+</div>
+
+<table id="MainContent_GridView1"><tr><td>No Accreditations</td></tr></table>
+<table id="MainContent_GridView3"><tr><td>No Adverse Actions</td></tr></table>
+<table id="MainContent_GridView2"><tr><td>No Substantiated Complaints</td></tr></table>
+<table id="MainContent_GridView4"><tr><td>No Evaluation/Deficiency Reports</td></tr></table>
+</body>
+</html>

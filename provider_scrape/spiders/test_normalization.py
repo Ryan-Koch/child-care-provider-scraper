@@ -625,6 +625,29 @@ def test_normalize_item_skips_parse_when_components_present(caplog):
     assert "no ZIP" not in caplog.text
 
 
+def test_normalize_item_cleans_mailing_address_but_skips_component_parse():
+    # bug_09: mailing_address gets the same whitespace/country-suffix/comma
+    # cleanup as address, but must never feed city/state/zip -- those are the
+    # provider's physical location and a mailing address can legitimately
+    # point somewhere else (a PO box, a different city, etc.).
+    item = {
+        "al_mailing_address": "1909 Central Parkway SW,  Decatur, AL 35601, United States",
+    }
+    out = normalization.normalize_item(item, "alabama")
+    assert out["mailing_address"] == "1909 Central Parkway SW, Decatur, AL 35601"
+    assert out.get("city") is None
+    assert out.get("state") is None
+    assert out.get("zip") is None
+
+
+def test_normalize_item_blank_mailing_address_stays_none():
+    # bug_09: collapse_state_fields only copies a *present* source value, so
+    # a bare "," (or None) from the spider must not produce a collapsed
+    # mailing_address at all.
+    out = normalization.normalize_item({"al_mailing_address": None}, "alabama")
+    assert out.get("mailing_address") is None
+
+
 def test_normalize_item_still_parses_when_a_component_missing():
     # Only city/state present (no zip) -> the parse still runs and fills zip.
     item = {"address": "849 Centerville Road Warwick, RI 02886", "city": "Warwick", "state": "RI"}

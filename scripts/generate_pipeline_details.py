@@ -88,6 +88,8 @@ def transformation_for(field):
         tags = ["Whitespace cleanup", "Preserved (drives facility_category)"]
     elif field == "address":
         tags = ["Whitespace cleanup", "Address cleanup", "Component parse -> city/state/zip"]
+    elif field == "mailing_address":
+        tags = ["Whitespace cleanup", "Field collapse from state-specific source", "Address cleanup"]
     elif field in collapse_targets:
         label = "Field collapse from state-specific source"
         if field in norm._BOOLEAN_COLLAPSE_FIELDS:

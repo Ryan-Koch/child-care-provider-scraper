@@ -1454,7 +1454,8 @@ def normalize_item(item: dict, state: str) -> dict:
       4. numeric / type normalization
       5. languages de-dupe + casing (bug_04)
       6. controlled vocabulary (status, facility_category)
-      7. address cleanup + component parse
+      7. address cleanup + component parse (also cleans ``mailing_address``,
+         bug_09)
       8. age-served flags -> bool-or-None (bug_05)
       9. scholarships_accepted -> bool-or-None (bug_06)
     """
@@ -1517,6 +1518,14 @@ def normalize_item(item: dict, state: str) -> dict:
             for key, parsed in (("city", city), ("state", parsed_state), ("zip", zip_code)):
                 if parsed is not None and not _is_present(item.get(key)):
                     item[key] = parsed
+
+    # bug_09: `mailing_address` gets the same whitespace/punctuation cleanup
+    # as `address` (trailing "United States"/"USA", comma spacing), but never
+    # feeds `parse_address_components` -- city/state/zip are the provider's
+    # physical location, not its mailing address, and the two can legitimately
+    # differ (a PO box, a different city, etc.).
+    if item.get("mailing_address") is not None:
+        item["mailing_address"] = clean_address(item["mailing_address"])
 
     # 8. age-served flags (bug_05): coerce infant/toddler/preschool/school to
     #    bool-or-None. Independent of the steps above (it only ever touches
