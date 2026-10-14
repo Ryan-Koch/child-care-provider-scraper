@@ -276,6 +276,91 @@ def test_normalize_item_applies_numeric_and_type_rules():
 
 
 # --------------------------------------------------------------------------- #
+# Task 09 — languages de-dupe + casing (bug_04)
+# --------------------------------------------------------------------------- #
+def test_normalize_languages_illinois_regression():
+    # bug_04: Illinois' Language1..3 columns repeat the same ALL-CAPS value.
+    assert normalization.normalize_languages(["ENGLISH", "ENGLISH", "SPANISH"]) == [
+        "English",
+        "Spanish",
+    ]
+
+
+def test_normalize_languages_dedupe_ignores_case_and_whitespace():
+    assert normalization.normalize_languages(["English", " english ", "ENGLISH"]) == ["English"]
+
+
+def test_normalize_languages_dedupe_keeps_first_occurrence_order():
+    # First-seen casing/order wins; a later differently-cased repeat is
+    # dropped, not swapped in.
+    assert normalization.normalize_languages(["Spanish", "English", "spanish"]) == [
+        "Spanish",
+        "English",
+    ]
+
+
+def test_normalize_languages_drops_empty_and_whitespace_entries():
+    assert normalization.normalize_languages(["English", "", "   ", "Spanish"]) == [
+        "English",
+        "Spanish",
+    ]
+
+
+def test_normalize_languages_all_empty_becomes_none():
+    assert normalization.normalize_languages(["", "   "]) is None
+    assert normalization.normalize_languages([]) is None
+
+
+def test_normalize_languages_acronym_preserved():
+    # "ASL" must not be title-cased down to "Asl".
+    assert normalization.normalize_languages(["ASL", "ENGLISH"]) == ["ASL", "English"]
+
+
+def test_normalize_languages_mixed_case_entries_untouched():
+    # Already-intentional mixed case (CT/MA/NJ-style) is left exactly as is,
+    # including parenthetical annotations and multi-word entries.
+    value = ["American Sign Language (ASL)", "Punjabi (Gurmukhi)", "French Creole"]
+    assert normalization.normalize_languages(value) == value
+
+
+def test_normalize_languages_multi_word_allcaps_titlecased():
+    assert normalization.normalize_languages(["OTHER ASIAN", "UNKNOWN"]) == [
+        "Other Asian",
+        "Unknown",
+    ]
+
+
+def test_normalize_languages_string_passthrough_unchanged():
+    # Delimited strings (AZ ';', CO/IA/ND/RI/VT/WA/DC ',', GA '; ' with
+    # annotations, NM boilerplate) are intentionally left alone -- see
+    # normalize_languages docstring and bug_04 follow-ups.
+    value = "English (Taught and Spoken by Staff); Spanish (Taught)"
+    assert normalization.normalize_languages(value) == value
+
+
+def test_normalize_languages_non_list_non_string_unchanged():
+    assert normalization.normalize_languages(None) is None
+
+
+def test_title_case_language_leaves_mixed_case_alone():
+    assert normalization.title_case_language("American Sign Language (ASL)") == (
+        "American Sign Language (ASL)"
+    )
+
+
+def test_normalize_item_dedupes_languages():
+    item = {"languages": ["ENGLISH", "ENGLISH"]}
+    out = normalization.normalize_item(item, "illinois")
+    assert out["languages"] == ["English"]
+
+
+def test_normalize_item_leaves_string_languages_unchanged():
+    item = {"languages": "English, Spanish"}
+    out = normalization.normalize_item(item, "colorado")
+    assert out["languages"] == "English, Spanish"
+
+
+# --------------------------------------------------------------------------- #
 # Task 06 — status + facility_category controlled vocabularies
 # --------------------------------------------------------------------------- #
 def test_canonical_status_active_variants():

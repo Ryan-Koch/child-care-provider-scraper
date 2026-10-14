@@ -88,7 +88,12 @@ class IllinoisSpider(scrapy.Spider):
         dict_reader = csv.DictReader(csv_file)
 
         for row in dict_reader:
-            # Consolidate language fields into a single list, filtering out empty values.
+            # Consolidate language fields into a single list, filtering out empty
+            # values. The source CSV often repeats the same language across
+            # Language1..3 (e.g. ["ENGLISH", "ENGLISH"]); de-duping and casing
+            # (ALL CAPS -> Title Case) is handled generally for every state by
+            # NormalizationPipeline (see normalization.normalize_languages),
+            # not here, so this stays a plain, unfiltered-for-duplicates list.
             languages = [
                 lang
                 for lang in [

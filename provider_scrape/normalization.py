@@ -84,15 +84,17 @@ def clean_whitespace(value):
     return value
 
 
-def _title_token(token: str) -> str:
+def _title_token(token: str, preserve_upper=NAME_PRESERVE_UPPER) -> str:
     """Title-case a single whitespace-delimited token.
 
-    Keeps corporate/Roman tokens uppercase, capitalizes the first letter and
-    letters following a hyphen/slash, and leaves the letter after an apostrophe
-    lowercase (so ``CHILD'S`` -> ``Child's``, not ``Child'S``).
+    Keeps any token in ``preserve_upper`` uppercase (default:
+    ``NAME_PRESERVE_UPPER``, corporate suffixes and Roman numerals),
+    capitalizes the first letter and letters following a hyphen/slash, and
+    leaves the letter after an apostrophe lowercase (so ``CHILD'S`` ->
+    ``Child's``, not ``Child'S``).
     """
     core = re.sub(r"[^A-Za-z]", "", token)
-    if core and core.upper() in NAME_PRESERVE_UPPER:
+    if core and core.upper() in preserve_upper:
         return token.upper()
     lowered = token.lower()
     return re.sub(
@@ -1196,6 +1198,81 @@ def parse_address_components(value):
     return (city, state, zip_code)
 
 
+# --------------------------------------------------------------------------- #
+# Task 09 — languages: order-preserving de-dupe + ALL CAPS -> Title Case
+# (bug_04: Illinois builds a 3-column ``languages`` list with no de-dupe,
+# giving ``["ENGLISH", "ENGLISH"]`` on 66% of records)
+# --------------------------------------------------------------------------- #
+
+LANGUAGES_FIELD = "languages"
+
+# Acronyms kept uppercase when title-casing an ALL-CAPS ``languages`` entry
+# (c.f. NAME_PRESERVE_UPPER for provider names). A full hf_sample survey
+# (2026-10-15) found no list-type state emitting one of these today -- CT/MA/NJ
+# already emit mixed-case entries like "American Sign Language (ASL)", which
+# is left alone by the isupper() guard below regardless -- but they're common,
+# recurring language-field acronyms and cheap to guard against before a state
+# emits one in ALL CAPS.
+LANGUAGE_PRESERVE_UPPER = {"ASL", "ESL"}
+
+
+def title_case_language(value):
+    """Convert an ALL-CAPS-looking ``languages`` entry to Title Case.
+
+    Mirrors :func:`title_case_name`: only acts when the whole string is
+    upper-case (``str.isupper()``), using the languages-specific
+    ``LANGUAGE_PRESERVE_UPPER`` acronym allowlist in place of corporate
+    suffixes. Already mixed-case entries (``"American Sign Language (ASL)"``,
+    ``"Punjabi (Gurmukhi)"``) are intentional as emitted and left untouched.
+    """
+    if not isinstance(value, str) or not value.isupper():
+        return value
+    return " ".join(_title_token(t, LANGUAGE_PRESERVE_UPPER) for t in value.split())
+
+
+def normalize_languages(value):
+    """De-dupe and case-normalize a ``languages`` value.
+
+    - **list** (CT, HI, IL, MA, NJ): order-preserving de-dupe, ignoring case
+      and surrounding whitespace -- the *first* occurrence of a value wins, so
+      a later differently-cased repeat (``["ENGLISH", "English"]``) is
+      dropped rather than replacing the earlier one. Empty/whitespace-only
+      entries are dropped. Each kept entry is then title-cased if (and only
+      if) it is entirely upper-case (bug_04: ``"ENGLISH"`` -> ``"English"``),
+      via :func:`title_case_language`. An empty result becomes ``None``.
+    - **str** (AZ, CO, GA, IA, NE, NM, ND, RI, VT, WA, DC): left unchanged.
+      Roughly a dozen states emit a single delimited string instead of a list
+      (``"English, Spanish"``, ``"English (Spoken by Staff)"``), each with its
+      own separator and quirks (GA's per-language annotations, NM's boilerplate
+      sentence, WA's hyphen-joined "Chinese-Mandarin"). Splitting those
+      generally risks mangling a value like "Chinese (Mandarin)" or
+      "French/ Arabic", so it is intentionally out of scope here -- see
+      ``docs/common_field_candidates.md`` D6 and the bug_04 follow-ups.
+    - anything else: returned unchanged.
+    """
+    if not isinstance(value, list):
+        return value
+    seen = set()
+    deduped = []
+    for entry in value:
+        if not isinstance(entry, str):
+            # Not expected in practice (languages entries are always strings),
+            # but de-dupe defensively rather than raising.
+            if entry not in seen:
+                seen.add(entry)
+                deduped.append(entry)
+            continue
+        cleaned = entry.strip()
+        if not cleaned:
+            continue
+        key = cleaned.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(title_case_language(cleaned))
+    return deduped or None
+
+
 def normalize_item(item: dict, state: str) -> dict:
     """Apply all normalization steps to one provider item, in order.
 
@@ -1207,8 +1284,9 @@ def normalize_item(item: dict, state: str) -> dict:
       2. field collapse (state-specific -> common)
       3. date normalization
       4. numeric / type normalization
-      5. controlled vocabulary (status, facility_category)
-      6. address cleanup + component parse
+      5. languages de-dupe + casing (bug_04)
+      6. controlled vocabulary (status, facility_category)
+      7. address cleanup + component parse
     """
     # 1. whitespace / string hygiene on every string/list value. ``inspections``
     #    is handled separately (it is a list of dicts, not strings).
@@ -1241,7 +1319,13 @@ def normalize_item(item: dict, state: str) -> dict:
         if item.get(coord) is not None:
             item[coord] = normalize_coordinate(item[coord])
 
-    # 5. controlled vocabulary. status is replaced in place (D4); the
+    # 5. languages (bug_04): order-preserving de-dupe + ALL CAPS -> Title Case
+    #    on list-type values only; a delimited string is left untouched (see
+    #    normalize_languages docstring).
+    if item.get(LANGUAGES_FIELD) is not None:
+        item[LANGUAGES_FIELD] = normalize_languages(item[LANGUAGES_FIELD])
+
+    # 6. controlled vocabulary. status is replaced in place (D4); the
     #    facility_category facet is derived additively from provider_type (D2)
     #    and provider_type itself is left untouched.
     if item.get("status") is not None:
@@ -1249,7 +1333,7 @@ def normalize_item(item: dict, state: str) -> dict:
     if item.get("provider_type") is not None:
         item["facility_category"] = facility_category_from_type(item["provider_type"])
 
-    # 6. address cleanup (in place, D1) + best-effort component parse (additive,
+    # 7. address cleanup (in place, D1) + best-effort component parse (additive,
     #    D2). Components are only set when clearly parsed and not already set.
     #    When the scraper already supplied all of city/state/zip (e.g. from
     #    structured source fields), skip the parse entirely: it can add nothing
