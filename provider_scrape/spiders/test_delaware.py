@@ -25,11 +25,13 @@ from provider_scrape.spiders.delaware import (
     build_visit_items,
     compose_address,
     compose_hours,
+    null_violation_keys,
     derive_status,
     parse_portal_ids,
     split_financial_arrangements,
     strip_trailing_period,
     violation_from_row,
+    violation_is_all_null,
 )
 
 FIXTURES = os.path.join(os.path.dirname(__file__), "fixtures")
@@ -175,14 +177,17 @@ def test_split_financial_arrangements_unrecognized_token_logged(caplog):
 
 
 def test_violation_from_row_full():
+    # bug_03: wb83-pkcv's source columns carry a facility_visit_ prefix
+    # live (two renamed further still) -- this is the real wire shape, not
+    # the pre-rename names the output dict's own keys happen to echo.
     row = {
-        "regulation_code": "49U",
-        "regulation_short_desc": "Indoor Space",
-        "regulation_corrective_action": "Paint the ceiling.",
-        "regulation_correction_status": "Completed",
-        "regulation_correction_due": "2023-03-15T00:00:00.000",
-        "regulation_corrected_date": "2023-03-23T00:00:00.000",
-        "regulation_how_corrected": "Document",
+        "facility_visit_regulation_code": "49U",
+        "facility_visit_regulation_short_description": "Indoor Space",
+        "facility_visit_regulation_corrective_action_notes": "Paint the ceiling.",
+        "facility_visit_regulation_correction_status": "Completed",
+        "facility_visit_regulation_correction_due": "2023-03-15T00:00:00.000",
+        "facility_visit_regulation_corrected_date": "2023-03-23T00:00:00.000",
+        "facility_visit_regulation_how_corrected": "Document",
     }
     assert violation_from_row(row) == {
         "regulation_code": "49U",
@@ -196,10 +201,41 @@ def test_violation_from_row_full():
 
 
 def test_violation_from_row_missing_dates_are_none_not_empty_string():
-    row = {"regulation_code": "22P", "regulation_correction_status": "Pending"}
+    row = {
+        "facility_visit_regulation_code": "22P",
+        "facility_visit_regulation_correction_status": "Pending",
+    }
     result = violation_from_row(row)
     assert result["correction_due"] is None
     assert result["corrected_date"] is None
+
+
+def test_violation_from_row_real_live_capture_is_not_all_null():
+    """Regression test for bug_03 -- a real captured wb83-pkcv row (the
+    schema with the facility_visit_ prefix) must produce populated fields,
+    not the all-None dicts the pre-fix column names silently produced.
+    """
+    rows = _load_fixture("de_compliance_live_capture_bug03.json")
+    result = violation_from_row(rows[0])
+    assert not violation_is_all_null(result)
+    assert result["regulation_code"] == "27U"
+    assert result["description"] == "Ratios, Group Size, and Supervision"
+    assert result["corrective_action"]
+    assert result["correction_status"] == "Completed"
+
+
+def test_violation_from_row_old_pre_rename_keys_are_now_all_null():
+    """Documents the bug itself: a row shaped with the OLD (pre-2026-10)
+    column names -- what violation_from_row read before this fix -- now
+    produces an all-null violation, since live data no longer uses them.
+    """
+    old_shaped_row = {
+        "regulation_code": "49U",
+        "regulation_short_desc": "Indoor Space",
+        "regulation_corrective_action": "Paint the ceiling.",
+        "regulation_correction_status": "Completed",
+    }
+    assert violation_is_all_null(violation_from_row(old_shaped_row))
 
 
 # --------------------------------------------------------------------------- #
@@ -598,3 +634,91 @@ def test_closed_quiet_when_baselines_met(spider, caplog):
     with caplog.at_level("WARNING"):
         spider.closed("finished")
     assert "possible incomplete crawl" not in caplog.text
+
+
+# --------------------------------------------------------------------------- #
+# bug_03 -- all-null de_violations guardrail
+# --------------------------------------------------------------------------- #
+
+
+def test_null_violation_keys_reports_keys_null_everywhere():
+    inspections_by_license = {
+        "1": [{"date": "2024-01-01", "de_violations": [{"regulation_code": "1U", "description": None}]}],
+        "2": [{"date": "2024-01-02", "de_violations": [{"regulation_code": None, "description": None}]}],
+    }
+    assert null_violation_keys(inspections_by_license) == (2, ["description"])
+
+
+def test_null_violation_keys_key_populated_once_is_not_reported():
+    inspections_by_license = {
+        "1": [{"date": "2024-01-01", "de_violations": [{"regulation_code": "1U", "description": None}]}],
+        "2": [{"date": "2024-01-02", "de_violations": [{"regulation_code": None, "description": "Ratio"}]}],
+    }
+    assert null_violation_keys(inspections_by_license) == (2, [])
+
+
+def test_null_violation_keys_ignores_items_without_the_key():
+    # Complaint items carry no "de_violations" key at all.
+    inspections_by_license = {"1": [{"date": "2024-01-01", "type": "IA Investigation"}]}
+    assert null_violation_keys(inspections_by_license) == (0, [])
+
+
+def test_null_violation_keys_empty_index():
+    assert null_violation_keys({}) == (0, [])
+
+
+def test_closed_warns_when_every_violation_is_all_null(spider, caplog):
+    """Regression test for bug_03: if the source columns ever get renamed
+    out from under violation_from_row again, every de_violations dict in
+    the run goes all-null silently (no crash, no row-count drop) -- closed()
+    must surface that with a WARNING.
+    """
+    old_shaped_rows = _load_fixture("de_compliance_multi_visit.json")
+    # Re-shape back to the OLD (pre-bug_03-fix) column names to simulate a
+    # repeat of the rename.
+    rename_back = {
+        "facility_visit_regulation_cited": "regulation_cited",
+        "facility_visit_regulation_code": "regulation_code",
+        "facility_visit_regulation_short_description": "regulation_short_desc",
+        "facility_visit_regulation_correction_due": "regulation_correction_due",
+        "facility_visit_regulation_correction_status": "regulation_correction_status",
+        "facility_visit_regulation_corrected_date": "regulation_corrected_date",
+        "facility_visit_regulation_how_corrected": "regulation_how_corrected",
+        "facility_visit_regulation_corrective_action_notes": "regulation_corrective_action",
+    }
+    old_rows = [{rename_back.get(k, k): v for k, v in row.items()} for row in old_shaped_rows]
+
+    spider.inspections_by_license, spider.visit_item_count, spider.complaint_item_count = build_inspection_index(
+        old_rows, [], spider.logger
+    )
+    with caplog.at_level("WARNING"):
+        spider.closed("finished")
+    assert "are null on all" in caplog.text
+    assert "'regulation_code'" in caplog.text
+
+
+def test_closed_quiet_when_violations_are_populated(spider, caplog):
+    rows = _load_fixture("de_compliance_multi_visit.json")
+    spider.inspections_by_license, spider.visit_item_count, spider.complaint_item_count = build_inspection_index(
+        rows, [], spider.logger
+    )
+    with caplog.at_level("WARNING"):
+        spider.closed("finished")
+    assert "are null on all" not in caplog.text
+
+
+def test_closed_warns_on_partial_rename(spider, caplog):
+    """Only one column renamed: most of each violation is still populated,
+    but the renamed key is null run-wide -- closed() must name it.
+    """
+    rows = _load_fixture("de_compliance_multi_visit.json")
+    renamed = [
+        {("regulation_code_v2" if k == "facility_visit_regulation_code" else k): v for k, v in row.items()}
+        for row in rows
+    ]
+    spider.inspections_by_license, spider.visit_item_count, spider.complaint_item_count = build_inspection_index(
+        renamed, [], spider.logger
+    )
+    with caplog.at_level("WARNING"):
+        spider.closed("finished")
+    assert "['regulation_code'] are null on all" in caplog.text

@@ -66,6 +66,13 @@ detail: delaware_plan.md Sec 6):
              page explicitly with an explicit ``$order``.
   Sec 6.6 -- ``geocoded_location.coordinates`` is GeoJSON: longitude first,
              latitude second -- the opposite of this project's field order.
+  bug_03   -- (2026-10-15) ``wb83-pkcv`` renamed its regulation_* columns
+             (now ``facility_visit_regulation_*``) sometime between build
+             (2026-08-21) and discovery -- ``.get()`` on the old names
+             returned ``None`` for every key with no error. This is why
+             ``closed()`` now warns if any ``de_violations`` key is null on
+             every violation built in a run -- Socrata gives no deprecation signal when a
+             published dataset's schema changes under a stable dataset id.
 """
 
 from collections import defaultdict
@@ -255,18 +262,65 @@ def violation_from_row(row):
     """One ``de_violations`` entry from a raw ``wb83-pkcv`` citation row
     (Sec 5.2). Dates are sliced to their first 10 characters (Sec 6.4);
     absent dates become ``None`` rather than an empty string.
+
+    bug_03 (2026-10-15): the source columns on ``wb83-pkcv`` were renamed
+    live, picking up a ``facility_visit_`` prefix -- e.g. ``regulation_code``
+    is now ``facility_visit_regulation_code``. Two columns were renamed
+    further still: ``regulation_short_desc`` ->
+    ``facility_visit_regulation_short_description`` and
+    ``regulation_corrective_action`` ->
+    ``facility_visit_regulation_corrective_action_notes``. Confirmed against
+    a live capture and the dataset's own column metadata (see
+    tasks/common_fields_epic/bug_03_delaware_capture.json) -- every other key
+    read elsewhere in this module (``license_number``,
+    ``provider_action_date_of_visit``, ``facility_visit_type``) was
+    unaffected. The output dict's own keys (``regulation_code``,
+    ``description``, ...) are unchanged -- only the source lookups below
+    moved.
     """
-    due = row.get("regulation_correction_due") or ""
-    corrected = row.get("regulation_corrected_date") or ""
+    due = row.get("facility_visit_regulation_correction_due") or ""
+    corrected = row.get("facility_visit_regulation_corrected_date") or ""
     return {
-        "regulation_code": row.get("regulation_code"),
-        "description": row.get("regulation_short_desc"),
-        "corrective_action": row.get("regulation_corrective_action"),
-        "correction_status": row.get("regulation_correction_status"),
+        "regulation_code": row.get("facility_visit_regulation_code"),
+        "description": row.get("facility_visit_regulation_short_description"),
+        "corrective_action": row.get("facility_visit_regulation_corrective_action_notes"),
+        "correction_status": row.get("facility_visit_regulation_correction_status"),
         "correction_due": due[:10] or None,
         "corrected_date": corrected[:10] or None,
-        "how_corrected": row.get("regulation_how_corrected"),
+        "how_corrected": row.get("facility_visit_regulation_how_corrected"),
     }
+
+
+def violation_is_all_null(violation):
+    """True if every value in a built ``de_violations`` entry is ``None``.
+
+    Used by the closed() guardrail (bug_03) to detect a repeat of the
+    column-rename bug: if the source dataset renames its columns again,
+    every violation built in a run would silently go all-null exactly like
+    this bug did, with no crash and no obviously wrong row count.
+    """
+    return all(v is None for v in violation.values())
+
+
+def null_violation_keys(inspections_by_license):
+    """Find the ``de_violations`` keys that are ``None`` on every violation
+    across every visit item in the license -> [InspectionItem, ...] index.
+
+    Returns ``(total, null_keys)`` -- the number of violation dicts seen and
+    a sorted list of the output keys never populated on any of them. Only
+    visit items carry ``de_violations`` (complaint items don't), so this
+    walks every item and skips those without the key.
+    """
+    total = 0
+    seen_keys = set()
+    populated_keys = set()
+    for items in inspections_by_license.values():
+        for item in items:
+            for violation in item.get("de_violations", []):
+                total += 1
+                seen_keys.update(violation)
+                populated_keys.update(k for k, v in violation.items() if v is not None)
+    return total, sorted(seen_keys - populated_keys)
 
 
 def build_visit_items(compliance_rows, logger=None):
@@ -725,4 +779,19 @@ class DelawareSpider(scrapy.Spider):
             self.logger.warning(
                 "Delaware: MAX_PAGES cap was hit for phase(s) %s -- data may be truncated",
                 sorted(self.page_cap_hit_phases),
+            )
+
+        # bug_03 guardrail: the wb83-pkcv columns renamed out from under
+        # violation_from_row, and every .get() silently returned None -- no
+        # crash and no obviously wrong row count; only someone reading the
+        # data surfaced it. Warn when any output key is null on every
+        # violation in the run, which also catches a partial rename.
+        total_violations, null_keys = null_violation_keys(self.inspections_by_license)
+        if total_violations and null_keys:
+            self.logger.warning(
+                "Delaware: de_violations key(s) %s are null on all %d "
+                "violations built this run -- the wb83-pkcv column names "
+                "may have changed again (see violation_from_row)",
+                null_keys,
+                total_violations,
             )
