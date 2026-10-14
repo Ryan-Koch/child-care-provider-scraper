@@ -1,3 +1,6 @@
+import asyncio
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 from scrapy.http import HtmlResponse, Request
 
@@ -6,6 +9,7 @@ from provider_scrape.spiders.minnesota import (
     COUNTIES,
     CSV_COLUMNS,
     MinnesotaSpider,
+    _classify_results_page,
     _compose_address,
     _parse_csv_body,
     _results_url,
@@ -105,6 +109,255 @@ def test_start_requests_county_ids_in_meta(spider):
     assert meta_pairs == COUNTIES
     for req, (county_id, county_name) in zip(requests, COUNTIES, strict=True):
         assert req.url == _results_url(county_id, county_name)
+
+
+def test_start_requests_close_page_and_retry_on_failure(spider):
+    # Regression: a networkidle timeout on one county leaked its page and,
+    # with a single page slot, blocked every remaining county forever.
+    for req in spider.start_requests():
+        assert req.errback == spider.errback_close_page
+        assert req.meta["playwright_retry"] is True
+
+
+# ---- errback_close_page (timed-out county) ----
+
+
+def _failed_county(spider, retry_count=0):
+    page = MagicMock()
+    page.is_closed = MagicMock(return_value=False)
+    page.close = AsyncMock()
+    request = next(iter(spider.start_requests()))
+    meta = dict(request.meta, playwright_page=page)
+    if retry_count:
+        meta["playwright_retry_count"] = retry_count
+    failure = MagicMock()
+    failure.value = TimeoutError("Timeout 90000ms exceeded.")
+    failure.request = request.replace(meta=meta)
+    return failure, page
+
+
+@pytest.mark.asyncio
+async def test_errback_closes_page_and_reschedules_county(spider):
+    failure, page = _failed_county(spider)
+
+    results = [r async for r in spider.errback_close_page(failure)]
+
+    page.close.assert_awaited_once()
+    assert len(results) == 1
+    retry = results[0]
+    assert retry.url == failure.request.url
+    assert retry.dont_filter is True
+    assert retry.meta["playwright_retry_count"] == 1
+    assert retry.meta["county_id"] == failure.request.meta["county_id"]
+    assert "playwright_page" not in retry.meta
+
+
+@pytest.mark.asyncio
+async def test_errback_gives_up_after_max_retries(spider):
+    failure, page = _failed_county(spider, retry_count=spider.playwright_max_retries)
+
+    results = [r async for r in spider.errback_close_page(failure)]
+
+    page.close.assert_awaited_once()
+    assert results == []
+
+
+@pytest.mark.asyncio
+async def test_errback_handles_missing_page(spider):
+    failure, _ = _failed_county(spider)
+    failure.request.meta.pop("playwright_page")
+
+    results = [r async for r in spider.errback_close_page(failure)]
+
+    assert len(results) == 1
+
+
+# ---- parse_county (csvdownload postback) ----
+
+
+RESULTS_HTML = b"<html><head><title>Search results, MN DHS Licensing Info Lookup</title></head></html>"
+CAPTCHA_HTML = b"<html><head><title>Radware Captcha Page</title></head><body>Radware</body></html>"
+
+
+def _county_response(spider, evaluate, retry_count=0, has_link=True, html=RESULTS_HTML):
+    """Build a county response whose Playwright page runs `evaluate`."""
+    page = MagicMock()
+    page.url = "https://licensinglookup.dhs.state.mn.us/Results.aspx?co=1"
+    page.locator.return_value.count = AsyncMock(return_value=1 if has_link else 0)
+    page.evaluate = evaluate
+    page.close = AsyncMock()
+    request = next(iter(spider.start_requests()))
+    meta = dict(request.meta, playwright_page=page)
+    if retry_count:
+        meta["playwright_retry_count"] = retry_count
+    request = request.replace(meta=meta)
+    response = HtmlResponse(url=request.url, request=request, body=html, encoding="utf-8")
+    return response, page
+
+
+async def _run_parse(spider, response):
+    return [r async for r in spider.parse_county(response)]
+
+
+@pytest.mark.asyncio
+async def test_parse_county_golden_path(spider):
+    row = [_sample_row()[c] for c in CSV_COLUMNS]
+    body = ",".join(CSV_COLUMNS) + "\n" + ",".join(f'"{v}"' for v in row)
+    evaluate = AsyncMock(return_value={"status": 200, "contentType": "text/csv", "body": body})
+    response, page = _county_response(spider, evaluate)
+
+    results = await _run_parse(spider, response)
+
+    page.close.assert_awaited_once()
+    assert len(results) == 1
+    assert isinstance(results[0], ProviderItem)
+    # The JS deadline is passed into the page script.
+    assert evaluate.await_args.args[1]["timeoutMs"] > 0
+
+
+@pytest.mark.asyncio
+async def test_parse_county_no_csv_link_closes_page(spider):
+    response, page = _county_response(spider, AsyncMock(), has_link=False)
+
+    results = await _run_parse(spider, response)
+
+    page.close.assert_awaited_once()
+    assert results == []
+
+
+@pytest.mark.asyncio
+async def test_parse_county_hung_evaluate_closes_page_and_retries(spider, monkeypatch):
+    # Regression: the in-page fetch stalled forever, the page was never
+    # closed, and the single page slot blocked every remaining county.
+    monkeypatch.setattr("provider_scrape.spiders.minnesota._CSV_EVALUATE_TIMEOUT_S", 0.01)
+
+    async def hang(*args, **kwargs):
+        await asyncio.sleep(3600)
+
+    response, page = _county_response(spider, hang)
+
+    results = await _run_parse(spider, response)
+
+    page.close.assert_awaited_once()
+    assert len(results) == 1
+    retry = results[0]
+    assert retry.url == response.request.url
+    assert retry.dont_filter is True
+    assert retry.meta["playwright_retry_count"] == 1
+    assert "playwright_page" not in retry.meta
+
+
+@pytest.mark.asyncio
+async def test_parse_county_js_fetch_timeout_retries(spider):
+    evaluate = AsyncMock(return_value={"error": "fetch_timeout", "detail": "no response"})
+    response, page = _county_response(spider, evaluate)
+
+    results = await _run_parse(spider, response)
+
+    page.close.assert_awaited_once()
+    assert len(results) == 1
+    assert results[0].meta["playwright_retry_count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_parse_county_gives_up_after_max_retries(spider):
+    evaluate = AsyncMock(return_value={"error": "fetch_failed", "detail": "boom"})
+    response, page = _county_response(spider, evaluate, retry_count=spider.playwright_max_retries)
+
+    results = await _run_parse(spider, response)
+
+    page.close.assert_awaited_once()
+    assert results == []
+
+
+@pytest.mark.asyncio
+async def test_parse_county_missing_tokens_not_retried(spider):
+    evaluate = AsyncMock(return_value={"error": "missing_tokens", "missing": ["__VIEWSTATE"]})
+    response, page = _county_response(spider, evaluate)
+
+    results = await _run_parse(spider, response)
+
+    page.close.assert_awaited_once()
+    assert results == []
+
+
+@pytest.mark.asyncio
+async def test_parse_county_close_failure_does_not_raise(spider):
+    evaluate = AsyncMock(return_value={"status": 200, "body": ""})
+    response, page = _county_response(spider, evaluate)
+    page.close = AsyncMock(side_effect=RuntimeError("browser gone"))
+
+    results = await _run_parse(spider, response)
+
+    assert results == []
+
+
+@pytest.mark.asyncio
+async def test_parse_county_captcha_page_retries_instead_of_zero_providers(spider):
+    # Regression: the first request of a fresh browser context gets a Radware
+    # CAPTCHA page. It has no csvdownload link, so it used to be logged as
+    # "zero providers" and the county was silently dropped.
+    evaluate = AsyncMock()
+    response, page = _county_response(spider, evaluate, has_link=False, html=CAPTCHA_HTML)
+
+    results = await _run_parse(spider, response)
+
+    page.close.assert_awaited_once()
+    evaluate.assert_not_awaited()
+    assert len(results) == 1
+    assert results[0].meta["playwright_retry_count"] == 1
+    assert results[0].dont_filter is True
+
+
+@pytest.mark.asyncio
+async def test_parse_county_unexpected_page_retries(spider):
+    html = b"<html><head><title>Server Error</title></head></html>"
+    response, page = _county_response(spider, AsyncMock(), has_link=False, html=html)
+
+    results = await _run_parse(spider, response)
+
+    page.close.assert_awaited_once()
+    assert len(results) == 1
+
+
+@pytest.mark.asyncio
+async def test_parse_county_persistent_captcha_gives_up(spider):
+    response, page = _county_response(spider, AsyncMock(), retry_count=spider.playwright_max_retries, html=CAPTCHA_HTML)
+
+    results = await _run_parse(spider, response)
+
+    page.close.assert_awaited_once()
+    assert results == []
+
+
+@pytest.mark.asyncio
+async def test_parse_county_captcha_csv_body_retries(spider):
+    body = "<html><head><title>Radware Captcha Page</title></head></html>"
+    evaluate = AsyncMock(return_value={"status": 200, "contentType": "text/html", "body": body})
+    response, page = _county_response(spider, evaluate)
+
+    results = await _run_parse(spider, response)
+
+    page.close.assert_awaited_once()
+    assert len(results) == 1
+    assert results[0].meta["playwright_retry_count"] == 1
+
+
+# ---- _classify_results_page ----
+
+
+@pytest.mark.parametrize(
+    "html,expected",
+    [
+        (RESULTS_HTML, "results"),
+        (CAPTCHA_HTML, "captcha"),
+        (b"<html><head><title>Server Error</title></head></html>", "unexpected"),
+        (b"<html></html>", "unexpected"),
+    ],
+)
+def test_classify_results_page(html, expected):
+    response = HtmlResponse(url="https://licensinglookup.dhs.state.mn.us/Results.aspx", body=html, encoding="utf-8")
+    assert _classify_results_page(response) == expected
 
 
 # ---- _compose_address ----

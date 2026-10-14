@@ -1,6 +1,8 @@
+import asyncio
 import csv
 import io
 import random
+import time
 from urllib.parse import quote
 
 import scrapy
@@ -9,6 +11,7 @@ from playwright_stealth import Stealth
 from scrapy_playwright.page import PageMethod
 
 from provider_scrape.items import ProviderItem
+from provider_scrape.playwright_utils import PlaywrightErrbackMixin
 
 # Base URL for county results pages — all filter params default to False/All
 # so every provider in the county is returned. Server-side filtering happens
@@ -252,6 +255,26 @@ def _row_to_item(row):
     return item
 
 
+def _page_title(response):
+    return (response.css("title::text").get() or "").strip()
+
+
+def _classify_results_page(response):
+    """Return "results", "captcha", or "unexpected" for a rendered county page.
+
+    The first request in a fresh browser context (and occasionally later
+    ones) is served a Radware CAPTCHA page instead of results. Only a real
+    "Search results" page can be trusted to mean zero providers when it
+    lacks a csvdownload link.
+    """
+    title = _page_title(response).lower()
+    if "captcha" in title or "radware" in response.text[:5000].lower():
+        return "captcha"
+    if title.startswith("search results"):
+        return "results"
+    return "unexpected"
+
+
 def _parse_csv_body(body, logger=None):
     """Parse the CSV body from the csvdownload POST into a list of dict rows.
 
@@ -283,7 +306,7 @@ def _parse_csv_body(body, logger=None):
 # Playwright's APIRequestContext cannot match. Hidden inputs are serialized
 # in document order; __EVENTTARGET/__EVENTARGUMENT are overridden in place.
 _CSV_DOWNLOAD_SCRIPT = """
-async ({url, eventTarget}) => {
+async ({url, eventTarget, timeoutMs}) => {
     const required = ['__VIEWSTATE', '__VIEWSTATEGENERATOR', '__EVENTVALIDATION'];
     const body = new URLSearchParams();
     const hidden = document.querySelectorAll('form input[type="hidden"]');
@@ -302,28 +325,48 @@ async ({url, eventTarget}) => {
         body.append('__EVENTTARGET', eventTarget);
         body.append('__EVENTARGUMENT', '');
     }
-    let resp;
+    // Without a deadline a stalled server leaves this promise pending forever,
+    // which wedges the whole crawl (the page slot is never released).
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-        resp = await fetch(url, {
+        const resp = await fetch(url, {
             method: 'POST',
             body: body,
             credentials: 'include',
             mode: 'same-origin',
             redirect: 'follow',
+            signal: controller.signal,
         });
+        return {
+            status: resp.status,
+            contentType: resp.headers.get('content-type') || '',
+            contentDisposition: resp.headers.get('content-disposition') || '',
+            body: await resp.text(),
+            viewstateSize: (body.get('__VIEWSTATE') || '').length,
+            inputCount: hidden.length,
+        };
     } catch (e) {
+        if (e.name === 'AbortError') {
+            return {error: 'fetch_timeout', detail: `no response within ${timeoutMs}ms`};
+        }
         return {error: 'fetch_failed', detail: String(e)};
+    } finally {
+        clearTimeout(timer);
     }
-    return {
-        status: resp.status,
-        contentType: resp.headers.get('content-type') || '',
-        contentDisposition: resp.headers.get('content-disposition') || '',
-        body: await resp.text(),
-        viewstateSize: (body.get('__VIEWSTATE') || '').length,
-        inputCount: hidden.length,
-    };
 }
 """
+
+# Deadline for the in-page csvdownload fetch (request + body). Large counties
+# (Hennepin) return multi-MB CSVs, so this is deliberately generous.
+_CSV_FETCH_TIMEOUT_MS = 180 * 1000
+# Python-side backstop around page.evaluate in case the page itself is wedged
+# and the JS deadline never fires.
+_CSV_EVALUATE_TIMEOUT_S = 200
+# How long to wait for page.close() before abandoning it.
+_PAGE_CLOSE_TIMEOUT_S = 30
+# Errors from the in-page fetch that are worth retrying the county for.
+_RETRYABLE_FETCH_ERRORS = {"fetch_timeout", "fetch_failed"}
 
 
 class StealthContextMiddleware:
@@ -374,13 +417,18 @@ class StealthContextMiddleware:
         spider.logger.info("StealthContextMiddleware: patched _create_browser_context on scrapy-playwright handler.")
 
 
-class MinnesotaSpider(scrapy.Spider):
+class MinnesotaSpider(PlaywrightErrbackMixin, scrapy.Spider):
     """Spider for Minnesota DHS child care provider licensing data.
 
     One request per county: load the Results.aspx page in Playwright, capture
     the ASP.NET viewstate tokens, then POST `__EVENTTARGET=csvdownload` via
     the same browser context to receive the full county provider export as
     TSV. Each row becomes one ProviderItem — no detail pages are fetched.
+
+    Every county request carries `errback_close_page` and opts into retries:
+    with CONCURRENT_REQUESTS=1 there is exactly one page slot per context, so
+    a single networkidle timeout that leaked its page would block every
+    remaining county forever (see playwright_utils).
     """
 
     name = "minnesota"
@@ -442,9 +490,13 @@ class MinnesotaSpider(scrapy.Spider):
             yield scrapy.Request(
                 _results_url(county_id, county_name),
                 callback=self.parse_county,
+                errback=self.errback_close_page,
                 meta={
                     "playwright": True,
                     "playwright_include_page": True,
+                    # A timed-out county is closed and re-scheduled by the
+                    # errback instead of leaking the only page slot.
+                    "playwright_retry": True,
                     "playwright_page_methods": [
                         PageMethod("wait_for_load_state", "networkidle", timeout=90000),
                         _human_delay(500, 3000),
@@ -467,12 +519,30 @@ class MinnesotaSpider(scrapy.Spider):
         county_name = response.meta.get("county_name", "")
         page = response.meta["playwright_page"]
 
+        # A bot-challenge page has no csvdownload link either, so it must be
+        # ruled out before "no link" can be read as "zero providers".
+        page_kind = _classify_results_page(response)
+        if page_kind != "results":
+            self.logger.warning(
+                "[county %s/%s] got %s page instead of results (title=%r)",
+                county_id,
+                county_name,
+                page_kind,
+                _page_title(response),
+            )
+            await self._close_page(page, county_id, county_name)
+            retry = self._retry_county(response.request, page_kind)
+            if retry is not None:
+                yield retry
+            return
+
         status = None
         content_type = ""
         content_disposition = ""
         body_text = ""
         viewstate_size = 0
         input_count = 0
+        retry_reason = None
 
         try:
             if not await page.locator("a#csvdownload").count():
@@ -491,9 +561,30 @@ class MinnesotaSpider(scrapy.Spider):
                 post_url,
             )
 
-            result = await page.evaluate(
-                _CSV_DOWNLOAD_SCRIPT,
-                {"url": post_url, "eventTarget": "csvdownload"},
+            started = time.monotonic()
+            try:
+                result = await asyncio.wait_for(
+                    page.evaluate(
+                        _CSV_DOWNLOAD_SCRIPT,
+                        {
+                            "url": post_url,
+                            "eventTarget": "csvdownload",
+                            "timeoutMs": _CSV_FETCH_TIMEOUT_MS,
+                        },
+                    ),
+                    timeout=_CSV_EVALUATE_TIMEOUT_S,
+                )
+            except TimeoutError:
+                result = {
+                    "error": "fetch_timeout",
+                    "detail": f"page.evaluate exceeded {_CSV_EVALUATE_TIMEOUT_S}s",
+                }
+            elapsed = time.monotonic() - started
+            self.logger.info(
+                "[county %s/%s] csvdownload postback finished in %.1fs",
+                county_id,
+                county_name,
+                elapsed,
             )
 
             if result.get("error"):
@@ -504,16 +595,27 @@ class MinnesotaSpider(scrapy.Spider):
                     result.get("error"),
                     result.get("missing") or result.get("detail"),
                 )
-                return
-
-            status = result.get("status")
-            content_type = result.get("contentType", "") or ""
-            content_disposition = result.get("contentDisposition", "") or ""
-            body_text = result.get("body", "") or ""
-            viewstate_size = result.get("viewstateSize", 0) or 0
-            input_count = result.get("inputCount", 0) or 0
+                if result["error"] in _RETRYABLE_FETCH_ERRORS:
+                    retry_reason = result["error"]
+                    # Fall through to the finally (closes the page) and
+                    # then re-schedule the county below.
+                else:
+                    return
+            else:
+                status = result.get("status")
+                content_type = result.get("contentType", "") or ""
+                content_disposition = result.get("contentDisposition", "") or ""
+                body_text = result.get("body", "") or ""
+                viewstate_size = result.get("viewstateSize", 0) or 0
+                input_count = result.get("inputCount", 0) or 0
         finally:
-            await page.close()
+            await self._close_page(page, county_id, county_name)
+
+        if retry_reason:
+            retry = self._retry_county(response.request, retry_reason)
+            if retry is not None:
+                yield retry
+            return
 
         self.logger.info(
             "[county %s/%s] csvdownload response: status=%s type=%r "
@@ -545,6 +647,9 @@ class MinnesotaSpider(scrapy.Spider):
                 county_name,
                 body_text[:300],
             )
+            retry = self._retry_county(response.request, "captcha_csv_body")
+            if retry is not None:
+                yield retry
             return
 
         rows = _parse_csv_body(body_text, logger=self.logger)
@@ -557,3 +662,48 @@ class MinnesotaSpider(scrapy.Spider):
 
         for row in rows:
             yield _row_to_item(row)
+
+    async def _close_page(self, page, county_id, county_name):
+        """Close the page with a deadline so a wedged browser can't hang us."""
+        try:
+            await asyncio.wait_for(page.close(), timeout=_PAGE_CLOSE_TIMEOUT_S)
+        except Exception as exc:
+            self.logger.warning(
+                "[county %s/%s] page.close() failed: %r",
+                county_id,
+                county_name,
+                exc,
+            )
+
+    def _retry_county(self, request, reason):
+        """Re-schedule a county whose csvdownload postback failed.
+
+        Shares the retry counter and cap with `errback_close_page`, so a
+        county gets at most `playwright_max_retries` retries in total no matter
+        which stage failed. Returns None once the cap is reached.
+        """
+        county_id = request.meta.get("county_id")
+        county_name = request.meta.get("county_name", "")
+        retries = request.meta.get("playwright_retry_count", 0)
+        if retries >= self.playwright_max_retries:
+            self.logger.error(
+                "[county %s/%s] giving up after %d retries (last error: %s)",
+                county_id,
+                county_name,
+                self.playwright_max_retries,
+                reason,
+            )
+            return None
+
+        self.logger.warning(
+            "[county %s/%s] retrying county (%d/%d) after %s",
+            county_id,
+            county_name,
+            retries + 1,
+            self.playwright_max_retries,
+            reason,
+        )
+        meta = dict(request.meta)
+        meta.pop("playwright_page", None)
+        meta["playwright_retry_count"] = retries + 1
+        return request.replace(meta=meta, dont_filter=True)
