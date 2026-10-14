@@ -50,6 +50,34 @@ class NewYorkSpiderTest(unittest.TestCase):
         self.assertEqual(item2["latitude"], "42.739818")
         self.assertEqual(item2["longitude"], "-78.878955")
 
+    # --------------------------------------------------------------------- #
+    # bug_05: raw per-age capacity counts preserved in ny_capacity_* fields
+    # --------------------------------------------------------------------- #
+    def test_parse_preserves_raw_capacity_counts_in_ny_fields(self):
+        csv_content = """"Facility ID","Program Type","Region Code","County","Facility Status","Facility Name","Facility Opened Date","License Issue Date","License Expiration Date","Address Omitted","Street Number","Street Name","Additional Address","Floor","Apartment","City","State","Zip Code","Phone Number Omitted","Phone Number","Phone Extension","Provider Name","School District Name","Capacity Description","Infant Capacity","Toddler Capacity","Preschool Capacity","School Age Capacity","Total Capacity","Program Profile","Latitude","Longitude","Georeference"
+"40783","DCC","BRO","Erie","License","Brierwood Child Care Center","03/01/1992","03/01/2024","02/29/2028",,"5540","Southwestern Boulevard",,,,"Hamburg","NY","14075",,"(716)646-0233",,"Nicole M. Rhynes","Frontier","16 Infants, 12 Toddlers, 35 Preschoolers and 21 School-Aged Children","16","12","35","21","84","https://hs.ocfs.ny.gov/dcfs/Profile/Index/40783","42.739818","-78.878955","POINT (-78.878955 42.739818)"
+"""
+
+        response = TextResponse(
+            url="https://data.ny.gov/api/v3/views/cb42-qumz/export.csv", body=csv_content, encoding="utf-8"
+        )
+
+        item = next(iter(self.spider.parse(response)))
+
+        # The common fields still carry the raw count (the pipeline, not the
+        # spider, coerces these to bool -- see test_normalization.py).
+        self.assertEqual(item["infant"], "16")
+        self.assertEqual(item["toddler"], "12")
+        self.assertEqual(item["preschool"], "35")
+        self.assertEqual(item["school"], "21")
+
+        # The raw counts are duplicated into NY-specific fields so they
+        # survive the common fields' bool coercion (pending story 35).
+        self.assertEqual(item["ny_capacity_infant"], "16")
+        self.assertEqual(item["ny_capacity_toddler"], "12")
+        self.assertEqual(item["ny_capacity_preschool"], "35")
+        self.assertEqual(item["ny_capacity_school_age"], "21")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -77,8 +77,11 @@ FIELD_DOCS = {
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
     "scholarships_accepted": "Subsidy/scholarship acceptance, as emitted (whitespace-cleaned only).",
     "deficiencies": "Deficiency count/summary, as emitted (whitespace-cleaned only).",
-    "infant": "Infant care indicator/count, as emitted (whitespace-cleaned).",
-    "toddler": "Toddler care indicator/count, as emitted (whitespace-cleaned).",
-    "preschool": "Preschool indicator/count, as emitted (whitespace-cleaned).",
-    "school": "School-age indicator/count, as emitted (whitespace-cleaned).",
+    "infant": "Whether the provider serves infants: bool-or-None. States that "
+    'emit a per-age count ("8"), a count string ("Y"/"N"), or "Yes"/absent '
+    "are coerced via count/token > 0 (bug_05); an unparseable token becomes "
+    "None rather than a guessed True.",
+    "toddler": "Whether the provider serves toddlers: bool-or-None. See infant.",
+    "preschool": "Whether the provider serves preschoolers: bool-or-None. See infant.",
+    "school": "Whether the provider serves school-age children: bool-or-None. See infant.",
 }

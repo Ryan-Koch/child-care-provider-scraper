@@ -1272,6 +1272,86 @@ def normalize_languages(value):
     return deduped or None
 
 
+# --------------------------------------------------------------------------- #
+# Task 10 — age-served flags: infant/toddler/preschool/school -> bool-or-None
+# (bug_05: NY emits per-age capacity count strings, VT emits per-age capacity
+# ints, TX emits "Y"/"N" (+ a stray "1"/"0"), GA emits "Yes"/absent into these
+# four common fields instead of a plain boolean)
+# --------------------------------------------------------------------------- #
+
+# The four age-served common fields, coerced to bool-or-None by this step.
+# NY/VT's raw per-age *capacity counts* (confirmed from source: NY's CSV
+# columns are literally "Infant Capacity"/"Toddler Capacity"/.../"School Age
+# Capacity"; VT's detail page groups field_infant4/etc. under the same
+# "capacity" section as field_totcap4 -> `capacity`, distinct from the
+# separate field_ivac4/etc. "vacancy" section already emitted as
+# vt_infant_vacancies/etc.) are preserved by the *spiders* in
+# ny_capacity_{age}/vt_{age}_capacity fields before this step runs — see
+# new_york.py.parse and vermont.py.parse_detail. That preservation lives in
+# the spiders (state-specific raw data), not here, per the project's
+# prefer-pipeline-fix rule for *shared* logic: this coercion is shared across
+# every state, but which raw field to preserve it in is a per-state naming
+# decision the spider already owns (ny_capacity_description, vt_*_vacancies).
+AGE_SERVED_FLAG_FIELDS = ("infant", "toddler", "preschool", "school")
+
+
+# Thousands-grouped count, e.g. NY's "1,100" school-age capacity.
+_GROUPED_INTEGER_RE = re.compile(r"\d{1,3}(?:,\d{3})+")
+
+
+def coerce_age_served_flag(value):
+    """Coerce one age-served flag (infant/toddler/preschool/school) to bool-or-None.
+
+    States emit a mix of shapes for these four fields (appendix D1 / bug_05):
+
+    - already a plain ``bool`` -- returned as-is (most states).
+    - a non-bool ``int``/``float`` count (VT) -- ``> 0`` is ``True``, ``0`` is
+      ``False``. (VT's raw count is separately preserved as
+      ``vt_{age}_capacity`` by the spider; see module note above.)
+    - a clean digit-string count (NY, e.g. ``"8"``, ``"0"``) -- the same
+      ``int(...) > 0`` rule. (NY's raw count is separately preserved as
+      ``ny_capacity_{age}``.)
+    - ``"Y"``/``"N"`` (TX) and ``"Yes"`` (GA) -- the obvious bool reading, via
+      the existing ``_AFFIRMATIVE``/``_NEGATIVE`` token sets (Task 07). TX's
+      two stray ``"1"`` values and one ``"0"`` are *also* covered by those same
+      sets (``"1"`` is affirmative, ``"0"`` is negative) -- which happens to
+      agree with the "count > 0" rule above, so there's no conflict between
+      the token vocabulary and the numeric reading.
+    - a recognized negative-ish token (``"No"``, ``"false"``, ``"0"``,
+      ...) -- ``False``, *never* ``True``: a negative token is
+      checked, and matched, **before** any "any other text is affirmative"
+      fallback exists at all (unlike ``_coerce_bool``, this function has no
+      such fallback -- see the final ``else`` below).
+    - a thousands-grouped count (NY's ``"1,100"``/``"1,305"``) -- commas
+      stripped, then the same ``> 0`` rule.
+    - ``None`` or an empty string -- ``None`` (no signal).
+    - anything else unparseable -- becomes ``None`` and is **logged at
+      DEBUG**. We never guess
+      ``True`` for a token we don't recognize.
+    """
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value > 0
+    if isinstance(value, str):
+        token = value.strip().lower()
+        if token == "":
+            return None
+        if token in _NEGATIVE:
+            return False
+        if token in _AFFIRMATIVE:
+            return True
+        digits = token.replace(",", "") if _GROUPED_INTEGER_RE.fullmatch(token) else token
+        if _INTEGER_RE.fullmatch(digits):
+            return int(digits) > 0
+        logger.debug("coerce_age_served_flag: unparseable flag %r -> None", value)
+        return None
+    logger.debug("coerce_age_served_flag: unexpected type for flag %r -> None", value)
+    return None
+
+
 def normalize_item(item: dict, state: str) -> dict:
     """Apply all normalization steps to one provider item, in order.
 
@@ -1286,6 +1366,7 @@ def normalize_item(item: dict, state: str) -> dict:
       5. languages de-dupe + casing (bug_04)
       6. controlled vocabulary (status, facility_category)
       7. address cleanup + component parse
+      8. age-served flags -> bool-or-None (bug_05)
     """
     # 1. whitespace / string hygiene on every string/list value. ``inspections``
     #    is handled separately (it is a list of dicts, not strings).
@@ -1346,6 +1427,13 @@ def normalize_item(item: dict, state: str) -> dict:
             for key, parsed in (("city", city), ("state", parsed_state), ("zip", zip_code)):
                 if parsed is not None and not _is_present(item.get(key)):
                     item[key] = parsed
+
+    # 8. age-served flags (bug_05): coerce infant/toddler/preschool/school to
+    #    bool-or-None. Independent of the steps above (it only ever touches
+    #    these four fields), so it can safely run last.
+    for field in AGE_SERVED_FLAG_FIELDS:
+        if item.get(field) is not None:
+            item[field] = coerce_age_served_flag(item[field])
 
     return item
 

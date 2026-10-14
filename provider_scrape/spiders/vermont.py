@@ -234,6 +234,14 @@ class VermontSpider(Spider):
         item["preschool"] = _num(_content_after(text, "field_pre4"))
         item["school"] = _num(_content_after(text, "field_school4"))
         item["capacity"] = _num(_content_after(text, "field_totcap4"))
+        # bug_05: preserve the raw per-age capacity counts in VT-specific
+        # fields before the normalization pipeline coerces the common
+        # infant/toddler/preschool/school fields above to bool (count > 0).
+        # Pending story 35 (capacity_by_age).
+        item["vt_infant_capacity"] = item["infant"]
+        item["vt_toddler_capacity"] = item["toddler"]
+        item["vt_preschool_capacity"] = item["preschool"]
+        item["vt_school_age_capacity"] = item["school"]
         item["vt_infant_vacancies"] = _num(_content_after(text, "field_ivac4"))
         item["vt_toddler_vacancies"] = _num(_content_after(text, "field_tvac4"))
         item["vt_preschool_vacancies"] = _num(_content_after(text, "field_pvac4"))

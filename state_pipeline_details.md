@@ -24,7 +24,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `email` | Whitespace cleanup | Contact email (whitespace-cleaned only). |
 | `head_start` | Whitespace cleanup; Field collapse from state-specific source (-> boolean) | Head Start participation, collapsed from a single state source and coerced to a boolean. |
 | `hours` | Whitespace cleanup | Operating hours, as emitted by the state (whitespace-cleaned only). |
-| `infant` | Whitespace cleanup | Infant care indicator/count, as emitted (whitespace-cleaned). |
+| `infant` | Whitespace cleanup | Whether the provider serves infants: bool-or-None. States that emit a per-age count ("8"), a count string ("Y"/"N"), or "Yes"/absent are coerced via count/token > 0 (bug_05); an unparseable token becomes None rather than a guessed True. |
 | `languages` | Whitespace cleanup | Languages, as emitted (string or list; whitespace-cleaned). |
 | `latitude` | Whitespace cleanup; Coordinate -> string | Latitude kept as a trimmed string to avoid float precision drift. |
 | `license_begin_date` | Whitespace cleanup; ISO 8601 date | License start date, normalized to ISO 8601. |
@@ -36,16 +36,16 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `mailing_address` | Whitespace cleanup; Field collapse from state-specific source | Facility mailing address, collapsed from a single populated state source (owner/licensee addresses are excluded). |
 | `meals` | Whitespace cleanup; Field collapse from state-specific source | Meals / food program, collapsed from a single populated state source. |
 | `phone` | Whitespace cleanup | Contact phone number (whitespace-cleaned only). |
-| `preschool` | Whitespace cleanup | Preschool indicator/count, as emitted (whitespace-cleaned). |
+| `preschool` | Whitespace cleanup | Whether the provider serves preschoolers: bool-or-None. See infant. |
 | `provider_name` | Whitespace cleanup; Title Case (ALL-CAPS names) | The facility's name. ALL-CAPS values are converted to Title Case; whitespace is cleaned. |
 | `provider_type` | Whitespace cleanup; Preserved (drives facility_category) | The raw state license category, preserved exactly. It drives the derived facility_category facet. |
 | `provider_website` | Whitespace cleanup | Provider website URL (whitespace-cleaned only). |
 | `scholarships_accepted` | Whitespace cleanup | Subsidy/scholarship acceptance, as emitted (whitespace-cleaned only). |
-| `school` | Whitespace cleanup | School-age indicator/count, as emitted (whitespace-cleaned). |
+| `school` | Whitespace cleanup | Whether the provider serves school-age children: bool-or-None. See infant. |
 | `school_district` | Whitespace cleanup; Field collapse from state-specific source | Associated school district, collapsed from a single populated state-specific source field. |
 | `status` | Whitespace cleanup; Controlled vocabulary (status) | License status mapped to the 5-bucket canonical vocabulary (active/provisional/pending/enforcement/closed, else unknown). Replaced in place. |
 | `status_date` | Whitespace cleanup; ISO 8601 date | Date the current status took effect, normalized to ISO 8601 (YYYY-MM-DD). |
-| `toddler` | Whitespace cleanup | Toddler care indicator/count, as emitted (whitespace-cleaned). |
+| `toddler` | Whitespace cleanup | Whether the provider serves toddlers: bool-or-None. See infant. |
 | `transportation` | Whitespace cleanup; Field collapse from state-specific source | Transportation offered, collapsed from a single populated state source. |
 
 > Inspections are normalized too: every string value gets whitespace cleanup, and the date fields (`date`, `status_updated`, `az_date_resolved`, `in_correction_date`, `ms_end_date`, `mo_disposition_date`) are converted to ISO 8601. The `status` vocabulary does not apply to inspections.
@@ -754,6 +754,10 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `ny_address_omitted` -> pass-through
 - `ny_capacity_description` -> pass-through
+- `ny_capacity_infant` -> pass-through
+- `ny_capacity_preschool` -> pass-through
+- `ny_capacity_school_age` -> pass-through
+- `ny_capacity_toddler` -> pass-through
 - `ny_facility_id` -> pass-through
 - `ny_facility_opened_date` -> pass-through
 - `ny_phone_extension` -> pass-through
@@ -884,18 +888,22 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `vt_current_vacancy` -> pass-through
 - `vt_days_of_operation` -> pass-through
 - `vt_guidance` -> pass-through
+- `vt_infant_capacity` -> pass-through
 - `vt_infant_vacancies` -> pass-through
 - `vt_pets` -> pass-through
+- `vt_preschool_capacity` -> pass-through
 - `vt_preschool_vacancies` -> pass-through
 - `vt_program_description` -> pass-through
 - `vt_program_participation` -> pass-through
 - `vt_provider_id` -> pass-through
 - `vt_religious_activity` -> pass-through
+- `vt_school_age_capacity` -> pass-through
 - `vt_school_age_vacancies` -> pass-through
 - `vt_sibling_discount` -> pass-through
 - `vt_special_schedule` -> pass-through
 - `vt_special_services` -> pass-through
 - `vt_star_level` -> pass-through
+- `vt_toddler_capacity` -> pass-through
 - `vt_toddler_vacancies` -> pass-through
 - `vt_type_of_care` -> pass-through
 - `vt_vacancy_as_of` -> pass-through

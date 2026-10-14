@@ -121,6 +121,17 @@ def test_parse_detail_capacity_and_vacancies(detail_item):
     assert detail_item["vt_vacancy_as_of"] == "06/24/2026"
 
 
+def test_parse_detail_preserves_raw_capacity_counts_in_vt_fields(detail_item):
+    # bug_05: the raw per-age capacity counts are duplicated into VT-specific
+    # fields so they survive the common fields' bool coercion (pending story
+    # 35). They mirror the common infant/toddler/preschool/school values
+    # above, which the pipeline -- not the spider -- coerces to bool.
+    assert detail_item["vt_infant_capacity"] == detail_item["infant"] == 2
+    assert detail_item["vt_toddler_capacity"] == detail_item["toddler"] == 2
+    assert detail_item["vt_preschool_capacity"] == detail_item["preschool"] == 2
+    assert detail_item["vt_school_age_capacity"] == detail_item["school"] == 4
+
+
 def test_parse_detail_program_fields(detail_item):
     assert detail_item["ages_served"] == "Infant, Toddler, Preschool, School Age"
     assert detail_item["languages"] == "English"
@@ -219,3 +230,18 @@ def test_normalize_item_sets_family_home_category(spider):
     assert data["provider_type"] == "Registered Family Child Care Home"
     # status normalizes into the canonical "active" bucket.
     assert data["status"] == "active"
+
+
+def test_normalize_item_coerces_age_flags_but_keeps_raw_vt_capacity(spider):
+    # bug_05: normalize_item coerces the common fields to bool while the raw
+    # vt_*_capacity fields (all 2/2/2/4 in this fixture, all > 0) stay as ints.
+    resp = _response("vermont_detail.html", DETAIL_URL)
+    item = next(iter(spider.parse_detail(resp)))
+    data = normalize_item(dict(item), spider.name)
+    assert (data["infant"], data["toddler"], data["preschool"], data["school"]) == (True, True, True, True)
+    assert (
+        data["vt_infant_capacity"],
+        data["vt_toddler_capacity"],
+        data["vt_preschool_capacity"],
+        data["vt_school_age_capacity"],
+    ) == (2, 2, 2, 4)

@@ -632,3 +632,126 @@ def test_normalize_item_still_parses_when_a_component_missing():
     item = {"address": "849 Centerville Road Warwick, RI 02886", "city": "Warwick", "state": "RI"}
     out = normalization.normalize_item(item, "rhode_island")
     assert out["zip"] == "02886"
+
+
+# --------------------------------------------------------------------------- #
+# Task 10 — age-served flags: infant/toddler/preschool/school -> bool-or-None
+# (bug_05)
+# --------------------------------------------------------------------------- #
+def test_coerce_age_served_flag_bool_and_none_passthrough():
+    assert normalization.coerce_age_served_flag(True) is True
+    assert normalization.coerce_age_served_flag(False) is False
+    assert normalization.coerce_age_served_flag(None) is None
+
+
+def test_coerce_age_served_flag_ny_digit_strings():
+    # NY's per-age capacity counts, emitted as strings.
+    assert normalization.coerce_age_served_flag("0") is False
+    assert normalization.coerce_age_served_flag("8") is True
+    assert normalization.coerce_age_served_flag("16") is True
+
+
+def test_coerce_age_served_flag_ny_comma_grouped_count():
+    # NY's two "1,100"/"1,305" outliers are thousands-grouped counts.
+    assert normalization.coerce_age_served_flag("1,100") is True
+    assert normalization.coerce_age_served_flag("0,000") is False
+
+
+def test_coerce_age_served_flag_malformed_commas_are_unparseable(caplog):
+    with caplog.at_level(logging.DEBUG, logger="provider_scrape.normalization"):
+        assert normalization.coerce_age_served_flag("1,10") is None
+        assert normalization.coerce_age_served_flag("2, 3") is None
+    assert "unparseable flag" in caplog.text
+
+
+def test_coerce_age_served_flag_vt_int_counts():
+    # VT's per-age capacity counts, emitted as ints (already coerced by the
+    # spider's _num() helper before the pipeline runs).
+    assert normalization.coerce_age_served_flag(0) is False
+    assert normalization.coerce_age_served_flag(2) is True
+
+
+def test_coerce_age_served_flag_tx_y_n_and_stray_tokens():
+    # TX's Y/N plus the two stray "1" values and one stray "0".
+    assert normalization.coerce_age_served_flag("Y") is True
+    assert normalization.coerce_age_served_flag("N") is False
+    assert normalization.coerce_age_served_flag("1") is True
+    assert normalization.coerce_age_served_flag("0") is False
+
+
+def test_coerce_age_served_flag_ga_yes_and_absent():
+    # GA only ever emits "Yes" (a falsy age group is left unset -> None).
+    assert normalization.coerce_age_served_flag("Yes") is True
+    assert normalization.coerce_age_served_flag(None) is None
+
+
+def test_coerce_age_served_flag_negative_tokens_never_become_true():
+    # None of these may ever coerce to True (plan §bug_05 criterion 4).
+    for token in ("N", "No", "no", "0", "false", "False", "", "   ", "n/a"):
+        assert normalization.coerce_age_served_flag(token) is not True
+
+
+def test_coerce_age_served_flag_unknown_token_logs_debug_and_returns_none(caplog):
+    with caplog.at_level(logging.DEBUG, logger="provider_scrape.normalization"):
+        result = normalization.coerce_age_served_flag("Sometimes")
+    assert result is None
+    assert "unparseable flag" in caplog.text
+
+
+def test_normalize_item_coerces_age_flags_for_every_state_shape():
+    # One representative item per affected state (bug_05 evidence), run
+    # through the full pipeline, confirming all four fields land bool-or-None.
+    ny_item = {
+        "infant": "8",
+        "toddler": "0",
+        "preschool": "16",
+        "school": "1,305",  # thousands-grouped count -> True
+    }
+    vt_item = {"infant": 2, "toddler": 0, "preschool": None, "school": 4}
+    tx_item = {"infant": "Y", "toddler": "N", "preschool": "1", "school": "0"}
+    ga_item = {"infant": "Yes", "toddler": None, "preschool": "Yes", "school": None}
+
+    out_ny = normalization.normalize_item(dict(ny_item), "new_york")
+    out_vt = normalization.normalize_item(dict(vt_item), "vermont")
+    out_tx = normalization.normalize_item(dict(tx_item), "texas")
+    out_ga = normalization.normalize_item(dict(ga_item), "georgia")
+
+    for out in (out_ny, out_vt, out_tx, out_ga):
+        for field in normalization.AGE_SERVED_FLAG_FIELDS:
+            assert out.get(field) is None or isinstance(out.get(field), bool), (
+                f"{field} not bool-or-None: {out.get(field)!r}"
+            )
+
+    assert (out_ny["infant"], out_ny["toddler"], out_ny["preschool"], out_ny["school"]) == (
+        True,
+        False,
+        True,
+        True,
+    )
+    assert (out_vt["infant"], out_vt["toddler"], out_vt["preschool"], out_vt["school"]) == (
+        True,
+        False,
+        None,
+        True,
+    )
+    assert (out_tx["infant"], out_tx["toddler"], out_tx["preschool"], out_tx["school"]) == (
+        True,
+        False,
+        True,
+        False,
+    )
+    assert (out_ga["infant"], out_ga["toddler"], out_ga["preschool"], out_ga["school"]) == (
+        True,
+        None,
+        True,
+        None,
+    )
+
+
+def test_normalize_item_skips_already_absent_age_flags():
+    # A state that never sets these keys at all (e.g. most states) is left
+    # alone -- no key is invented.
+    item = {"provider_name": "Example Center"}
+    out = normalization.normalize_item(item, "montana")
+    for field in normalization.AGE_SERVED_FLAG_FIELDS:
+        assert field not in out

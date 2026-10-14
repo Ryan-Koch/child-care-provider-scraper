@@ -422,6 +422,13 @@ class ProviderItem(scrapy.Item):
     ny_phone_extension = scrapy.Field()
     ny_school_district_name = scrapy.Field()
     ny_capacity_description = scrapy.Field()
+    # bug_05: raw per-age capacity counts, preserved before the normalization
+    # pipeline coerces the common infant/toddler/preschool/school fields to
+    # bool (count > 0). Pending story 35 (capacity_by_age).
+    ny_capacity_infant = scrapy.Field()
+    ny_capacity_toddler = scrapy.Field()
+    ny_capacity_preschool = scrapy.Field()
+    ny_capacity_school_age = scrapy.Field()
 
     # Pennsylvania specific fields
     pa_stars_rating = scrapy.Field()
@@ -784,8 +791,11 @@ class ProviderItem(scrapy.Item):
     # common `license_number` (DC precedent) and duplicated here as an explicit
     # join key. The STARS quality rating stays state-specific per the
     # field-mapping playbook. The `infant`/`toddler`/`preschool`/`school` common
-    # fields carry the per-age *capacities*; the per-age *vacancies* (the
-    # registry's frequently-updated, VT-unique content) live in the vt_* fields.
+    # fields carry the per-age *capacities* (bug_05: coerced to bool-or-None,
+    # `count > 0`, by the normalization pipeline -- the raw count is preserved
+    # here as `vt_{age}_capacity`, pending story 35/capacity_by_age); the
+    # per-age *vacancies* (the registry's frequently-updated, VT-unique
+    # content) live in the vt_*_vacancies fields.
     vt_provider_id = scrapy.Field()  # PARTY_ID, e.g. "3053"
     vt_star_level = scrapy.Field()  # STARS rating, e.g. "4 Star"
     vt_type_of_care = scrapy.Field()  # e.g. "Full-Time, Part-Time, Daytime"
@@ -802,6 +812,11 @@ class ProviderItem(scrapy.Item):
     vt_pets = scrapy.Field()
     vt_vacancy_as_of = scrapy.Field()  # "Current as of" date for vacancies
     vt_current_vacancy = scrapy.Field()  # total current vacancy count
+    # bug_05: raw per-age capacity counts (see comment above). Pending story 35.
+    vt_infant_capacity = scrapy.Field()
+    vt_toddler_capacity = scrapy.Field()
+    vt_preschool_capacity = scrapy.Field()
+    vt_school_age_capacity = scrapy.Field()
     vt_infant_vacancies = scrapy.Field()
     vt_toddler_vacancies = scrapy.Field()
     vt_preschool_vacancies = scrapy.Field()
