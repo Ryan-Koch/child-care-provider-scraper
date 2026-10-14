@@ -1246,8 +1246,7 @@ def normalize_languages(value):
       own separator and quirks (GA's per-language annotations, NM's boilerplate
       sentence, WA's hyphen-joined "Chinese-Mandarin"). Splitting those
       generally risks mangling a value like "Chinese (Mandarin)" or
-      "French/ Arabic", so it is intentionally out of scope here -- see
-      ``docs/common_field_candidates.md`` D6 and the bug_04 follow-ups.
+      "French/ Arabic", so it is intentionally out of scope here.
     - anything else: returned unchanged.
     """
     if not isinstance(value, list):
