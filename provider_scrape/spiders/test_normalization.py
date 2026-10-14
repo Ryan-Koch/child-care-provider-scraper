@@ -437,6 +437,21 @@ def test_collapse_no_sources_leaves_common_unset():
     assert out.get("head_start") is None
 
 
+def test_collapse_accepting_new_children_from_single_source():
+    # bug_02: a real Yes/No source (e.g. Colorado) still collapses normally.
+    out = normalization.collapse_state_fields({"co_accepting_new_children": "Yes"})
+    assert out["accepting_new_children"] == "Yes"
+
+
+def test_collapse_accepting_new_children_ignores_none_source():
+    # bug_02 regression: GA's ga_accepting_new_children is None whenever the
+    # source carries no signal (see georgia.py's _accepting_new_children); a
+    # None source must not be treated as "present" and must not fabricate a
+    # collapsed value.
+    out = normalization.collapse_state_fields({"ga_accepting_new_children": None})
+    assert out.get("accepting_new_children") is None
+
+
 def test_collapse_does_not_touch_quality_ratings():
     # Quality ratings are intentionally never collapsed.
     assert "ut_quality_rating" not in str(normalization.FIELD_COLLAPSE_MAP)
