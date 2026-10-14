@@ -386,6 +386,15 @@ class GeorgiaSpider(scrapy.Spider):
         if accreditation:
             item["ga_accreditation"] = accreditation
 
+        # bug_08: confirmed live (bug_02 capture, 2026-10-15) that this key is
+        # present on every /provider/search record but is `null` on all of
+        # them (99/99 fully-inspected, 308/308 stratified across every
+        # Provider_Type/region), with no alternate key (ownershipType,
+        # nonprofit, ...) anywhere on the record or in the CSV export. This
+        # looks like GA simply never populates the field rather than a wrong
+        # key, so it is left reading `profitStatus` as-is -- `_clean` maps
+        # `None` to `None` and never fabricates a value, so this will pick up
+        # real values automatically if GA ever starts populating the source.
         item["ga_profit_status"] = _clean(r("profitStatus"))
 
         rates = parse_weekly_rates(r("weeklyFullDayRates"))

@@ -64,9 +64,9 @@ _TUITION_CADENCES = [
 # own source; providerdetails.aspx spells it `lookupTable`) embedded directly
 # in childcarenj.gov's page HTML -- not a separate JS bundle or lookup API.
 # First recovered from an Internet Archive snapshot (2026-05-17), then
-# refreshed from the live /Search page on 2026-10-15 via a webshare.env
-# proxy (this project's direct IP is Cloudflare-WAF-blocked; the spider's
-# fingerprint got through unmodified once proxied). The live table only
+# refreshed from the live /Search page on 2026-10-15 via a US webshare.env
+# proxy (the site blocks non-US traffic; the spider's fingerprint got
+# through unmodified). The live table only
 # added special schedules 7-12. See
 # tasks/common_fields_epic/bug_07_nj_lookups.json for both captures.
 #

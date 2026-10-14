@@ -342,6 +342,33 @@ def test_parse_detail_missing_accepting_key_is_none(spider):
     assert enriched["ga_accepting_new_children"] is None
 
 
+def test_parse_detail_profit_status_null_is_none(spider):
+    """bug_08 regression: profitStatus is confirmed (live, see
+    bug_02_georgia_capture.json) to be null on every sampled provider. A null
+    value must map to None, not a fabricated status."""
+    spider.token = "TOK"
+    item = _base_item()
+    response = _json_response(SEARCH_URL, [SEARCH_RECORD], request=Request(url=SEARCH_URL))
+
+    results = list(spider.parse_detail(response, item=item, provider_number="CCLC-38436"))
+    enriched = results[0].cb_kwargs["item"]
+    assert enriched["ga_profit_status"] is None
+
+
+def test_parse_detail_profit_status_passes_through_real_value(spider):
+    """bug_08: if GA's API ever does populate profitStatus, it must still
+    surface as-is (the fix only confirms null isn't fabricated, not that a
+    real value gets suppressed)."""
+    spider.token = "TOK"
+    item = _base_item()
+    record = dict(SEARCH_RECORD, profitStatus="For Profit")
+    response = _json_response(SEARCH_URL, [record], request=Request(url=SEARCH_URL))
+
+    results = list(spider.parse_detail(response, item=item, provider_number="CCLC-38436"))
+    enriched = results[0].cb_kwargs["item"]
+    assert enriched["ga_profit_status"] == "For Profit"
+
+
 def test_parse_detail_keeps_csv_services_when_api_empty(spider):
     spider.token = "TOK"
     item = _base_item()
