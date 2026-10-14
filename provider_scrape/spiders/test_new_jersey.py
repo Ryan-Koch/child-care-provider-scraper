@@ -1,16 +1,24 @@
+import asyncio
 import json
+from collections import Counter
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from scrapy.http import HtmlResponse, Request
 
+import provider_scrape.normalization as norm
 from provider_scrape.items import ProviderItem
 from provider_scrape.spiders.new_jersey import (
+    _LICENSE_TYPE_LABELS,
+    _MEAL_OPTION_LABELS,
+    _SPECIAL_SCHEDULE_LABELS,
     API_PATH,
     SEARCH_URL,
     NewJerseySpider,
     _build_social_media,
     _empty_to_none,
+    _resolve_code,
+    _resolve_codes,
     _trim_seconds,
     build_address,
     build_api_path,
@@ -691,3 +699,262 @@ async def test_parse_search_page_zero_result_count_exits_cleanly(spider):
     # Only the probe call is made; no big fetch
     assert page.evaluate.await_count == 1
     page.close.assert_awaited_once()
+
+
+# ---- bug_07: code -> label lookup tables ----
+
+
+def test_license_type_labels_known_codes():
+    item = build_item(WOW_KIDS)  # LicenseType == 1
+    assert item["nj_license_type"] == 1
+    assert item["nj_license_type_label"] == "Licensed"
+
+    exempt = dict(WOW_KIDS)
+    exempt["LicenseType"] = 3
+    item = build_item(exempt)
+    assert item["nj_license_type_label"] == "License exempt"
+
+
+def test_meal_option_labels_known_codes():
+    item = build_item(TWO_FOR_CARE)  # MealOptions == [4, 5, 1, 2]
+    assert item["nj_meal_options"] == [4, 5, 1, 2]
+    assert item["nj_meal_options_labels"] == ["Morning snack", "Afternoon snack", "Breakfast", "Lunch"]
+
+
+def test_transportation_labels_known_codes():
+    item = build_item(TWO_FOR_CARE)  # TransportationOptions == [2]
+    assert item["nj_transportation"] == [2]
+    assert item["nj_transportation_labels"] == ["Near public transportation"]
+
+
+def test_program_facility_type_labels_known_codes():
+    item = build_item(TWO_FOR_CARE)  # ProgramFacilityType == 1
+    assert item["nj_program_facility_type_label"] == "Licensed Child Care Center"
+
+    registered = dict(TWO_FOR_CARE)
+    registered["ProgramFacilityType"] = 2
+    item = build_item(registered)
+    assert item["nj_program_facility_type_label"] == "Registered Family Child Care Provider"
+
+
+def test_accreditation_labels_known_code():
+    facility = dict(TWO_FOR_CARE)
+    facility["Accreditation"] = [1, 8]
+    item = build_item(facility)
+    assert item["nj_accreditation_labels"] == [
+        "National Association for the Education of Young Children",
+        "American Montessori Society",
+    ]
+
+
+def test_quality_rating_label_known_code():
+    item = build_item(TWO_FOR_CARE)  # QualityRating == 3
+    assert item["nj_quality_rating_label"] == "QRIS level 3"
+
+
+def test_yearly_schedule_label_known_code():
+    item = build_item(TWO_FOR_CARE)  # YearlySchedule == 1
+    assert item["nj_yearly_schedule_label"] == "Full year"
+
+
+def test_participation_programs_labels_known_code():
+    item = build_item(TWO_FOR_CARE)  # ParticipationInLocalStateOrFederalPrograms == [3]
+    assert item["nj_participation_programs_labels"] == [
+        "Accepts state-funded child care assistance; e.g., contracts, vouchers, scholarships"
+    ]
+
+
+def test_fees_labels_known_codes():
+    item = build_item(TWO_FOR_CARE)  # AdditionalDepositsAndFees == [1, 2]
+    assert item["nj_fees_labels"] == ["Registration fee", "Late fee"]
+
+
+# ---- bug_07: unknown-code handling (never silently dropped) ----
+
+
+def test_resolve_code_unknown_falls_back_and_tallies():
+    counts = Counter()
+    label = _resolve_code(999, _LICENSE_TYPE_LABELS, "license_type", counts)
+    assert label == "Unknown (code 999)"
+    assert counts[("license_type", 999)] == 1
+
+
+def test_resolve_code_known_does_not_tally():
+    counts = Counter()
+    label = _resolve_code(1, _LICENSE_TYPE_LABELS, "license_type", counts)
+    assert label == "Licensed"
+    assert counts == {}
+
+
+def test_special_schedules_7_to_12_from_live_table():
+    # Added to the live lookup table after the 2026-05 archive snapshot.
+    counts = Counter()
+    labels = _resolve_codes([1, 8, 12], _SPECIAL_SCHEDULE_LABELS, "special_schedules", counts)
+    assert labels == ["Evening", "Night Care", "Rotating Shifts"]
+    assert counts == {}
+
+
+def test_resolve_code_none_passes_through_untallied():
+    counts = Counter()
+    assert _resolve_code(None, _LICENSE_TYPE_LABELS, "license_type", counts) is None
+    assert counts == {}
+
+
+def test_resolve_codes_unknown_element_kept_not_dropped():
+    counts = Counter()
+    # 7 and 8 are real codes observed in hf_sample that even the live lookup
+    # table (2026-10-15) doesn't define -- they must not vanish.
+    labels = _resolve_codes([1, 7, 8], _MEAL_OPTION_LABELS, "meal_options", counts)
+    assert labels == ["Breakfast", "Unknown (code 7)", "Unknown (code 8)"]
+    assert counts[("meal_options", 7)] == 1
+    assert counts[("meal_options", 8)] == 1
+
+
+def test_resolve_codes_none_passes_through():
+    counts = Counter()
+    assert _resolve_codes(None, _MEAL_OPTION_LABELS, "meal_options", counts) is None
+    assert counts == {}
+
+
+def test_build_item_unknown_license_type_code():
+    facility = dict(WOW_KIDS)
+    facility["LicenseType"] = 42
+    counts = Counter()
+    item = build_item(facility, counts)
+    assert item["nj_license_type"] == 42  # raw code preserved
+    assert item["nj_license_type_label"] == "Unknown (code 42)"
+    assert counts[("license_type", 42)] == 1
+
+
+def test_build_item_without_unmapped_counts_arg_still_works():
+    # unmapped_counts is optional (defaults to a throwaway Counter) so
+    # existing callers (and these fixtures) that don't pass one keep working.
+    facility = dict(WOW_KIDS)
+    facility["LicenseType"] = 42
+    item = build_item(facility)
+    assert item["nj_license_type_label"] == "Unknown (code 42)"
+
+
+def test_build_item_accumulates_unmapped_counts_across_records():
+    counts = Counter()
+    facility_a = dict(WOW_KIDS)
+    facility_a["LicenseType"] = 42
+    facility_b = dict(WOW_KIDS)
+    facility_b["LicenseType"] = 42
+    build_item(facility_a, counts)
+    build_item(facility_b, counts)
+    assert counts[("license_type", 42)] == 2
+
+
+# ---- bug_07: fields with no sourced label (deliberately untouched) ----
+
+
+def test_nj_facility_type_has_no_label_sibling():
+    item = build_item(TWO_FOR_CARE)
+    assert item["nj_facility_type"] == 1
+    assert "nj_facility_type_label" not in item
+
+
+def test_nj_mccyn_plus_has_no_label_sibling():
+    item = build_item(TWO_FOR_CARE)
+    assert item["nj_mccyn_plus"] == "1"
+    assert "nj_mccyn_plus_label" not in item
+
+
+# ---- bug_07: closed() aggregate warning ----
+
+
+def test_closed_logs_nothing_when_no_unmapped_codes(spider, caplog):
+    spider.unmapped_code_counts = Counter()
+    with caplog.at_level("WARNING"):
+        spider.closed("finished")
+    assert caplog.text == ""
+
+
+def test_closed_logs_one_aggregate_warning_with_counts(spider, caplog):
+    spider.unmapped_code_counts = Counter({("meal_options", 7): 870, ("meal_options", 8): 122})
+    with caplog.at_level("WARNING"):
+        spider.closed("finished")
+    assert len(caplog.records) == 1
+    message = caplog.records[0].getMessage()
+    assert "meal_options=7(870x)" in message
+    assert "meal_options=8(122x)" in message
+
+
+def test_spider_tracks_unmapped_counts_across_parsed_items(spider):
+    probe_body = _payload(facility_count=1, result_count=1, template=WOW_KIDS)
+    weird = dict(WOW_KIDS)
+    weird["LicenseType"] = 77
+    full_body = json.dumps({"Facilities": [weird], "ResultCount": 1})
+    page = _make_fake_page(
+        [
+            {"status": 200, "body": probe_body},
+            {"status": 200, "body": full_body},
+        ]
+    )
+    response = _make_fake_response(page)
+
+    asyncio.run(_collect(spider.parse_search_page(response)))
+
+    assert spider.unmapped_code_counts[("license_type", 77)] == 1
+
+
+# ---- bug_07: facility_category wiring via provider_type ----
+
+
+def test_provider_type_set_from_program_facility_type_label():
+    item = build_item(TWO_FOR_CARE)  # ProgramFacilityType == 1
+    assert item["provider_type"] == "Licensed Child Care Center"
+    assert norm.facility_category_from_type(item["provider_type"]) == "center"
+
+
+def test_provider_type_family_home_category():
+    facility = dict(TWO_FOR_CARE)
+    facility["ProgramFacilityType"] = 2
+    item = build_item(facility)
+    assert item["provider_type"] == "Registered Family Child Care Provider"
+    assert norm.facility_category_from_type(item["provider_type"]) == "family_home"
+
+
+def test_provider_type_none_when_facility_type_missing():
+    facility = dict(WOW_KIDS)
+    facility["ProgramFacilityType"] = None
+    item = build_item(facility)
+    assert item["provider_type"] is None
+
+
+# ---- bug_07: regression -- common fields emit labels, not raw codes ----
+
+
+def test_common_fields_emit_labels_not_raw_codes_after_collapse():
+    item = dict(build_item(TWO_FOR_CARE))
+    norm.collapse_state_fields(item)
+
+    assert item["license_type"] == "Licensed"
+    assert item["meals"] == ["Morning snack", "Afternoon snack", "Breakfast", "Lunch"]
+    assert item["transportation"] == ["Near public transportation"]
+
+    # Raw nj_* fields are untouched (D2 -- additive, not destructive).
+    assert item["nj_license_type"] == 1
+    assert item["nj_meal_options"] == [4, 5, 1, 2]
+    assert item["nj_transportation"] == [2]
+
+
+def test_accreditation_common_field_emits_labels_after_collapse():
+    facility = dict(TWO_FOR_CARE)
+    facility["Accreditation"] = [1]
+    item = dict(build_item(facility))
+    norm.collapse_state_fields(item)
+
+    assert item["accreditation"] == ["National Association for the Education of Young Children"]
+    assert item["nj_accreditation"] == [1]
+
+
+def test_full_normalize_item_produces_labels_and_facility_category():
+    item = dict(build_item(TWO_FOR_CARE))
+    normalized = norm.normalize_item(item, state="new_jersey")
+
+    assert normalized["license_type"] == "Licensed"
+    assert normalized["meals"] == ["Morning snack", "Afternoon snack", "Breakfast", "Lunch"]
+    assert normalized["transportation"] == ["Near public transportation"]
+    assert normalized["facility_category"] == "center"

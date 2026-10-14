@@ -72,14 +72,14 @@ Each common field is populated from a single populated source field (additive â€
 | Common field | Source state-specific fields |
 |---|---|
 | `accepting_new_children` | `co_accepting_new_children`, `ct_accepting_referrals`, `ga_accepting_new_children` |
-| `accreditation` | `al_accreditations`, `ct_accreditations`, `ga_accreditation`, `hi_accreditations`, `md_accreditation`, `nj_accreditation` |
+| `accreditation` | `al_accreditations`, `ct_accreditations`, `ga_accreditation`, `hi_accreditations`, `md_accreditation`, `nj_accreditation_labels` |
 | `curriculum` | `ga_curriculum`, `nj_curriculum` |
 | `head_start` | `az_headstart`, `co_head_start`, `ct_head_start`, `fl_is_head_start`, `nh_head_start`, `ri_head_start`, `wa_head_start` |
-| `license_type` | `ak_license_type`, `az_license_type`, `co_license_type`, `ct_license_type`, `hi_license_type`, `mt_license_type`, `nc_license_type`, `nj_license_type`, `ut_license_type`, `va_license_type`, `wa_license_type`, `wv_license_type` |
+| `license_type` | `ak_license_type`, `az_license_type`, `co_license_type`, `ct_license_type`, `hi_license_type`, `mt_license_type`, `nc_license_type`, `nj_license_type_label`, `ut_license_type`, `va_license_type`, `wa_license_type`, `wv_license_type` |
 | `mailing_address` | `al_mailing_address`, `ga_mailing_address`, `hi_mailing_address` |
-| `meals` | `ga_meals`, `hi_meals`, `nj_meal_options`, `nm_meals`, `pa_meal_options`, `ut_meals` |
+| `meals` | `ga_meals`, `hi_meals`, `nj_meal_options_labels`, `nm_meals`, `pa_meal_options`, `ut_meals` |
 | `school_district` | `co_school_district`, `ct_school_districts`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
-| `transportation` | `ct_transportation`, `ga_transportation`, `nj_transportation` |
+| `transportation` | `ct_transportation`, `ga_transportation`, `nj_transportation_labels` |
 
 ## Controlled vocabulary: `status`
 
@@ -101,7 +101,7 @@ Raw `provider_type` values mapped to each canonical category (additive; unmapped
 |---|---|
 | `center` | `CDC (Child Development Center)`, `CTR`, `Center`, `Center Based Child Care and Preschool Program`, `Center Based Child Care and Preschool Program - Non-Recurring`, `Center based Child Care Facility`, `Certified Pre-School`, `Child Care`, `Child Care Center`, `Child Care Commercial Preschool`, `Child Care Facility`, `Child Care Hourly Center`, `Child Care Learning Center`, `Child Care Registered Center Based Program`, `Child Care for Children with Disabilities`, `Child Day Center`, `DAY CARE CENTER`, `DAY CARE CENTER - ILL CENTER`, `DCC`, `DOE`, `Department of Defense`, `GA Early Head Start`, `GA Head Start`, `HHS Four-Year Old Program`, `HHS-Licensed Child Care Center`, `HHS-Licensed Group Child Care Facility`, `HHS-Licensed Preschool`, `Head Start`, `Head Start Child Care Center`, `Head Start Site`, `INFANT CENTER`, `Infant and Toddler Center`, `LOC`, `Large Child Care Center (26 or more children)`, `Large Group`, `Licensed`, `Licensed Center`, `Licensed Child Care Center`, `Licensed Group`, `Licensed Group Child Care Program`, `Licensed School-Based Preschool`, `Local School System`, `Nursery`, `Nursery School`, `Outdoor Nature Based Program`, `Preschool`, `Preschool Center`, `Preschool Program`, `Private School`, `Provisional Child Care Center`, `Provisional Preschool`, `Public School`, `SDCC`, `SINGLE LICENSED CHILD CARE CENTER`, `Short Term Child Day Center`, `Small Employer Based Child Care`, `Small Group`, `Type I`, `Type II`, `Type III`, `University` |
 | `exempt` | `6 or Fewer`, `CCAP Certified/Accredited`, `Child Care Exempt Program`, `DWS Approved, Exempt Center`, `DWS Approved, Exempt School Age Program`, `Exempt`, `Exempt Child Care Center`, `Exempt Only`, `Exempt Program`, `Exempt from Licensing`, `License Exempt`, `License Exempt Facility`, `License Exempt Family Child Care Program`, `License Exempt Program`, `Religious Exempt Child Day Center`, `Self-Declared Provider`, `Unlicensed CCDF Certified Center/School`, `Unlicensed CCDF Certified Home`, `Unlicensed Registered Ministry`, `Voluntary Registration` |
-| `family_home` | `CDH (Child Development Home)`, `Certified`, `Child Care Licensed Family`, `Child Care Residential Certificate`, `FAMILY DAY CARE HOME`, `FCCH`, `FDC`, `Family`, `Family Child Care`, `Family Child Care Facility (up to 6 children)`, `Family Child Care Home`, `Family Child Care Home I`, `Family Child Care Home II`, `Family Child Care Learning Home`, `Family Child Care Provider`, `Family Day Care`, `Family Day Care Home`, `Family Day Home`, `Family Home`, `Family Home Child Care`, `HHS-Licensed Family Child Care`, `Home based Child Care Facility`, `In Home Provider`, `LFCCH`, `Large Family Child Care Home`, `Licensed Child-Care Home`, `Licensed Family`, `Licensed Family Child Care`, `Licensed Family Child Care Home`, `Licensed Family Child Care Program`, `Licensed Family Home`, `Licensed Home`, `Licensed Type A Family Child Care Home`, `Licensed Type B Family Child Care Home`, `Listed Family Home`, `Non-Registered Child Care Home`, `Provisional Certified`, `Provisional Family Child Care Home I`, `Provisional Family Child Care Home II`, `Registered Child Development Home A`, `Registered Child Development Home B`, `Registered Child Development Home C`, `Registered Child Development Home C1`, `Registered Child-Care Home`, `Registered Family Child Care Home`, `Registered Home`, `Regular Certified`, `System Approved FDH`, `Unlicensed/Unregistered FDH` |
+| `family_home` | `CDH (Child Development Home)`, `Certified`, `Child Care Licensed Family`, `Child Care Residential Certificate`, `FAMILY DAY CARE HOME`, `FCCH`, `FDC`, `Family`, `Family Child Care`, `Family Child Care Facility (up to 6 children)`, `Family Child Care Home`, `Family Child Care Home I`, `Family Child Care Home II`, `Family Child Care Learning Home`, `Family Child Care Provider`, `Family Day Care`, `Family Day Care Home`, `Family Day Home`, `Family Home`, `Family Home Child Care`, `HHS-Licensed Family Child Care`, `Home based Child Care Facility`, `In Home Provider`, `LFCCH`, `Large Family Child Care Home`, `Licensed Child-Care Home`, `Licensed Family`, `Licensed Family Child Care`, `Licensed Family Child Care Home`, `Licensed Family Child Care Program`, `Licensed Family Home`, `Licensed Home`, `Licensed Type A Family Child Care Home`, `Licensed Type B Family Child Care Home`, `Listed Family Home`, `Non-Registered Child Care Home`, `Provisional Certified`, `Provisional Family Child Care Home I`, `Provisional Family Child Care Home II`, `Registered Child Development Home A`, `Registered Child Development Home B`, `Registered Child Development Home C`, `Registered Child Development Home C1`, `Registered Child-Care Home`, `Registered Family Child Care Home`, `Registered Family Child Care Provider`, `Registered Home`, `Regular Certified`, `System Approved FDH`, `Unlicensed/Unregistered FDH` |
 | `group_home` | `CDX (Child Development Home Expanded)`, `Family Child Care Center`, `GFDC`, `Group`, `Group Child Care Facility (up to 12 children)`, `Group Child Care Home`, `Group Home`, `Group Home Child Care`, `HHS-Licensed Group Child Care Home`, `Licensed Group Home`, `Licensed Large Family Child Care` |
 | `other` | `(FCC)Nanny Individual`, `Certified In Home Aide`, `Family, Friends & Neighbor (FFN) Providers`, `HHS-Licensed Multiple License`, `Illegally Unlicensed`, `In-Home`, `Informal`, `Informal Child Care`, `Licensed Camp`, `Neighborhood Youth Organization`, `Other`, `Outdoor Summer Camp`, `Registered Day Camp or Approved Day Camp`, `Resident Camp`, `Residential Child Care Program`, `Substitute Placement Agency`, `Summer Camp/Program`, `Summer Day Camp`, `Tribal Subsidy Recipient`, `Youth Camp` |
 | `school_age` | `Afterschool Child Care Program`, `Child Care Out of School Time Program`, `HHS-Licensed School Age Child Care`, `Licensed School-Age Child Care`, `SACC`, `SCHOOL AGE DAY CARE CENTER`, `School Age Program`, `School-age Center`, `School-age Program`, `Youth Development Program` |
@@ -684,25 +684,37 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### New Jersey (NJ)
 
-- `nj_accreditation` -> collapses into `accreditation`
+- `nj_accreditation` -> pass-through
+- `nj_accreditation_labels` -> collapses into `accreditation`
 - `nj_child_assessment` -> pass-through
 - `nj_curriculum` -> collapses into `curriculum`
 - `nj_discounts` -> pass-through
+- `nj_discounts_labels` -> pass-through
 - `nj_doh_id` -> pass-through
 - `nj_environmental_features` -> pass-through
+- `nj_environmental_features_labels` -> pass-through
 - `nj_facility_type` -> pass-through
 - `nj_fees` -> pass-through
-- `nj_license_type` -> collapses into `license_type`
+- `nj_fees_labels` -> pass-through
+- `nj_license_type` -> pass-through
+- `nj_license_type_label` -> collapses into `license_type`
 - `nj_mccyn_plus` -> pass-through
-- `nj_meal_options` -> collapses into `meals`
+- `nj_meal_options` -> pass-through
+- `nj_meal_options_labels` -> collapses into `meals`
 - `nj_participation_programs` -> pass-through
+- `nj_participation_programs_labels` -> pass-through
 - `nj_phone_extension` -> pass-through
 - `nj_program_facility_type` -> pass-through
+- `nj_program_facility_type_label` -> pass-through
 - `nj_quality_rating` -> pass-through
+- `nj_quality_rating_label` -> pass-through
 - `nj_social_media` -> pass-through
 - `nj_special_needs_training` -> pass-through
+- `nj_special_needs_training_labels` -> pass-through
 - `nj_special_schedules` -> pass-through
-- `nj_transportation` -> collapses into `transportation`
+- `nj_special_schedules_labels` -> pass-through
+- `nj_transportation` -> pass-through
+- `nj_transportation_labels` -> collapses into `transportation`
 - `nj_tuition_infant_daily` -> pass-through
 - `nj_tuition_infant_hourly` -> pass-through
 - `nj_tuition_infant_monthly` -> pass-through
@@ -721,6 +733,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nj_tuition_toddler_weekly` -> pass-through
 - `nj_unique_program_id` -> pass-through
 - `nj_yearly_schedule` -> pass-through
+- `nj_yearly_schedule_label` -> pass-through
 
 ### New Mexico (NM)
 

@@ -533,7 +533,10 @@ FACILITY_CATEGORY_BUCKETS = {
         # program operating under a Letter of Compliance.
         "CTR",
         "LOC",
-        # Ohio (childcaresearch.ohio.gov) program types.
+        # Ohio (childcaresearch.ohio.gov) program types. New Jersey
+        # (childcarenj.gov ProgramFacilityType code 1, resolved via bug_07's
+        # programTypes lookup table) reuses this exact string -- no separate
+        # entry needed.
         "Licensed Child Care Center",
         "Licensed School-Based Preschool",
         # North Dakota (search.ec.hhs.nd.gov) facilityType labels. Facility- and
@@ -713,6 +716,13 @@ FACILITY_CATEGORY_BUCKETS = {
         # own residence -- matches the Delaware "Licensed Family Child Care"
         # precedent above (NH's exact string carries a trailing "Program").
         "Licensed Family Child Care Program",
+        # New Jersey (childcarenj.gov ProgramFacilityType code 2, resolved
+        # via bug_07's programTypes lookup table): registered care in the
+        # provider's own residence -- a *different* exact string from the
+        # existing "Registered Family Child Care Home" (Vermont) entry above
+        # ("Provider" vs. "Home"), so it needs its own entry or it would be
+        # unmapped -> "other" with a logged warning.
+        "Registered Family Child Care Provider",
     ],
     "group_home": [
         "GFDC",
@@ -897,7 +907,11 @@ FIELD_COLLAPSE_MAP = {
         "co_license_type",
         "az_license_type",
         "nc_license_type",
-        "nj_license_type",
+        # bug_07: source renamed from the raw nj_license_type to the resolved
+        # nj_license_type_label (int code -> human label; see new_jersey.py
+        # and tasks/common_fields_epic/bug_07_nj_lookups.json). nj_license_type
+        # itself is untouched (D2) and still carries the raw code.
+        "nj_license_type_label",
         "wv_license_type",
         "wa_license_type",
         "hi_license_type",
@@ -921,7 +935,8 @@ FIELD_COLLAPSE_MAP = {
         "al_accreditations",
         "ga_accreditation",
         "hi_accreditations",
-        "nj_accreditation",
+        # bug_07: renamed from raw nj_accreditation to resolved labels.
+        "nj_accreditation_labels",
         "md_accreditation",
         "ct_accreditations",
     ],
@@ -930,7 +945,8 @@ FIELD_COLLAPSE_MAP = {
         "ga_meals",
         "hi_meals",
         "nm_meals",
-        "nj_meal_options",
+        # bug_07: renamed from raw nj_meal_options to resolved labels.
+        "nj_meal_options_labels",
         "pa_meal_options",
     ],
     "accepting_new_children": [
@@ -938,7 +954,8 @@ FIELD_COLLAPSE_MAP = {
         "ga_accepting_new_children",
         "ct_accepting_referrals",
     ],
-    "transportation": ["ga_transportation", "nj_transportation", "ct_transportation"],
+    # bug_07: nj_transportation renamed to resolved nj_transportation_labels.
+    "transportation": ["ga_transportation", "nj_transportation_labels", "ct_transportation"],
     "head_start": [
         "co_head_start",
         "az_headstart",

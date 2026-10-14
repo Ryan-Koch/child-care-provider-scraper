@@ -541,23 +541,41 @@ class ProviderItem(scrapy.Item):
     # New Jersey specific fields (from GetProviders.aspx)
     nj_unique_program_id = scrapy.Field()
     nj_program_facility_type = scrapy.Field()
+    # bug_07: resolved label for nj_program_facility_type (also feeds
+    # provider_type -> facility_category). See new_jersey.py module docstring
+    # and tasks/common_fields_epic/bug_07_nj_lookups.json for the source.
+    nj_program_facility_type_label = scrapy.Field()
+    # No label source found anywhere for this one (bug_07) -- raw code only.
     nj_facility_type = scrapy.Field()
     nj_license_type = scrapy.Field()
+    nj_license_type_label = scrapy.Field()  # bug_07; also feeds common license_type
     nj_quality_rating = scrapy.Field()
+    nj_quality_rating_label = scrapy.Field()  # bug_07
     nj_accreditation = scrapy.Field()
+    nj_accreditation_labels = scrapy.Field()  # bug_07; also feeds common accreditation
     nj_yearly_schedule = scrapy.Field()
+    nj_yearly_schedule_label = scrapy.Field()  # bug_07
     nj_doh_id = scrapy.Field()
     nj_phone_extension = scrapy.Field()
     nj_participation_programs = scrapy.Field()
+    nj_participation_programs_labels = scrapy.Field()  # bug_07
     nj_curriculum = scrapy.Field()
     nj_child_assessment = scrapy.Field()
     nj_environmental_features = scrapy.Field()
+    nj_environmental_features_labels = scrapy.Field()  # bug_07
     nj_meal_options = scrapy.Field()
+    nj_meal_options_labels = scrapy.Field()  # bug_07; also feeds common meals
     nj_special_needs_training = scrapy.Field()
+    nj_special_needs_training_labels = scrapy.Field()  # bug_07
     nj_transportation = scrapy.Field()
+    nj_transportation_labels = scrapy.Field()  # bug_07; also feeds common transportation
     nj_special_schedules = scrapy.Field()
+    nj_special_schedules_labels = scrapy.Field()  # bug_07
     nj_discounts = scrapy.Field()
+    nj_discounts_labels = scrapy.Field()  # bug_07
     nj_fees = scrapy.Field()
+    nj_fees_labels = scrapy.Field()  # bug_07
+    # No label source found anywhere for this one (bug_07) -- raw value only.
     nj_mccyn_plus = scrapy.Field()
     nj_social_media = scrapy.Field()
     nj_tuition_infant_hourly = scrapy.Field()
