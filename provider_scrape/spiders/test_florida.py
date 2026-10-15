@@ -7,6 +7,9 @@ from provider_scrape.spiders.florida import (
     _num,
     build_county_url,
     build_spa_search_url,
+    choose_surviving_county,
+    dedupe_inspection_reports,
+    dedupe_providers,
     response_matches_county,
 )
 
@@ -414,3 +417,176 @@ def test_parse_inspections_handles_none_and_missing_reports(spider):
     assert spider.parse_inspections(None) == []
     assert spider.parse_inspections([]) == []
     assert spider.parse_inspections([{"year": 2024, "inspectionReport": None}]) == []
+
+
+# ---- bug_12: cause B -- duplicate inspection reports within one provider ----
+
+
+def test_dedupe_inspection_reports_drops_exact_repeat_id():
+    reports = [
+        {"inspectionDate": "2024-11-20T00:00:00", "id": "dup-1", "hasViolation": False},
+        {"inspectionDate": "2024-11-20T00:00:00", "id": "dup-1", "hasViolation": False},
+    ]
+    kept, dropped = dedupe_inspection_reports(reports)
+    assert dropped == 1
+    assert len(kept) == 1
+    assert kept[0]["id"] == "dup-1"
+
+
+def test_dedupe_inspection_reports_keeps_different_ids_same_date():
+    reports = [
+        {"inspectionDate": "2024-05-17T00:00:00", "id": "a", "hasViolation": False},
+        {"inspectionDate": "2024-05-17T00:00:00", "id": "b", "hasViolation": True},
+    ]
+    kept, dropped = dedupe_inspection_reports(reports)
+    assert dropped == 0
+    assert {r["id"] for r in kept} == {"a", "b"}
+
+
+def test_dedupe_inspection_reports_never_collapses_missing_ids():
+    # Reports with no id must each be kept -- None is not a real identity.
+    reports = [
+        {"inspectionDate": "2024-01-01T00:00:00", "id": None, "hasViolation": False},
+        {"inspectionDate": "2024-02-02T00:00:00", "id": None, "hasViolation": False},
+        {"inspectionDate": "2024-03-03T00:00:00", "id": None, "hasViolation": True},
+    ]
+    kept, dropped = dedupe_inspection_reports(reports)
+    assert dropped == 0
+    assert len(kept) == 3
+
+
+def test_parse_inspections_integration_dedupes_and_counts(spider):
+    year_buckets = [
+        {
+            "year": 2024,
+            "inspectionReport": [
+                {"inspectionDate": "2024-11-20T00:00:00", "id": "rep-1", "hasViolation": False},
+                {"inspectionDate": "2024-11-20T00:00:00", "id": "rep-1", "hasViolation": False},
+                {"inspectionDate": "2024-12-01T00:00:00", "id": "rep-2", "hasViolation": True},
+            ],
+        }
+    ]
+    inspections = spider.parse_inspections(year_buckets)
+    assert len(inspections) == 2
+    assert {i["fl_inspection_id"] for i in inspections} == {"rep-1", "rep-2"}
+    assert spider._inspection_dupes_dropped == 1
+
+
+# ---- bug_12: cause A -- same license returned under more than one county ----
+
+
+def _raw_record(license_number, address, city="", provider_name="", dba="", county=None):
+    record = {
+        "licenseNumber": license_number,
+        "fullAddress": address,
+        "city": city,
+        "providerName": provider_name,
+        "dba": dba,
+    }
+    if county is not None:
+        record["county"] = county
+    return record
+
+
+def test_choose_surviving_county_tier1_record_owns_county():
+    # The record's own `county` field wins outright, even though it isn't
+    # one of the search candidates at all.
+    record = _raw_record("C11MD0431", "22940 Old Dixie Hwy, Miami FL, 33170", county="Miami-Dade")
+    county, tier = choose_surviving_county(["Dixie", "Orange"], record)
+    assert (county, tier) == ("Miami-Dade", 1)
+
+
+def test_choose_surviving_county_tier2_license_code_wins_regardless_of_order():
+    # C11MD... -> district 11, code MD -> Miami-Dade, per
+    # FL_LICENSE_DISTRICT_COUNTY_CODES. No `county` field on the record, so
+    # it must fall through to the code tier.
+    record = _raw_record(
+        "C11MD0431",
+        "22940 Old Dixie Hwy, Miami FL, 33170",
+        city="Miami",
+        provider_name="Children's Rainbow Day School",
+    )
+    county, tier = choose_surviving_county(["Dixie", "Miami-Dade"], record, "C11MD0431")
+    assert (county, tier) == ("Miami-Dade", 2)
+
+    # Order of the candidates must not matter.
+    county, tier = choose_surviving_county(["Miami-Dade", "Dixie"], record, "C11MD0431")
+    assert (county, tier) == ("Miami-Dade", 2)
+
+
+def test_choose_surviving_county_tier3_substring_fallback():
+    # License number doesn't match the known-code pattern, so tier 2 can't
+    # resolve it. "Pinellas" doesn't appear anywhere in the address/city/
+    # name text, but "Martin" does (via "Dr Martin Luther King Jr St") --
+    # that's the search's own false-positive signature, so the
+    # non-matching candidate is the real one.
+    record = _raw_record(
+        "F99ZZ9999",
+        "5025 Dr Martin Luther King Jr St N, St Petersburg FL, 33703",
+        city="St Petersburg",
+        provider_name="Baker, Tamsen",
+    )
+    county, tier = choose_surviving_county(["Pinellas", "Martin"], record, "F99ZZ9999")
+    assert (county, tier) == ("Pinellas", 3)
+
+
+def test_choose_surviving_county_tier4_first_candidate_when_unresolvable():
+    # Both candidates' names appear in the text and the license code is
+    # unknown -- nothing can resolve it, so the first-seen candidate wins
+    # (and callers log this at debug).
+    record = _raw_record(
+        "F99ZZ9999",
+        "5025 Dr Martin Luther King Jr St N, St Petersburg FL, 33703",
+        city="St Petersburg",
+        provider_name="Baker, Tamsen",
+    )
+    county, tier = choose_surviving_county(["Baker", "Martin"], record, "F99ZZ9999")
+    assert (county, tier) == ("Baker", 4)
+
+
+def test_dedupe_providers_collapses_same_license_two_counties():
+    record = _raw_record("C11MD0431", "22940 Old Dixie Hwy, Miami FL, 33170", provider_name="Children's Rainbow")
+    buffered = [("Dixie", record), ("Miami-Dade", record)]
+    resolved, tier_counts = dedupe_providers(buffered)
+    assert len(resolved) == 1
+    assert resolved[0][0] == "Miami-Dade"
+    assert tier_counts[2] == 1
+
+
+def test_dedupe_providers_keeps_unique_licenses_untouched():
+    record_a = _raw_record("C01ES0001", "100 Main St, Pensacola FL, 32501")
+    record_b = _raw_record("C02LE0002", "200 Main St, Tallahassee FL, 32301")
+    buffered = [("Escambia", record_a), ("Leon", record_b)]
+    resolved, tier_counts = dedupe_providers(buffered)
+    assert len(resolved) == 2
+    assert sum(tier_counts.values()) == 0  # nothing needed a tie-break
+
+
+def test_dedupe_providers_integration_yields_one_item_per_license(spider):
+    record = _raw_record(
+        "C11MD0431",
+        "22940 Old Dixie Hwy, Miami FL, 33170",
+        city="Miami",
+        provider_name="Children's Rainbow Day School",
+    )
+    buffered = [("Dixie", record), ("Miami-Dade", record)]
+    resolved, _tier_counts = dedupe_providers(buffered)
+    assert len(resolved) == 1
+
+    county, raw_record = resolved[0]
+    item = spider.parse_provider(raw_record, county)
+    assert item["county"] == "Miami-Dade"
+    assert item["license_number"] == "C11MD0431"
+
+
+def test_parse_provider_prefers_record_county_over_search_county(spider):
+    # bug_12: a singleton found only by a false-positive search ("Dixie" via
+    # "Old Dixie Hwy") must still carry the record's own county.
+    item = spider.parse_provider(FL_PROVIDER_FULL, "Dixie")
+    assert item["county"] == "Miami-Dade"
+
+
+def test_parse_provider_falls_back_to_search_county_without_record_county(spider):
+    record = {k: v for k, v in FL_PROVIDER_FULL.items() if k != "county"}
+    item = spider.parse_provider(record, "Miami-Dade")
+    assert item["county"] == "Miami-Dade"
