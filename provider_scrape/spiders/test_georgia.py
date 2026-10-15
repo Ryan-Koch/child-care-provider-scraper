@@ -12,6 +12,7 @@ from provider_scrape.spiders.georgia import (
     SEARCH_URL,
     VISITS_URL,
     GeorgiaSpider,
+    _accepting_new_children,
     _clean,
     _format_fee,
     _split_multi,
@@ -155,6 +156,17 @@ def test_yes_no():
     assert _yes_no(None) is None
 
 
+def test_accepting_new_children():
+    """bug_02 regression: the API's isAcceptingNewChildren is confirmed (live,
+    see bug_02_georgia_capture.json) to be False on every sampled provider
+    with no corroborating accepting/vacancy signal elsewhere. False, a
+    missing key (None), and any other falsy value must map to None -- never
+    a fabricated "No" -- while an explicit True still reports "Yes"."""
+    assert _accepting_new_children(True) == "Yes"
+    assert _accepting_new_children(False) is None
+    assert _accepting_new_children(None) is None
+
+
 def test_format_fee():
     assert _format_fee(95.0) == "$95.00"
     assert _format_fee(5) == "$5.00"
@@ -274,7 +286,9 @@ def test_parse_detail_enriches_and_requests_visits(spider):
     assert enriched["capacity"] == "43"
     assert enriched["ga_quality_rated_level"] == "3"
     assert enriched["ga_liability_insurance"] == "Yes"
-    assert enriched["ga_accepting_new_children"] == "No"
+    # SEARCH_RECORD's isAcceptingNewChildren is False (the live, always-false
+    # value) -- bug_02: that must not be fabricated into "No".
+    assert enriched["ga_accepting_new_children"] is None
     assert enriched["ga_registration_fee"] == "$95.00"
     assert enriched["ga_activity_fee"] == "$5.00"
     assert enriched["ga_services"] == "Enrolled in Childcare Subsidies (CAPS); CACFP"
@@ -298,6 +312,61 @@ def test_parse_detail_enriches_and_requests_visits(spider):
     # Unpopulated API fields map to None.
     assert enriched["ga_profit_status"] is None
     assert enriched["ga_transportation_notes"] is None
+
+
+def test_parse_detail_reports_yes_when_api_says_true(spider):
+    """bug_02: if GA's API ever does return True for a provider, it must still
+    surface as "Yes" (the fix only suppresses the fabricated "No", not a real
+    affirmative signal)."""
+    spider.token = "TOK"
+    item = _base_item()
+    record = dict(SEARCH_RECORD, isAcceptingNewChildren=True)
+    response = _json_response(SEARCH_URL, [record], request=Request(url=SEARCH_URL))
+
+    results = list(spider.parse_detail(response, item=item, provider_number="CCLC-38436"))
+    enriched = results[0].cb_kwargs["item"]
+    assert enriched["ga_accepting_new_children"] == "Yes"
+
+
+def test_parse_detail_missing_accepting_key_is_none(spider):
+    """bug_02 regression: a record that omits isAcceptingNewChildren entirely
+    must not be fabricated into "No" either."""
+    spider.token = "TOK"
+    item = _base_item()
+    record = dict(SEARCH_RECORD)
+    del record["isAcceptingNewChildren"]
+    response = _json_response(SEARCH_URL, [record], request=Request(url=SEARCH_URL))
+
+    results = list(spider.parse_detail(response, item=item, provider_number="CCLC-38436"))
+    enriched = results[0].cb_kwargs["item"]
+    assert enriched["ga_accepting_new_children"] is None
+
+
+def test_parse_detail_profit_status_null_is_none(spider):
+    """bug_08 regression: profitStatus is confirmed (live, see
+    bug_02_georgia_capture.json) to be null on every sampled provider. A null
+    value must map to None, not a fabricated status."""
+    spider.token = "TOK"
+    item = _base_item()
+    response = _json_response(SEARCH_URL, [SEARCH_RECORD], request=Request(url=SEARCH_URL))
+
+    results = list(spider.parse_detail(response, item=item, provider_number="CCLC-38436"))
+    enriched = results[0].cb_kwargs["item"]
+    assert enriched["ga_profit_status"] is None
+
+
+def test_parse_detail_profit_status_passes_through_real_value(spider):
+    """bug_08: if GA's API ever does populate profitStatus, it must still
+    surface as-is (the fix only confirms null isn't fabricated, not that a
+    real value gets suppressed)."""
+    spider.token = "TOK"
+    item = _base_item()
+    record = dict(SEARCH_RECORD, profitStatus="For Profit")
+    response = _json_response(SEARCH_URL, [record], request=Request(url=SEARCH_URL))
+
+    results = list(spider.parse_detail(response, item=item, provider_number="CCLC-38436"))
+    enriched = results[0].cb_kwargs["item"]
+    assert enriched["ga_profit_status"] == "For Profit"
 
 
 def test_parse_detail_keeps_csv_services_when_api_empty(spider):

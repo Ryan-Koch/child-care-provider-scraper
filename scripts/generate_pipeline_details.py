@@ -78,6 +78,8 @@ def transformation_for(field):
         tags = ["Whitespace cleanup", "ISO 8601 date"]
     elif field == norm.CAPACITY_FIELD:
         tags = ["Whitespace cleanup", "Integer coercion"]
+    elif field == norm.DEFICIENCIES_FIELD:
+        tags = ["Whitespace cleanup", "Integer coercion (bug_10)"]
     elif field == norm.AGES_SERVED_FIELD:
         tags = ["Whitespace cleanup", "List -> string"]
     elif field in norm.COORDINATE_FIELDS:
@@ -88,6 +90,8 @@ def transformation_for(field):
         tags = ["Whitespace cleanup", "Preserved (drives facility_category)"]
     elif field == "address":
         tags = ["Whitespace cleanup", "Address cleanup", "Component parse -> city/state/zip"]
+    elif field == "mailing_address":
+        tags = ["Whitespace cleanup", "Field collapse from state-specific source", "Address cleanup"]
     elif field in collapse_targets:
         label = "Field collapse from state-specific source"
         if field in norm._BOOLEAN_COLLAPSE_FIELDS:

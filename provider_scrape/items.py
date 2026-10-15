@@ -422,6 +422,13 @@ class ProviderItem(scrapy.Item):
     ny_phone_extension = scrapy.Field()
     ny_school_district_name = scrapy.Field()
     ny_capacity_description = scrapy.Field()
+    # bug_05: raw per-age capacity counts, preserved before the normalization
+    # pipeline coerces the common infant/toddler/preschool/school fields to
+    # bool (count > 0). Pending story 35 (capacity_by_age).
+    ny_capacity_infant = scrapy.Field()
+    ny_capacity_toddler = scrapy.Field()
+    ny_capacity_preschool = scrapy.Field()
+    ny_capacity_school_age = scrapy.Field()
 
     # Pennsylvania specific fields
     pa_stars_rating = scrapy.Field()
@@ -465,8 +472,24 @@ class ProviderItem(scrapy.Item):
     mi_services_provided = scrapy.Field()
     mi_full_day = scrapy.Field()
 
-    # Minnesota specific fields
+    # Minnesota specific fields (bug_11). license_begin_date holds the
+    # CURRENT license term's start (the CSV's "Current Effective Date"), to
+    # match other states' semantics; mn_original_license_date holds the
+    # facility's first-ever license date (the CSV's "Initial Effective
+    # Date" -- the site's own naming is reversed from what cross-state
+    # consumers expect). mn_last_renewed_date intentionally still carries
+    # the same "Current Effective Date" value as license_begin_date --
+    # story 38 will collapse that duplication into a common
+    # last_renewed_date field. Both are normalized to ISO here by the
+    # spider (normalize_date), since neither is in normalization.DATE_FIELDS
+    # (that list is common-fields-only).
     mn_last_renewed_date = scrapy.Field()
+    # Large clusters at 2014-07-01 (2,519 records) and 2014-01-01 (963) are
+    # real: 245D Home and Community Based Services licenses whose *license
+    # category* began on those dates, not a data-migration artifact -- do
+    # not null them out. Pending story 37 (collapse into a common
+    # original_license_date field).
+    mn_original_license_date = scrapy.Field()
     mn_licensed_to_provide = scrapy.Field()
     mn_restrictions = scrapy.Field()
     mn_setting = scrapy.Field()
@@ -534,23 +557,41 @@ class ProviderItem(scrapy.Item):
     # New Jersey specific fields (from GetProviders.aspx)
     nj_unique_program_id = scrapy.Field()
     nj_program_facility_type = scrapy.Field()
+    # bug_07: resolved label for nj_program_facility_type (also feeds
+    # provider_type -> facility_category). See new_jersey.py module docstring
+    # and tasks/common_fields_epic/bug_07_nj_lookups.json for the source.
+    nj_program_facility_type_label = scrapy.Field()
+    # No label source found anywhere for this one (bug_07) -- raw code only.
     nj_facility_type = scrapy.Field()
     nj_license_type = scrapy.Field()
+    nj_license_type_label = scrapy.Field()  # bug_07; also feeds common license_type
     nj_quality_rating = scrapy.Field()
+    nj_quality_rating_label = scrapy.Field()  # bug_07
     nj_accreditation = scrapy.Field()
+    nj_accreditation_labels = scrapy.Field()  # bug_07; also feeds common accreditation
     nj_yearly_schedule = scrapy.Field()
+    nj_yearly_schedule_label = scrapy.Field()  # bug_07
     nj_doh_id = scrapy.Field()
     nj_phone_extension = scrapy.Field()
     nj_participation_programs = scrapy.Field()
+    nj_participation_programs_labels = scrapy.Field()  # bug_07
     nj_curriculum = scrapy.Field()
     nj_child_assessment = scrapy.Field()
     nj_environmental_features = scrapy.Field()
+    nj_environmental_features_labels = scrapy.Field()  # bug_07
     nj_meal_options = scrapy.Field()
+    nj_meal_options_labels = scrapy.Field()  # bug_07; also feeds common meals
     nj_special_needs_training = scrapy.Field()
+    nj_special_needs_training_labels = scrapy.Field()  # bug_07
     nj_transportation = scrapy.Field()
+    nj_transportation_labels = scrapy.Field()  # bug_07; also feeds common transportation
     nj_special_schedules = scrapy.Field()
+    nj_special_schedules_labels = scrapy.Field()  # bug_07
     nj_discounts = scrapy.Field()
+    nj_discounts_labels = scrapy.Field()  # bug_07
     nj_fees = scrapy.Field()
+    nj_fees_labels = scrapy.Field()  # bug_07
+    # No label source found anywhere for this one (bug_07) -- raw value only.
     nj_mccyn_plus = scrapy.Field()
     nj_social_media = scrapy.Field()
     nj_tuition_infant_hourly = scrapy.Field()
@@ -573,7 +614,23 @@ class ProviderItem(scrapy.Item):
     # Rhode Island specific fields
     ri_brightstars_rating = scrapy.Field()
     ri_license_decision = scrapy.Field()
+    # bug_13: license_begin_date (current license term's start) is fed from
+    # currentLicenseStartDate -- confirmed directly against the independent
+    # licenseExpirationDate field (~1 year gap for >97% of records).
+    # ri_most_recently_renewed intentionally still carries the same value --
+    # story 38 will collapse that duplication into a common
+    # last_renewed_date field. Normalized to ISO here by the spider
+    # (normalize_date), since it's not in normalization.DATE_FIELDS (that
+    # list is common-fields-only).
     ri_most_recently_renewed = scrapy.Field()
+    # The original/first-ever license date (originalLicenseStartDate),
+    # pending story 37 (collapse into a common original_license_date
+    # field). A sharp 1997 spike (16.8% of hf_sample) is a suspected
+    # registry system-migration/backfill artifact -- kept as-is, not
+    # nulled, per the bug_11 (VT) precedent: a migration artifact can't be
+    # told apart from a genuine 1997 date on a per-record basis, and
+    # nulling it would understate provider age for real 1997 licensees.
+    ri_original_license_date = scrapy.Field()
     ri_ccap_status = scrapy.Field()
     ri_ccap_expiration_date = scrapy.Field()
     ri_head_start = scrapy.Field()
@@ -784,8 +841,26 @@ class ProviderItem(scrapy.Item):
     # common `license_number` (DC precedent) and duplicated here as an explicit
     # join key. The STARS quality rating stays state-specific per the
     # field-mapping playbook. The `infant`/`toddler`/`preschool`/`school` common
-    # fields carry the per-age *capacities*; the per-age *vacancies* (the
-    # registry's frequently-updated, VT-unique content) live in the vt_* fields.
+    # fields carry the per-age *capacities* (bug_05: coerced to bool-or-None,
+    # `count > 0`, by the normalization pipeline -- the raw count is preserved
+    # here as `vt_{age}_capacity`, pending story 35/capacity_by_age); the
+    # per-age *vacancies* (the registry's frequently-updated, VT-unique
+    # content) live in the vt_*_vacancies fields.
+    #
+    # bug_11: VT's detail page publishes exactly one license date
+    # (field_ldate3, labelled "License Date") -- there is no separate
+    # current-term/renewal/expiration date, so nothing on the page
+    # represents a "current term start". The common `license_begin_date` is
+    # therefore left None for every VT record, and the page's one date moves
+    # here instead (normalized to ISO by the spider via normalize_date,
+    # since this field is not in normalization.DATE_FIELDS). About 22% of
+    # values cluster in 2005 (half on the 1st of a month, including
+    # decades-old Head Start programs) -- suspected system-cutover dates
+    # from a VT registry migration that may understate provider age, not
+    # necessarily each facility's true original license date. They are NOT
+    # nulled out: that can't be told apart from a genuine 2005 date on a
+    # per-record basis.
+    vt_original_license_date = scrapy.Field()
     vt_provider_id = scrapy.Field()  # PARTY_ID, e.g. "3053"
     vt_star_level = scrapy.Field()  # STARS rating, e.g. "4 Star"
     vt_type_of_care = scrapy.Field()  # e.g. "Full-Time, Part-Time, Daytime"
@@ -802,6 +877,11 @@ class ProviderItem(scrapy.Item):
     vt_pets = scrapy.Field()
     vt_vacancy_as_of = scrapy.Field()  # "Current as of" date for vacancies
     vt_current_vacancy = scrapy.Field()  # total current vacancy count
+    # bug_05: raw per-age capacity counts (see comment above). Pending story 35.
+    vt_infant_capacity = scrapy.Field()
+    vt_toddler_capacity = scrapy.Field()
+    vt_preschool_capacity = scrapy.Field()
+    vt_school_age_capacity = scrapy.Field()
     vt_infant_vacancies = scrapy.Field()
     vt_toddler_vacancies = scrapy.Field()
     vt_preschool_vacancies = scrapy.Field()
@@ -1016,8 +1096,18 @@ class ProviderItem(scrapy.Item):
     ma_account_id = scrapy.Field()  # Salesforce accountId -- the dedupe key
     ma_encrypted_id = scrapy.Field()  # Encrypted_Id__c -- the detail-call key
     ma_program_number = scrapy.Field()  # providerNumber, e.g. "P-176763"
-    ma_last_issue_date = scrapy.Field()  # most-recent licence issuance (D-3
-    # keeps the FIRST issuance on the common `license_begin_date`)
+    # bug_13: license_begin_date (current license term's start) is fed from
+    # Last_Issue_Date__c / lastIssueDate -- MA's ~3-year renewal cycle
+    # reissues this date on every renewal (confirmed against the provider's
+    # own "Renewal"-typed visit dates). ma_last_issue_date intentionally
+    # still carries the same value -- story 38 will collapse that
+    # duplication into a common last_renewed_date field. Normalized to ISO
+    # here by the spider (normalize_date), since it's not in
+    # normalization.DATE_FIELDS (that list is common-fields-only).
+    ma_last_issue_date = scrapy.Field()
+    # The original/first-ever issuance (First_Issue_Date__c / firstIssueDate),
+    # pending story 37 (collapse into a common original_license_date field).
+    ma_original_license_date = scrapy.Field()
     ma_temporary_status = scrapy.Field()  # Temporary_Status__c, e.g. "Reopened"
     ma_capacity_by_age = scrapy.Field()  # dict of the non-zero per-age-group counts
     ma_availability = scrapy.Field()  # raw availability text

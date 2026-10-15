@@ -6,14 +6,14 @@
   "provider_action_type_of_action": "Facility Visit",
   "provider_action_date_of_visit": "2026-07-17T00:00:00.000",
   "facility_visit_type": "Announced",
-  "regulation_cited": "2026-07-17T00:00:00.000",
-  "regulation_code": "27U",
-  "regulation_short_desc": "Ratios, Group Size, and Supervision",
-  "regulation_correction_due": "2026-07-17T00:00:00.000",
-  "regulation_correction_status": "Pending",
-  "regulation_corrected_date": "2026-07-17T00:00:00.000",
-  "regulation_how_corrected": "Document",
-  "regulation_corrective_action": "A licensee shall ensure supervision and direct observation of children is provided   at all times.    The staff member received a written warning and counseling from the center."
+  "facility_visit_regulation_cited": "2026-07-17T00:00:00.000",
+  "facility_visit_regulation_code": "27U",
+  "facility_visit_regulation_short_description": "Ratios, Group Size, and Supervision",
+  "facility_visit_regulation_correction_due": "2026-07-17T00:00:00.000",
+  "facility_visit_regulation_correction_status": "Pending",
+  "facility_visit_regulation_corrected_date": "2026-07-17T00:00:00.000",
+  "facility_visit_regulation_how_corrected": "Document",
+  "facility_visit_regulation_corrective_action_notes": "A licensee shall ensure supervision and direct observation of children is provided   at all times.    The staff member received a written warning and counseling from the center."
  },
  {
   "license_number": "52621",
@@ -22,14 +22,14 @@
   "provider_action_type_of_action": "Facility Visit",
   "provider_action_date_of_visit": "2026-07-20T00:00:00.000",
   "facility_visit_type": "Unannounced Full Compliance Review",
-  "regulation_cited": "2026-07-20T00:00:00.000",
-  "regulation_code": "22P",
-  "regulation_short_desc": "Children's Files",
-  "regulation_correction_due": "2026-08-07T00:00:00.000",
-  "regulation_correction_status": "Pending",
-  "regulation_corrected_date": "2026-07-20T00:00:00.000",
-  "regulation_how_corrected": "Document",
-  "regulation_corrective_action": "Ensure child files are complete."
+  "facility_visit_regulation_cited": "2026-07-20T00:00:00.000",
+  "facility_visit_regulation_code": "22P",
+  "facility_visit_regulation_short_description": "Children's Files",
+  "facility_visit_regulation_correction_due": "2026-08-07T00:00:00.000",
+  "facility_visit_regulation_correction_status": "Pending",
+  "facility_visit_regulation_corrected_date": "2026-07-20T00:00:00.000",
+  "facility_visit_regulation_how_corrected": "Document",
+  "facility_visit_regulation_corrective_action_notes": "Ensure child files are complete."
  },
  {
   "license_number": "278255",
@@ -38,14 +38,14 @@
   "provider_action_type_of_action": "Facility Visit",
   "provider_action_date_of_visit": "2026-07-17T00:00:00.000",
   "facility_visit_type": "Unannounced Full Compliance Review",
-  "regulation_cited": "2026-07-17T00:00:00.000",
-  "regulation_code": "8U",
-  "regulation_short_desc": "License Renewal",
-  "regulation_correction_due": "2026-08-14T00:00:00.000",
-  "regulation_correction_status": "Pending",
-  "regulation_corrected_date": "2026-07-17T00:00:00.000",
-  "regulation_how_corrected": "Document",
-  "regulation_corrective_action": "Ensure notarized application is received by OCCL at least 60 days prior to license expiring."
+  "facility_visit_regulation_cited": "2026-07-17T00:00:00.000",
+  "facility_visit_regulation_code": "8U",
+  "facility_visit_regulation_short_description": "License Renewal",
+  "facility_visit_regulation_correction_due": "2026-08-14T00:00:00.000",
+  "facility_visit_regulation_correction_status": "Pending",
+  "facility_visit_regulation_corrected_date": "2026-07-17T00:00:00.000",
+  "facility_visit_regulation_how_corrected": "Document",
+  "facility_visit_regulation_corrective_action_notes": "Ensure notarized application is received by OCCL at least 60 days prior to license expiring."
  },
  {
   "license_number": "564685",
@@ -54,11 +54,11 @@
   "provider_action_type_of_action": "Facility Visit",
   "provider_action_date_of_visit": "2026-07-14T00:00:00.000",
   "facility_visit_type": "Unannounced Full Compliance Review",
-  "regulation_cited": "2026-07-14T00:00:00.000",
-  "regulation_code": "56U",
-  "regulation_short_desc": "Sleeping Accommodations and Safe Sleep Environments",
-  "regulation_correction_due": "2026-08-03T00:00:00.000",
-  "regulation_correction_status": "Pending",
-  "regulation_corrective_action": "Purchase new nap mats for all classrooms."
+  "facility_visit_regulation_cited": "2026-07-14T00:00:00.000",
+  "facility_visit_regulation_code": "56U",
+  "facility_visit_regulation_short_description": "Sleeping Accommodations and Safe Sleep Environments",
+  "facility_visit_regulation_correction_due": "2026-08-03T00:00:00.000",
+  "facility_visit_regulation_correction_status": "Pending",
+  "facility_visit_regulation_corrective_action_notes": "Purchase new nap mats for all classrooms."
  }
 ]

@@ -84,15 +84,17 @@ def clean_whitespace(value):
     return value
 
 
-def _title_token(token: str) -> str:
+def _title_token(token: str, preserve_upper=NAME_PRESERVE_UPPER) -> str:
     """Title-case a single whitespace-delimited token.
 
-    Keeps corporate/Roman tokens uppercase, capitalizes the first letter and
-    letters following a hyphen/slash, and leaves the letter after an apostrophe
-    lowercase (so ``CHILD'S`` -> ``Child's``, not ``Child'S``).
+    Keeps any token in ``preserve_upper`` uppercase (default:
+    ``NAME_PRESERVE_UPPER``, corporate suffixes and Roman numerals),
+    capitalizes the first letter and letters following a hyphen/slash, and
+    leaves the letter after an apostrophe lowercase (so ``CHILD'S`` ->
+    ``Child's``, not ``Child'S``).
     """
     core = re.sub(r"[^A-Za-z]", "", token)
-    if core and core.upper() in NAME_PRESERVE_UPPER:
+    if core and core.upper() in preserve_upper:
         return token.upper()
     lowered = token.lower()
     return re.sub(
@@ -232,8 +234,14 @@ def normalize_date(value):
 COORDINATE_FIELDS = ("latitude", "longitude")
 CAPACITY_FIELD = "capacity"
 AGES_SERVED_FIELD = "ages_served"
+DEFICIENCIES_FIELD = "deficiencies"
 
 _INTEGER_RE = re.compile(r"\d+")
+
+# Thousands-grouped count, e.g. NY's "1,100" school-age capacity or TX's rare
+# high deficiency counts. Shared by normalize_deficiencies (below) and
+# coerce_age_served_flag/_coerce_strict_bool_flag (Task 10).
+_GROUPED_INTEGER_RE = re.compile(r"\d{1,3}(?:,\d{3})+")
 
 
 def normalize_capacity(value):
@@ -254,6 +262,77 @@ def normalize_capacity(value):
             return int(stripped)
         logger.warning("normalize_capacity: non-integer capacity %r (left unchanged)", value)
         return value
+    return value
+
+
+def normalize_deficiencies(value):
+    """Coerce the provider-level ``deficiencies`` count to ``int``-or-``None``
+    (bug_10).
+
+    CT/KS/WI already compute this as a plain Python ``int`` in their spiders
+    (a ``sum``/``len`` over parsed inspection rows); TX instead passes its CSV
+    ``Deficiencies`` column straight through as a numeric **string**
+    (``'0'``, ``'1'``, ``'2'``, ...). This normalizes every shape the pipeline
+    might see to the same ``int``-or-``None``, unlike :func:`normalize_capacity`
+    (which leaves an unparseable value unchanged) -- a bad deficiency count is
+    data we don't trust, so it is dropped to ``None`` rather than kept:
+
+    - already an ``int`` (and not a ``bool``) -> returned as-is, unless
+      negative (see below).
+    - a clean digit string (``"0"``, ``"47"``) -> ``int``.
+    - a thousands-grouped string (``"1,234"``) -> commas stripped, then ``int``.
+    - an integral float or integral-float **string** (``2.0``, ``"2.0"``) ->
+      ``int`` (``2``). A non-integral float (``2.5``) is *not* rounded --
+      treated as unparseable (below).
+    - ``None``, ``""``, or whitespace-only -> ``None`` (no signal).
+    - negative (any numeric shape), non-numeric text, or a non-integral float
+      -> ``None``, **logged at DEBUG**. We never guess a count.
+
+    ``bool`` is checked first and becomes ``None`` (logged at DEBUG) --
+    ``isinstance(True, int)`` is ``True`` in Python, so without this guard a
+    stray boolean would fall into the ``int`` branch and be read as a count
+    of 0/1. Unlike :func:`normalize_capacity`, a bool is not passed through:
+    ``deficiencies`` is strictly int-or-None.
+    """
+    if isinstance(value, bool):
+        logger.debug("normalize_deficiencies: boolean value %r -> None", value)
+        return None
+    if isinstance(value, int):
+        if value < 0:
+            logger.debug("normalize_deficiencies: negative value %r -> None", value)
+            return None
+        return value
+    if isinstance(value, float):
+        if value < 0:
+            logger.debug("normalize_deficiencies: negative value %r -> None", value)
+            return None
+        if value.is_integer():
+            return int(value)
+        logger.debug("normalize_deficiencies: non-integer value %r -> None", value)
+        return None
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return None
+        if stripped.startswith("-"):
+            logger.debug("normalize_deficiencies: negative value %r -> None", value)
+            return None
+        # Strip thousands-grouping commas (e.g. "1,234") before the digit
+        # check, same gated approach as coerce_age_served_flag -- only when
+        # the *whole* trimmed string matches the grouped pattern, so a
+        # malformed value like "1,2,3" isn't silently reinterpreted.
+        candidate = stripped.replace(",", "") if _GROUPED_INTEGER_RE.fullmatch(stripped) else stripped
+        if _INTEGER_RE.fullmatch(candidate):
+            return int(candidate)
+        try:
+            as_float = float(candidate)
+        except ValueError:
+            logger.debug("normalize_deficiencies: non-numeric value %r -> None", value)
+            return None
+        if as_float.is_integer():
+            return int(as_float)
+        logger.debug("normalize_deficiencies: non-integer value %r -> None", value)
+        return None
     return value
 
 
@@ -531,7 +610,10 @@ FACILITY_CATEGORY_BUCKETS = {
         # program operating under a Letter of Compliance.
         "CTR",
         "LOC",
-        # Ohio (childcaresearch.ohio.gov) program types.
+        # Ohio (childcaresearch.ohio.gov) program types. New Jersey
+        # (childcarenj.gov ProgramFacilityType code 1, resolved via bug_07's
+        # programTypes lookup table) reuses this exact string -- no separate
+        # entry needed.
         "Licensed Child Care Center",
         "Licensed School-Based Preschool",
         # North Dakota (search.ec.hhs.nd.gov) facilityType labels. Facility- and
@@ -711,6 +793,13 @@ FACILITY_CATEGORY_BUCKETS = {
         # own residence -- matches the Delaware "Licensed Family Child Care"
         # precedent above (NH's exact string carries a trailing "Program").
         "Licensed Family Child Care Program",
+        # New Jersey (childcarenj.gov ProgramFacilityType code 2, resolved
+        # via bug_07's programTypes lookup table): registered care in the
+        # provider's own residence -- a *different* exact string from the
+        # existing "Registered Family Child Care Home" (Vermont) entry above
+        # ("Provider" vs. "Home"), so it needs its own entry or it would be
+        # unmapped -> "other" with a logged warning.
+        "Registered Family Child Care Provider",
     ],
     "group_home": [
         "GFDC",
@@ -895,7 +984,11 @@ FIELD_COLLAPSE_MAP = {
         "co_license_type",
         "az_license_type",
         "nc_license_type",
-        "nj_license_type",
+        # bug_07: source renamed from the raw nj_license_type to the resolved
+        # nj_license_type_label (int code -> human label; see new_jersey.py
+        # and tasks/common_fields_epic/bug_07_nj_lookups.json). nj_license_type
+        # itself is untouched (D2) and still carries the raw code.
+        "nj_license_type_label",
         "wv_license_type",
         "wa_license_type",
         "hi_license_type",
@@ -919,7 +1012,8 @@ FIELD_COLLAPSE_MAP = {
         "al_accreditations",
         "ga_accreditation",
         "hi_accreditations",
-        "nj_accreditation",
+        # bug_07: renamed from raw nj_accreditation to resolved labels.
+        "nj_accreditation_labels",
         "md_accreditation",
         "ct_accreditations",
     ],
@@ -928,7 +1022,8 @@ FIELD_COLLAPSE_MAP = {
         "ga_meals",
         "hi_meals",
         "nm_meals",
-        "nj_meal_options",
+        # bug_07: renamed from raw nj_meal_options to resolved labels.
+        "nj_meal_options_labels",
         "pa_meal_options",
     ],
     "accepting_new_children": [
@@ -936,7 +1031,8 @@ FIELD_COLLAPSE_MAP = {
         "ga_accepting_new_children",
         "ct_accepting_referrals",
     ],
-    "transportation": ["ga_transportation", "nj_transportation", "ct_transportation"],
+    # bug_07: nj_transportation renamed to resolved nj_transportation_labels.
+    "transportation": ["ga_transportation", "nj_transportation_labels", "ct_transportation"],
     "head_start": [
         "co_head_start",
         "az_headstart",
@@ -948,6 +1044,14 @@ FIELD_COLLAPSE_MAP = {
     ],
     "curriculum": ["ga_curriculum", "nj_curriculum"],
 }
+# NOTE (bug_06): `scholarships_accepted` is deliberately NOT in this map --
+# every state that fills it sets the common field directly in the spider
+# (no xx_* source field to collapse from). Its bool-or-None coercion lives at
+# the end of normalize_item (step 9), after this collapse step runs, via
+# coerce_scholarships_accepted_flag. If a future story (e.g. story 13) adds a
+# collapse source for it here, keep _BOOLEAN_COLLAPSE_FIELDS/_coerce_bool out
+# of that path -- reuse coerce_scholarships_accepted_flag instead, since
+# plain _coerce_bool would misread "Not Accepted"-shaped text as True.
 
 # Common fields whose collapsed value is coerced to a boolean.
 _BOOLEAN_COLLAPSE_FIELDS = {"head_start"}
@@ -1196,6 +1300,223 @@ def parse_address_components(value):
     return (city, state, zip_code)
 
 
+# --------------------------------------------------------------------------- #
+# Task 09 — languages: order-preserving de-dupe + ALL CAPS -> Title Case
+# (bug_04: Illinois builds a 3-column ``languages`` list with no de-dupe,
+# giving ``["ENGLISH", "ENGLISH"]`` on 66% of records)
+# --------------------------------------------------------------------------- #
+
+LANGUAGES_FIELD = "languages"
+
+# Acronyms kept uppercase when title-casing an ALL-CAPS ``languages`` entry
+# (c.f. NAME_PRESERVE_UPPER for provider names). A full hf_sample survey
+# (2026-10-15) found no list-type state emitting one of these today -- CT/MA/NJ
+# already emit mixed-case entries like "American Sign Language (ASL)", which
+# is left alone by the isupper() guard below regardless -- but they're common,
+# recurring language-field acronyms and cheap to guard against before a state
+# emits one in ALL CAPS.
+LANGUAGE_PRESERVE_UPPER = {"ASL", "ESL"}
+
+
+def title_case_language(value):
+    """Convert an ALL-CAPS-looking ``languages`` entry to Title Case.
+
+    Mirrors :func:`title_case_name`: only acts when the whole string is
+    upper-case (``str.isupper()``), using the languages-specific
+    ``LANGUAGE_PRESERVE_UPPER`` acronym allowlist in place of corporate
+    suffixes. Already mixed-case entries (``"American Sign Language (ASL)"``,
+    ``"Punjabi (Gurmukhi)"``) are intentional as emitted and left untouched.
+    """
+    if not isinstance(value, str) or not value.isupper():
+        return value
+    return " ".join(_title_token(t, LANGUAGE_PRESERVE_UPPER) for t in value.split())
+
+
+def normalize_languages(value):
+    """De-dupe and case-normalize a ``languages`` value.
+
+    - **list** (CT, HI, IL, MA, NJ): order-preserving de-dupe, ignoring case
+      and surrounding whitespace -- the *first* occurrence of a value wins, so
+      a later differently-cased repeat (``["ENGLISH", "English"]``) is
+      dropped rather than replacing the earlier one. Empty/whitespace-only
+      entries are dropped. Each kept entry is then title-cased if (and only
+      if) it is entirely upper-case (bug_04: ``"ENGLISH"`` -> ``"English"``),
+      via :func:`title_case_language`. An empty result becomes ``None``.
+    - **str** (AZ, CO, GA, IA, NE, NM, ND, RI, VT, WA, DC): left unchanged.
+      Roughly a dozen states emit a single delimited string instead of a list
+      (``"English, Spanish"``, ``"English (Spoken by Staff)"``), each with its
+      own separator and quirks (GA's per-language annotations, NM's boilerplate
+      sentence, WA's hyphen-joined "Chinese-Mandarin"). Splitting those
+      generally risks mangling a value like "Chinese (Mandarin)" or
+      "French/ Arabic", so it is intentionally out of scope here.
+    - anything else: returned unchanged.
+    """
+    if not isinstance(value, list):
+        return value
+    seen = set()
+    deduped = []
+    for entry in value:
+        if not isinstance(entry, str):
+            # Not expected in practice (languages entries are always strings),
+            # but de-dupe defensively rather than raising.
+            if entry not in seen:
+                seen.add(entry)
+                deduped.append(entry)
+            continue
+        cleaned = entry.strip()
+        if not cleaned:
+            continue
+        key = cleaned.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(title_case_language(cleaned))
+    return deduped or None
+
+
+# --------------------------------------------------------------------------- #
+# Task 10 — age-served flags: infant/toddler/preschool/school -> bool-or-None
+# (bug_05: NY emits per-age capacity count strings, VT emits per-age capacity
+# ints, TX emits "Y"/"N" (+ a stray "1"/"0"), GA emits "Yes"/absent into these
+# four common fields instead of a plain boolean)
+# --------------------------------------------------------------------------- #
+
+# The four age-served common fields, coerced to bool-or-None by this step.
+# NY/VT's raw per-age *capacity counts* (confirmed from source: NY's CSV
+# columns are literally "Infant Capacity"/"Toddler Capacity"/.../"School Age
+# Capacity"; VT's detail page groups field_infant4/etc. under the same
+# "capacity" section as field_totcap4 -> `capacity`, distinct from the
+# separate field_ivac4/etc. "vacancy" section already emitted as
+# vt_infant_vacancies/etc.) are preserved by the *spiders* in
+# ny_capacity_{age}/vt_{age}_capacity fields before this step runs — see
+# new_york.py.parse and vermont.py.parse_detail. That preservation lives in
+# the spiders (state-specific raw data), not here, per the project's
+# prefer-pipeline-fix rule for *shared* logic: this coercion is shared across
+# every state, but which raw field to preserve it in is a per-state naming
+# decision the spider already owns (ny_capacity_description, vt_*_vacancies).
+AGE_SERVED_FLAG_FIELDS = ("infant", "toddler", "preschool", "school")
+
+# _GROUPED_INTEGER_RE (thousands-grouped count, e.g. NY's "1,100" school-age
+# capacity) is defined in Task 05 above, shared with normalize_deficiencies.
+
+
+def _coerce_strict_bool_flag(value, *, func_name, extra_affirmative=frozenset(), extra_negative=frozenset()):
+    """Shared body for the strict bool-or-None flag coercers below.
+
+    Unlike ``_coerce_bool`` (used for ``head_start``'s field collapse), this
+    coercer has **no** "any other non-empty text is affirmative" fallback:
+    an unrecognized token always becomes ``None`` (logged at DEBUG), never a
+    guessed ``True``. ``extra_affirmative``/``extra_negative`` let a caller
+    add field-specific vocabulary (e.g. NM's "Accepted"/"Not Accepted" for
+    ``scholarships_accepted``) on top of the shared ``_AFFIRMATIVE``/
+    ``_NEGATIVE`` token sets, with negative tokens always checked first so a
+    negative phrase can never fall through to True.
+
+    ``func_name`` is only used to label the DEBUG log lines (each public
+    wrapper passes its own name) -- the two log messages below must keep the
+    literal substrings "unparseable flag" / "unexpected type for flag" that
+    existing tests assert on.
+    """
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value > 0
+    if isinstance(value, str):
+        token = value.strip().lower()
+        if token == "":
+            return None
+        if token in _NEGATIVE or token in extra_negative:
+            return False
+        if token in _AFFIRMATIVE or token in extra_affirmative:
+            return True
+        digits = token.replace(",", "") if _GROUPED_INTEGER_RE.fullmatch(token) else token
+        if _INTEGER_RE.fullmatch(digits):
+            return int(digits) > 0
+        logger.debug("%s: unparseable flag %r -> None", func_name, value)
+        return None
+    logger.debug("%s: unexpected type for flag %r -> None", func_name, value)
+    return None
+
+
+def coerce_age_served_flag(value):
+    """Coerce one age-served flag (infant/toddler/preschool/school) to bool-or-None.
+
+    States emit a mix of shapes for these four fields (appendix D1 / bug_05):
+
+    - already a plain ``bool`` -- returned as-is (most states).
+    - a non-bool ``int``/``float`` count (VT) -- ``> 0`` is ``True``, ``0`` is
+      ``False``. (VT's raw count is separately preserved as
+      ``vt_{age}_capacity`` by the spider; see module note above.)
+    - a clean digit-string count (NY, e.g. ``"8"``, ``"0"``) -- the same
+      ``int(...) > 0`` rule. (NY's raw count is separately preserved as
+      ``ny_capacity_{age}``.)
+    - ``"Y"``/``"N"`` (TX) and ``"Yes"`` (GA) -- the obvious bool reading, via
+      the existing ``_AFFIRMATIVE``/``_NEGATIVE`` token sets (Task 07). TX's
+      two stray ``"1"`` values and one ``"0"`` are *also* covered by those same
+      sets (``"1"`` is affirmative, ``"0"`` is negative) -- which happens to
+      agree with the "count > 0" rule above, so there's no conflict between
+      the token vocabulary and the numeric reading.
+    - a recognized negative-ish token (``"No"``, ``"false"``, ``"0"``,
+      ...) -- ``False``, *never* ``True``: a negative token is
+      checked, and matched, **before** any "any other text is affirmative"
+      fallback exists at all (unlike ``_coerce_bool``, this function has no
+      such fallback -- see the final ``else`` below).
+    - a thousands-grouped count (NY's ``"1,100"``/``"1,305"``) -- commas
+      stripped, then the same ``> 0`` rule.
+    - ``None`` or an empty string -- ``None`` (no signal).
+    - anything else unparseable -- becomes ``None`` and is **logged at
+      DEBUG**. We never guess
+      ``True`` for a token we don't recognize.
+
+    The coercion itself is shared with ``coerce_scholarships_accepted_flag``
+    (bug_06) via ``_coerce_strict_bool_flag``; this wrapper adds no extra
+    tokens.
+    """
+    return _coerce_strict_bool_flag(value, func_name="coerce_age_served_flag")
+
+
+# Extra vocabulary for scholarships_accepted (bug_06): NM emits "Accepted"/
+# "Not Accepted" rather than the "Yes"/"No" the other nine affected states
+# use. "Not Accepted" is an explicit negative token -- without it, the
+# generic "any other non-empty text is affirmative" reading (the one
+# `_coerce_bool` uses) would misread it as True, which is the bug.
+_SCHOLARSHIPS_ACCEPTED_EXTRA_AFFIRMATIVE = {"accepted"}
+_SCHOLARSHIPS_ACCEPTED_EXTRA_NEGATIVE = {"not accepted"}
+
+
+def coerce_scholarships_accepted_flag(value):
+    """Coerce ``scholarships_accepted`` to bool-or-None (bug_06).
+
+    States emit three shapes for this field (appendix D2):
+
+    - already a plain ``bool`` (most states, e.g. CT, DE, IN, IA, KY, LA, ME,
+      MA, MS, NE, NC, ND) -- returned as-is.
+    - ``"Yes"``/``"No"`` (AK, CO, GA, RI, TN, TX, UT, VT, DC) -- via the
+      shared ``_AFFIRMATIVE``/``_NEGATIVE`` token sets, same as
+      ``coerce_age_served_flag``.
+    - ``"Accepted"``/``"Not Accepted"`` (NM) -- NM's own vocabulary, added via
+      ``extra_affirmative``/``extra_negative``. ``"Not Accepted"`` is checked
+      as a negative token *before* any affirmative fallback, so it can never
+      become ``True``.
+    - ``None`` or an empty string -- ``None`` (no signal; e.g. VT leaves this
+      unset for ~23% of records).
+    - anything else unrecognized -- ``None``, logged at DEBUG. Never guessed
+      as ``True``.
+
+    This is the identical strict bool-or-None rule as
+    ``coerce_age_served_flag`` (Task 10 / bug_05) -- see
+    ``_coerce_strict_bool_flag`` -- with NM's two extra tokens layered on.
+    """
+    return _coerce_strict_bool_flag(
+        value,
+        func_name="coerce_scholarships_accepted_flag",
+        extra_affirmative=_SCHOLARSHIPS_ACCEPTED_EXTRA_AFFIRMATIVE,
+        extra_negative=_SCHOLARSHIPS_ACCEPTED_EXTRA_NEGATIVE,
+    )
+
+
 def normalize_item(item: dict, state: str) -> dict:
     """Apply all normalization steps to one provider item, in order.
 
@@ -1207,8 +1528,12 @@ def normalize_item(item: dict, state: str) -> dict:
       2. field collapse (state-specific -> common)
       3. date normalization
       4. numeric / type normalization
-      5. controlled vocabulary (status, facility_category)
-      6. address cleanup + component parse
+      5. languages de-dupe + casing (bug_04)
+      6. controlled vocabulary (status, facility_category)
+      7. address cleanup + component parse (also cleans ``mailing_address``,
+         bug_09)
+      8. age-served flags -> bool-or-None (bug_05)
+      9. scholarships_accepted -> bool-or-None (bug_06)
     """
     # 1. whitespace / string hygiene on every string/list value. ``inspections``
     #    is handled separately (it is a list of dicts, not strings).
@@ -1237,11 +1562,19 @@ def normalize_item(item: dict, state: str) -> dict:
         item[CAPACITY_FIELD] = normalize_capacity(item[CAPACITY_FIELD])
     if item.get(AGES_SERVED_FIELD) is not None:
         item[AGES_SERVED_FIELD] = normalize_ages_served(item[AGES_SERVED_FIELD])
+    if item.get(DEFICIENCIES_FIELD) is not None:
+        item[DEFICIENCIES_FIELD] = normalize_deficiencies(item[DEFICIENCIES_FIELD])
     for coord in COORDINATE_FIELDS:
         if item.get(coord) is not None:
             item[coord] = normalize_coordinate(item[coord])
 
-    # 5. controlled vocabulary. status is replaced in place (D4); the
+    # 5. languages (bug_04): order-preserving de-dupe + ALL CAPS -> Title Case
+    #    on list-type values only; a delimited string is left untouched (see
+    #    normalize_languages docstring).
+    if item.get(LANGUAGES_FIELD) is not None:
+        item[LANGUAGES_FIELD] = normalize_languages(item[LANGUAGES_FIELD])
+
+    # 6. controlled vocabulary. status is replaced in place (D4); the
     #    facility_category facet is derived additively from provider_type (D2)
     #    and provider_type itself is left untouched.
     if item.get("status") is not None:
@@ -1249,7 +1582,7 @@ def normalize_item(item: dict, state: str) -> dict:
     if item.get("provider_type") is not None:
         item["facility_category"] = facility_category_from_type(item["provider_type"])
 
-    # 6. address cleanup (in place, D1) + best-effort component parse (additive,
+    # 7. address cleanup (in place, D1) + best-effort component parse (additive,
     #    D2). Components are only set when clearly parsed and not already set.
     #    When the scraper already supplied all of city/state/zip (e.g. from
     #    structured source fields), skip the parse entirely: it can add nothing
@@ -1263,6 +1596,29 @@ def normalize_item(item: dict, state: str) -> dict:
             for key, parsed in (("city", city), ("state", parsed_state), ("zip", zip_code)):
                 if parsed is not None and not _is_present(item.get(key)):
                     item[key] = parsed
+
+    # bug_09: `mailing_address` gets the same whitespace/punctuation cleanup
+    # as `address` (trailing "United States"/"USA", comma spacing), but never
+    # feeds `parse_address_components` -- city/state/zip are the provider's
+    # physical location, not its mailing address, and the two can legitimately
+    # differ (a PO box, a different city, etc.).
+    if item.get("mailing_address") is not None:
+        item["mailing_address"] = clean_address(item["mailing_address"])
+
+    # 8. age-served flags (bug_05): coerce infant/toddler/preschool/school to
+    #    bool-or-None. Independent of the steps above (it only ever touches
+    #    these four fields), so it can safely run last.
+    for field in AGE_SERVED_FLAG_FIELDS:
+        if item.get(field) is not None:
+            item[field] = coerce_age_served_flag(item[field])
+
+    # 9. scholarships_accepted (bug_06): coerce bool / "Yes"-"No" /
+    #    "Accepted"-"Not Accepted" to bool-or-None. Not a FIELD_COLLAPSE_MAP
+    #    target today (every state that fills it does so directly in the
+    #    spider, not via collapse of an xx_* source field), so this just
+    #    needs to run after collapse (step 2) -- which it does, being last.
+    if item.get("scholarships_accepted") is not None:
+        item["scholarships_accepted"] = coerce_scholarships_accepted_flag(item["scholarships_accepted"])
 
     return item
 

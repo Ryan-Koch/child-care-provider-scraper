@@ -32,7 +32,6 @@ writeup (live-verified cookieless 2026-09-04).
 """
 
 import json
-import re
 from urllib.parse import urlencode
 
 import scrapy
@@ -263,32 +262,6 @@ def format_hours(schedule_list):
     if len(windows) == 1 and len(rows) > 1:
         return f"{rows[0][0]}-{rows[-1][0]} {rows[0][1]} - {rows[0][2]}"
     return "; ".join(f"{day} {start} - {end}" for day, start, end in rows)
-
-
-_ISO_DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
-_MDY_DATE_RE = re.compile(r"(\d{1,2})/(\d{1,2})/(\d{4})")
-
-
-def _normalize_last_issue_date(value):
-    """Normalize ``ma_last_issue_date`` to ISO ``YYYY-MM-DD``.
-
-    Unlike the common ``license_begin_date``, this state-specific field is
-    not routed through the shared normalization pipeline's ``DATE_FIELDS``
-    (that list is common-fields-only), so the spider normalizes it itself --
-    the Maine ``_normalize_date`` precedent. The search summary's
-    ``Last_Issue_Date__c`` is already ISO; the detail call's ``lastIssueDate``
-    is ``M/D/YYYY`` (not zero-padded, plan Sec 6.4). An unparseable value
-    passes through unchanged.
-    """
-    if not value:
-        return value
-    if _ISO_DATE_RE.fullmatch(value):
-        return value
-    match = _MDY_DATE_RE.fullmatch(value)
-    if match:
-        month, day, year = match.groups()
-        return f"{year}-{int(month):02d}-{int(day):02d}"
-    return value
 
 
 def _date_sort_key(value):
@@ -555,11 +528,20 @@ class MassachusettsSpider(scrapy.Spider):
         _put(item, "phone", record.get("phoneNumber") or acc.get("Phone"))
         _put(item, "email", acc.get("Provider_Email__c"))
         _put(item, "capacity", acc.get("Capacity__c"))
-        # D-3: license_begin_date is the FIRST issuance; the most-recent
-        # issuance is kept separately on ma_last_issue_date.
-        _put(item, "license_begin_date", acc.get("First_Issue_Date__c"))
+        # D-3 (bug_13): license_begin_date is the CURRENT license term's
+        # start. MA has no separate effective/expiration field; bug_13's
+        # research (gap-clustering at exact 3/6/9y multiples, and
+        # cross-checked within days of the provider's own "Renewal"-typed
+        # visit in two full detail captures) confirms Last_Issue_Date__c is
+        # reissued on each renewal, so it -- not First_Issue_Date__c -- is
+        # the current-term start. The original/first-ever issuance is kept
+        # separately on ma_original_license_date. license_begin_date is a
+        # common field in normalization.DATE_FIELDS, so the pipeline (not
+        # the spider) normalizes it -- the raw value is passed through here.
+        _put(item, "license_begin_date", acc.get("Last_Issue_Date__c"))
 
-        _put(item, "ma_last_issue_date", _normalize_last_issue_date(acc.get("Last_Issue_Date__c")))
+        _put(item, "ma_original_license_date", norm.normalize_date(acc.get("First_Issue_Date__c")))
+        _put(item, "ma_last_issue_date", norm.normalize_date(acc.get("Last_Issue_Date__c")))
         _put(item, "ma_temporary_status", acc.get("Temporary_Status__c"))
         _put(item, "ma_regional_office_address", acc.get("Region_Address__c"))
         _put(item, "ma_ccrr_name", acc.get("Associated_CCRR__c"))
@@ -688,12 +670,18 @@ class MassachusettsSpider(scrapy.Spider):
         _put_if_absent(item, "phone", det.get("providerPhone"))
         _put_if_absent(item, "email", det.get("providerEmail"))
         _put_if_absent(item, "capacity", det.get("capacity"))
-        _put_if_absent(item, "license_begin_date", det.get("firstIssueDate"))
+        # bug_13: ma_original_license_date (first issuance) is search-
+        # preferred -- this is the old license_begin_date precedence,
+        # carried over unchanged, just renamed.
+        _put_if_absent(item, "ma_original_license_date", norm.normalize_date(det.get("firstIssueDate")))
 
         # Detail-preferred fields: overwrite the search-summary placeholder
         # (set in _item_from_summary) whenever the detail call carries a
-        # value.
-        _put(item, "ma_last_issue_date", _normalize_last_issue_date(det.get("lastIssueDate")))
+        # value. bug_13: license_begin_date (current-term start, i.e. the
+        # last issuance) moves here -- this is the old ma_last_issue_date
+        # precedence, carried over unchanged.
+        _put(item, "license_begin_date", det.get("lastIssueDate"))
+        _put(item, "ma_last_issue_date", norm.normalize_date(det.get("lastIssueDate")))
         _put(item, "ma_regional_office_address", det.get("eecRegionalOfficeAddress"))
         ccrr = det.get("ccrrRecord") or {}
         _put(item, "ma_ccrr_name", ccrr.get("name"))

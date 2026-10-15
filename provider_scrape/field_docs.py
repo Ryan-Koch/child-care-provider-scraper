@@ -29,7 +29,10 @@ FIELD_DOCS = {
     "Replaced in place.",
     # Dates
     "status_date": "Date the current status took effect, normalized to ISO 8601 (YYYY-MM-DD).",
-    "license_begin_date": "License start date, normalized to ISO 8601.",
+    "license_begin_date": "Start date of the provider's CURRENT license term, normalized to ISO 8601 -- "
+    "not necessarily the facility's first-ever license date (bug_11). Some states publish no "
+    "current-term date at all, in which case this is left empty rather than falling back to an "
+    "original/migration date; see that state's xx_original_license_date field, where published.",
     "license_expiration": "License expiration date, normalized to ISO 8601.",
     # Address
     "address": "Full street address; whitespace-cleaned, trailing country "
@@ -75,10 +78,20 @@ FIELD_DOCS = {
     "county": "County (whitespace-cleaned only).",
     "hours": "Operating hours, as emitted by the state (whitespace-cleaned only).",
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
-    "scholarships_accepted": "Subsidy/scholarship acceptance, as emitted (whitespace-cleaned only).",
-    "deficiencies": "Deficiency count/summary, as emitted (whitespace-cleaned only).",
-    "infant": "Infant care indicator/count, as emitted (whitespace-cleaned).",
-    "toddler": "Toddler care indicator/count, as emitted (whitespace-cleaned).",
-    "preschool": "Preschool indicator/count, as emitted (whitespace-cleaned).",
-    "school": "School-age indicator/count, as emitted (whitespace-cleaned).",
+    "deficiencies": "Deficiency/violation count for the provider, coerced to an "
+    "integer (bug_10). Digit strings, comma-grouped counts, and integral "
+    "floats (e.g. 2.0) all become int; blank/None stays None; negative or "
+    "non-numeric values (and stray booleans) become None rather than a "
+    "guessed number.",
+    "infant": "Whether the provider serves infants: bool-or-None. States that "
+    'emit a per-age count ("8"), a count string ("Y"/"N"), or "Yes"/absent '
+    "are coerced via count/token > 0 (bug_05); an unparseable token becomes "
+    "None rather than a guessed True.",
+    "toddler": "Whether the provider serves toddlers: bool-or-None. See infant.",
+    "preschool": "Whether the provider serves preschoolers: bool-or-None. See infant.",
+    "school": "Whether the provider serves school-age children: bool-or-None. See infant.",
+    "scholarships_accepted": "Whether the provider accepts child-care subsidies/scholarships: "
+    'bool-or-None. States that emit "Yes"/"No" or NM\'s "Accepted"/"Not '
+    'Accepted" are coerced via the shared strict token rule (bug_06); an '
+    "unparseable token becomes None rather than a guessed True.",
 }

@@ -218,6 +218,33 @@ def test_normalize_inspection_converts_date_fields():
     assert out["status_updated"] == "2025-03-01"
 
 
+def test_date_fields_is_common_only_not_state_specific():
+    """bug_11: DATE_FIELDS is documented as common-(provider-level)-fields
+    only. mn_original_license_date / mn_last_renewed_date / vt_original_
+    license_date are state-specific, so the spiders normalize them directly
+    via normalize_date rather than routing them through this shared list --
+    guard against a future change quietly adding them here instead (which
+    would be harmless, normalize_date is idempotent on an already-ISO value,
+    but would duplicate normalization logic the spiders already do)."""
+    for field in ("mn_original_license_date", "mn_last_renewed_date", "vt_original_license_date"):
+        assert field not in normalization.DATE_FIELDS
+
+
+def test_normalize_item_leaves_mn_vt_date_fields_untouched():
+    # These are normalized by the spiders themselves (see minnesota.py /
+    # vermont.py), not by the shared pipeline -- normalize_item must leave a
+    # raw, non-ISO value on these fields exactly as given.
+    item = {
+        "mn_original_license_date": "07/01/2014",
+        "mn_last_renewed_date": "01/01/2026",
+        "vt_original_license_date": "07/01/2005",
+    }
+    out = normalization.normalize_item(item, "minnesota")
+    assert out["mn_original_license_date"] == "07/01/2014"
+    assert out["mn_last_renewed_date"] == "01/01/2026"
+    assert out["vt_original_license_date"] == "07/01/2005"
+
+
 # --------------------------------------------------------------------------- #
 # Task 05 — numeric & type consistency
 # --------------------------------------------------------------------------- #
@@ -235,6 +262,68 @@ def test_normalize_capacity_range_unchanged_and_logged(caplog):
         assert normalization.normalize_capacity("6-12") == "6-12"
         assert normalization.normalize_capacity("up to 50") == "up to 50"
     assert "non-integer capacity" in caplog.text
+
+
+def test_normalize_deficiencies_digit_string_to_int():
+    # TX (bug_10): CSV "Deficiencies" column passed through as a string.
+    assert normalization.normalize_deficiencies("0") == 0
+    assert normalization.normalize_deficiencies("1") == 1
+    assert normalization.normalize_deficiencies("2") == 2
+
+
+def test_normalize_deficiencies_int_passthrough():
+    # CT/KS/WI already compute a plain int (sum/len) in the spider.
+    assert normalization.normalize_deficiencies(0) == 0
+    assert normalization.normalize_deficiencies(47) == 47
+
+
+def test_normalize_deficiencies_none_and_blank_stay_none():
+    assert normalization.normalize_deficiencies(None) is None
+    assert normalization.normalize_deficiencies("") is None
+    assert normalization.normalize_deficiencies("   ") is None
+
+
+def test_normalize_deficiencies_comma_grouped_string():
+    assert normalization.normalize_deficiencies("1,234") == 1234
+
+
+def test_normalize_deficiencies_integral_float_and_string():
+    assert normalization.normalize_deficiencies(2.0) == 2
+    assert normalization.normalize_deficiencies("2.0") == 2
+    assert isinstance(normalization.normalize_deficiencies("2.0"), int)
+
+
+def test_normalize_deficiencies_non_integral_float_becomes_none_and_logged(caplog):
+    with caplog.at_level("DEBUG"):
+        assert normalization.normalize_deficiencies(2.5) is None
+        assert normalization.normalize_deficiencies("2.5") is None
+    assert "non-integer value" in caplog.text
+
+
+def test_normalize_deficiencies_negative_values_become_none_and_logged(caplog):
+    with caplog.at_level("DEBUG"):
+        assert normalization.normalize_deficiencies(-1) is None
+        assert normalization.normalize_deficiencies(-1.0) is None
+        assert normalization.normalize_deficiencies("-1") is None
+        assert normalization.normalize_deficiencies("-1,234") is None
+    assert "negative value" in caplog.text
+
+
+def test_normalize_deficiencies_non_numeric_becomes_none_and_logged(caplog):
+    with caplog.at_level("DEBUG"):
+        assert normalization.normalize_deficiencies("N/A") is None
+        assert normalization.normalize_deficiencies("see report") is None
+        assert normalization.normalize_deficiencies("1,2,3") is None  # malformed grouping
+    assert "non-numeric value" in caplog.text
+
+
+def test_normalize_deficiencies_bool_becomes_none(caplog):
+    # isinstance(True, int) is True in Python -- a stray bool must not be
+    # read as a count of 0/1, and the field stays strictly int-or-None.
+    with caplog.at_level(logging.DEBUG, logger="provider_scrape.normalization"):
+        assert normalization.normalize_deficiencies(True) is None
+        assert normalization.normalize_deficiencies(False) is None
+    assert "boolean value" in caplog.text
 
 
 def test_normalize_ages_served_list_to_string():
@@ -273,6 +362,116 @@ def test_normalize_item_applies_numeric_and_type_rules():
     assert out["ages_served"] == "Pre-K (4 - 5 yrs)"
     assert isinstance(out["latitude"], str) and out["latitude"] == "33.5141"
     assert out["longitude"] == "-112.109100000000000"
+
+
+def test_normalize_item_coerces_texas_deficiencies_string_to_int(caplog):
+    # bug_10: TX-shaped item -- numeric string from the CSV "Deficiencies"
+    # column -- is coerced to a plain int by the shared pipeline.
+    item = {"deficiencies": "2"}
+    out = normalization.normalize_item(item, "texas")
+    assert out["deficiencies"] == 2
+    assert isinstance(out["deficiencies"], int) and not isinstance(out["deficiencies"], bool)
+
+
+def test_normalize_item_leaves_int_emitting_states_deficiencies_unchanged():
+    # CT/KS/WI already compute a plain int (sum/len) in the spider -- the
+    # pipeline must not alter an already-correct value.
+    out_ct = normalization.normalize_item({"deficiencies": 47}, "connecticut")
+    out_ks = normalization.normalize_item({"deficiencies": 0}, "kansas")
+    out_wi = normalization.normalize_item({"deficiencies": 55}, "wisconsin")
+    assert out_ct["deficiencies"] == 47
+    assert out_ks["deficiencies"] == 0
+    assert out_wi["deficiencies"] == 55
+
+
+def test_normalize_item_skips_absent_deficiencies():
+    # A state that never sets this key is left alone -- no key is invented.
+    item = {"provider_name": "Example Center"}
+    out = normalization.normalize_item(item, "montana")
+    assert "deficiencies" not in out
+
+
+# --------------------------------------------------------------------------- #
+# Task 09 — languages de-dupe + casing (bug_04)
+# --------------------------------------------------------------------------- #
+def test_normalize_languages_illinois_regression():
+    # bug_04: Illinois' Language1..3 columns repeat the same ALL-CAPS value.
+    assert normalization.normalize_languages(["ENGLISH", "ENGLISH", "SPANISH"]) == [
+        "English",
+        "Spanish",
+    ]
+
+
+def test_normalize_languages_dedupe_ignores_case_and_whitespace():
+    assert normalization.normalize_languages(["English", " english ", "ENGLISH"]) == ["English"]
+
+
+def test_normalize_languages_dedupe_keeps_first_occurrence_order():
+    # First-seen casing/order wins; a later differently-cased repeat is
+    # dropped, not swapped in.
+    assert normalization.normalize_languages(["Spanish", "English", "spanish"]) == [
+        "Spanish",
+        "English",
+    ]
+
+
+def test_normalize_languages_drops_empty_and_whitespace_entries():
+    assert normalization.normalize_languages(["English", "", "   ", "Spanish"]) == [
+        "English",
+        "Spanish",
+    ]
+
+
+def test_normalize_languages_all_empty_becomes_none():
+    assert normalization.normalize_languages(["", "   "]) is None
+    assert normalization.normalize_languages([]) is None
+
+
+def test_normalize_languages_acronym_preserved():
+    # "ASL" must not be title-cased down to "Asl".
+    assert normalization.normalize_languages(["ASL", "ENGLISH"]) == ["ASL", "English"]
+
+
+def test_normalize_languages_mixed_case_entries_untouched():
+    # Already-intentional mixed case (CT/MA/NJ-style) is left exactly as is,
+    # including parenthetical annotations and multi-word entries.
+    value = ["American Sign Language (ASL)", "Punjabi (Gurmukhi)", "French Creole"]
+    assert normalization.normalize_languages(value) == value
+
+
+def test_normalize_languages_multi_word_allcaps_titlecased():
+    assert normalization.normalize_languages(["OTHER ASIAN", "UNKNOWN"]) == [
+        "Other Asian",
+        "Unknown",
+    ]
+
+
+def test_normalize_languages_string_passthrough_unchanged():
+    # Delimited strings (AZ ';', CO/IA/ND/RI/VT/WA/DC ',', GA '; ' with
+    # annotations, NM boilerplate) are intentionally left alone -- see
+    # normalize_languages docstring and bug_04 follow-ups.
+    value = "English (Taught and Spoken by Staff); Spanish (Taught)"
+    assert normalization.normalize_languages(value) == value
+
+
+def test_normalize_languages_non_list_non_string_unchanged():
+    assert normalization.normalize_languages(None) is None
+
+
+def test_title_case_language_leaves_mixed_case_alone():
+    assert normalization.title_case_language("American Sign Language (ASL)") == ("American Sign Language (ASL)")
+
+
+def test_normalize_item_dedupes_languages():
+    item = {"languages": ["ENGLISH", "ENGLISH"]}
+    out = normalization.normalize_item(item, "illinois")
+    assert out["languages"] == ["English"]
+
+
+def test_normalize_item_leaves_string_languages_unchanged():
+    item = {"languages": "English, Spanish"}
+    out = normalization.normalize_item(item, "colorado")
+    assert out["languages"] == "English, Spanish"
 
 
 # --------------------------------------------------------------------------- #
@@ -437,6 +636,21 @@ def test_collapse_no_sources_leaves_common_unset():
     assert out.get("head_start") is None
 
 
+def test_collapse_accepting_new_children_from_single_source():
+    # bug_02: a real Yes/No source (e.g. Colorado) still collapses normally.
+    out = normalization.collapse_state_fields({"co_accepting_new_children": "Yes"})
+    assert out["accepting_new_children"] == "Yes"
+
+
+def test_collapse_accepting_new_children_ignores_none_source():
+    # bug_02 regression: GA's ga_accepting_new_children is None whenever the
+    # source carries no signal (see georgia.py's _accepting_new_children); a
+    # None source must not be treated as "present" and must not fabricate a
+    # collapsed value.
+    out = normalization.collapse_state_fields({"ga_accepting_new_children": None})
+    assert out.get("accepting_new_children") is None
+
+
 def test_collapse_does_not_touch_quality_ratings():
     # Quality ratings are intentionally never collapsed.
     assert "ut_quality_rating" not in str(normalization.FIELD_COLLAPSE_MAP)
@@ -527,8 +741,246 @@ def test_normalize_item_skips_parse_when_components_present(caplog):
     assert "no ZIP" not in caplog.text
 
 
+def test_normalize_item_cleans_mailing_address_but_skips_component_parse():
+    # bug_09: mailing_address gets the same whitespace/country-suffix/comma
+    # cleanup as address, but must never feed city/state/zip -- those are the
+    # provider's physical location and a mailing address can legitimately
+    # point somewhere else (a PO box, a different city, etc.).
+    item = {
+        "al_mailing_address": "1909 Central Parkway SW,  Decatur, AL 35601, United States",
+    }
+    out = normalization.normalize_item(item, "alabama")
+    assert out["mailing_address"] == "1909 Central Parkway SW, Decatur, AL 35601"
+    assert out.get("city") is None
+    assert out.get("state") is None
+    assert out.get("zip") is None
+
+
+def test_normalize_item_blank_mailing_address_stays_none():
+    # bug_09: collapse_state_fields only copies a *present* source value, so
+    # a bare "," (or None) from the spider must not produce a collapsed
+    # mailing_address at all.
+    out = normalization.normalize_item({"al_mailing_address": None}, "alabama")
+    assert out.get("mailing_address") is None
+
+
 def test_normalize_item_still_parses_when_a_component_missing():
     # Only city/state present (no zip) -> the parse still runs and fills zip.
     item = {"address": "849 Centerville Road Warwick, RI 02886", "city": "Warwick", "state": "RI"}
     out = normalization.normalize_item(item, "rhode_island")
     assert out["zip"] == "02886"
+
+
+# --------------------------------------------------------------------------- #
+# Task 10 — age-served flags: infant/toddler/preschool/school -> bool-or-None
+# (bug_05)
+# --------------------------------------------------------------------------- #
+def test_coerce_age_served_flag_bool_and_none_passthrough():
+    assert normalization.coerce_age_served_flag(True) is True
+    assert normalization.coerce_age_served_flag(False) is False
+    assert normalization.coerce_age_served_flag(None) is None
+
+
+def test_coerce_age_served_flag_ny_digit_strings():
+    # NY's per-age capacity counts, emitted as strings.
+    assert normalization.coerce_age_served_flag("0") is False
+    assert normalization.coerce_age_served_flag("8") is True
+    assert normalization.coerce_age_served_flag("16") is True
+
+
+def test_coerce_age_served_flag_ny_comma_grouped_count():
+    # NY's two "1,100"/"1,305" outliers are thousands-grouped counts.
+    assert normalization.coerce_age_served_flag("1,100") is True
+    assert normalization.coerce_age_served_flag("0,000") is False
+
+
+def test_coerce_age_served_flag_malformed_commas_are_unparseable(caplog):
+    with caplog.at_level(logging.DEBUG, logger="provider_scrape.normalization"):
+        assert normalization.coerce_age_served_flag("1,10") is None
+        assert normalization.coerce_age_served_flag("2, 3") is None
+    assert "unparseable flag" in caplog.text
+
+
+def test_coerce_age_served_flag_vt_int_counts():
+    # VT's per-age capacity counts, emitted as ints (already coerced by the
+    # spider's _num() helper before the pipeline runs).
+    assert normalization.coerce_age_served_flag(0) is False
+    assert normalization.coerce_age_served_flag(2) is True
+
+
+def test_coerce_age_served_flag_tx_y_n_and_stray_tokens():
+    # TX's Y/N plus the two stray "1" values and one stray "0".
+    assert normalization.coerce_age_served_flag("Y") is True
+    assert normalization.coerce_age_served_flag("N") is False
+    assert normalization.coerce_age_served_flag("1") is True
+    assert normalization.coerce_age_served_flag("0") is False
+
+
+def test_coerce_age_served_flag_ga_yes_and_absent():
+    # GA only ever emits "Yes" (a falsy age group is left unset -> None).
+    assert normalization.coerce_age_served_flag("Yes") is True
+    assert normalization.coerce_age_served_flag(None) is None
+
+
+def test_coerce_age_served_flag_negative_tokens_never_become_true():
+    # None of these may ever coerce to True (plan §bug_05 criterion 4).
+    for token in ("N", "No", "no", "0", "false", "False", "", "   ", "n/a"):
+        assert normalization.coerce_age_served_flag(token) is not True
+
+
+def test_coerce_age_served_flag_unknown_token_logs_debug_and_returns_none(caplog):
+    with caplog.at_level(logging.DEBUG, logger="provider_scrape.normalization"):
+        result = normalization.coerce_age_served_flag("Sometimes")
+    assert result is None
+    assert "unparseable flag" in caplog.text
+
+
+def test_normalize_item_coerces_age_flags_for_every_state_shape():
+    # One representative item per affected state (bug_05 evidence), run
+    # through the full pipeline, confirming all four fields land bool-or-None.
+    ny_item = {
+        "infant": "8",
+        "toddler": "0",
+        "preschool": "16",
+        "school": "1,305",  # thousands-grouped count -> True
+    }
+    vt_item = {"infant": 2, "toddler": 0, "preschool": None, "school": 4}
+    tx_item = {"infant": "Y", "toddler": "N", "preschool": "1", "school": "0"}
+    ga_item = {"infant": "Yes", "toddler": None, "preschool": "Yes", "school": None}
+
+    out_ny = normalization.normalize_item(dict(ny_item), "new_york")
+    out_vt = normalization.normalize_item(dict(vt_item), "vermont")
+    out_tx = normalization.normalize_item(dict(tx_item), "texas")
+    out_ga = normalization.normalize_item(dict(ga_item), "georgia")
+
+    for out in (out_ny, out_vt, out_tx, out_ga):
+        for field in normalization.AGE_SERVED_FLAG_FIELDS:
+            assert out.get(field) is None or isinstance(out.get(field), bool), (
+                f"{field} not bool-or-None: {out.get(field)!r}"
+            )
+
+    assert (out_ny["infant"], out_ny["toddler"], out_ny["preschool"], out_ny["school"]) == (
+        True,
+        False,
+        True,
+        True,
+    )
+    assert (out_vt["infant"], out_vt["toddler"], out_vt["preschool"], out_vt["school"]) == (
+        True,
+        False,
+        None,
+        True,
+    )
+    assert (out_tx["infant"], out_tx["toddler"], out_tx["preschool"], out_tx["school"]) == (
+        True,
+        False,
+        True,
+        False,
+    )
+    assert (out_ga["infant"], out_ga["toddler"], out_ga["preschool"], out_ga["school"]) == (
+        True,
+        None,
+        True,
+        None,
+    )
+
+
+def test_normalize_item_skips_already_absent_age_flags():
+    # A state that never sets these keys at all (e.g. most states) is left
+    # alone -- no key is invented.
+    item = {"provider_name": "Example Center"}
+    out = normalization.normalize_item(item, "montana")
+    for field in normalization.AGE_SERVED_FLAG_FIELDS:
+        assert field not in out
+
+
+# --------------------------------------------------------------------------- #
+# bug_06 -- scholarships_accepted: bool / Yes-No / Accepted-Not Accepted ->
+# bool-or-None
+# --------------------------------------------------------------------------- #
+def test_coerce_scholarships_accepted_flag_bool_and_none_passthrough():
+    assert normalization.coerce_scholarships_accepted_flag(True) is True
+    assert normalization.coerce_scholarships_accepted_flag(False) is False
+    assert normalization.coerce_scholarships_accepted_flag(None) is None
+
+
+def test_coerce_scholarships_accepted_flag_yes_no():
+    # AK/CO/GA/RI/TN/TX/UT/VT/DC all emit this shape.
+    assert normalization.coerce_scholarships_accepted_flag("Yes") is True
+    assert normalization.coerce_scholarships_accepted_flag("No") is False
+    assert normalization.coerce_scholarships_accepted_flag("yes") is True
+    assert normalization.coerce_scholarships_accepted_flag("no") is False
+
+
+def test_coerce_scholarships_accepted_flag_accepted_not_accepted():
+    # NM's vocabulary. "Not Accepted" is the regression case from bug_06: a
+    # plain _coerce_bool-style fallback would read it as truthy text.
+    assert normalization.coerce_scholarships_accepted_flag("Accepted") is True
+    assert normalization.coerce_scholarships_accepted_flag("Not Accepted") is False
+    assert normalization.coerce_scholarships_accepted_flag("not accepted") is False
+
+
+def test_coerce_scholarships_accepted_flag_not_accepted_never_becomes_true():
+    # Regression test (bug_06 acceptance criterion): across a few casings/
+    # whitespace variants, "Not Accepted" must never slip through as True.
+    for token in ("Not Accepted", "NOT ACCEPTED", " Not Accepted ", "not accepted"):
+        assert normalization.coerce_scholarships_accepted_flag(token) is False
+
+
+def test_coerce_scholarships_accepted_flag_none_and_empty():
+    assert normalization.coerce_scholarships_accepted_flag(None) is None
+    assert normalization.coerce_scholarships_accepted_flag("") is None
+    assert normalization.coerce_scholarships_accepted_flag("   ") is None
+
+
+def test_coerce_scholarships_accepted_flag_unknown_token_logs_debug_and_returns_none(caplog):
+    with caplog.at_level(logging.DEBUG, logger="provider_scrape.normalization"):
+        result = normalization.coerce_scholarships_accepted_flag("Pending Review")
+    assert result is None
+    assert "unparseable flag" in caplog.text
+
+
+def test_coerce_scholarships_accepted_flag_negative_tokens_never_become_true():
+    # Mirrors the age-served-flag regression test (bug_05 criterion 4): none
+    # of these may ever coerce to True.
+    for token in ("No", "no", "0", "false", "False", "", "   ", "n/a", "Not Accepted"):
+        assert normalization.coerce_scholarships_accepted_flag(token) is not True
+
+
+def test_normalize_item_coerces_scholarships_accepted_for_every_state_shape():
+    # One representative item per affected-state shape (bug_06 evidence),
+    # run through the full pipeline.
+    bool_item = {"scholarships_accepted": True}  # e.g. CT/IN/IA/KY/...
+    yes_no_item = {"scholarships_accepted": "Yes"}  # AK/CO/GA/RI/TN/TX/UT/VT/DC
+    no_item = {"scholarships_accepted": "No"}
+    accepted_item = {"scholarships_accepted": "Accepted"}  # NM
+    not_accepted_item = {"scholarships_accepted": "Not Accepted"}  # NM
+    absent_item = {"provider_name": "Example Center"}  # most states never set it
+
+    out_bool = normalization.normalize_item(dict(bool_item), "connecticut")
+    out_yes = normalization.normalize_item(dict(yes_no_item), "alaska")
+    out_no = normalization.normalize_item(dict(no_item), "colorado")
+    out_accepted = normalization.normalize_item(dict(accepted_item), "new_mexico")
+    out_not_accepted = normalization.normalize_item(dict(not_accepted_item), "new_mexico")
+    out_absent = normalization.normalize_item(dict(absent_item), "montana")
+
+    assert out_bool["scholarships_accepted"] is True
+    assert out_yes["scholarships_accepted"] is True
+    assert out_no["scholarships_accepted"] is False
+    assert out_accepted["scholarships_accepted"] is True
+    assert out_not_accepted["scholarships_accepted"] is False
+    assert "scholarships_accepted" not in out_absent
+
+    for out in (out_bool, out_yes, out_no, out_accepted, out_not_accepted):
+        assert isinstance(out["scholarships_accepted"], bool)
+
+
+def test_normalize_item_scholarships_accepted_runs_after_collapse():
+    # scholarships_accepted is not a FIELD_COLLAPSE_MAP target (bug_06
+    # investigation), but guard the ordering contract anyway: even if a
+    # source field for it were ever collapsed in, the final value must still
+    # come out bool-or-None, not the raw collapsed text.
+    assert "scholarships_accepted" not in normalization.FIELD_COLLAPSE_MAP
+    item = {"scholarships_accepted": "Not Accepted"}
+    out = normalization.normalize_item(item, "new_mexico")
+    assert out["scholarships_accepted"] is False

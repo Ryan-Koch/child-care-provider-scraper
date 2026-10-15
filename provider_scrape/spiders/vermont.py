@@ -31,6 +31,7 @@ from html import unescape
 from scrapy import FormRequest, Request, Spider
 
 from provider_scrape.items import InspectionItem, ProviderItem
+from provider_scrape.normalization import normalize_date
 
 BASE = "https://www.brightfutures.dcf.state.vt.us"
 BOOTSTRAP_URL = f"{BASE}/vtcc/public.jsp"
@@ -224,7 +225,19 @@ class VermontSpider(Spider):
         item["phone"] = _content_after(text, "field_pnum3")
         item["email"] = _content_after(text, "field_email3")
         item["provider_website"] = _content_after(text, "field_web3")
-        item["license_begin_date"] = _content_after(text, "field_ldate3")
+        # bug_11: VT publishes only one license date (field_ldate3, "License
+        # Date") -- there is no separate current-term/renewal/expiration
+        # date on the page, so nothing represents a "current term start" the
+        # way other states' license_begin_date does. Leave it None rather
+        # than putting an original/migration date there, and move the raw
+        # value to vt_original_license_date instead (not in
+        # normalization.DATE_FIELDS, so normalized here directly via the
+        # shared normalize_date helper). ~22% of values cluster in 2005 --
+        # suspected system-cutover dates from a VT registry migration, not
+        # nulled out because that can't be told apart from a genuine 2005
+        # date per record (see items.py for the full note).
+        item["license_begin_date"] = None
+        item["vt_original_license_date"] = normalize_date(_content_after(text, "field_ldate3"))
         item["license_holder"] = _content_after(text, "field_owner3")
         item["administrator"] = _content_after(text, "field_director3")
 
@@ -234,6 +247,14 @@ class VermontSpider(Spider):
         item["preschool"] = _num(_content_after(text, "field_pre4"))
         item["school"] = _num(_content_after(text, "field_school4"))
         item["capacity"] = _num(_content_after(text, "field_totcap4"))
+        # bug_05: preserve the raw per-age capacity counts in VT-specific
+        # fields before the normalization pipeline coerces the common
+        # infant/toddler/preschool/school fields above to bool (count > 0).
+        # Pending story 35 (capacity_by_age).
+        item["vt_infant_capacity"] = item["infant"]
+        item["vt_toddler_capacity"] = item["toddler"]
+        item["vt_preschool_capacity"] = item["preschool"]
+        item["vt_school_age_capacity"] = item["school"]
         item["vt_infant_vacancies"] = _num(_content_after(text, "field_ivac4"))
         item["vt_toddler_vacancies"] = _num(_content_after(text, "field_tvac4"))
         item["vt_preschool_vacancies"] = _num(_content_after(text, "field_pvac4"))

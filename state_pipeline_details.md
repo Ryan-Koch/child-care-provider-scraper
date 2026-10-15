@@ -20,32 +20,32 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `capacity` | Whitespace cleanup; Integer coercion | Licensed capacity coerced to an integer when it is a clean number; ranges/free text are left unchanged and logged. |
 | `county` | Whitespace cleanup | County (whitespace-cleaned only). |
 | `curriculum` | Whitespace cleanup; Field collapse from state-specific source | Curriculum, collapsed from a single populated state source (VPK-specific curriculum is excluded). |
-| `deficiencies` | Whitespace cleanup | Deficiency count/summary, as emitted (whitespace-cleaned only). |
+| `deficiencies` | Whitespace cleanup; Integer coercion (bug_10) | Deficiency/violation count for the provider, coerced to an integer (bug_10). Digit strings, comma-grouped counts, and integral floats (e.g. 2.0) all become int; blank/None stays None; negative or non-numeric values (and stray booleans) become None rather than a guessed number. |
 | `email` | Whitespace cleanup | Contact email (whitespace-cleaned only). |
 | `head_start` | Whitespace cleanup; Field collapse from state-specific source (-> boolean) | Head Start participation, collapsed from a single state source and coerced to a boolean. |
 | `hours` | Whitespace cleanup | Operating hours, as emitted by the state (whitespace-cleaned only). |
-| `infant` | Whitespace cleanup | Infant care indicator/count, as emitted (whitespace-cleaned). |
+| `infant` | Whitespace cleanup | Whether the provider serves infants: bool-or-None. States that emit a per-age count ("8"), a count string ("Y"/"N"), or "Yes"/absent are coerced via count/token > 0 (bug_05); an unparseable token becomes None rather than a guessed True. |
 | `languages` | Whitespace cleanup | Languages, as emitted (string or list; whitespace-cleaned). |
 | `latitude` | Whitespace cleanup; Coordinate -> string | Latitude kept as a trimmed string to avoid float precision drift. |
-| `license_begin_date` | Whitespace cleanup; ISO 8601 date | License start date, normalized to ISO 8601. |
+| `license_begin_date` | Whitespace cleanup; ISO 8601 date | Start date of the provider's CURRENT license term, normalized to ISO 8601 -- not necessarily the facility's first-ever license date (bug_11). Some states publish no current-term date at all, in which case this is left empty rather than falling back to an original/migration date; see that state's xx_original_license_date field, where published. |
 | `license_expiration` | Whitespace cleanup; ISO 8601 date | License expiration date, normalized to ISO 8601. |
 | `license_holder` | Whitespace cleanup; Title Case (ALL-CAPS names) | Name of the license holder/licensee. ALL-CAPS values are Title-cased. |
 | `license_number` | Whitespace cleanup | State-issued license/registration identifier, kept as emitted (only whitespace-cleaned). |
 | `license_type` | Whitespace cleanup; Field collapse from state-specific source | Type/category of license, collapsed from a single populated state-specific *_license_type field. |
 | `longitude` | Whitespace cleanup; Coordinate -> string | Longitude kept as a trimmed string to avoid float precision drift. |
-| `mailing_address` | Whitespace cleanup; Field collapse from state-specific source | Facility mailing address, collapsed from a single populated state source (owner/licensee addresses are excluded). |
+| `mailing_address` | Whitespace cleanup; Field collapse from state-specific source; Address cleanup | Facility mailing address, collapsed from a single populated state source (owner/licensee addresses are excluded). |
 | `meals` | Whitespace cleanup; Field collapse from state-specific source | Meals / food program, collapsed from a single populated state source. |
 | `phone` | Whitespace cleanup | Contact phone number (whitespace-cleaned only). |
-| `preschool` | Whitespace cleanup | Preschool indicator/count, as emitted (whitespace-cleaned). |
+| `preschool` | Whitespace cleanup | Whether the provider serves preschoolers: bool-or-None. See infant. |
 | `provider_name` | Whitespace cleanup; Title Case (ALL-CAPS names) | The facility's name. ALL-CAPS values are converted to Title Case; whitespace is cleaned. |
 | `provider_type` | Whitespace cleanup; Preserved (drives facility_category) | The raw state license category, preserved exactly. It drives the derived facility_category facet. |
 | `provider_website` | Whitespace cleanup | Provider website URL (whitespace-cleaned only). |
-| `scholarships_accepted` | Whitespace cleanup | Subsidy/scholarship acceptance, as emitted (whitespace-cleaned only). |
-| `school` | Whitespace cleanup | School-age indicator/count, as emitted (whitespace-cleaned). |
+| `scholarships_accepted` | Whitespace cleanup | Whether the provider accepts child-care subsidies/scholarships: bool-or-None. States that emit "Yes"/"No" or NM's "Accepted"/"Not Accepted" are coerced via the shared strict token rule (bug_06); an unparseable token becomes None rather than a guessed True. |
+| `school` | Whitespace cleanup | Whether the provider serves school-age children: bool-or-None. See infant. |
 | `school_district` | Whitespace cleanup; Field collapse from state-specific source | Associated school district, collapsed from a single populated state-specific source field. |
 | `status` | Whitespace cleanup; Controlled vocabulary (status) | License status mapped to the 5-bucket canonical vocabulary (active/provisional/pending/enforcement/closed, else unknown). Replaced in place. |
 | `status_date` | Whitespace cleanup; ISO 8601 date | Date the current status took effect, normalized to ISO 8601 (YYYY-MM-DD). |
-| `toddler` | Whitespace cleanup | Toddler care indicator/count, as emitted (whitespace-cleaned). |
+| `toddler` | Whitespace cleanup | Whether the provider serves toddlers: bool-or-None. See infant. |
 | `transportation` | Whitespace cleanup; Field collapse from state-specific source | Transportation offered, collapsed from a single populated state source. |
 
 > Inspections are normalized too: every string value gets whitespace cleanup, and the date fields (`date`, `status_updated`, `az_date_resolved`, `in_correction_date`, `ms_end_date`, `mo_disposition_date`) are converted to ISO 8601. The `status` vocabulary does not apply to inspections.
@@ -72,14 +72,14 @@ Each common field is populated from a single populated source field (additive â€
 | Common field | Source state-specific fields |
 |---|---|
 | `accepting_new_children` | `co_accepting_new_children`, `ct_accepting_referrals`, `ga_accepting_new_children` |
-| `accreditation` | `al_accreditations`, `ct_accreditations`, `ga_accreditation`, `hi_accreditations`, `md_accreditation`, `nj_accreditation` |
+| `accreditation` | `al_accreditations`, `ct_accreditations`, `ga_accreditation`, `hi_accreditations`, `md_accreditation`, `nj_accreditation_labels` |
 | `curriculum` | `ga_curriculum`, `nj_curriculum` |
 | `head_start` | `az_headstart`, `co_head_start`, `ct_head_start`, `fl_is_head_start`, `nh_head_start`, `ri_head_start`, `wa_head_start` |
-| `license_type` | `ak_license_type`, `az_license_type`, `co_license_type`, `ct_license_type`, `hi_license_type`, `mt_license_type`, `nc_license_type`, `nj_license_type`, `ut_license_type`, `va_license_type`, `wa_license_type`, `wv_license_type` |
+| `license_type` | `ak_license_type`, `az_license_type`, `co_license_type`, `ct_license_type`, `hi_license_type`, `mt_license_type`, `nc_license_type`, `nj_license_type_label`, `ut_license_type`, `va_license_type`, `wa_license_type`, `wv_license_type` |
 | `mailing_address` | `al_mailing_address`, `ga_mailing_address`, `hi_mailing_address` |
-| `meals` | `ga_meals`, `hi_meals`, `nj_meal_options`, `nm_meals`, `pa_meal_options`, `ut_meals` |
+| `meals` | `ga_meals`, `hi_meals`, `nj_meal_options_labels`, `nm_meals`, `pa_meal_options`, `ut_meals` |
 | `school_district` | `co_school_district`, `ct_school_districts`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
-| `transportation` | `ct_transportation`, `ga_transportation`, `nj_transportation` |
+| `transportation` | `ct_transportation`, `ga_transportation`, `nj_transportation_labels` |
 
 ## Controlled vocabulary: `status`
 
@@ -101,7 +101,7 @@ Raw `provider_type` values mapped to each canonical category (additive; unmapped
 |---|---|
 | `center` | `CDC (Child Development Center)`, `CTR`, `Center`, `Center Based Child Care and Preschool Program`, `Center Based Child Care and Preschool Program - Non-Recurring`, `Center based Child Care Facility`, `Certified Pre-School`, `Child Care`, `Child Care Center`, `Child Care Commercial Preschool`, `Child Care Facility`, `Child Care Hourly Center`, `Child Care Learning Center`, `Child Care Registered Center Based Program`, `Child Care for Children with Disabilities`, `Child Day Center`, `DAY CARE CENTER`, `DAY CARE CENTER - ILL CENTER`, `DCC`, `DOE`, `Department of Defense`, `GA Early Head Start`, `GA Head Start`, `HHS Four-Year Old Program`, `HHS-Licensed Child Care Center`, `HHS-Licensed Group Child Care Facility`, `HHS-Licensed Preschool`, `Head Start`, `Head Start Child Care Center`, `Head Start Site`, `INFANT CENTER`, `Infant and Toddler Center`, `LOC`, `Large Child Care Center (26 or more children)`, `Large Group`, `Licensed`, `Licensed Center`, `Licensed Child Care Center`, `Licensed Group`, `Licensed Group Child Care Program`, `Licensed School-Based Preschool`, `Local School System`, `Nursery`, `Nursery School`, `Outdoor Nature Based Program`, `Preschool`, `Preschool Center`, `Preschool Program`, `Private School`, `Provisional Child Care Center`, `Provisional Preschool`, `Public School`, `SDCC`, `SINGLE LICENSED CHILD CARE CENTER`, `Short Term Child Day Center`, `Small Employer Based Child Care`, `Small Group`, `Type I`, `Type II`, `Type III`, `University` |
 | `exempt` | `6 or Fewer`, `CCAP Certified/Accredited`, `Child Care Exempt Program`, `DWS Approved, Exempt Center`, `DWS Approved, Exempt School Age Program`, `Exempt`, `Exempt Child Care Center`, `Exempt Only`, `Exempt Program`, `Exempt from Licensing`, `License Exempt`, `License Exempt Facility`, `License Exempt Family Child Care Program`, `License Exempt Program`, `Religious Exempt Child Day Center`, `Self-Declared Provider`, `Unlicensed CCDF Certified Center/School`, `Unlicensed CCDF Certified Home`, `Unlicensed Registered Ministry`, `Voluntary Registration` |
-| `family_home` | `CDH (Child Development Home)`, `Certified`, `Child Care Licensed Family`, `Child Care Residential Certificate`, `FAMILY DAY CARE HOME`, `FCCH`, `FDC`, `Family`, `Family Child Care`, `Family Child Care Facility (up to 6 children)`, `Family Child Care Home`, `Family Child Care Home I`, `Family Child Care Home II`, `Family Child Care Learning Home`, `Family Child Care Provider`, `Family Day Care`, `Family Day Care Home`, `Family Day Home`, `Family Home`, `Family Home Child Care`, `HHS-Licensed Family Child Care`, `Home based Child Care Facility`, `In Home Provider`, `LFCCH`, `Large Family Child Care Home`, `Licensed Child-Care Home`, `Licensed Family`, `Licensed Family Child Care`, `Licensed Family Child Care Home`, `Licensed Family Child Care Program`, `Licensed Family Home`, `Licensed Home`, `Licensed Type A Family Child Care Home`, `Licensed Type B Family Child Care Home`, `Listed Family Home`, `Non-Registered Child Care Home`, `Provisional Certified`, `Provisional Family Child Care Home I`, `Provisional Family Child Care Home II`, `Registered Child Development Home A`, `Registered Child Development Home B`, `Registered Child Development Home C`, `Registered Child Development Home C1`, `Registered Child-Care Home`, `Registered Family Child Care Home`, `Registered Home`, `Regular Certified`, `System Approved FDH`, `Unlicensed/Unregistered FDH` |
+| `family_home` | `CDH (Child Development Home)`, `Certified`, `Child Care Licensed Family`, `Child Care Residential Certificate`, `FAMILY DAY CARE HOME`, `FCCH`, `FDC`, `Family`, `Family Child Care`, `Family Child Care Facility (up to 6 children)`, `Family Child Care Home`, `Family Child Care Home I`, `Family Child Care Home II`, `Family Child Care Learning Home`, `Family Child Care Provider`, `Family Day Care`, `Family Day Care Home`, `Family Day Home`, `Family Home`, `Family Home Child Care`, `HHS-Licensed Family Child Care`, `Home based Child Care Facility`, `In Home Provider`, `LFCCH`, `Large Family Child Care Home`, `Licensed Child-Care Home`, `Licensed Family`, `Licensed Family Child Care`, `Licensed Family Child Care Home`, `Licensed Family Child Care Program`, `Licensed Family Home`, `Licensed Home`, `Licensed Type A Family Child Care Home`, `Licensed Type B Family Child Care Home`, `Listed Family Home`, `Non-Registered Child Care Home`, `Provisional Certified`, `Provisional Family Child Care Home I`, `Provisional Family Child Care Home II`, `Registered Child Development Home A`, `Registered Child Development Home B`, `Registered Child Development Home C`, `Registered Child Development Home C1`, `Registered Child-Care Home`, `Registered Family Child Care Home`, `Registered Family Child Care Provider`, `Registered Home`, `Regular Certified`, `System Approved FDH`, `Unlicensed/Unregistered FDH` |
 | `group_home` | `CDX (Child Development Home Expanded)`, `Family Child Care Center`, `GFDC`, `Group`, `Group Child Care Facility (up to 12 children)`, `Group Child Care Home`, `Group Home`, `Group Home Child Care`, `HHS-Licensed Group Child Care Home`, `Licensed Group Home`, `Licensed Large Family Child Care` |
 | `other` | `(FCC)Nanny Individual`, `Certified In Home Aide`, `Family, Friends & Neighbor (FFN) Providers`, `HHS-Licensed Multiple License`, `Illegally Unlicensed`, `In-Home`, `Informal`, `Informal Child Care`, `Licensed Camp`, `Neighborhood Youth Organization`, `Other`, `Outdoor Summer Camp`, `Registered Day Camp or Approved Day Camp`, `Resident Camp`, `Residential Child Care Program`, `Substitute Placement Agency`, `Summer Camp/Program`, `Summer Day Camp`, `Tribal Subsidy Recipient`, `Youth Camp` |
 | `school_age` | `Afterschool Child Care Program`, `Child Care Out of School Time Program`, `HHS-Licensed School Age Child Care`, `Licensed School-Age Child Care`, `SACC`, `SCHOOL AGE DAY CARE CENTER`, `School Age Program`, `School-age Center`, `School-age Program`, `Youth Development Program` |
@@ -499,6 +499,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ma_level_of_compliance` -> pass-through
 - `ma_licensor` -> pass-through
 - `ma_noncompliance_identified` -> pass-through
+- `ma_original_license_date` -> pass-through
 - `ma_program_number` -> pass-through
 - `ma_regional_office_address` -> pass-through
 - `ma_regional_website` -> pass-through
@@ -553,6 +554,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `mn_license_holder_onsite` -> pass-through
 - `mn_license_info_misc` -> pass-through
 - `mn_licensed_to_provide` -> pass-through
+- `mn_original_license_date` -> pass-through
 - `mn_restrictions` -> pass-through
 - `mn_setting` -> pass-through
 - `mn_type_of_license` -> pass-through
@@ -684,25 +686,37 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### New Jersey (NJ)
 
-- `nj_accreditation` -> collapses into `accreditation`
+- `nj_accreditation` -> pass-through
+- `nj_accreditation_labels` -> collapses into `accreditation`
 - `nj_child_assessment` -> pass-through
 - `nj_curriculum` -> collapses into `curriculum`
 - `nj_discounts` -> pass-through
+- `nj_discounts_labels` -> pass-through
 - `nj_doh_id` -> pass-through
 - `nj_environmental_features` -> pass-through
+- `nj_environmental_features_labels` -> pass-through
 - `nj_facility_type` -> pass-through
 - `nj_fees` -> pass-through
-- `nj_license_type` -> collapses into `license_type`
+- `nj_fees_labels` -> pass-through
+- `nj_license_type` -> pass-through
+- `nj_license_type_label` -> collapses into `license_type`
 - `nj_mccyn_plus` -> pass-through
-- `nj_meal_options` -> collapses into `meals`
+- `nj_meal_options` -> pass-through
+- `nj_meal_options_labels` -> collapses into `meals`
 - `nj_participation_programs` -> pass-through
+- `nj_participation_programs_labels` -> pass-through
 - `nj_phone_extension` -> pass-through
 - `nj_program_facility_type` -> pass-through
+- `nj_program_facility_type_label` -> pass-through
 - `nj_quality_rating` -> pass-through
+- `nj_quality_rating_label` -> pass-through
 - `nj_social_media` -> pass-through
 - `nj_special_needs_training` -> pass-through
+- `nj_special_needs_training_labels` -> pass-through
 - `nj_special_schedules` -> pass-through
-- `nj_transportation` -> collapses into `transportation`
+- `nj_special_schedules_labels` -> pass-through
+- `nj_transportation` -> pass-through
+- `nj_transportation_labels` -> collapses into `transportation`
 - `nj_tuition_infant_daily` -> pass-through
 - `nj_tuition_infant_hourly` -> pass-through
 - `nj_tuition_infant_monthly` -> pass-through
@@ -721,6 +735,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nj_tuition_toddler_weekly` -> pass-through
 - `nj_unique_program_id` -> pass-through
 - `nj_yearly_schedule` -> pass-through
+- `nj_yearly_schedule_label` -> pass-through
 
 ### New Mexico (NM)
 
@@ -754,6 +769,10 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `ny_address_omitted` -> pass-through
 - `ny_capacity_description` -> pass-through
+- `ny_capacity_infant` -> pass-through
+- `ny_capacity_preschool` -> pass-through
+- `ny_capacity_school_age` -> pass-through
+- `ny_capacity_toddler` -> pass-through
 - `ny_facility_id` -> pass-through
 - `ny_facility_opened_date` -> pass-through
 - `ny_phone_extension` -> pass-through
@@ -808,6 +827,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ri_license_decision` -> pass-through
 - `ri_licensor` -> pass-through
 - `ri_most_recently_renewed` -> pass-through
+- `ri_original_license_date` -> pass-through
 - `ri_provider_contact_name` -> pass-through
 - `ri_provider_email` -> pass-through
 - `ri_services_offered` -> pass-through
@@ -884,18 +904,23 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `vt_current_vacancy` -> pass-through
 - `vt_days_of_operation` -> pass-through
 - `vt_guidance` -> pass-through
+- `vt_infant_capacity` -> pass-through
 - `vt_infant_vacancies` -> pass-through
+- `vt_original_license_date` -> pass-through
 - `vt_pets` -> pass-through
+- `vt_preschool_capacity` -> pass-through
 - `vt_preschool_vacancies` -> pass-through
 - `vt_program_description` -> pass-through
 - `vt_program_participation` -> pass-through
 - `vt_provider_id` -> pass-through
 - `vt_religious_activity` -> pass-through
+- `vt_school_age_capacity` -> pass-through
 - `vt_school_age_vacancies` -> pass-through
 - `vt_sibling_discount` -> pass-through
 - `vt_special_schedule` -> pass-through
 - `vt_special_services` -> pass-through
 - `vt_star_level` -> pass-through
+- `vt_toddler_capacity` -> pass-through
 - `vt_toddler_vacancies` -> pass-through
 - `vt_type_of_care` -> pass-through
 - `vt_vacancy_as_of` -> pass-through

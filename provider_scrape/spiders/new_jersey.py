@@ -1,4 +1,5 @@
 import json
+from collections import Counter
 from urllib.parse import urlencode
 
 import scrapy
@@ -54,6 +55,177 @@ _TUITION_CADENCES = [
     ("weekly", "Weekly"),
     ("monthly", "Monthly"),
 ]
+
+
+# --------------------------------------------------------------------------- #
+# Code -> label lookup tables (bug_07)
+#
+# Captured from an inline `looupTable` JS object (sic -- typo in the site's
+# own source; providerdetails.aspx spells it `lookupTable`) embedded directly
+# in childcarenj.gov's page HTML -- not a separate JS bundle or lookup API.
+# First recovered from an Internet Archive snapshot (2026-05-17), then
+# refreshed from the live /Search page on 2026-10-15 via a US webshare.env
+# proxy (the site blocks non-US traffic; the spider's fingerprint got
+# through unmodified). The live table only
+# added special schedules 7-12. See
+# tasks/common_fields_epic/bug_07_nj_lookups.json for both captures.
+#
+# Codes the live table itself does NOT define (meal options 7/8,
+# environmental features 6-13, accreditation 28, yearly schedule 0) have no
+# public label source: the details page doesn't render those sections at
+# all. They fall through to "Unknown (code N)" by design rather than being
+# guessed.
+#
+# These are STATIC tables, not a live fetch: the table lives in
+# challenge-gated HTML, not a dedicated lookup endpoint, so fetching it live
+# would mean re-solving Cloudflare on every spider run just for this --
+# far more fragile than committing a dict that rarely changes.
+#
+# Two nj_* fields have NO label source anywhere (checked this table, the
+# public UI, and a general web search) and are deliberately left as raw
+# values only, with no *_label sibling added -- guessing would violate
+# bug_07's "never invent a mapping without a source" rule:
+#   - nj_facility_type (NJFacilityType): not rendered anywhere in the public
+#     UI and not present in the lookup table; codes 1-4 observed.
+#   - nj_mccyn_plus (MCCYNPlusInd): a '1'/'2' indicator with no documented
+#     meaning found anywhere.
+# --------------------------------------------------------------------------- #
+
+_LICENSE_TYPE_LABELS = {1: "Licensed", 2: "Registered", 3: "License exempt"}
+
+_PROGRAM_FACILITY_TYPE_LABELS = {
+    1: "Licensed Child Care Center",
+    2: "Registered Family Child Care Provider",
+    3: "Group care",
+}
+
+_QUALITY_RATING_LABELS = {
+    1: "QRIS level 1",
+    2: "QRIS level 2",
+    3: "QRIS level 3",
+    4: "QRIS level 4",
+    5: "QRIS level 5",
+    6: "QRIS level 6",
+}
+
+_ACCREDITATION_LABELS = {
+    1: "National Association for the Education of Young Children",
+    2: "National Association for Family Child Care",
+    3: "Council on Accreditation",
+    4: "American Camp Association",
+    5: "National Early Childhood Program Accreditation",
+    6: "National Accreditation Commission for Early Care and Education Programs",
+    7: "Association for Christian Schools International",
+    8: "American Montessori Society",
+    9: "Accredited Professional Preschool Learning Environment",
+    10: "Association Montessori International/USA",
+    11: "Association of Waldorf Schools of North America",
+    12: "Commission on Accreditation of Rehabilitation Facilities: Child and Youth Services Standards",
+    13: "Green Apple Accreditation Services",
+    14: "International Christian Accrediting",
+    15: "Council on Accreditation- After School Programs",
+    16: "Academy for Early Childhood Program Accreditation",
+    17: "National Council for Private School Accreditation",
+    18: "Montessori School Accreditation Commission",
+    19: "Southern Association of Colleges and Schools",
+    20: "Other Type of National Accreditation",
+}
+
+_YEARLY_SCHEDULE_LABELS = {1: "Full year", 2: "School year", 3: "Summer only"}
+
+_FEDERAL_PROGRAM_LABELS = {
+    1: "Participates in Head Start",
+    2: "Participates in state preschool program",
+    3: "Accepts state-funded child care assistance; e.g., contracts, vouchers, scholarships",
+    4: "Accepts private scholarships; e.g., United Way scholarships",
+}
+
+_MEAL_OPTION_LABELS = {
+    1: "Breakfast",
+    2: "Lunch",
+    3: "Dinner",
+    4: "Morning snack",
+    5: "Afternoon snack",
+    6: "Child and Adult Care Food Program",
+}
+
+_SPECIAL_NEEDS_TRAINING_LABELS = {
+    1: "Developmental delay",
+    2: "Emotional or behavioral",
+    3: "Hearing impairment",
+    4: "Visual impairment",
+    5: "Physical challenges",
+    6: "Special health needs",
+    7: "Speech impairment",
+}
+
+_TRANSPORTATION_LABELS = {
+    1: "On school transportation route",
+    2: "Near public transportation",
+    3: "Program transportation provided",
+}
+
+_SPECIAL_SCHEDULE_LABELS = {
+    1: "Evening",
+    2: "Overnight",
+    3: "Weekends",
+    4: "Holidays",
+    5: "Sick care",
+    6: "Drop-in care",
+    7: "Special Needs",
+    8: "Night Care",
+    9: "Temporary Care",
+    10: "Emergency Care",
+    11: "Intermittent Care",
+    12: "Rotating Shifts",
+}
+
+_DISCOUNT_LABELS = {
+    1: "Discount provided for siblings",
+    2: "Discounts provided for employees",
+    3: "Discounts provided on a sliding scale",
+    4: "Discounts provided for parents in military service",
+}
+
+_FEE_LABELS = {
+    1: "Registration fee",
+    2: "Late fee",
+    3: "Extended care fee",
+    4: "Waitlist fee",
+    5: "Materials fee",
+    6: "Activities fee",
+}
+
+_ENVIRONMENTAL_FEATURE_LABELS = {
+    1: "No pets",
+    2: "Fenced-in play area",
+    3: "Handicap accessible",
+    4: "Separated play areas",
+    5: "Smoke-free environment",
+}
+
+
+def _resolve_code(code, table, field_name, unmapped_counts):
+    """Map one raw code to its label, or an identifiable placeholder.
+
+    ``None`` passes straight through (nothing to resolve, not "unknown"). A
+    code absent from `table` is tallied in `unmapped_counts` -- a ``Counter``
+    keyed by ``(field_name, code)`` -- so ``NewJerseySpider.closed`` can log
+    one aggregate warning with counts, instead of a line per record.
+    """
+    if code is None:
+        return None
+    if code in table:
+        return table[code]
+    unmapped_counts[(field_name, code)] += 1
+    return f"Unknown (code {code})"
+
+
+def _resolve_codes(codes, table, field_name, unmapped_counts):
+    """List version of `_resolve_code`. Preserves every element -- never drops."""
+    if codes is None:
+        return None
+    return [_resolve_code(code, table, field_name, unmapped_counts) for code in codes]
 
 
 _UA = (
@@ -181,8 +353,19 @@ def _build_social_media(facility):
     return None
 
 
-def build_item(facility):
-    """Map one Facilities[] JSON record to a ProviderItem."""
+def build_item(facility, unmapped_counts=None):
+    """Map one Facilities[] JSON record to a ProviderItem.
+
+    `unmapped_counts` is a `Counter` the caller uses to tally any raw code
+    that falls outside the bug_07 lookup tables above, keyed by
+    `(field_name, code)` -- see `NewJerseySpider.closed`. When omitted (e.g.
+    a unit test that only cares about one record) a throwaway `Counter` is
+    used, so the "Unknown (code N)" fallback still works correctly, just
+    without cross-record aggregation.
+    """
+    if unmapped_counts is None:
+        unmapped_counts = Counter()
+
     item = ProviderItem()
     item["source_state"] = "New Jersey"
     item["provider_url"] = None
@@ -201,25 +384,72 @@ def build_item(facility):
 
     item["nj_unique_program_id"] = _empty_to_none(facility.get("UniqueProgramID"))
     item["nj_program_facility_type"] = facility.get("ProgramFacilityType")
+    item["nj_program_facility_type_label"] = _resolve_code(
+        item["nj_program_facility_type"], _PROGRAM_FACILITY_TYPE_LABELS, "program_facility_type", unmapped_counts
+    )
+    # NJFacilityType: no label source found anywhere (see module docstring
+    # above) -- raw code only, deliberately no *_label sibling.
     item["nj_facility_type"] = facility.get("NJFacilityType")
     item["nj_license_type"] = facility.get("LicenseType")
+    item["nj_license_type_label"] = _resolve_code(
+        item["nj_license_type"], _LICENSE_TYPE_LABELS, "license_type", unmapped_counts
+    )
     item["nj_quality_rating"] = facility.get("QualityRating")
+    item["nj_quality_rating_label"] = _resolve_code(
+        item["nj_quality_rating"], _QUALITY_RATING_LABELS, "quality_rating", unmapped_counts
+    )
     item["nj_accreditation"] = _empty_to_none(facility.get("Accreditation"))
+    item["nj_accreditation_labels"] = _resolve_codes(
+        item["nj_accreditation"], _ACCREDITATION_LABELS, "accreditation", unmapped_counts
+    )
     item["nj_yearly_schedule"] = facility.get("YearlySchedule")
+    item["nj_yearly_schedule_label"] = _resolve_code(
+        item["nj_yearly_schedule"], _YEARLY_SCHEDULE_LABELS, "yearly_schedule", unmapped_counts
+    )
     item["nj_doh_id"] = _empty_to_none(facility.get("DohID"))
     item["nj_phone_extension"] = _empty_to_none(facility.get("ProgramPhoneNumberExtension"))
     item["nj_participation_programs"] = _empty_to_none(facility.get("ParticipationInLocalStateOrFederalPrograms"))
+    item["nj_participation_programs_labels"] = _resolve_codes(
+        item["nj_participation_programs"], _FEDERAL_PROGRAM_LABELS, "participation_programs", unmapped_counts
+    )
     item["nj_curriculum"] = _empty_to_none(facility.get("CurriculumUsed"))
     item["nj_child_assessment"] = _empty_to_none(facility.get("ChildAssessmentUsed"))
     item["nj_environmental_features"] = _empty_to_none(facility.get("EnvironmentalFeatures"))
+    item["nj_environmental_features_labels"] = _resolve_codes(
+        item["nj_environmental_features"], _ENVIRONMENTAL_FEATURE_LABELS, "environmental_features", unmapped_counts
+    )
     item["nj_meal_options"] = _empty_to_none(facility.get("MealOptions"))
+    item["nj_meal_options_labels"] = _resolve_codes(
+        item["nj_meal_options"], _MEAL_OPTION_LABELS, "meal_options", unmapped_counts
+    )
     item["nj_special_needs_training"] = _empty_to_none(facility.get("TrainingAndExperienceToSupportSpecialNeeds"))
+    item["nj_special_needs_training_labels"] = _resolve_codes(
+        item["nj_special_needs_training"], _SPECIAL_NEEDS_TRAINING_LABELS, "special_needs_training", unmapped_counts
+    )
     item["nj_transportation"] = _empty_to_none(facility.get("TransportationOptions"))
+    item["nj_transportation_labels"] = _resolve_codes(
+        item["nj_transportation"], _TRANSPORTATION_LABELS, "transportation", unmapped_counts
+    )
     item["nj_special_schedules"] = _empty_to_none(facility.get("SpecialSchedules"))
+    item["nj_special_schedules_labels"] = _resolve_codes(
+        item["nj_special_schedules"], _SPECIAL_SCHEDULE_LABELS, "special_schedules", unmapped_counts
+    )
     item["nj_discounts"] = _empty_to_none(facility.get("DiscountsAvailable"))
+    item["nj_discounts_labels"] = _resolve_codes(item["nj_discounts"], _DISCOUNT_LABELS, "discounts", unmapped_counts)
     item["nj_fees"] = _empty_to_none(facility.get("AdditionalDepositsAndFees"))
+    item["nj_fees_labels"] = _resolve_codes(item["nj_fees"], _FEE_LABELS, "fees", unmapped_counts)
+    # MCCYNPlusInd: no label source found anywhere (see module docstring
+    # above) -- raw '1'/'2' value only, deliberately no *_label sibling.
     item["nj_mccyn_plus"] = _empty_to_none(facility.get("MCCYNPlusInd"))
     item["nj_social_media"] = _build_social_media(facility)
+
+    # Additive (D2): provider_type feeds facility_category_from_type in the
+    # normalization pipeline. NJ never set this before bug_07, so
+    # facility_category was never derived for any NJ record. Sourced from the
+    # same programTypes table as nj_program_facility_type_label -- see
+    # normalization.FACILITY_CATEGORY_BUCKETS for the center/family_home
+    # entries this now maps to.
+    item["provider_type"] = item["nj_program_facility_type_label"]
 
     for age_out, age_in in _TUITION_AGE_GROUPS:
         for cadence_out, cadence_in in _TUITION_CADENCES:
@@ -349,6 +579,9 @@ class NewJerseySpider(scrapy.Spider):
         super().__init__(*args, **kwargs)
         self.page_size_buffer = int(page_size_buffer)
         self.fallback_page_size = int(fallback_page_size)
+        # bug_07: tallies raw codes not found in the lookup tables above,
+        # keyed by (field_name, code) -- see closed().
+        self.unmapped_code_counts = Counter()
 
     def start_requests(self):
         # `networkidle` doesn't work here — Cloudflare insights + GA keep the
@@ -442,7 +675,7 @@ class NewJerseySpider(scrapy.Spider):
                     result_count,
                 )
                 for raw in facilities:
-                    yield build_item(raw)
+                    yield build_item(raw, self.unmapped_code_counts)
             else:
                 self.logger.warning(
                     "Server capped pageSize: got %d of %d; switching to paginated fetch (pageSize=%d)",
@@ -505,7 +738,32 @@ class NewJerseySpider(scrapy.Spider):
                 result_count,
             )
             for raw in facilities:
-                yield build_item(raw)
+                yield build_item(raw, self.unmapped_code_counts)
 
             seen = seen_after
             current_page += 1
+
+    def closed(self, reason):
+        """bug_07: summarize any code -> label lookup misses in one place.
+
+        Per-record logging would spam thousands of identical lines for a
+        single stale/new code, so misses are tallied during the crawl (see
+        `_resolve_code`/`_resolve_codes`) and reported here as one aggregate
+        warning with counts -- never silently dropped.
+        """
+        if not self.unmapped_code_counts:
+            return
+        fields = sorted({field for field, _ in self.unmapped_code_counts})
+        detail = ", ".join(
+            f"{field}={code}({count}x)" for (field, code), count in sorted(self.unmapped_code_counts.items())
+        )
+        self.logger.warning(
+            "NJ: %d unmapped code(s) across %d field(s) fell back to 'Unknown "
+            "(code N)' -- see tasks/common_fields_epic/bug_07_nj_lookups.json "
+            "for the captured table and known staleness notes. Fields: %s. "
+            "Counts: %s",
+            len(self.unmapped_code_counts),
+            len(fields),
+            ", ".join(fields),
+            detail,
+        )

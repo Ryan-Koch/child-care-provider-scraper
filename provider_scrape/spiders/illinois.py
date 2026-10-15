@@ -88,7 +88,12 @@ class IllinoisSpider(scrapy.Spider):
         dict_reader = csv.DictReader(csv_file)
 
         for row in dict_reader:
-            # Consolidate language fields into a single list, filtering out empty values.
+            # Consolidate language fields into a single list, filtering out empty
+            # values. The source CSV often repeats the same language across
+            # Language1..3 (e.g. ["ENGLISH", "ENGLISH"]); de-duping and casing
+            # (ALL CAPS -> Title Case) is handled generally for every state by
+            # NormalizationPipeline (see normalization.normalize_languages),
+            # not here, so this stays a plain, unfiltered-for-duplicates list.
             languages = [
                 lang
                 for lang in [
@@ -103,7 +108,7 @@ class IllinoisSpider(scrapy.Spider):
             provider["source_state"] = "Illinois"
             provider["il_provider_id"] = row.get("ProviderID")
             provider["provider_name"] = row.get("DoingBusinessAs")
-            provider["address"] = f"{row.get('Street')}, {row.get('City')}, CA {row.get('Zip')}"
+            provider["address"] = f"{row.get('Street')}, {row.get('City')}, IL {row.get('Zip')}"
             provider["county"] = row.get("County")
             provider["phone"] = row.get("Phone")
             provider["il_facility_type"] = row.get("FacilityType")

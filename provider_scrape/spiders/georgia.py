@@ -57,6 +57,22 @@ def _yes_no(value):
     return "Yes" if value else "No"
 
 
+def _accepting_new_children(value):
+    """Map ``isAcceptingNewChildren`` to "Yes"/None (never a fabricated "No").
+
+    Confirmed live (bug_02 capture, 2026-10-15): this key is present on every
+    /provider/search record, but it is ``False`` on all 308 stratified sample
+    providers checked (every Provider_Type, every region) -- a flat 0%
+    positive rate with no other accepting/vacancy field in the CSV export or
+    the search payload to corroborate it (``fcclhTotalVacancies`` is likewise
+    always null). A value that never varies carries no real signal, so
+    treating every ``False`` as "No" would fabricate a negative for all
+    ~7,800 GA providers. Only an explicit ``True`` is reported as "Yes";
+    anything else (``False``, ``None``, or a missing key) maps to ``None``.
+    """
+    return "Yes" if value is True else None
+
+
 def _format_fee(value):
     """Render a numeric fee (95.0) as the "$95.00" string the old page showed."""
     if value is None:
@@ -339,7 +355,7 @@ class GeorgiaSpider(scrapy.Spider):
             item["ga_quality_rated_level"] = str(r("qualityRating"))
 
         item["ga_liability_insurance"] = _yes_no(r("liabilityInsurance"))
-        item["ga_accepting_new_children"] = _yes_no(r("isAcceptingNewChildren"))
+        item["ga_accepting_new_children"] = _accepting_new_children(r("isAcceptingNewChildren"))
         item["ga_registration_fee"] = _format_fee(r("rateRegistrationFee"))
         item["ga_activity_fee"] = _format_fee(r("rateActivityFee"))
 
@@ -370,6 +386,15 @@ class GeorgiaSpider(scrapy.Spider):
         if accreditation:
             item["ga_accreditation"] = accreditation
 
+        # bug_08: confirmed live (bug_02 capture, 2026-10-15) that this key is
+        # present on every /provider/search record but is `null` on all of
+        # them (99/99 fully-inspected, 308/308 stratified across every
+        # Provider_Type/region), with no alternate key (ownershipType,
+        # nonprofit, ...) anywhere on the record or in the CSV export. This
+        # looks like GA simply never populates the field rather than a wrong
+        # key, so it is left reading `profitStatus` as-is -- `_clean` maps
+        # `None` to `None` and never fabricates a value, so this will pick up
+        # real values automatically if GA ever starts populating the source.
         item["ga_profit_status"] = _clean(r("profitStatus"))
 
         rates = parse_weekly_rates(r("weeklyFullDayRates"))
