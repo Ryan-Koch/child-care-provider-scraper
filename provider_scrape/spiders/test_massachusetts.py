@@ -17,7 +17,6 @@ from provider_scrape.spiders.massachusetts import (
     SEARCH_URL,
     MassachusettsSpider,
     _date_sort_key,
-    _normalize_last_issue_date,
     age_flags_from_counts,
     format_hours,
     split_semicolon,
@@ -205,12 +204,17 @@ def test_age_flags_from_counts_mixed():
     assert capacity_by_age == {"schoolAge": 26}
 
 
-def test_normalize_last_issue_date():
-    assert _normalize_last_issue_date("2024-03-25") == "2024-03-25"  # already ISO (search)
-    assert _normalize_last_issue_date("3/25/2024") == "2024-03-25"  # M/D/YYYY (detail)
-    assert _normalize_last_issue_date("7/6/2026") == "2026-07-06"
-    assert _normalize_last_issue_date("") == ""  # blank passes through (_put then drops it)
-    assert _normalize_last_issue_date(None) is None
+def test_normalize_date_covers_ma_last_issue_date_shapes():
+    """bug_13: ma_last_issue_date/ma_original_license_date now go through the
+    shared norm.normalize_date instead of the deleted bespoke
+    _normalize_last_issue_date -- port that helper's old coverage (ISO
+    passthrough, unpadded M/D/YYYY, blank/None passthrough) onto the shared
+    function to confirm no shape it handled is lost."""
+    assert norm.normalize_date("2024-03-25") == "2024-03-25"  # already ISO (search)
+    assert norm.normalize_date("3/25/2024") == "2024-03-25"  # M/D/YYYY (detail)
+    assert norm.normalize_date("7/6/2026") == "2026-07-06"
+    assert norm.normalize_date("") == ""  # blank passes through (_put then drops it)
+    assert norm.normalize_date(None) is None
 
 
 def test_date_sort_key_orders_iso_and_mdy_correctly():
@@ -375,8 +379,18 @@ def test_parse_detail_family_home_golden(spider):
     assert result["license_number"] == "9140144"  # search-sourced (D-4 has no fallback need here)
     assert result["ma_program_number"] == "P-176763"  # detail-sourced program number, kept alongside
     assert norm.facility_category_from_type(result["provider_type"]) == "family_home"
-    assert result["license_begin_date"] == "2002-09-12"  # D-3: First Issue Date
+    # bug_13: license_begin_date now holds the CURRENT term start (Last
+    # Issue Date), detail-preferred -- so it carries the detail call's raw,
+    # unpadded "3/25/2024" (the pipeline, not the spider, normalizes common
+    # fields to ISO; see DATE_FIELDS). ma_last_issue_date is a state field
+    # the spider normalizes itself, so it already reads ISO.
+    assert result["license_begin_date"] == "3/25/2024"
     assert result["ma_last_issue_date"] == "2024-03-25"
+    # The original/first issuance moves to ma_original_license_date,
+    # search-preferred (already ISO from the search summary; the detail
+    # call's unpadded "9/12/2002" never overrides it, since it was already
+    # present).
+    assert result["ma_original_license_date"] == "2002-09-12"
     assert len(result["inspections"]) == 6
 
 
@@ -397,8 +411,59 @@ def test_parse_detail_informal_golden(spider):
     assert "capacity" not in result
     assert "license_begin_date" not in result
     assert "ma_last_issue_date" not in result
+    assert "ma_original_license_date" not in result
     assert "inspections" not in result
     assert dict(result)  # still emits cleanly
+
+
+def _minimal_detail_payload(**fields):
+    """Build a minimal SUCCESS detail payload carrying only the given
+    top-level keys -- enough for parse_detail to run without raising, since
+    every other lookup in parse_detail is a defensive ``.get(...)``/``or
+    []`` that tolerates missing keys."""
+    return {
+        "actions": [
+            {"id": "5;a", "state": "SUCCESS", "returnValue": {"returnValue": fields, "cacheable": False}},
+        ]
+    }
+
+
+def test_parse_detail_license_begin_date_is_detail_preferred(spider):
+    """bug_13: license_begin_date (current-term start, fed from the Last
+    Issue Date) is detail-preferred -- the detail call's lastIssueDate
+    always overwrites whatever the search summary already put there, even
+    though it's a common field (mirrors the old ma_last_issue_date
+    precedence, just swapped onto license_begin_date)."""
+    item = ProviderItem()
+    item["provider_name"] = "Detail Preferred Co"
+    item["license_begin_date"] = "2020-01-01"  # simulated search-sourced value
+    payload = _minimal_detail_payload(lastIssueDate="6/1/2023")
+    result = next(spider.parse_detail(detail_response(payload, item=item, encrypted_id="enc-precedence-1")))
+    assert result["license_begin_date"] == "6/1/2023"
+
+
+def test_parse_detail_original_license_date_is_search_preferred(spider):
+    """bug_13: ma_original_license_date (first issuance) is search-
+    preferred -- the detail call's firstIssueDate only fills it in when
+    the search summary didn't already carry a value (mirrors the old
+    license_begin_date precedence, just renamed)."""
+    # Search summary lacked First_Issue_Date__c -- detail should fill it.
+    item_missing = ProviderItem()
+    item_missing["provider_name"] = "Fill When Absent Co"
+    payload = _minimal_detail_payload(firstIssueDate="5/2/2015")
+    result_missing = next(
+        spider.parse_detail(detail_response(payload, item=item_missing, encrypted_id="enc-precedence-2"))
+    )
+    assert result_missing["ma_original_license_date"] == "2015-05-02"
+
+    # Search summary already carried a value -- detail must not clobber it.
+    item_present = ProviderItem()
+    item_present["provider_name"] = "Already Present Co"
+    item_present["ma_original_license_date"] = "1999-03-04"
+    result_present = next(
+        spider.parse_detail(detail_response(payload, item=item_present, encrypted_id="enc-precedence-3"))
+    )
+    assert result_present["ma_original_license_date"] == "1999-03-04"
 
 
 def test_parse_detail_empty_payload_keeps_summary_item(spider):

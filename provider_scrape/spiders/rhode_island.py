@@ -15,6 +15,7 @@ from playwright_stealth import Stealth
 from scrapy_playwright.page import PageMethod
 
 from provider_scrape.items import InspectionItem, ProviderItem
+from provider_scrape.normalization import normalize_date
 from provider_scrape.proxy_pool import load_pool, playwright_proxy
 
 SEARCH_PAGE_URL = "https://earlylearningprograms.dhs.ri.gov/s/?language=en_US"
@@ -487,16 +488,30 @@ def build_item(summary, detail):
     item["capacity"] = acc_wrap.get("capacity")
     item["languages"] = _empty_to_none(acc_wrap.get("languageSpoken"))
     item["administrator"] = _empty_to_none(acc_wrap.get("contactPerson"))
-    item["license_begin_date"] = _empty_to_none(acc_wrap.get("originalLicenseStartDate"))
+    # bug_13: license_begin_date is the CURRENT license term's start --
+    # confirmed directly against the independent licenseExpirationDate
+    # field (currentLicenseStartDate + ~1 year == licenseExpirationDate for
+    # >97% of hf_sample records). license_begin_date is a common field in
+    # normalization.DATE_FIELDS, so the pipeline (not the spider)
+    # normalizes it; the raw value is passed through here.
+    item["license_begin_date"] = _empty_to_none(acc_wrap.get("currentLicenseStartDate"))
     item["license_expiration"] = _empty_to_none(acc_wrap.get("licenseExpirationDate"))
     item["provider_website"] = _empty_to_none(acc_wrap.get("website"))
     item["hours"] = format_hours(schedule)
     item["ages_served"] = format_ages_served(acc_wrap.get("accAvailability"))
 
     # RI-specific
-    item["ri_most_recently_renewed"] = _empty_to_none(acc_wrap.get("currentLicenseStartDate"))
+    item["ri_most_recently_renewed"] = normalize_date(_empty_to_none(acc_wrap.get("currentLicenseStartDate")))
+    # The original/first-ever license date. A sharp 1997 spike (~16.8% of
+    # hf_sample, no corresponding spike in currentLicenseStartDate or
+    # license_expiration) is a suspected registry system-migration/backfill
+    # artifact -- the same signature as VT's 2005 cluster (bug_11). Kept
+    # as-is, not nulled: a migration artifact can't be told apart from a
+    # genuine 1997 date on a per-record basis, and nulling it would
+    # understate provider age for real 1997 licensees.
+    item["ri_original_license_date"] = normalize_date(_empty_to_none(acc_wrap.get("originalLicenseStartDate")))
     item["ri_ccap_status"] = _empty_to_none(acc_wrap.get("ccapStatus"))
-    item["ri_ccap_expiration_date"] = _empty_to_none(acc_wrap.get("ccapExpirationDate"))
+    item["ri_ccap_expiration_date"] = normalize_date(_empty_to_none(acc_wrap.get("ccapExpirationDate")))
     item["ri_head_start"] = _empty_to_none(acc_wrap.get("headStart"))
     item["ri_state_prek"] = _empty_to_none(acc_wrap.get("riStatePreK"))
     item["ri_provider_contact_name"] = _empty_to_none(acc_wrap.get("providerContactName"))

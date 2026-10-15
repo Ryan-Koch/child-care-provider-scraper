@@ -499,6 +499,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ma_level_of_compliance` -> pass-through
 - `ma_licensor` -> pass-through
 - `ma_noncompliance_identified` -> pass-through
+- `ma_original_license_date` -> pass-through
 - `ma_program_number` -> pass-through
 - `ma_regional_office_address` -> pass-through
 - `ma_regional_website` -> pass-through
@@ -826,6 +827,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ri_license_decision` -> pass-through
 - `ri_licensor` -> pass-through
 - `ri_most_recently_renewed` -> pass-through
+- `ri_original_license_date` -> pass-through
 - `ri_provider_contact_name` -> pass-through
 - `ri_provider_email` -> pass-through
 - `ri_services_offered` -> pass-through

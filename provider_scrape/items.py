@@ -614,7 +614,23 @@ class ProviderItem(scrapy.Item):
     # Rhode Island specific fields
     ri_brightstars_rating = scrapy.Field()
     ri_license_decision = scrapy.Field()
+    # bug_13: license_begin_date (current license term's start) is fed from
+    # currentLicenseStartDate -- confirmed directly against the independent
+    # licenseExpirationDate field (~1 year gap for >97% of records).
+    # ri_most_recently_renewed intentionally still carries the same value --
+    # story 38 will collapse that duplication into a common
+    # last_renewed_date field. Normalized to ISO here by the spider
+    # (normalize_date), since it's not in normalization.DATE_FIELDS (that
+    # list is common-fields-only).
     ri_most_recently_renewed = scrapy.Field()
+    # The original/first-ever license date (originalLicenseStartDate),
+    # pending story 37 (collapse into a common original_license_date
+    # field). A sharp 1997 spike (16.8% of hf_sample) is a suspected
+    # registry system-migration/backfill artifact -- kept as-is, not
+    # nulled, per the bug_11 (VT) precedent: a migration artifact can't be
+    # told apart from a genuine 1997 date on a per-record basis, and
+    # nulling it would understate provider age for real 1997 licensees.
+    ri_original_license_date = scrapy.Field()
     ri_ccap_status = scrapy.Field()
     ri_ccap_expiration_date = scrapy.Field()
     ri_head_start = scrapy.Field()
@@ -1080,8 +1096,18 @@ class ProviderItem(scrapy.Item):
     ma_account_id = scrapy.Field()  # Salesforce accountId -- the dedupe key
     ma_encrypted_id = scrapy.Field()  # Encrypted_Id__c -- the detail-call key
     ma_program_number = scrapy.Field()  # providerNumber, e.g. "P-176763"
-    ma_last_issue_date = scrapy.Field()  # most-recent licence issuance (D-3
-    # keeps the FIRST issuance on the common `license_begin_date`)
+    # bug_13: license_begin_date (current license term's start) is fed from
+    # Last_Issue_Date__c / lastIssueDate -- MA's ~3-year renewal cycle
+    # reissues this date on every renewal (confirmed against the provider's
+    # own "Renewal"-typed visit dates). ma_last_issue_date intentionally
+    # still carries the same value -- story 38 will collapse that
+    # duplication into a common last_renewed_date field. Normalized to ISO
+    # here by the spider (normalize_date), since it's not in
+    # normalization.DATE_FIELDS (that list is common-fields-only).
+    ma_last_issue_date = scrapy.Field()
+    # The original/first-ever issuance (First_Issue_Date__c / firstIssueDate),
+    # pending story 37 (collapse into a common original_license_date field).
+    ma_original_license_date = scrapy.Field()
     ma_temporary_status = scrapy.Field()  # Temporary_Status__c, e.g. "Reopened"
     ma_capacity_by_age = scrapy.Field()  # dict of the non-zero per-age-group counts
     ma_availability = scrapy.Field()  # raw availability text

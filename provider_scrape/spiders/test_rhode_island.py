@@ -539,7 +539,11 @@ def test_build_item_full_record_core_fields():
     assert item["capacity"] == 81
     assert item["languages"] == "English, Spanish"
     assert item["administrator"] == "Lynsey Colgan"
-    assert item["license_begin_date"] == "10/24/2002"
+    # bug_13: license_begin_date now holds the CURRENT license term's start
+    # (currentLicenseStartDate), not the original/first license date. It's
+    # a common field in normalization.DATE_FIELDS, so the pipeline (not the
+    # spider) normalizes it -- the raw "11/01/2025" passes through here.
+    assert item["license_begin_date"] == "11/01/2025"
     assert item["license_expiration"] == "10/31/2026"
     assert item["provider_website"] == "achildsuniversity.com"
     assert item["hours"] == (
@@ -550,9 +554,17 @@ def test_build_item_full_record_core_fields():
 def test_build_item_full_record_ri_fields():
     item = build_item(CHILD_INC_SUMMARY, CHILD_UNIVERSITY_DETAIL)
 
-    assert item["ri_most_recently_renewed"] == "11/01/2025"
+    # bug_13: ri_most_recently_renewed, ri_ccap_expiration_date, and the new
+    # ri_original_license_date are state fields (not in
+    # normalization.DATE_FIELDS), so the spider normalizes them itself via
+    # the shared normalize_date -- they now read ISO instead of the raw
+    # MM/DD/YYYY wire format.
+    assert item["ri_most_recently_renewed"] == "2025-11-01"
     assert item["ri_ccap_status"] == "Active"
-    assert item["ri_ccap_expiration_date"] == "10/31/2026"
+    assert item["ri_ccap_expiration_date"] == "2026-10-31"
+    # The original/first-ever license date moves here (was the old,
+    # incorrect license_begin_date mapping).
+    assert item["ri_original_license_date"] == "2002-10-24"
     assert item["ri_head_start"] == "No"
     assert item["ri_state_prek"] == "No"
     assert item["ri_provider_contact_name"] == "Kelli Moniz"
@@ -612,7 +624,7 @@ def test_build_item_populates_fields_that_were_null_in_smoke_test():
     assert item["ri_provider_email"] == "kelli@achilduniversity.com"
     assert item["ri_services_offered"] == ["Full day care"]
     assert item["ri_ccap_status"] == "Active"
-    assert item["ri_ccap_expiration_date"] == "10/31/2026"
+    assert item["ri_ccap_expiration_date"] == "2026-10-31"  # bug_13: now ISO-normalized
 
 
 def test_build_item_normalizes_dash_placeholder_to_none():
@@ -636,6 +648,54 @@ def test_build_item_normalizes_dash_placeholder_to_none():
     assert item["ri_ccap_status"] is None
     assert item["ri_ccap_expiration_date"] is None
     assert item["ri_head_start"] is None
+
+
+def test_build_item_keeps_1997_cluster_original_license_date():
+    """bug_13: originalLicenseStartDate shows a sharp, isolated 1997 spike
+    (16.8% of hf_sample) with no corresponding spike in
+    currentLicenseStartDate/license_expiration -- a suspected registry
+    system-migration/backfill artifact, same signature as VT's 2005
+    cluster (bug_11). Per that precedent it must be preserved as-is in
+    ri_original_license_date, not nulled: a migration artifact can't be
+    told apart from a genuine 1997 date on a per-record basis."""
+    detail = {
+        "programDetailWrap": {
+            "accWrap": {
+                "accName": "1997 Cluster Co",
+                "originalLicenseStartDate": "01/01/1997",
+                "currentLicenseStartDate": "06/15/2025",
+            }
+        },
+        "lstVisits": [],
+        "ageGroupServedWrapper": [],
+        "scheduleOfOperationData": {"data": []},
+    }
+    item = build_item(CHILD_INC_SUMMARY, detail)
+    assert item["ri_original_license_date"] == "1997-01-01"
+    assert item["license_begin_date"] == "06/15/2025"
+
+
+def test_build_item_state_date_fields_normalize_unpadded_m_d_yyyy():
+    """ISO-normalization coverage for all three RI state date fields
+    converted by bug_13 -- including the unpadded M/D/YYYY shape, not just
+    the zero-padded MM/DD/YYYY seen in the main fixture."""
+    detail = {
+        "programDetailWrap": {
+            "accWrap": {
+                "accName": "Unpadded Date Co",
+                "originalLicenseStartDate": "4/9/1999",
+                "currentLicenseStartDate": "9/1/2024",
+                "ccapExpirationDate": "7/4/2026",
+            }
+        },
+        "lstVisits": [],
+        "ageGroupServedWrapper": [],
+        "scheduleOfOperationData": {"data": []},
+    }
+    item = build_item(CHILD_INC_SUMMARY, detail)
+    assert item["ri_original_license_date"] == "1999-04-09"
+    assert item["ri_most_recently_renewed"] == "2024-09-01"
+    assert item["ri_ccap_expiration_date"] == "2026-07-04"
 
 
 def test_build_item_inspections_attached():
