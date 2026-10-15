@@ -218,6 +218,33 @@ def test_normalize_inspection_converts_date_fields():
     assert out["status_updated"] == "2025-03-01"
 
 
+def test_date_fields_is_common_only_not_state_specific():
+    """bug_11: DATE_FIELDS is documented as common-(provider-level)-fields
+    only. mn_original_license_date / mn_last_renewed_date / vt_original_
+    license_date are state-specific, so the spiders normalize them directly
+    via normalize_date rather than routing them through this shared list --
+    guard against a future change quietly adding them here instead (which
+    would be harmless, normalize_date is idempotent on an already-ISO value,
+    but would duplicate normalization logic the spiders already do)."""
+    for field in ("mn_original_license_date", "mn_last_renewed_date", "vt_original_license_date"):
+        assert field not in normalization.DATE_FIELDS
+
+
+def test_normalize_item_leaves_mn_vt_date_fields_untouched():
+    # These are normalized by the spiders themselves (see minnesota.py /
+    # vermont.py), not by the shared pipeline -- normalize_item must leave a
+    # raw, non-ISO value on these fields exactly as given.
+    item = {
+        "mn_original_license_date": "07/01/2014",
+        "mn_last_renewed_date": "01/01/2026",
+        "vt_original_license_date": "07/01/2005",
+    }
+    out = normalization.normalize_item(item, "minnesota")
+    assert out["mn_original_license_date"] == "07/01/2014"
+    assert out["mn_last_renewed_date"] == "01/01/2026"
+    assert out["vt_original_license_date"] == "07/01/2005"
+
+
 # --------------------------------------------------------------------------- #
 # Task 05 — numeric & type consistency
 # --------------------------------------------------------------------------- #

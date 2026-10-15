@@ -11,6 +11,7 @@ from playwright_stealth import Stealth
 from scrapy_playwright.page import PageMethod
 
 from provider_scrape.items import ProviderItem
+from provider_scrape.normalization import normalize_date
 from provider_scrape.playwright_utils import PlaywrightErrbackMixin
 
 # Base URL for county results pages — all filter params default to False/All
@@ -247,8 +248,27 @@ def _row_to_item(row):
     item["mn_type_of_license"] = (row.get("Type Of License") or "").strip() or None
     item["mn_restrictions"] = (row.get("Restrictions") or "").strip() or None
     item["mn_licensed_to_provide"] = (row.get("Services") or "").strip() or None
-    item["license_begin_date"] = (row.get("Initial Effective Date") or "").strip() or None
-    item["mn_last_renewed_date"] = (row.get("Current Effective Date") or "").strip() or None
+
+    # bug_11: the CSV's own column names are reversed from what cross-state
+    # consumers expect of `license_begin_date` -- "Initial Effective Date" is
+    # the facility's first-ever license date, "Current Effective Date" is
+    # the current license term's start. license_begin_date must hold the
+    # latter to match every other state's semantics; the former moves to
+    # mn_original_license_date. mn_last_renewed_date intentionally still
+    # duplicates the current-term value (pending story 38). license_begin_date
+    # is in normalization.DATE_FIELDS and gets ISO-normalized by the shared
+    # pipeline automatically; the other two are state-specific fields the
+    # pipeline does not touch, so they are normalized here directly via the
+    # same shared normalize_date helper. Large clusters at 2014-07-01
+    # (2,519 records) and 2014-01-01 (963) in mn_original_license_date are
+    # real -- 245D Home and Community Based Services licenses whose license
+    # *category* began on those dates -- not a data-migration artifact, so
+    # do not null them out.
+    initial_effective_date = (row.get("Initial Effective Date") or "").strip() or None
+    current_effective_date = (row.get("Current Effective Date") or "").strip() or None
+    item["license_begin_date"] = current_effective_date
+    item["mn_original_license_date"] = normalize_date(initial_effective_date)
+    item["mn_last_renewed_date"] = normalize_date(current_effective_date)
     item["license_expiration"] = (row.get("Expiration Date") or "").strip() or None
     item["mn_license_holder_onsite"] = (row.get("License Holder Lives Onsite") or "").strip() or None
     item["email"] = (row.get("EmailAddress") or "").strip() or None

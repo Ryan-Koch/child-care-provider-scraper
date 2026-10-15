@@ -29,7 +29,10 @@ FIELD_DOCS = {
     "Replaced in place.",
     # Dates
     "status_date": "Date the current status took effect, normalized to ISO 8601 (YYYY-MM-DD).",
-    "license_begin_date": "License start date, normalized to ISO 8601.",
+    "license_begin_date": "Start date of the provider's CURRENT license term, normalized to ISO 8601 -- "
+    "not necessarily the facility's first-ever license date (bug_11). Some states publish no "
+    "current-term date at all, in which case this is left empty rather than falling back to an "
+    "original/migration date; see that state's xx_original_license_date field, where published.",
     "license_expiration": "License expiration date, normalized to ISO 8601.",
     # Address
     "address": "Full street address; whitespace-cleaned, trailing country "

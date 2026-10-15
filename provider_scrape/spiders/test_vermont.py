@@ -108,7 +108,12 @@ def test_parse_detail_contact_and_dates(detail_item):
     assert detail_item["phone"] == "(802)468-2993"
     assert detail_item["email"] == "penniehartwareing@gmail.com"
     assert detail_item["provider_website"] is None
-    assert detail_item["license_begin_date"] == "07/01/2005"
+    # bug_11: VT publishes only one license date and nothing represents a
+    # "current term start" -- license_begin_date is None for every VT
+    # record, and the page's one date (field_ldate3) moves to
+    # vt_original_license_date instead, normalized to ISO by the spider.
+    assert detail_item["license_begin_date"] is None
+    assert detail_item["vt_original_license_date"] == "2005-07-01"
 
 
 def test_parse_detail_capacity_and_vacancies(detail_item):

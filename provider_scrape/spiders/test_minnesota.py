@@ -527,8 +527,8 @@ def _sample_row(**overrides):
         "Restrictions": "None",
         "Services": "Services: Day Program",
         "Licensing Authority": "Minnesota Department of Human Services",
-        "Initial Effective Date": "6/29/20",
-        "Current Effective Date": "1/1/26",
+        "Initial Effective Date": "06/29/2020",
+        "Current Effective Date": "01/01/2026",
         "Expiration Date": "12/31/26",
         "License Holder Lives Onsite": "",
         "EmailAddress": "info@absee.example.com",
@@ -554,8 +554,17 @@ def test_row_to_item_golden_path():
     assert item["mn_type_of_license"] == "Ages Served: Infants Toddlers Preschool"
     assert item["mn_restrictions"] == "None"
     assert item["mn_licensed_to_provide"] == "Services: Day Program"
-    assert item["license_begin_date"] == "6/29/20"
-    assert item["mn_last_renewed_date"] == "1/1/26"
+    # bug_11: license_begin_date now holds the CURRENT license term's start
+    # ("Current Effective Date") -- raw here, since it's ISO-normalized
+    # later by the shared pipeline (it's in normalization.DATE_FIELDS).
+    # mn_original_license_date holds the facility's first-ever license date
+    # ("Initial Effective Date") and mn_last_renewed_date still duplicates
+    # the current-term value (pending story 38) -- both are state-specific
+    # fields the pipeline doesn't touch, so _row_to_item normalizes them to
+    # ISO directly.
+    assert item["license_begin_date"] == "01/01/2026"
+    assert item["mn_original_license_date"] == "2020-06-29"
+    assert item["mn_last_renewed_date"] == "2026-01-01"
     assert item["license_expiration"] == "12/31/26"
     assert item["mn_license_holder_onsite"] is None
     assert item["email"] == "info@absee.example.com"
@@ -613,3 +622,35 @@ def test_row_to_item_with_secondary_address_line():
 def test_row_to_item_license_holder_lives_onsite_yes():
     row = _sample_row(**{"License Holder Lives Onsite": "Yes"})
     assert _row_to_item(row)["mn_license_holder_onsite"] == "Yes"
+
+
+# ---- bug_11: license_begin_date / mn_original_license_date / mn_last_renewed_date ----
+
+
+def test_row_to_item_245d_cluster_is_not_nulled():
+    """The 2014-07-01/2014-01-01 cluster (appendix D10) is real 245D Home and
+    Community Based Services data -- a satellite license whose *category*
+    began on that date, not a data-migration artifact -- so it must survive
+    into mn_original_license_date untouched, not be blanked."""
+    row = _sample_row(
+        **{
+            "Type Of License": (
+                "This community residential setting license is a satellite "
+                "operating under 245D-HCBS Program License Number 1070926"
+            ),
+            "Initial Effective Date": "07/01/2014",
+            "Current Effective Date": "03/01/2025",
+        }
+    )
+    item = _row_to_item(row)
+    assert item["mn_original_license_date"] == "2014-07-01"
+    assert item["license_begin_date"] == "03/01/2025"
+    assert item["mn_last_renewed_date"] == "2025-03-01"
+
+
+def test_row_to_item_blank_dates_stay_none():
+    row = _sample_row(**{"Initial Effective Date": "", "Current Effective Date": ""})
+    item = _row_to_item(row)
+    assert item["license_begin_date"] is None
+    assert item["mn_original_license_date"] is None
+    assert item["mn_last_renewed_date"] is None

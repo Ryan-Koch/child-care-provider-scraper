@@ -27,7 +27,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `infant` | Whitespace cleanup | Whether the provider serves infants: bool-or-None. States that emit a per-age count ("8"), a count string ("Y"/"N"), or "Yes"/absent are coerced via count/token > 0 (bug_05); an unparseable token becomes None rather than a guessed True. |
 | `languages` | Whitespace cleanup | Languages, as emitted (string or list; whitespace-cleaned). |
 | `latitude` | Whitespace cleanup; Coordinate -> string | Latitude kept as a trimmed string to avoid float precision drift. |
-| `license_begin_date` | Whitespace cleanup; ISO 8601 date | License start date, normalized to ISO 8601. |
+| `license_begin_date` | Whitespace cleanup; ISO 8601 date | Start date of the provider's CURRENT license term, normalized to ISO 8601 -- not necessarily the facility's first-ever license date (bug_11). Some states publish no current-term date at all, in which case this is left empty rather than falling back to an original/migration date; see that state's xx_original_license_date field, where published. |
 | `license_expiration` | Whitespace cleanup; ISO 8601 date | License expiration date, normalized to ISO 8601. |
 | `license_holder` | Whitespace cleanup; Title Case (ALL-CAPS names) | Name of the license holder/licensee. ALL-CAPS values are Title-cased. |
 | `license_number` | Whitespace cleanup | State-issued license/registration identifier, kept as emitted (only whitespace-cleaned). |
@@ -553,6 +553,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `mn_license_holder_onsite` -> pass-through
 - `mn_license_info_misc` -> pass-through
 - `mn_licensed_to_provide` -> pass-through
+- `mn_original_license_date` -> pass-through
 - `mn_restrictions` -> pass-through
 - `mn_setting` -> pass-through
 - `mn_type_of_license` -> pass-through
@@ -903,6 +904,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `vt_guidance` -> pass-through
 - `vt_infant_capacity` -> pass-through
 - `vt_infant_vacancies` -> pass-through
+- `vt_original_license_date` -> pass-through
 - `vt_pets` -> pass-through
 - `vt_preschool_capacity` -> pass-through
 - `vt_preschool_vacancies` -> pass-through

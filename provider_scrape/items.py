@@ -472,8 +472,24 @@ class ProviderItem(scrapy.Item):
     mi_services_provided = scrapy.Field()
     mi_full_day = scrapy.Field()
 
-    # Minnesota specific fields
+    # Minnesota specific fields (bug_11). license_begin_date holds the
+    # CURRENT license term's start (the CSV's "Current Effective Date"), to
+    # match other states' semantics; mn_original_license_date holds the
+    # facility's first-ever license date (the CSV's "Initial Effective
+    # Date" -- the site's own naming is reversed from what cross-state
+    # consumers expect). mn_last_renewed_date intentionally still carries
+    # the same "Current Effective Date" value as license_begin_date --
+    # story 38 will collapse that duplication into a common
+    # last_renewed_date field. Both are normalized to ISO here by the
+    # spider (normalize_date), since neither is in normalization.DATE_FIELDS
+    # (that list is common-fields-only).
     mn_last_renewed_date = scrapy.Field()
+    # Large clusters at 2014-07-01 (2,519 records) and 2014-01-01 (963) are
+    # real: 245D Home and Community Based Services licenses whose *license
+    # category* began on those dates, not a data-migration artifact -- do
+    # not null them out. Pending story 37 (collapse into a common
+    # original_license_date field).
+    mn_original_license_date = scrapy.Field()
     mn_licensed_to_provide = scrapy.Field()
     mn_restrictions = scrapy.Field()
     mn_setting = scrapy.Field()
@@ -814,6 +830,21 @@ class ProviderItem(scrapy.Item):
     # here as `vt_{age}_capacity`, pending story 35/capacity_by_age); the
     # per-age *vacancies* (the registry's frequently-updated, VT-unique
     # content) live in the vt_*_vacancies fields.
+    #
+    # bug_11: VT's detail page publishes exactly one license date
+    # (field_ldate3, labelled "License Date") -- there is no separate
+    # current-term/renewal/expiration date, so nothing on the page
+    # represents a "current term start". The common `license_begin_date` is
+    # therefore left None for every VT record, and the page's one date moves
+    # here instead (normalized to ISO by the spider via normalize_date,
+    # since this field is not in normalization.DATE_FIELDS). About 22% of
+    # values cluster in 2005 (half on the 1st of a month, including
+    # decades-old Head Start programs) -- suspected system-cutover dates
+    # from a VT registry migration that may understate provider age, not
+    # necessarily each facility's true original license date. They are NOT
+    # nulled out: that can't be told apart from a genuine 2005 date on a
+    # per-record basis.
+    vt_original_license_date = scrapy.Field()
     vt_provider_id = scrapy.Field()  # PARTY_ID, e.g. "3053"
     vt_star_level = scrapy.Field()  # STARS rating, e.g. "4 Star"
     vt_type_of_care = scrapy.Field()  # e.g. "Full-Time, Part-Time, Daytime"
