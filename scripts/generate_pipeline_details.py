@@ -78,6 +78,8 @@ def transformation_for(field):
         tags = ["Whitespace cleanup", "ISO 8601 date"]
     elif field == norm.CAPACITY_FIELD:
         tags = ["Whitespace cleanup", "Integer coercion"]
+    elif field == norm.DEFICIENCIES_FIELD:
+        tags = ["Whitespace cleanup", "Integer coercion (bug_10)"]
     elif field == norm.AGES_SERVED_FIELD:
         tags = ["Whitespace cleanup", "List -> string"]
     elif field in norm.COORDINATE_FIELDS:

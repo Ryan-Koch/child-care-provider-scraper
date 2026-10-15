@@ -237,6 +237,68 @@ def test_normalize_capacity_range_unchanged_and_logged(caplog):
     assert "non-integer capacity" in caplog.text
 
 
+def test_normalize_deficiencies_digit_string_to_int():
+    # TX (bug_10): CSV "Deficiencies" column passed through as a string.
+    assert normalization.normalize_deficiencies("0") == 0
+    assert normalization.normalize_deficiencies("1") == 1
+    assert normalization.normalize_deficiencies("2") == 2
+
+
+def test_normalize_deficiencies_int_passthrough():
+    # CT/KS/WI already compute a plain int (sum/len) in the spider.
+    assert normalization.normalize_deficiencies(0) == 0
+    assert normalization.normalize_deficiencies(47) == 47
+
+
+def test_normalize_deficiencies_none_and_blank_stay_none():
+    assert normalization.normalize_deficiencies(None) is None
+    assert normalization.normalize_deficiencies("") is None
+    assert normalization.normalize_deficiencies("   ") is None
+
+
+def test_normalize_deficiencies_comma_grouped_string():
+    assert normalization.normalize_deficiencies("1,234") == 1234
+
+
+def test_normalize_deficiencies_integral_float_and_string():
+    assert normalization.normalize_deficiencies(2.0) == 2
+    assert normalization.normalize_deficiencies("2.0") == 2
+    assert isinstance(normalization.normalize_deficiencies("2.0"), int)
+
+
+def test_normalize_deficiencies_non_integral_float_becomes_none_and_logged(caplog):
+    with caplog.at_level("DEBUG"):
+        assert normalization.normalize_deficiencies(2.5) is None
+        assert normalization.normalize_deficiencies("2.5") is None
+    assert "non-integer value" in caplog.text
+
+
+def test_normalize_deficiencies_negative_values_become_none_and_logged(caplog):
+    with caplog.at_level("DEBUG"):
+        assert normalization.normalize_deficiencies(-1) is None
+        assert normalization.normalize_deficiencies(-1.0) is None
+        assert normalization.normalize_deficiencies("-1") is None
+        assert normalization.normalize_deficiencies("-1,234") is None
+    assert "negative value" in caplog.text
+
+
+def test_normalize_deficiencies_non_numeric_becomes_none_and_logged(caplog):
+    with caplog.at_level("DEBUG"):
+        assert normalization.normalize_deficiencies("N/A") is None
+        assert normalization.normalize_deficiencies("see report") is None
+        assert normalization.normalize_deficiencies("1,2,3") is None  # malformed grouping
+    assert "non-numeric value" in caplog.text
+
+
+def test_normalize_deficiencies_bool_becomes_none(caplog):
+    # isinstance(True, int) is True in Python -- a stray bool must not be
+    # read as a count of 0/1, and the field stays strictly int-or-None.
+    with caplog.at_level(logging.DEBUG, logger="provider_scrape.normalization"):
+        assert normalization.normalize_deficiencies(True) is None
+        assert normalization.normalize_deficiencies(False) is None
+    assert "boolean value" in caplog.text
+
+
 def test_normalize_ages_served_list_to_string():
     assert normalization.normalize_ages_served(["Pre-K (4 - 5 yrs)"]) == "Pre-K (4 - 5 yrs)"
 
@@ -273,6 +335,33 @@ def test_normalize_item_applies_numeric_and_type_rules():
     assert out["ages_served"] == "Pre-K (4 - 5 yrs)"
     assert isinstance(out["latitude"], str) and out["latitude"] == "33.5141"
     assert out["longitude"] == "-112.109100000000000"
+
+
+def test_normalize_item_coerces_texas_deficiencies_string_to_int(caplog):
+    # bug_10: TX-shaped item -- numeric string from the CSV "Deficiencies"
+    # column -- is coerced to a plain int by the shared pipeline.
+    item = {"deficiencies": "2"}
+    out = normalization.normalize_item(item, "texas")
+    assert out["deficiencies"] == 2
+    assert isinstance(out["deficiencies"], int) and not isinstance(out["deficiencies"], bool)
+
+
+def test_normalize_item_leaves_int_emitting_states_deficiencies_unchanged():
+    # CT/KS/WI already compute a plain int (sum/len) in the spider -- the
+    # pipeline must not alter an already-correct value.
+    out_ct = normalization.normalize_item({"deficiencies": 47}, "connecticut")
+    out_ks = normalization.normalize_item({"deficiencies": 0}, "kansas")
+    out_wi = normalization.normalize_item({"deficiencies": 55}, "wisconsin")
+    assert out_ct["deficiencies"] == 47
+    assert out_ks["deficiencies"] == 0
+    assert out_wi["deficiencies"] == 55
+
+
+def test_normalize_item_skips_absent_deficiencies():
+    # A state that never sets this key is left alone -- no key is invented.
+    item = {"provider_name": "Example Center"}
+    out = normalization.normalize_item(item, "montana")
+    assert "deficiencies" not in out
 
 
 # --------------------------------------------------------------------------- #

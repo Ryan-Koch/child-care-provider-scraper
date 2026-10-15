@@ -234,8 +234,14 @@ def normalize_date(value):
 COORDINATE_FIELDS = ("latitude", "longitude")
 CAPACITY_FIELD = "capacity"
 AGES_SERVED_FIELD = "ages_served"
+DEFICIENCIES_FIELD = "deficiencies"
 
 _INTEGER_RE = re.compile(r"\d+")
+
+# Thousands-grouped count, e.g. NY's "1,100" school-age capacity or TX's rare
+# high deficiency counts. Shared by normalize_deficiencies (below) and
+# coerce_age_served_flag/_coerce_strict_bool_flag (Task 10).
+_GROUPED_INTEGER_RE = re.compile(r"\d{1,3}(?:,\d{3})+")
 
 
 def normalize_capacity(value):
@@ -256,6 +262,77 @@ def normalize_capacity(value):
             return int(stripped)
         logger.warning("normalize_capacity: non-integer capacity %r (left unchanged)", value)
         return value
+    return value
+
+
+def normalize_deficiencies(value):
+    """Coerce the provider-level ``deficiencies`` count to ``int``-or-``None``
+    (bug_10).
+
+    CT/KS/WI already compute this as a plain Python ``int`` in their spiders
+    (a ``sum``/``len`` over parsed inspection rows); TX instead passes its CSV
+    ``Deficiencies`` column straight through as a numeric **string**
+    (``'0'``, ``'1'``, ``'2'``, ...). This normalizes every shape the pipeline
+    might see to the same ``int``-or-``None``, unlike :func:`normalize_capacity`
+    (which leaves an unparseable value unchanged) -- a bad deficiency count is
+    data we don't trust, so it is dropped to ``None`` rather than kept:
+
+    - already an ``int`` (and not a ``bool``) -> returned as-is, unless
+      negative (see below).
+    - a clean digit string (``"0"``, ``"47"``) -> ``int``.
+    - a thousands-grouped string (``"1,234"``) -> commas stripped, then ``int``.
+    - an integral float or integral-float **string** (``2.0``, ``"2.0"``) ->
+      ``int`` (``2``). A non-integral float (``2.5``) is *not* rounded --
+      treated as unparseable (below).
+    - ``None``, ``""``, or whitespace-only -> ``None`` (no signal).
+    - negative (any numeric shape), non-numeric text, or a non-integral float
+      -> ``None``, **logged at DEBUG**. We never guess a count.
+
+    ``bool`` is checked first and becomes ``None`` (logged at DEBUG) --
+    ``isinstance(True, int)`` is ``True`` in Python, so without this guard a
+    stray boolean would fall into the ``int`` branch and be read as a count
+    of 0/1. Unlike :func:`normalize_capacity`, a bool is not passed through:
+    ``deficiencies`` is strictly int-or-None.
+    """
+    if isinstance(value, bool):
+        logger.debug("normalize_deficiencies: boolean value %r -> None", value)
+        return None
+    if isinstance(value, int):
+        if value < 0:
+            logger.debug("normalize_deficiencies: negative value %r -> None", value)
+            return None
+        return value
+    if isinstance(value, float):
+        if value < 0:
+            logger.debug("normalize_deficiencies: negative value %r -> None", value)
+            return None
+        if value.is_integer():
+            return int(value)
+        logger.debug("normalize_deficiencies: non-integer value %r -> None", value)
+        return None
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return None
+        if stripped.startswith("-"):
+            logger.debug("normalize_deficiencies: negative value %r -> None", value)
+            return None
+        # Strip thousands-grouping commas (e.g. "1,234") before the digit
+        # check, same gated approach as coerce_age_served_flag -- only when
+        # the *whole* trimmed string matches the grouped pattern, so a
+        # malformed value like "1,2,3" isn't silently reinterpreted.
+        candidate = stripped.replace(",", "") if _GROUPED_INTEGER_RE.fullmatch(stripped) else stripped
+        if _INTEGER_RE.fullmatch(candidate):
+            return int(candidate)
+        try:
+            as_float = float(candidate)
+        except ValueError:
+            logger.debug("normalize_deficiencies: non-numeric value %r -> None", value)
+            return None
+        if as_float.is_integer():
+            return int(as_float)
+        logger.debug("normalize_deficiencies: non-integer value %r -> None", value)
+        return None
     return value
 
 
@@ -1319,9 +1396,8 @@ def normalize_languages(value):
 # decision the spider already owns (ny_capacity_description, vt_*_vacancies).
 AGE_SERVED_FLAG_FIELDS = ("infant", "toddler", "preschool", "school")
 
-
-# Thousands-grouped count, e.g. NY's "1,100" school-age capacity.
-_GROUPED_INTEGER_RE = re.compile(r"\d{1,3}(?:,\d{3})+")
+# _GROUPED_INTEGER_RE (thousands-grouped count, e.g. NY's "1,100" school-age
+# capacity) is defined in Task 05 above, shared with normalize_deficiencies.
 
 
 def _coerce_strict_bool_flag(value, *, func_name, extra_affirmative=frozenset(), extra_negative=frozenset()):
@@ -1486,6 +1562,8 @@ def normalize_item(item: dict, state: str) -> dict:
         item[CAPACITY_FIELD] = normalize_capacity(item[CAPACITY_FIELD])
     if item.get(AGES_SERVED_FIELD) is not None:
         item[AGES_SERVED_FIELD] = normalize_ages_served(item[AGES_SERVED_FIELD])
+    if item.get(DEFICIENCIES_FIELD) is not None:
+        item[DEFICIENCIES_FIELD] = normalize_deficiencies(item[DEFICIENCIES_FIELD])
     for coord in COORDINATE_FIELDS:
         if item.get(coord) is not None:
             item[coord] = normalize_coordinate(item[coord])

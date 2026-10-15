@@ -75,7 +75,11 @@ FIELD_DOCS = {
     "county": "County (whitespace-cleaned only).",
     "hours": "Operating hours, as emitted by the state (whitespace-cleaned only).",
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
-    "deficiencies": "Deficiency count/summary, as emitted (whitespace-cleaned only).",
+    "deficiencies": "Deficiency/violation count for the provider, coerced to an "
+    "integer (bug_10). Digit strings, comma-grouped counts, and integral "
+    "floats (e.g. 2.0) all become int; blank/None stays None; negative or "
+    "non-numeric values (and stray booleans) become None rather than a "
+    "guessed number.",
     "infant": "Whether the provider serves infants: bool-or-None. States that "
     'emit a per-age count ("8"), a count string ("Y"/"N"), or "Yes"/absent '
     "are coerced via count/token > 0 (bug_05); an unparseable token becomes "
