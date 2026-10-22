@@ -1,19 +1,3337 @@
+
+
+
 <!DOCTYPE html>
-<html>
-<head><title>Child Care Provider Search</title></head>
-<body>
-<script>
-    let areaTree = {};
-    $.ajax({
-        url: 'https://prod-28.usgovtexas.logic.azure.us:443/workflows/5a3c6892c14442138e4b600e03411aa2/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=sPbgvsl2Ese18mRBq1xAB51oZVzIoUG4TQuFTuzERpg',
-        type: "POST",
-    });
-    $("#search-form").on("submit", function (e) {
-        $.ajax({
-            url: 'https://prod-06.usgovtexas.logic.azure.us:443/workflows/179f51f14f6a4837b49e82a3099bc3c3/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=V2SJOS2DthZkevCZtKQR-6GAHNVv1p57XZKIYJKewYo',
-            type: "POST",
+<html lang="en-US" data-lang="en-US" crm-lang="en-US" dir="ltr" crm-lcid="1033"
+	same-site-mode="None">
+<head>
+		
+		
+		<link rel="manifest" href="/PWAManifest.json">
+		<meta charset="utf-8" /><meta name="viewport" content="width=device-width,&#32;initial-scale=1.0" /><meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<script type="text/javascript" >
+				
+        </script>
+	<title>
+	
+		Home
+		
+</title>
+		
+		<script src="/_portal/bbe35dee-2e27-4e5e-bb0d-41c80c125968/Resources/ResourceManager?lang=en-US"></script>
+	
+	<script type="text/javascript">
+        // Refresh all powerBI Iframes on Login in one Iframe
+        window.addEventListener('message', function (event) {
+            if (event && event.data && event.data == 'refreshPowerBI') {
+                $("iframe.powerbi").each(function () {
+                    this.src = this.src;
+                });
+            }
         });
-    });
+
+        // Fix for incorrect viewport width setting in IE 10 on Windows Phone 8.
+        if (navigator.userAgent.match(/IEMobile\/10\.0/)) {
+            var msViewportStyle = document.createElement("style");
+            msViewportStyle.appendChild(document.createTextNode("@-ms-viewport{width:auto!important}"));
+            document.getElementsByTagName("head")[0].appendChild(msViewportStyle);
+        }
+    </script>
+		
+	
+		
+		<link href="/bootstrap.min.css" rel="stylesheet" />
+
+		<link href="https://gov.content.powerapps.us/resource/powerappsportal/dist/font-awesome.BootstrapV5.bundle-2ce6efb497.css" onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;link&#32;=&#32;document.createElement(&#39;link&#39;);&#32;link.crossOrigin&#32;=&#32;target.crossOrigin;&#32;link.href&#32;=&#32;&#39;/dist/font-awesome.BootstrapV5.bundle-2ce6efb497.css&#39;;&#32;link.rel&#32;=&#32;&#39;stylesheet&#39;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,link);" rel="stylesheet" />
+
+				<link href="https://gov.content.powerapps.us/resource/powerappsportal/dist/preform.BootstrapV5.bundle-e3e84e09a3.css" onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;link&#32;=&#32;document.createElement(&#39;link&#39;);&#32;link.crossOrigin&#32;=&#32;target.crossOrigin;&#32;link.href&#32;=&#32;&#39;/dist/preform.BootstrapV5.bundle-e3e84e09a3.css&#39;;&#32;link.rel&#32;=&#32;&#39;stylesheet&#39;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,link);" rel="stylesheet" />
+
+
+		
+		<link href="https://gov.content.powerapps.us/resource/powerappsportal/dist/privatemode.bundle-049b12b66e.css" onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;link&#32;=&#32;document.createElement(&#39;link&#39;);&#32;link.crossOrigin&#32;=&#32;target.crossOrigin;&#32;link.href&#32;=&#32;&#39;/dist/privatemode.bundle-049b12b66e.css&#39;;&#32;link.rel&#32;=&#32;&#39;stylesheet&#39;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,link);" rel="stylesheet" />
+
+
+		
+			
+
+
+		
+		<link href="/thumbnail.css" rel="stylesheet" />
+<link href="/theme.css" rel="stylesheet" />
+<link href="/portalbasictheme.css" rel="stylesheet" />
+
+		
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+<!-- MS Clarity -->
+<style>
+  /* Styles for the cookie consent overlay */
+  #cookie-consent-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0; /* Start hidden */
+    visibility: hidden; /* Start hidden */
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+  }
+
+  #cookie-consent-overlay.show {
+    opacity: 1; /* Fade in */
+    visibility: visible; /* Show */
+  }
+
+  #cookie-consent-message {
+    background: white;
+    padding: 24px;
+    border-radius: 4px;
+    text-align: center;
+    transform: translateY(-50px); /* Start position */
+    opacity: 0; /* Start hidden */
+    transition: transform 0.5s ease, opacity 0.5s ease;
+    max-width: 550px;
+  }
+
+  #cookie-consent-message.show {
+    transform: translateY(0); /* Slide in */
+    opacity: 1; /* Fade in */
+  }
+
+  button {
+    margin: 10px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  #accept-cookies {
+    background-color: #4caf50;
+    color: white;
+  }
+
+  #reject-cookies {
+    background-color: #f44336;
+    color: white;
+  }
+
+  @media (max-width: 500px) {
+    .buttonDiv {
+      flex-direction: column-reverse !important;
+    }
+  }
+</style>
+<script>
+  function showOverlay() {
+    // Check if the user is already on the homepage
+    if (window.location.pathname === '/') {
+      openOverlay();
+    } else {
+      // Redirect to the homepage with a query parameter
+      window.location.href = '/?showOverlay=true';
+    }
+  }
+
+  function openOverlay() {
+    document.querySelector('.overlay').classList.add('show');
+  }
 </script>
+<script type="text/javascript">
+  (function (c, l, a, r, i, t, y) {
+    c[a] =
+      c[a] ||
+      function () {
+        (c[a].q = c[a].q || []).push(arguments);
+      };
+    t = l.createElement(r);
+    t.async = 1;
+    t.src = "https://www.clarity.ms/tag/" + i;
+    y = l.getElementsByTagName(r)[0];
+    y.parentNode.insertBefore(t, y);
+  })(window, document, "clarity", "script", "sf209nollg");
+
+  // Utility function to set a cookie
+  function setCookie(name, value, days) {
+    let expires = "";
+    if (days) {
+      const date = new Date();
+      date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+      expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "") + expires + "; path=/";
+  }
+
+  // Utility function to get a cookie value
+  function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(";");
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === " ") c = c.substring(1, c.length);
+      if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+  }
+
+  // Function to create and append the cookie consent HTML
+  function createCookieConsentOverlay() {
+    // Create the overlay div
+    const overlay = document.createElement("div");
+    overlay.id = "cookie-consent-overlay";
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.background = "rgba(0, 0, 0, 0.7)";
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+    overlay.style.zIndex = "1000";
+    overlay.className = "hidden";
+
+    // Create the message div
+    const messageDiv = document.createElement("div");
+    messageDiv.id = "cookie-consent-message";
+    messageDiv.style.background = "white";
+    messageDiv.style.padding = "24px";
+    messageDiv.style.borderRadius = "5px";
+    messageDiv.style.textAlign = "center";
+    messageDiv.style.width = "430px";
+
+    // Create the title header
+    const consentHeader = document.createElement("h1");
+    consentHeader.textContent = "Cookie Preferences";
+    consentHeader.style.textAlign = 'left';
+    consentHeader.style.textAlign = 'left';
+    consentHeader.style.fontWeight = 600;
+    consentHeader.style.margin = 0;
+    consentHeader.style.fontSize = '24px';
+    messageDiv.appendChild(consentHeader);
+
+    // Create the message paragraph
+    const message = document.createElement("p");
+    message.textContent =
+      "Child Care Provider Search employs cookies to enhance your application experience and improve website usability. By accepting all cookies, you agree to their use on your device.";
+    message.style.marginTop = '1rem';
+    message.style.textAlign = 'left';
+    message.style.fontWeight = 400;
+    message.style.fontSize = '14px';
+    messageDiv.appendChild(message);
+
+    // Create the flex div
+    const buttonDiv = document.createElement("div");
+    buttonDiv.className = 'buttonDiv';
+    buttonDiv.style.display = "flex";
+    buttonDiv.style.justifyContent = "center";
+    buttonDiv.style.flexDirection = "column";
+    buttonDiv.style.gap = "12px";
+    messageDiv.appendChild(buttonDiv);
+
+    // Create the Accept button
+    const acceptButton = document.createElement("button");
+    acceptButton.className = "cookie-button";
+    acceptButton.id = "accept-cookies";
+    acceptButton.textContent = "ALLOW ALL";
+    acceptButton.style.margin = "0";
+    acceptButton.style.padding = "16px 32px 16px 32px";
+    acceptButton.style.border = "none";
+    acceptButton.style.borderRadius = "41px";
+    acceptButton.style.cursor = "pointer";
+    acceptButton.style.backgroundColor = "#CA4623";
+    acceptButton.style.color = "white";
+    buttonDiv.appendChild(acceptButton);
+
+    // Create the Reject button
+    const rejectButton = document.createElement("button");
+    rejectButton.className = "cookie-button";
+    rejectButton.id = "reject-cookies";
+    rejectButton.textContent = "DECLINE ALL";
+    rejectButton.style.margin = "0";
+    rejectButton.style.padding = "16px 32px 16px 32px";
+    rejectButton.style.border = "2px solid #CA4623";
+    rejectButton.style.borderRadius = "41px";
+    rejectButton.style.cursor = "pointer";
+    rejectButton.style.backgroundColor = "white";
+    rejectButton.style.color = "black";
+    buttonDiv.appendChild(rejectButton);
+
+    // Append message div to overlay, and overlay to body
+    overlay.appendChild(messageDiv);
+    document.body.appendChild(overlay);
+
+    // Show overlay with animation
+    requestAnimationFrame(() => {
+      overlay.classList.add("show");
+      messageDiv.classList.add("show");
+    });
+
+    // Set up event listeners for the consent buttons
+    acceptButton.addEventListener("click", () => {
+      setCookie("cookie_consent", "accepted", 365);
+      window.clarity("consent");
+      hideOverlay();
+    });
+
+    rejectButton.addEventListener("click", () => {
+      setCookie("cookie_consent", "rejected", 365);
+      window.clarity("consent", false);
+      hideOverlay();
+    });
+  }
+
+  // Function to hide the overlay with animation
+  function hideOverlay() {
+    const overlay = document.getElementById("cookie-consent-overlay");
+    const messageDiv = document.getElementById("cookie-consent-message");
+
+    messageDiv.classList.remove("show");
+    overlay.classList.remove("show");
+
+    overlay.addEventListener(
+      "transitionend",
+      () => {
+        overlay.remove();
+      },
+      { once: true }
+    );
+  }
+
+  // Check if the cookie consent has already been given
+  function checkCookieConsent() {
+    const consent = getCookie("cookie_consent");
+    if (!consent) {
+      createCookieConsentOverlay();
+    }
+  }
+
+  // Run the script after the DOM content is loaded
+  document.addEventListener("DOMContentLoaded", checkCookieConsent);
+</script>
+		
+		
+		
+	
+		
+		<link href="https://gov.content.powerapps.us/resource/powerappsportal/dist/pwa-style.bundle-55718a4c0d.css" onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;link&#32;=&#32;document.createElement(&#39;link&#39;);&#32;link.crossOrigin&#32;=&#32;target.crossOrigin;&#32;link.href&#32;=&#32;&#39;/dist/pwa-style.bundle-55718a4c0d.css&#39;;&#32;link.rel&#32;=&#32;&#39;stylesheet&#39;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,link);" rel="stylesheet" />
+
+		</head>
+<body data-sitemap-state="/"
+	data-dateformat="M/d/yyyy"
+	data-timeformat="h:mm tt"
+	data-datetimeformat="M/d/yyyy h:mm tt"
+	data-app-path="/"
+	data-ckeditor-basepath="/js/BaseHtmlContentDesigner/Libs/msdyncrm_/libs/ckeditor/"
+	data-case-deflection-url="/_services/search/bbe35dee-2e27-4e5e-bb0d-41c80c125968">
+
+
+	
+		<link href="https://gov.content.powerapps.us/resource/powerappsportal/dist/pcf-style.bundle-373a0f4982.css" onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;link&#32;=&#32;document.createElement(&#39;link&#39;);&#32;link.crossOrigin&#32;=&#32;target.crossOrigin;&#32;link.href&#32;=&#32;&#39;/dist/pcf-style.bundle-373a0f4982.css&#39;;&#32;link.rel&#32;=&#32;&#39;stylesheet&#39;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,link);" rel="stylesheet" />
+
+			
+	
+		
+
+	<div id="offlineNotificationBar" class="displayNone">
+		<img alt="web" class="col-3" id="web" onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;img&#32;=&#32;document.createElement(&#39;img&#39;);&#32;img.src&#32;=&#32;&#39;/css/images/web.png&#39;;&#32;img.alt&#32;=&#32;&#39;web&#39;;&#32;img.id&#32;=&#32;&#39;web&#39;&#32;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,img);&#32;target.remove();" src="https://gov.content.powerapps.us/resource/powerappsportal/img/web.png" />
+		<div id="message">You&#8217;re offline. This is a read only version of the page.</div>
+		<div id="close" onclick="this.parentElement.style.display='none';"><img alt="close" class="col-3" onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;img&#32;=&#32;document.createElement(&#39;img&#39;);&#32;img.src&#32;=&#32;&#39;/css/images/close.png&#39;;&#32;img.alt&#32;=&#32;&#39;close&#39;;&#32;img.id&#32;=&#32;&#39;&#39;&#32;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,img);&#32;target.remove();" src="https://gov.content.powerapps.us/resource/powerappsportal/img/close.png" /></div>
+	</div>
+
+	
+
+	<script type="text/javascript">
+        window.DisableCkEditor = window.DisableCkEditor || {};
+		
+		DisableCkEditor.Value = 'False';
+    </script>
+
+	<script type="text/javascript">
+        var enableOmniChannelWidgetWithSiteCopilot = 'False';
+        if (enableOmniChannelWidgetWithSiteCopilot === "True" || enableOmniChannelWidgetWithSiteCopilot === "true") {
+            const authUrl = window.location.origin + "/_services/auth/portalusertoken";
+            const fetchWithRetries = async (url, options, retries) => {
+                try {
+                    const authResponse = await fetch(url, options);
+                    const token = await authResponse.text();
+                    sessionStorage['c2Token'] = token;
+                } catch (err) {
+                    if (retries === 1) throw err;
+                    return await fetchWithRetries(url, options, retries - 1);
+                }
+            };
+            fetchWithRetries(authUrl, { method: "POST" }, 4);
+
+            // Enable/disable Omnichannel session refresh on auth state change
+            // When enabled, closeChat() is called when user logs in/out to start a fresh session
+            var enableOmniChannelSessionRefreshSetting = 'True';
+            window.enableOmniChannelSessionRefresh = enableOmniChannelSessionRefreshSetting === 'True' || enableOmniChannelSessionRefreshSetting === 'true';
+        }
+    </script>
+
+	<script type="text/javascript">
+		var isPvaBotAuthenticated = sessionStorage['isPvaBotAuthenticated'];
+		var isPortalUserLoggedIn = 'False';
+
+        if ((isPvaBotAuthenticated != null || isPvaBotAuthenticated != undefined) && isPvaBotAuthenticated != isPortalUserLoggedIn) {
+			sessionStorage['triggerPvaBotSignOut'] = true;
+			sessionStorage.removeItem('c2Token');
+            sessionStorage.removeItem('directLinetoken');
+            sessionStorage.removeItem('conversation_Id');
+
+			sessionStorage.removeItem('bot_c2Token');
+			sessionStorage.removeItem('botdirectLinetoken');
+            sessionStorage.removeItem('botconversation_Id');
+		}
+		sessionStorage['isPvaBotAuthenticated'] = isPortalUserLoggedIn;
+    </script>
+
+	<script type="text/javascript">
+		window["CSPSettings"] = window["CSPSettings"] || {};
+		window["CSPSettings"].nonce = '';
+        window["FabricConfig"] = window["FabricConfig"] || {};
+        window["FabricConfig"].mergeStyles = window["FabricConfig"].mergeStyles || {};
+		window["FabricConfig"].mergeStyles.cspSettings = window["CSPSettings"];
+        window["Microsoft"] = window["Microsoft"] || {};
+		window["Microsoft"].Dynamic365 = {
+			Portal: {
+				
+				User: {
+					userName: '',
+					firstName: '',
+					lastName: '',
+					email: '',
+					contactId: '',
+					userRoles: [],
+				},
+				
+				type: 'PowerPages_BlankTemplate_V2',
+				id: '1c3f74aa-7e2d-4681-ad18-430b0fa5103f', 
+				geo: 'GCC2', 
+				tenant: '3847dec6-63b2-43f9-a6d0-58a40aaa1a10', 
+				correlationId: 'dc52dd72-ef7e-4f44-866c-520942feb6bd',
+                orgEnvironmentId: '8c50e76e-ae24-4562-b7f5-6a6a04974efc',
+                orgId: 'eee997f6-590e-43cb-a783-b8d090dba824',
+                portalProductionOrTrialType: 'Production',
+                isTelemetryEnabled: 'True',
+                InstrumentationSettings: {
+                    instrumentationKey: '47d84c9b995341e19219d73ab0c6bcd2-e951660d-d17d-4de3-83c3-6a766bd23de8-7007',
+                    collectorEndpoint: 'https://tb.events.data.microsoft.com/OneCollector/1.0/'
+                },
+                timerProfileForBatching: 'NEAR_REAL_TIME',
+                activeLanguages: ["en-US"],
+                isClientApiEnabled: 'True',
+                isSpaSite: 'False'
+            }
+        };
+
+		window["Microsoft"].PowerPages = window["Microsoft"].PowerPages || {};
+		window["Microsoft"].PowerPages.onPagesClientApiReady = (callback) => {
+			return new Promise((resolve, reject) => {
+				let isComplete = false;
+				let timeoutId;
+				const timeoutInterval = 10000;
+		
+				function handleReady() {
+					if (!isComplete && window.$pages) {
+						isComplete = true;
+						clearTimeout(timeoutId);
+						try {
+							if (typeof callback === "function") {
+								callback(window.$pages);
+							}
+						} catch (e) {
+							console.error("onPagesClientApiReady callback error:", e);
+						}
+						resolve(window.$pages); // should we reject if callback throws an error
+					}
+				}
+		
+				if (window.$pages) {
+					handleReady();
+					return;
+				}
+		
+				function sdkListener() {
+					handleReady();
+					window.removeEventListener('pagesSDKInitialized', sdkListener);
+				}
+		
+				window.addEventListener('pagesSDKInitialized', sdkListener);
+		
+				timeoutId = setTimeout(() => {
+					if (!isComplete) {
+						window.removeEventListener('pagesSDKInitialized', sdkListener);
+						if (window.$pages) {
+							handleReady();
+						} else {
+							isComplete = true;
+							reject(new Error('window.$pages not available.'));
+						}
+					}
+				}, timeoutInterval);
+			});
+		};
+
+		// Deprecated alias: Microsoft.Dynamic365.Portal.onPagesClientApiReady.
+		// Remove once telemetry shows no callers remain.
+		(function () {
+			var _impl = window["Microsoft"].PowerPages.onPagesClientApiReady;
+			var _logged = false;
+
+			window["Microsoft"].Dynamic365.Portal.onPagesClientApiReady = function (callback) {
+				if (!_logged) {
+					_logged = true;
+					try {
+						if (window.clientLogWrapper && typeof window.clientLogWrapper.traceWarning === "function") {
+							window.clientLogWrapper.traceWarning(
+								"Microsoft.Dynamic365.Portal.onPagesClientApiReady invoked (deprecated)",
+								"DeprecatedApi",
+								"ClientApiReady",
+								"Invoke",
+								"DeprecationTracker"
+							);
+						}
+						if (typeof console !== "undefined" && console.warn) {
+							console.warn(
+								"[DEPRECATED] Microsoft.Dynamic365.Portal.onPagesClientApiReady is deprecated " +
+								"and will be removed in a future release. Use Microsoft.PowerPages.onPagesClientApiReady instead."
+							);
+						}
+					} catch (_) { /* never break the caller */ }
+				}
+
+				return _impl(callback);
+			};
+		})();
+
+        // Mark request not cacheable if Dynamics365PortalAnalytics cookie is being refreshed by the server or if the cookie in request header is invalid
+		
+
+        // For client side telemetry intializing Dynamics365PortalAnalytics cookie object
+		
+        window["Microsoft"].Dynamic365.Portal.dynamics365PortalAnalytics = 'siz-DTTMZk-SRpTih44FnNLMuRwX7TZA86E7O8pah3901cPEQBXhuQVSzLcHDx2Hsk7-1OqtnBc7mmbtQtLI04EODK-tQ8Io2mc9ry7dRl9WqBRm4cBp6C3UBdQQM3kUGPoDqT-h_8nrfjv3VZI7bw2'; // CodeQL [SM00430] False Positive: only alphanumeric chars allowed, for non-alphanumeric char it will return INVALID_CHARACTERS_IN_COOKIE 
+		
+
+	</script>
+	
+	<script type="text/javascript">
+
+		
+    </script>
+
+	
+		
+<script>console.log("10/22/2026 1:10:58 PM")</script>
+
+ 
+
+
+<!--10/22/2026 1:10:58 PM
+Liquid error: Index was outside the bounds of the array.
+Liquid error: Index was outside the bounds of the array.-->
+
+ 
+
+
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+<style>
+  .banner {
+    display: flex;
+    background: #FFFFCC;
+    padding: 16px 50px;
+    position: relative;
+    z-index: 10;
+  }
+
+  #maintenance {
+    display: flex;
+    background: #FAEA39;
+    padding: 16px 50px;
+    position: relative;
+    z-index: 10;
+    align-items: center;
+  }
+
+  .banner svg, #maintenance svg {
+    margin: auto 0px;
+    min-width: 25px;
+    max-height: 25px;
+  }
+
+  .banner-body {
+      padding: 0px 10px 0px 8px;
+      margin: auto auto auto 0px;
+      font-family: Inter;
+      font-style: normal;
+      line-height: normal;
+      width: 100%;
+  }
+
+  .banner-body b {
+    font-size: 14px;
+    font-weight: 600px;
+    margin: 0px;
+  }
+
+  .banner-body p {
+    font-size: 14px;
+    font-weight: 400px;
+    margin: 0px;
+  }
+
+  .close-banner, #close-maint {
+    width: 40px;
+    font-size: 24px;
+    background: transparent;
+    color: #000000;
+    border: none;
+    height: 40px;
+    padding: 0px;
+  }
+
+  @media (max-width: 600px) {
+    .banner, #maintenance {
+      padding: 16px;
+    }
+  }
+</style>
+
+
+
+
+
+
+
+<script>
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const banners = document.querySelectorAll('[id^="banner-"]');
+    const maint = document.getElementById('close-maint');
+
+    banners.forEach(banner => {
+      const closeButton = banner.querySelector('button[id^="close-"]');
+      
+      closeButton.addEventListener('click', function() {
+        banner.style.display = 'none';
+      });
+    });
+
+      if (maint) {
+        maint.addEventListener('click', function() {
+          document.getElementById('maintenance').style.display = 'none';
+      });
+    }
+
+  });
+  
+</script>
+
+
+
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "pv05ayahb3");
+</script>
+
+<div id="skipContentDiv" tabindex="-1">
+  <a href="#main-content" class="skipContent" id="skipContentId" style="color: #007bff;">SKIP TO MAIN CONTENT</a>
+</div>
+<header role="header" class="header-container">
+  <div class="header-left">
+    <div class="logo">
+      <a
+        title="State of Hawaii Homepage"
+        aria-label="State of Hawaii Homepage"
+        href="https://portal.ehawaii.gov/"
+        ><img
+          src="/StateSeal.png"
+          alt="State of Hawaii Seal"
+          class="header-state"
+      /></a>
+      <a
+        title="DHS Homepage"
+        aria-label="DHS Homepage"
+        href="https://humanservices.hawaii.gov/"
+        ><img
+          src="/DHSSeal.png"
+          alt="Department of Hawaii Seal"
+          class="header-dhs"
+      /></a>
+    </div>
+
+  </div>
+  <div class="header-middle">
+    <a style="text-decoration: none;" href="/" onclick="sessionStorage.clear()">
+      <div class="header1Parent">
+        <span class="header1">State of Hawaiʻi</span><br />
+      </div>
+      <div class="header2Parent">
+        <span class="header2">Department of Human Services</span>
+      </div>
+      <span class="header3">Child Care Provider Search</span>
+    </a>
+  </div>
+  
+    <div class='weblink ' style="position: absolute; right: 100px;" role="none">
+        <a class="navbar-links" style="font-weight: 700; text-decoration-line: underline; color: black;" role="menuitem" aria-label="Sign In" href="https://childcareprovidersearch.dhs.hawaii.gov/SignIn">
+            WORKER SIGN-IN
+        </a>
+    </div>
+  
+</header>
+
+<style>
+  #skipContentDiv {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #FFFFFF;
+        height: 0; /* Initially hidden */
+        overflow: hidden; /* Prevent overflow when height is 0 */
+        transform: translateY(-100%);
+        transition: transform 0.3s ease, height 0.3s ease; /* Smooth transition for both */
+  }
+ 
+  #skipContentDiv:focus-within {
+        height: 50px; /* Full height when focused */
+        transform: translateY(0); /* Slide into view */
+  }
+
+  .header-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    /* justify-content: space-between; */
+    background-color: #ffffff;
+    padding: 10px 20px;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+  }
+
+  #userCache, #userLogout {
+    font-weight: 700; 
+    text-decoration: underline; 
+    color: black;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+  }
+
+  .header-state {
+    height: 85px;
+  }
+
+  .header-dhs {
+    height: 95px;
+  }
+
+  .header-middle {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+  }
+
+  .header1Parent {
+    height: 17px;
+  }
+
+  .header2Parent {
+    height: 20px;
+  }
+
+  .header1 {
+    font-family: "Inter", sans-serif;
+    font-size: 20px;
+    color: #a47f36;
+    font-weight: 600;
+  }
+
+  .header2 {
+    font-family: "Inter", sans-serif;
+    font-size: 20px;
+    color: #3c747b;
+    font-weight: 600;
+  }
+
+  .header3 {
+    font-size: 30px;
+    font-weight: 600;
+    line-height: 40px;
+    color: black;;
+  }
+
+  /*Ipad View*/
+  @media (max-width: 676px) {
+    .header1 {
+      font-size: 16px;
+    }
+
+    .header2 {
+      font-size: 16px;
+    }
+
+    .header3 {
+      font-size: 20px;
+      line-height: 30px;
+    }
+
+    .header-state {
+      height: 65px;
+    }
+
+    .header-dhs {
+      height: 75px;
+    }
+  }
+
+  /*Mobile View*/
+  @media all and (max-width: 1024px) {
+    .header-container {
+      flex-direction: column;
+      align-items: flex-start;
+      border-bottom: 1px solid #e7e7e7;
+    }
+
+    .header-left {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .logo .img {
+      max-height: 44px;
+    }
+
+    .header-middle {
+      margin-top: 10px;
+      margin-left: 0;
+    }
+
+    .header1 {
+      font-size: 14px;
+      letter-spacing: -0.75px;
+    }
+
+    .header2 {
+      font-size: 14px;
+      letter-spacing: -0.75px;
+    }
+
+    .header3 {
+      font-size: 24px;
+    }
+    .header-state {
+      height: 65px;
+    }
+
+    .header-dhs {
+      height: 75px;
+    }
+
+    .open {
+      display: flex;
+    }
+
+    .hidden {
+      display: none;
+    }
+  }
+</style>
+	
+
+	<!-- add anti-forgery token-->
+	<div id="antiforgerytoken" data-url="/_layout/tokenhtml"></div>
+
+	
+			<!-- Client Telemetry init if telemetry enabled-->
+			<script onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;script&#32;=&#32;document.createElement(&#39;script&#39;);&#32;script.crossOrigin&#32;=&#32;target.crossOrigin;&#32;script.src&#32;=&#32;&#39;/dist/client-telemetry.bundle-d490766e4f.js&#39;;&#32;script.type&#32;=&#32;&#39;text/javascript&#39;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/client-telemetry.bundle-d490766e4f.js" type="text/javascript"></script>
+
+		
+	
+		<!-- Client Telemetry Wrapper init -->
+		<script onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;script&#32;=&#32;document.createElement(&#39;script&#39;);&#32;script.crossOrigin&#32;=&#32;target.crossOrigin;&#32;script.src&#32;=&#32;&#39;/dist/client-telemetry-wrapper.bundle-633e70f51b.js&#39;;&#32;script.type&#32;=&#32;&#39;text/javascript&#39;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/client-telemetry-wrapper.bundle-633e70f51b.js" type="text/javascript"></script>
+
+		<script>
+			window.clientLogWrapper = new ClientLogWrapper();
+		</script>
+		<script onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;script&#32;=&#32;document.createElement(&#39;script&#39;);&#32;script.crossOrigin&#32;=&#32;target.crossOrigin;&#32;script.src&#32;=&#32;&#39;/dist/preform.BootstrapV5.moment_2_29_4.bundle-e6db58f462.js&#39;;&#32;script.type&#32;=&#32;&#39;text/javascript&#39;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/preform.BootstrapV5.moment_2_29_4.bundle-e6db58f462.js" type="text/javascript"></script>
+
+		
+
+		<script onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;script&#32;=&#32;document.createElement(&#39;script&#39;);&#32;script.crossOrigin&#32;=&#32;target.crossOrigin;&#32;script.src&#32;=&#32;&#39;/dist/pcf-dependency.bundle-805a1661b7.js&#39;;&#32;script.type&#32;=&#32;&#39;text/javascript&#39;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/pcf-dependency.bundle-805a1661b7.js" type="text/javascript"></script>
+
+							   <script onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;script&#32;=&#32;document.createElement(&#39;script&#39;);&#32;script.crossOrigin&#32;=&#32;target.crossOrigin;&#32;script.src&#32;=&#32;&#39;/dist/pcf.bundle-60440c37cb.js&#39;;&#32;script.type&#32;=&#32;&#39;text/javascript&#39;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/pcf.bundle-60440c37cb.js" type="text/javascript"></script>
+
+							   <script onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;script&#32;=&#32;document.createElement(&#39;script&#39;);&#32;script.crossOrigin&#32;=&#32;target.crossOrigin;&#32;script.src&#32;=&#32;&#39;/dist/pcf-extended.bundle-b0e01b5622.js&#39;;&#32;script.type&#32;=&#32;&#39;text/javascript&#39;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/pcf-extended.bundle-b0e01b5622.js" type="text/javascript"></script>
+
+						
+	
+
+  
+
+
+
+
+
+<div class="xrm-editable-html&#32;xrm-attribute" data-languageContext="English"><div class="xrm-attribute-value"><!-- Help Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="helpModalLabel">Help</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="helpModalBody">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+$(document).ready(function() {
+    $("#modal-close-button").on("click", function () {
+       $("#helpModal").modal("hide");
+    });
+
+    $('[data-dismiss="modal"]').on("click", function () {
+       $("#helpModal").modal("hide");
+    });
+
+    // Handle help icon click
+    $(".help-icon").on("click", function () {
+        const type = $(this).data("type");
+        let content = "";
+        if (type === "type") {
+            content = `
+            <div>
+                <h5><b>Home Based Provider</b></h5>
+                <p style="font-size: 12px;">Child care provided in a private residence.</p>
+            </div>
+            <div>
+                <h5><b>Center Based Provider</b></h5>
+                <p style="font-size: 12px;">Child care provided in a facility other than a private residence.</p>
+            </div>`;
+        } else if (type === "others") {
+            content = `
+            <div>
+                <h5>NAEYC</h5>
+                <p style="font-size: 12px;">NAEYC or National Association for the Education of Young Children promotes high-quality early learning for all young children by connecting early childhood practice, policy, and research. NAEYC is the largest organization for early childhood educators.</p>
+            </div>
+            <div>
+                <h5>NECPA</h5>
+                <p style="font-size: 12px;">NECPA or National Early Childhood Program Accreditation is a set of standards that encompass the whole child by assessing relationships between the child and teacher, program and center relationships with families, and program community relationships.</p>
+            </div>
+            <div>
+                <h5>NAFCC</h5>
+                <p style="font-size: 12px;">NAFCC or National Association for Family Child Care is a standard designed specifically for family child care providers. This system was designed by hundreds of providers, parents, and early care and education experts in an effort to create a quality indicator for family child care programs across the country.</p>
+            </div>`;
+        }
+        $("#helpModalBody").html(content);
+        $("#helpModalLabel").text(
+            type === "type" ? "Provider Types" : "Accreditation Types"
+        );
+    });
+
+    // Handle help icon click
+    $(".help-icon-types").on("click", function () {
+        const content = `
+            <div>
+                <h5>School-age Center</h5>
+                <p style="font-size: 12px;">Center-based child care provided before and/or after the regular school day.</p>
+            </div>
+            <div>
+                <h5>Family Child Care Home</h5>
+                <p style="font-size: 12px;">Home-based child care provider.</p>
+            </div>
+            <div>
+                <h5>Preschool Center</h5>
+                <p style="font-size: 12px;">Center based child care provider for children around the ages of 2-4 years old.</p>
+            </div>
+            <div>
+                <h5>Group Child Care Home</h5>
+                <p style="font-size: 12px;">Home-based child care provider (larger capacity than Family Child Care Home).</p>
+            </div>
+            <div>
+                <h5>Infant and Toddler Center</h5>
+                <p style="font-size: 12px;">Center-based child care for infants and toddlers.</p>
+            </div>
+            `;
+        $("#helpModalBody").html(content);
+        $("#helpModalLabel").text("Service Types");
+    });
+});
+</script>
+<style>
+    .help-icon, .help-icon-types {
+        cursor: pointer;
+        margin-left: 5px;
+        vertical-align: middle;
+    }
+</style></div></div>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find a Provider</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <style>
+      a,
+      .a {
+        color: #0062CC;
+      }
+
+
+      body {
+        font-size: 14px;
+
+      }
+
+      body,
+      div,
+      p {
+        font-family: 'Inter'
+        , sans-serif !important;
+      }
+
+      #main-content {
+        margin: 20px 20px 0;
+        background-color: #216A20;
+        color: white;
+        border-radius: 24px 24px 0 0;
+        height: 45px;
+        align-content: center;
+        text-align: center;
+        font-size: 24px;
+      }
+
+      .search-container,
+      .results-container {
+        margin: 0 var(--margin-large) var(--margin-large);
+        padding: var(--padding-large);
+        border: 1px solid var(--border-color);
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+      }
+
+      .results-container {
+        padding: 20px;
+        margin: 0;
+        border: 0;
+      }
+
+      #search-form {
+        padding: 24px 20px 20px;
+        margin-left: 20px;
+        border-top-width: 10px;
+        margin-right: 20px;
+        border-radius: 0 0 24px 24px;
+      }
+
+      .form-group-horizontal .form-group {
+        display: inline-block;
+        vertical-align: top;
+        margin-right: 125px;
+        width: auto;
+      }
+
+      .form-group label {
+        font-size: 14px;
+      }
+
+
+      .location-tabs {
+        display: flex;
+        margin-bottom: 10px;
+      }
+
+      .form-group-horizontal .form-check {
+        display: block;
+        margin-right: 0;
+      }
+
+      .form-group-horizontal {
+        margin-left: 10px;
+      }
+
+      .form-control {
+        font-size: 14px;
+      }
+
+      .form-check-label {
+        font-size: 14px;
+        padding-top: 3px;
+      }
+
+      .btn {
+        font-size: 18px;
+        background-color: #22767c;
+        color: white;
+        border: none;
+        margin-bottom: 10px;
+      }
+
+      .table th,
+      .table td {
+        font-size: 14px;
+      }
+
+      .table tr td:first-child, .table td a {
+        font-weight: 700;
+      }
+
+      .table tr td:first-child {
+          font-size: 16px;
+      }
+
+      .table thead th {
+        background-color: #216A20;
+        color: white;
+      }
+
+
+      .pagination {
+        justify-content: center;
+      }
+
+      .zipcode-tab {
+        margin-right: 5px;
+      }
+
+      .area-tab {
+        margin-left: 5px;
+      }
+
+      .area-tab,
+      .zipcode-tab {
+        width: 330px;
+        text-align: center;
+        padding: 10px;
+        cursor: pointer;
+        border: 1px solid #ccc;
+        border-radius: 24px;
+        background-color: white;
+        color: #212529;
+      }
+
+      .area-tab.active,
+      .zipcode-tab.active {
+        background-color: #CA4623;
+        color: white;
+        border-color: #CA4623;
+      }
+
+      .area-tab.disabled,
+      .zipcode-tab.disabled {
+        pointer-events: none;
+        background: #dddddd;
+      }
+
+      .area-content,
+      .zipcode-content {
+        display: none;
+      }
+
+      .area-content.active,
+      .zipcode-content.active {
+        display: block;
+      }
+
+      .tree-view-container {
+        overflow-y: auto;
+        max-height: 400px;
+        border: 1px solid #ccc;
+        padding: 10px;
+        background-color: white;
+        border-radius: 24px;
+        margin: 5px;
+      }
+
+      .tree-view ul {
+        list-style: none;
+        padding-left: 20px;
+        margin: 0;
+      }
+
+      .tree-view li {
+        margin: 5px 0;
+        position: relative;
+      }
+
+      .tree-view .form-check-label {
+        margin-left: 0.5rem;
+      }
+
+      .expand-collapse {
+        cursor: pointer;
+        width: 20px;
+        text-align: center;
+        user-select: none;
+        position: absolute;
+        left: -25px;
+      }
+
+      .expand-collapse-type {
+        cursor: pointer;
+        width: 20px;
+        text-align: center;
+        user-select: none;
+        position: inherit;
+        padding-right: 10px;
+        left: -20px;
+        display: inline-block;
+      }
+
+      .fa-chevron-right {
+        transition: transform 0.2s;
+      }
+
+      .tree-view li input[type="checkbox"] {
+        cursor: pointer;
+      }
+
+      .form-check-input:checked {
+        background-color: #22767c !important;
+        border-color: #22767c !important;
+      }
+
+      .area-check-input:checked {
+        background-color: #22767c !important;
+        border-color: #22767c !important;
+      }
+
+
+      .important {
+        font-weight: bold;
+        /*color: #ff6347; */
+        padding-top: 10px;
+        text-align: center;
+      }
+
+      .outerbox {
+        text-align: center;
+      }
+
+      .innerbox {
+        display: inline-block;
+        text-align: left;
+      }
+
+      .centered {
+        text-align: center;
+      }
+
+      .submit-btns {
+        display: flex;
+        flex-direction: row;
+        gap: 24px;
+      }
+
+      .submit-btns button {
+        background-color: #CA4623;
+      }
+
+      .table th:first-child {
+        border-top-left-radius: 24px;
+      }
+      .table th:last-child {
+        border-top-right-radius: 24px;
+      }
+
+      #results-mobile-container {
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #F5F5F5;
+      }
+
+      #mobile-pagination {
+        display: none;
+      }
+
+      #results-mobile-container .provider-row {
+        width: 100%;
+        padding: 16px 20px;
+        font-size: 16px;
+        font-weight: 700;
+        border-top: 1px solid #E7E7E7;
+        border-bottom: 1px solid #E7E7E7;
+      }
+
+      #results-mobile-container .provider-detail-row {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        border: 1px solid #CCCCCC;
+        border-radius: 10px;
+        width: 90%;
+        margin: 16px;
+        padding: 8px;
+        text-align: center;
+        background-color: #FFFFFF;
+      }
+
+      #results-mobile-container .provider-detail-row h2 {
+        color: #FFFFFF;
+        background-color: #216A20;
+        font-size: 16px;
+        font-weight: 700;
+        padding: 8px 4px;
+        border-radius: 6px;
+        margin: 0;
+      }
+
+      #results-mobile-container .provider-detail-row a {
+        font-size: 14px;
+        font-weight: 700;
+        color: #0062CC;
+      }
+
+      #results-mobile-container .provider-detail-row p {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 400;
+        color: #333333;
+      }
+
+      .see-more-results {
+        width: 100%;
+        max-width: 450px;
+        background-color: #CA4623;
+        color: white;
+        padding: 8px 12px;
+        font-weight: 500;
+        border-radius: 8px;
+        border: none;
+      }
+
+      @media (max-width: 768px) {
+        .results-card {
+          margin: 20px;
+          border: 1px solid #CCCCCC;
+          border-radius: 10px;
+          padding: 10px;
+        }
+
+        #main-content {
+          margin: 0;
+          background-color: #CA4623;
+          border-radius: 10px;
+          font-size: 16px;
+          font-weight: 700;
+          padding: 4px;
+          height: 27px;
+        }
+
+        #search-form,
+        .results-container {
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .results-container {
+          padding: 0 !important;
+        }
+
+        #search-form {
+          padding: 0;
+        }
+
+        .form-group,
+        .form-group-horizontal,
+        #searchReset,
+        .ml-2,
+        .mb-4,
+        .my-4 {
+          margin: 0 !important;
+        }
+
+        .form-group i {
+          display: none;
+        }
+
+        .form-group-horizontal {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .submit-btns {
+          flex-direction: column;
+          gap: 0;
+        }
+
+        .submit-btns button {
+          width: 100%;
+        }
+
+        .table,
+        .pagination {
+          display: none;
+        }
+
+        #results-mobile-container {
+          display: flex;
+        }
+        #mobile-pagination {
+          display: flex;
+          justify-content: center;
+          background-color: #F5F5F5;
+          padding-bottom: 20px;
+        }
+
+        .form-group i {
+          display: inline-block;
+        }
+
+        .form-group label {
+            font-size: 10px;
+        }
+      }
+
+      .disabled {
+        opacity: 0.5;
+        cursor: default;
+        pointer-events: none; 
+    }
+    </style>
+    <div class="xrm-editable-html&#32;xrm-attribute&#32;no-value"><div class="xrm-attribute-value"></div></div>
+  </head>
+  
+  <body>
+    <div class="xrm-editable-html&#32;xrm-attribute" data-languageContext="English"><div class="xrm-attribute-value"><div id="loading" style="position: fixed; top: 0px; left: 0px; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.9); z-index: 1000; display: flex; justify-content: center; align-items: center; box-sizing: border-box; font-family: Inter, sans-serif;">
+  <div class="loading-container" style="background-color: rgb(255, 255, 255); padding-top: 20px; padding-right: 40px; padding-bottom: 20px; padding-left: 40px; border-top-left-radius: 8px; border-top-right-radius: 8px; border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 8px; text-align: center; box-sizing: border-box; font-family: Inter, sans-serif;">
+    <div class="spinner-border" style="width: 3rem; height: 3rem; border-right-width: 0.3rem; border-bottom-width: 0.3rem; border-left-width: 0.3rem; border-right-style: solid; border-bottom-style: solid; border-left-style: solid; border-right-color: rgb(227, 227, 227); border-bottom-color: rgb(227, 227, 227); border-left-color: rgb(227, 227, 227); border-image-source: initial; border-image-slice: initial; border-image-width: initial; border-image-outset: initial; border-image-repeat: initial; border-top-width: 0.3rem; border-top-style: solid; border-top-color: rgb(34, 118, 124); border-top-left-radius: 50%; border-top-right-radius: 50%; border-bottom-right-radius: 50%; border-bottom-left-radius: 50%; animation-duration: 1.5s; animation-timing-function: ease-in-out; animation-delay: 0s; animation-iteration-count: infinite; animation-direction: normal; animation-fill-mode: none; animation-play-state: running; animation-name: spin; animation-timeline: auto; animation-range-start: normal; animation-range-end: normal; margin-bottom: 10px; box-sizing: border-box; font-family: Inter, sans-serif;"></div>
+    <p style="margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; color: rgb(108, 117, 125); font-size: 1rem; font-weight: 500; box-sizing: border-box; font-family: Inter, sans-serif;">Loading...</p>
+  </div>
+</div>
+</div></div>
+      <div>
+      <!--Provider Search Image and Modal Component -->
+      <div class="xrm-editable-html&#32;xrm-attribute" data-languageContext="English"><div class="xrm-attribute-value"><style>
+    .centered-content {
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+        max-height: 700px;
+    }
+    .image-wrapper {
+        position: relative;
+        width: 100vw;
+        max-height: 700px;
+        display: block;
+        justify-content: center;
+        align-items: flex-end;
+        filter: brightness(0.3) blur(2px);
+    }
+    .image-position {
+        width: 100vw;
+        max-height: 700px;
+        object-fit: cover;
+        object-position: 100% 40%;
+    }
+    .text-container {
+        max-width: 766px;
+        position: relative;
+        margin: 10px 10%;
+        top: -350px;
+        max-height: 700px; 
+        background: transparent;
+        font-size: 16px;
+        text-align: left;
+    }
+    .text-container h1, .text-container p {
+        color: white;
+        margin: 20px 0px;
+    }
+    .text-container h1 {
+        font-size: 48px;
+        font-weight: 700;
+    }
+    .text-container p {
+        font-size: 16px;
+    }
+    .button {
+        font-size: 18px;
+        background: #CA4623;
+        border-radius: 10px;
+        padding: 16px 22px;
+        width: 242px;
+        border: none;
+        color: #ffffff;
+    }
+    .button:hover {
+        color: #212529;
+        background: #f5f5f5;
+    }    
+    /*Pupop Modal*/
+    .addition-resources-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 11;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.4);
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin: auto auto;    
+    }
+    .window-header {
+        width: 100%;
+        max-width: 600px;
+        background-color: #CA4623;
+        border: 1px solid #CA4623;
+        border-top-left-radius: 24px;
+        border-top-right-radius: 24px;
+        color: #ffffff;
+        display: flex;
+        justify-content:space-between;
+        gap: auto;
+        align-items: center;
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #ffffff;
+            padding: 10px;
+            margin: 0;
+        }
+        button {
+            background-color: transparent;
+            border: none;
+            max-width: 24px;
+        }       
+        .close-icon {
+            min-width: 24px;
+            min-height: 25px;
+            background-color: white;
+            mask-repeat: no-repeat;
+            -webkit-mask-image: url(/close.svg);
+            mask-image: url(/close.svg);
+        }
+        .close-icon:hover {
+            background-color: #212529;
+        }
+    }
+    .window-body {
+        width: 100%;
+        max-width: 600px;
+        background-color: rgb(245, 245, 245, 1);
+        border: 1px solid #cccccc;
+        border-bottom-left-radius: 24px;
+        border-bottom-right-radius: 24px;
+        color: #333333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;  
+        padding: 20px 20px 0px 20px;
+        overflow-y: auto;
+    }
+    .resource-card {
+        border: 2px solid #cccccc;
+        border-radius: 15px;
+        padding: 10px;
+        width: 100%;
+        h2 {
+            margin: 0;
+            padding: 0;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 1px solid #cccccc;
+        }
+        p {
+            margin: 10px 0px;
+            font-size: 16px;
+            font-weight: 400;      
+        }
+        a {
+            font-size: 16px;
+        }
+    }
+    .modal-open {
+        display: flex;
+        flex-direction: column;
+    }
+    @media (max-width: 900px) {
+        .centered-content {
+        max-height: 75vw;
+        }
+    }   
+    @media (max-width: 460px) {
+        .text-container h1 {
+            font-size: 35px;
+        }
+        .text-container p {
+            font-size: 14px;
+        }
+        .text-container {
+            top: -65vw;
+        }
+        .window-header h1 {
+            font-size: 16px;
+        }
+        .window-body { 
+            padding: 10px 10px 0px 10px;
+        }
+        .resource-card {
+            padding: 5px;
+        }
+        .resource-card h2 {
+        font-size: 14px;
+        }
+        .resource-card p, .resource-card a {
+        font-size: 12px;
+        }
+    }
+    @media (max-width: 400px) {
+        .text-container {
+            top: -75vw;
+        }
+    }
+    @media (max-width: 360px) {
+        .text-container {
+            margin: 5% auto;
+            display: flex;
+            flex-direction: column;
+            width: 90vw;
+            height: 500px;
+            gap: 15px;
+        }
+        .text-container h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0px;
+        }
+        .text-container p {
+            font-size: 16px;
+            font-weight: 400;
+            margin: 0px;
+        }
+        .button {
+            font-size: 16px
+            font-weight: 500;
+            width: 100%;
+        }
+    }
+    @media (max-width: 320px) {
+        .text-container {
+            margin: 3.5% auto;
+            display: flex;
+            flex-direction: column;
+            width: 95vw;
+            height: 500px;
+            gap: 5px;
+        }
+    }
+</style>
+<div role="hero-section" class="centered-content">
+    <div class="image-wrapper">
+        <img class="image-position"
+        src="/Provider_Search_Page2.jpg"
+        alt="Consumer Education Background"
+        />
+    </div>
+    <div class="text-container">
+        <h1>Provider Search</h1>
+        <p>The Provider Search Portal helps families find and filter child care options to meet their needs, supporting decisions with key details and in-person visits.</p>
+        <button class="button" id="additionalResourcesButton">Additional Resources</button>
+    </div>
+</div>
+<div class="addition-resources-modal">
+    <div class="window-header">
+        <div></div>
+        <h1>Additional Resources</h1>
+        <button id="additionalResourcesClose"><i class="close-icon"></i></button>
+    </div>
+    <div class="window-body">
+        <div class="resource-card">
+            <h2>Child Care Licensing Units</h2>
+            <p>For reporting child care complaints, reviewing licensing inspection reports, or any other questions related to the licensing process or information on a child care provider or facility: 
+                <a href="https://humanservices.hawaii.gov/bessd/files/2025/01/Statewide-Child-Care-Licensing-Units-01-25.pdf" target="_blank">Child Care Licensing Units Information</a>.</p>
+        </div>
+        <div class="resource-card">
+            <h2>PATCH (People Attentive to Children) Hawaiʻi (Child Care Resource & Referral Agency)</h2>
+            <p>For assistance in finding a child care provider or facility and providing information and resources to help you make informed decisions about child care: 
+                <a href="https://www.patchhawaii.org/contact/" target="_blank">Patch Hawaiʻi Contact Information</a>.</p>
+        </div>
+        <div class="resource-card">
+            <h2>Department of Human Services Contact Information</h2>
+            <p>For more information, visit the 
+                <a href="https://humanservices.hawaii.gov/" target="_blank">Department of Human Services Website</a>.</p>
+        </div>
+        <div class="resource-card">
+            <h2>Child Care Subsidy and Preschool Open Door (POD) Program</h2>
+            <p>Want to learn more about the Child Care Subsidy or Preschool Open Door (POD) Program? Visit the 
+                <a href="https://childcaresubsidyapplication.dhs.hawaii.gov/program-overview/" target="_blank">Child Care Subsidy Program Website</a>.</p>
+        </div>
+        <p style="font-size: 12px;">Please revisit this child care search portal regularly for updated information.</p>
+    </div>
+</div>
+<script>
+    const btn = document.querySelector('#additionalResourcesButton');
+    const modal = document.querySelector('.addition-resources-modal');
+    var close = document.querySelector('#additionalResourcesClose');
+    btn.addEventListener("click", () => {
+        modal.classList.toggle('modal-open');
+    });
+    close.addEventListener("click", () => {
+        modal.classList.remove('modal-open');
+    });
+    window.addEventListener("click", (event) => {
+        if (event.target == modal) {
+            modal.classList.remove('modal-open');
+        }
+    });
+</script></div></div>
+
+      <div class="results-card">
+        <h1 id="main-content" tabindex="-1">Find a Provider</h1>
+        <div class="results-container">
+          <form id="search-form" class="mb-4">
+            <div class="form-group">
+              <label for="providerName">Provider</label>
+              <input
+                type="text"
+                class="form-control"
+                id="providerName"
+                name="providerName"
+                placeholder="Enter provider name">
+            </div>
+            <div class="form-group">
+              <label>Location</label>
+              <div class="location-tabs">
+                <div class="zipcode-tab active" data-target="#zipCodeTab">Zip Code</div>
+                <div
+                  tabindex="0"
+                  class="area-tab"
+                  data-target="#areaTab">Area</div>
+              </div>
+              <div class="zipcode-content active" id="zipCodeTab">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="zipCode"
+                  name="zipCode"
+                  placeholder="Zip Code"
+                  maxlength="5">
+              </div>
+              <div class="area-content" id="areaTab">
+                <div class="tree-view-container">
+                  <ul class="tree-view" id="areaTreeView"></ul>
+                </div>
+              </div>
+            </div>
+            <div class="form-group-horizontal">
+              <div class="form-group">
+                <label>
+                  Service Type
+                  <i
+                  class="fas fa-question-circle help-icon-types"
+                  data-toggle="modal"
+                  data-target="#helpModal"
+                  data-type="type"></i>
+                </label>
+                <div class="form-check">
+                    <div class="expand-collapse-type"><i tabindex="0" class="fas fa-chevron-down"></i></div>
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    id="center"
+                    name="type"
+                    value="center"
+                    checked>
+                  <label class="form-check-label" for="center">Center</label>
+                  <ul class="form-check">
+                    <li class="form-check">
+                        <input type="checkbox" class="form-check-input" name="center-1" id="center-1" checked>
+                        <label class="form-check-label" for="center-1">Infant and Toddler Center</label>
+                    </li>
+                    <li class="form-check">
+                        <input type="checkbox" class="form-check-input" name="center-2" id="center-2" checked>
+                        <label class="form-check-label" for="center-2">Preschool Center</label>
+                    </li>
+                    <li class="form-check">
+                        <input type="checkbox" class="form-check-input" name="center-3" id="center-3" checked>
+                        <label class="form-check-label" for="center-3">School-aged Center</label>
+                    </li>
+                  </ul>
+                </div>
+                <div class="form-check">
+                  <div class="expand-collapse-type"><i tabindex="0" class="fas fa-chevron-down"></i></div>
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    id="home"
+                    name="type"
+                    value="home"
+                    checked>
+                  <label class="form-check-label" for="home">Home</label>
+                  <ul class="form-check">
+                    <li class="form-check">
+                        <input type="checkbox" class="form-check-input" name="home-1" id="home-1" checked>
+                        <label class="form-check-label" for="home-1">Family Child Care Home</label>
+                    </li>
+                    <li class="form-check">
+                        <input type="checkbox" class="form-check-input" name="home-2" id="home-2" checked>
+                        <label class="form-check-label" for="home-2">Group Child Care Home</label>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="form-group" id="ages-checkboxes">
+                <label>Age of Child</label>
+                <div class="form-check">
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    id="infant"
+                    name="age"
+                    value="infant">
+                  <label class="form-check-label" for="infant">Infant - 36 months</label>
+                </div>
+                <div class="form-check">
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    id="preschool"
+                    name="age"
+                    value="preschool">
+                  <label class="form-check-label" for="preschool">2 - 5 years</label>
+                </div>
+                <div class="form-check">
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    id="schoolAged"
+                    name="age"
+                    value="schoolAged">
+                  <label class="form-check-label" for="schoolAged">5 - 13 years</label>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Other</label>
+                <div class="form-check">
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    id="accredited"
+                    name="other"
+                    value="accredited">
+                  <label class="form-check-label" for="accredited">Accredited</label>
+                  <i
+                    class="fas fa-question-circle help-icon"
+                    data-toggle="modal"
+                    data-target="#helpModal"
+                    data-type="others"></i>
+                </div>
+                <div class="form-check">
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    id="weekendcare"
+                    name="other"
+                    value="weekendcare">
+                  <label class="form-check-label" for="weekendcare">Weekend Care</label>
+                </div>
+                <div class="form-check">
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    id="mealsprovided"
+                    name="other"
+                    value="mealsprovided">
+                  <label class="form-check-label" for="mealsprovided">Meals Provided</label>
+                </div>
+                <div class="form-check">
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    id="snacksprovided"
+                    name="other"
+                    value="snacksprovided">
+                  <label class="form-check-label" for="snacksprovided">Snacks Provided</label>
+                </div>
+              </div>
+            </div>
+            <div class="submit-btns" style="float: left">
+              <button type="submit" class="btn btn-primary">Search</button>
+              <button
+                id="searchReset"
+                type="reset"
+                class="btn btn-secondary ml-2">Reset Filters</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="results-container">
+        <table class="table table-bordered" style="border: none">
+          <thead id="results-header" style="border: none">
+            <tr style="border: none">
+              <th>Provider</th>
+              <th>
+                Type
+              </th>
+              <th>Location</th>
+            </tr>
+          </thead>
+          <tbody id="results-body">
+            <!-- Results will be populated here -->
+          </tbody>
+        </table>
+        <nav>
+          <ul class="pagination" id="pagination">
+            <!-- Pagination will be populated here -->
+          </ul>
+        </nav>
+      </div>
+
+      <div id="results-mobile-container">
+        <!-- Results will be populated here -->
+      </div>
+      <!-- See more results button - created programmatically -->
+      <div id="mobile-pagination"></div>
+    </div>
+
+    <script>
+        const PROVIDER_MAX = 50;
+        let serviceTypeObject;
+
+        $("#ccps-link").css("display", "none");
+
+        // API call for Service Info (Details, Summary, History)
+        
+            const response = `{"hanaResponseStatus":{"responseStatusMessage":"Success","responseCode":200,"requestReceivedAt":"2026-07-17T19:46:44.526-1000","responseReturnedAt":"2026-07-17T19:46:44.529-1000"},"hanaResponse":{"codeTableRows":[{"code":"AC","shortName":"ACT","publicName":null},{"code":"EM","shortName":"EMP","publicName":null},{"code":"I1","shortName":"ILL","publicName":"Illegal Child Care Center"},{"code":"I2","shortName":"ILL","publicName":"Illegal Child Care Home"},{"code":"TR","shortName":"TRT","publicName":null},{"code":"01","shortName":"REL","publicName":"Exempt Family Child Care Home - relative"},{"code":"02","shortName":"FCC","publicName":"Family Child Care Home"},{"code":"03","shortName":"GCC","publicName":"Preschool Center"},{"code":"04","shortName":"BAS","publicName":"School-age Center"},{"code":"05","shortName":"IT","publicName":"Infant and Toddler Center"},{"code":"06","shortName":"LE-GCC","publicName":"Exempt Preschool Center"},{"code":"07","shortName":"LE-FCC","publicName":"Exempt Family Child Care Home"},{"code":"08","shortName":"LE-BAS","publicName":"Exempt School-age Center"},{"code":"09","shortName":"GCH","publicName":"Group Child Care Home"},{"code":"10","shortName":"LE-GCCMA","publicName":"Exempt Preschool Center - Military, Accredited"},{"code":"11","shortName":"LE-FCCM","publicName":"Exempt Family Child Care Home - Military"},{"code":"12","shortName":"LE-BASM","publicName":"Exempt School-age Center - Military"}]}}`
+
+            const hanaJSON = JSON.parse(response)
+            serviceTypeObject = hanaJSON;
+
+        
+
+        const serviceCodeMap = {}
+
+        for (const serviceType of serviceTypeObject.hanaResponse.codeTableRows) {
+            serviceCodeMap[serviceType.code] = serviceType.publicName
+        }
+
+        function mapServiceTypeToString(serviceCode) {
+            return serviceCodeMap[serviceCode];
+        }
+
+        // Keep table hidden until a search is conducted
+        $('#results-header').hide();
+
+        $(document).ready(function () {
+            let providersList = [];
+            let Providers = [];
+            let currentPage = 1;
+            const itemsPerPage = 5; // Items per page for providers, excluding child services
+            let areaTree = {};
+            let areas = [];
+            let serviceTypes = [];
+            let areaCheckboxes = [];
+
+            $.ajax({
+                url: 'https://8c50e76eae244562b7f56a6a04974ef.c.environment.api.gov.powerplatform.microsoft.us:443/powerautomate/automations/direct/workflows/5a3c6892c14442138e4b600e03411aa2/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=c2K2ljXPXz8Jw33L4AZelCtcnAOu3-c6XGoASwaYOyA',
+                type: "POST",
+                async: false,
+                success: function (response) {
+                    $("#loading").hide();
+                    if (
+                        response.hanaResponseStatus !== null &&
+                        response.hanaResponseStatus !== undefined &&
+                        response.hanaResponseStatus.responseCode === 200
+                    ) {
+                        areas = response.hanaResponse.codeTableRows;
+                        areas.sort((a, b) => a.description.localeCompare(b.description));
+                        areas.forEach((area) => {
+                            areaTree[area.code] = { ...area, children: [] };
+                        });
+
+                        areas.forEach((area) => {
+                            if (area.parent) {
+                                areaTree[area.parent].children.push(areaTree[area.code]);
+                            }
+                        });
+
+                        // Render tree for the children of the root node (excluding the root)
+                        const treeHtml = areaTree["AA"].children
+                            .map((child) => generateTreeHtml(child))
+                            .join("");
+                        console.log(areaTree["AA"].children)
+                        areaCheckboxes = areaTree["AA"].children;
+                        $("#areaTreeView").html(treeHtml);
+                    } else if (
+                        response.hanaResponseStatus !== null &&
+                        response.hanaResponseStatus !== undefined &&
+                        response.hanaResponseStatus.responseCode === 400
+                    ) {
+                        response.errors.forEach((result) => {
+                            $("#helpModalLabel").text("Error");
+                            $("#helpModalBody").text(
+                                `An error occurred: ${result.message}`
+                            );
+                            $("#helpModal").modal("show");
+                        });
+                    } else {
+                        $("#helpModalLabel").text("Error");
+                        $("#helpModalBody").text(
+                            `An error occurred while fetching the data:${response.hanaResponseStatus.responseStatusMessage}`
+                        );
+                        $("#helpModal").modal("show");
+                    }
+                },
+                error: function (xhr, status, error) {
+                    $("#loading").hide();
+                    console.error(
+                        `An error occurred while fetching the data: ${xhr.responseText || error
+                        }`
+                    );
+                },
+            });
+
+            // Function to generate tree HTML
+            function generateTreeHtml(area) {
+                const childrenHtml = area.children
+                    .map((child) => generateTreeHtml(child))
+                    .join("");
+                const hasChildren = area.children.length > 0;
+                //console.log(area.children)
+                console.log(area)
+                const expandCollapseIcon = hasChildren
+                    ? '<div class="expand-collapse"><i tabindex="0" class="fas fa-chevron-right"></i></div>'
+                    : '<div style="width: 20px;"></div>'; // Empty div for spacing if no children
+
+                return `
+                <li class="form-check" style="position: relative;">
+                    ${expandCollapseIcon}
+                    <input type="checkbox" class="area-check-input" id="${area.code}" name="area" value="${area.code}">
+                    <label class="form-check-label" for="${area.code}">${area.description}</label>
+                    <ul style="display: none; padding-left: 20px;">${childrenHtml}</ul>
+                </li>
+            `;
+            }
+
+            function renderTable(page) {
+                const start = (page - 1) * itemsPerPage;
+                const end = start + itemsPerPage;
+                const paginatedProviders = providersList.slice(start, end);
+                const resultsBody = $("#results-body");
+                const resultsMobile = $("#results-mobile-container");
+                resultsBody.empty();
+
+                if (paginatedProviders.length === 0) {
+                    resultsBody.append(`
+                    <tr style="background-color: #f2f2f2;">
+                        <td colspan="3">No Data Found</td>
+                    </tr>`);
+                    resultsMobile.append(`
+                    <div style="width: 100%; padding: 20px; text-align: center; background-color: #E7E7E7;">
+                        <p>No Data Found</p>
+                    </div>`);
+                    return;
+                }
+                paginatedProviders.forEach((provider) => {
+                    resultsBody.append(`
+                    <tr style="background-color: #f2f2f2;" class="provider-row" data-name="${provider.name}">
+                        <td>${provider.name}</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    `);
+                    resultsMobile.append(`
+                    <div class="provider-row" data-name="${provider.name}">
+                        ${provider.name}
+                    </div>
+                    `);
+                    provider.services.forEach((service) => {
+                        resultsBody.append(`
+                        <tr class="provider-detail-row" data-name="${provider.name}">
+                            <td><a href="${window.location.origin + '/details/?serviceId=' + service.serviceId}">${service.serviceName}</a></td>
+                            <td tabindex="0">${service.serviceTypeOriginal}</td>
+                            <td tabindex="0">${service.area}</td>
+                        </tr>
+                    `);
+                    });
+                    provider.services.forEach((service) => {
+                        resultsMobile.append(`
+                        <div class="provider-detail-row" data-name="${provider.name}">
+                            <h2>Provider</h2>
+                            <a href="${window.location.origin + '/details/?serviceId=' + service.serviceId}">${service.serviceName}</a>
+                            <h2>Type</h2>
+                            <p>${service.serviceTypeOriginal}</p>
+                            <h2>Location</h2>
+                            <p>${service.area}</p>
+                        </div>
+                    `);
+                    });
+                });
+
+                renderPagination(page);
+            }
+
+            function createSeeMoreResultsButton(newIndex) {
+                const seeMoreResultsButton = document.createElement("button");
+                seeMoreResultsButton.classList.add("see-more-results");
+                seeMoreResultsButton.textContent = "See More Results";
+                seeMoreResultsButton.addEventListener("click", function () {
+                    currentPage = newIndex;
+                    renderTable(currentPage);
+                });
+                return seeMoreResultsButton;
+            }
+
+            function renderPagination(page) {
+                // Only paginate providers, not their services
+                const totalPages = Math.ceil(providersList.length / itemsPerPage);
+                const pagination = $("#pagination");
+                const mobilePagination = $("#mobile-pagination");
+                pagination.empty();
+                mobilePagination.empty();
+
+                for (let i = 1; i <= totalPages; i++) {
+                    const activeClass = i === page ? "active" : "";
+                    pagination.append(`
+                    <li class="page-item ${activeClass}">
+                        <a class="page-link" href="#">${i}</a>
+                    </li>`);
+                    // Only display if there are more pages to show
+                    if (page + 1 == i) {
+                        mobilePagination.append(createSeeMoreResultsButton(i));
+                    }
+                }
+            }
+
+            let searchString = '';
+            let searchFilters = '';
+            $("#search-form").on("submit", function (e) {
+                e.preventDefault();
+
+                const providerName = $("#providerName").val().trim();
+                const zipCode = $("#zipCode").val().trim();
+                const isCenter = $("#center").is(":checked") ? "true" : "false";
+                const isCenter1 = $("#center-1").is(":checked") ? "true" : "false";
+                const isCenter2 = $("#center-2").is(":checked") ? "true" : "false";
+                const isCenter3 = $("#center-3").is(":checked") ? "true" : "false";
+                const isHome = $("#home").is(":checked") ? "true" : "false";
+                const isHome1 = $("#home-1").is(":checked") ? "true" : "false";
+                const isHome2 = $("#home-2").is(":checked") ? "true" : "false";
+                const selectedAreas = $('input[name="area"]:checked')
+                    .map(function () {
+                        let areaCode = this.value;
+                        let parentCodes = [];
+                        let currentArea = areaCode;
+
+                        while (areaTree[currentArea].parent && areaTree[currentArea].parent !== 'AA') {
+                            parentCodes.unshift(areaTree[currentArea].parent);
+                            currentArea = areaTree[currentArea].parent;
+                        }
+
+                        return parentCodes.length > 0 ? `${parentCodes.join('')}${areaCode}` : areaCode;
+                    })
+                    .get()
+                    .join(",");
+                    console.log(selectedAreas)
+
+                // Check if zip code contains only numerical values, throws an error otherwise
+                const validateZipCode = "/^[0-9]+$/";
+                if (zipCode !== '' && !/^[0-9]+$/.test(zipCode) && (!providerName || providerName)) {
+                    $("#helpModalLabel").text("Validation Error");
+                    $("#helpModalBody").text(
+                        "Please enter a valid Zip Code."
+                    );
+                    $("#helpModal").modal("show");
+                    return;
+                }
+
+
+                if (!providerName && !zipCode && selectedAreas.length === 0) {
+                    $("#helpModalLabel").text("Validation Error");
+                    $("#helpModalBody").text(
+                        " Please enter a Provider Name, Zip Code, or select an Area to conduct a search."
+                    );
+                    $("#helpModal").modal("show");
+                    return;
+                }else if (!providerName && zipCode || !providerName && selectedAreas || !providerName && zipCode) {
+                }else if (providerName.length <= 2) {
+                    $("#helpModalLabel").text("Validation Error");
+                    $("#helpModalBody").text(
+                        "The provider name must be at least three characters long. Please refine your search."
+                    );
+                    $("#helpModal").modal("show");
+                    return;
+                }
+
+                if (isHome === "false" && isCenter === "false" && isCenter1 === "false" 
+                && isCenter2 === "false" && isCenter3 === "false" && isHome1 === "false" && isHome2 === "false") {
+                    $("#helpModalLabel").text("Validation Error");
+                    $("#helpModalBody").text(
+                        "Please select a Center, Home or both types."
+                    );
+                    $("#helpModal").modal("show");
+                    return;
+                }
+
+                console.log("starting search");
+                
+                $("#loading").show();
+                $("#results-body").empty();
+                $("#results-mobile-container").empty();
+                $("#pagination").empty();
+                $("#mobile-pagination").empty();
+
+                const data = {
+                    ProviderName: providerName,
+                    ZipCode: zipCode,
+                    Areas: selectedAreas,
+                    Type: {
+                        Center: isCenter,
+                        Center1: isCenter1,
+                        Center2: isCenter2,
+                        Center3: isCenter3,
+                        Home: isHome,
+                        Home1: isHome1,
+                        Home2: isHome2,
+                    },
+                    Ages: {
+                        InfantandToddler: $("#infant").is(":checked") ? "true" : "false",
+                        Preschool: $("#preschool").is(":checked") ? "true" : "false",
+                        "School-aged": $("#schoolAged").is(":checked") ? "true" : "false",
+                    },
+                    Others: {
+                        Accredited: $("#accredited").is(":checked") ? "true" : "false",
+                        WeekendCare: $("#weekendcare").is(":checked") ? "true" : "false",
+                        MealsProvided: $("#mealsprovided").is(":checked")
+                            ? "true"
+                            : "false",
+                        SnacksProvided: $("#snacksprovided").is(":checked")
+                            ? "true"
+                            : "false",
+                    },
+                };
+
+                searchFilters = JSON.stringify(data);
+                sessionStorage.setItem('searchFilters', searchFilters);
+
+                $.ajax({
+                    url: 'https://8c50e76eae244562b7f56a6a04974ef.c.environment.api.gov.powerplatform.microsoft.us:443/powerautomate/automations/direct/cu/22/workflows/179f51f14f6a4837b49e82a3099bc3c3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=niSRw7iuksi6qFKCyFpAnxkb1WXZtkEhtbhzEvUH1MA',
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(data),
+                    success: function (response) {
+                        $("#loading").hide();
+                        if (
+                            response.hanaResponseStatus !== null &&
+                            response.hanaResponseStatus !== undefined &&
+                            response.hanaResponseStatus.responseCode === 200
+                        ) {
+                            providersList = [];
+                            $('#results-header').show();
+                            if (response.hanaResponse.results !== null) {
+                                console.log(response)
+                                // Process response to populate providers array grouped by name
+                                response.hanaResponse.results.forEach((result) => {
+                                    const provider = {
+                                        name: result.name,
+                                        services: []
+                                    };
+                                    result.services.forEach((service) => {
+                                        provider.services.push({
+                                            serviceId: service.serviceId,
+                                            serviceName: service.serviceName,
+                                            serviceTypeOriginal: mapServiceTypeToString(service.serviceType),
+                                            serviceType: serviceTypes !== null && serviceTypes !== undefined ? serviceTypes.find((_servicetypes) => _servicetypes.code === service.serviceType) !== undefined
+                                                ? serviceTypes.find((_servicetypes) => _servicetypes.code === service.serviceType).publicName: "" : "",
+                                           /* serviceType: service.serviceType === "02" || service.serviceType === "09"
+                                                ? "Home"
+                                                : service.serviceType === "03" || service.serviceType === "04" || service.serviceType === "05"
+                                                    ? "Service"
+                                                    : "",*/
+                                            area: service.area !== null && service.area !== undefined
+                                                ? areas.find(
+                                                    (location) =>
+                                                        location.code === service.area.slice(-2)
+                                                ) !== undefined
+                                                    ? areas.find(
+                                                        (location) =>
+                                                            location.code === service.area.slice(-2)
+                                                    ).description
+                                                    : ""
+                                                : "",
+                                        });
+                                    });
+                                    providersList.push(provider);
+                                });
+
+                                if (providersList.length > PROVIDER_MAX) {
+                                alert('Maximum number of results returned. Consider narrowing search filters.');
+                                }
+
+                                providersList.sort((a, b) => a.name.localeCompare(b.name));
+
+                                searchString = JSON.stringify(providersList);
+                                sessionStorage.setItem('searchPOC', searchString);
+
+                                // Display the grouped providers
+                                renderTable(currentPage);
+                            } else {
+                                renderTable(currentPage);
+                            }
+                        } else if (
+                            response.boomiResponseStatus !== null &&
+                            response.boomiResponseStatus !== undefined &&
+                            response.boomiResponseStatus.responseCode === "500"
+                        ) {
+                            response.boomiResponseStatus.errors.forEach((result) => {
+                                $("#helpModalLabel").text("Error");
+                                $("#helpModalBody").text(
+                                    `An error occurred: ${result.message}`
+                                );
+                                $("#helpModal").modal("show");
+                            });
+
+                            renderTable(currentPage);
+                        } else {
+                            $("#helpModalLabel").text("Error");
+                            $("#helpModalBody").text(
+                                `An error occurred while fetching the data:${response.hanaResponseStatus.responseStatusMessage}`
+                            );
+                            $("#helpModal").modal("show");
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        $("#loading").hide();
+                        $("#helpModalLabel").text("Error");
+                        $("#helpModalBody").text(
+                            `An error occurred while fetching the data: ${xhr.responseText || error
+                            }`
+                        );
+                        $("#helpModal").modal("show");
+                    },
+                });
+            });
+
+            $("#searchReset").on("click", function () {
+                $("#results-body").empty();
+                $("#results-mobile-container").empty();
+                $("#pagination").empty();
+                $("#mobile-pagination").empty();
+                $(".zipcode-tab").removeClass("disabled");
+                $(".area-tab").removeClass("disabled");
+                $('#results-header').hide();
+            });
+
+            $(document).on("click", ".page-link", function (e) {
+                e.preventDefault();
+                const page = parseInt($(this).text());
+                currentPage = page;
+                renderTable(currentPage);
+            });
+            function displayZipCodeTab() {
+                // Activate Zipcode tab and deactivate Area tab
+                $(".zipcode-tab").addClass("active").attr("tabindex", "-1");
+                $(".area-tab").removeClass("active").attr("tabindex", "0");
+
+                // Show Zipcode content and hide Area content
+                $(".zipcode-content").addClass("active");
+                $(".area-content").removeClass("active");
+            }
+
+            // need to create own class for area checkboxes
+            function displayAreaTab() {
+                // Activate Area tab and deactivate Zipcode tab
+                $(".area-tab").addClass("active").attr("tabindex", "-1");
+                $(".zipcode-tab").removeClass("active").attr("tabindex", "0");
+
+                // Show Area content and hide Zipcode content
+                $(".area-content").addClass("active");
+                $(".zipcode-content").removeClass("active");
+            }
+
+            $("#center-1").click(function () {
+                if (isAllCenterSubtypesChecked() === false) {
+                    $("#center").prop("checked", false);
+                } else {
+                    $("#center").prop('checked', true);
+                } 
+
+                if (isAllChecked() === false) {
+                    $("#ages-checkboxes").addClass("disabled");
+                    $("#infant").prop('checked', false);
+                    $("#preschool").prop('checked', false);
+                    $("#schoolAged").prop('checked', false);
+                } else {
+                    $("#ages-checkboxes").removeClass("disabled");
+                }
+            });
+
+            $("#center-2").click(function () {
+                if (isAllCenterSubtypesChecked() === false){
+                    $("#center").prop("checked", false);
+                } else {
+                    $("#center").prop('checked', true);
+                }  
+
+                if (isAllChecked() === false) {
+                    $("#ages-checkboxes").addClass("disabled");
+                    $("#infant").prop('checked', false);
+                    $("#preschool").prop('checked', false);
+                    $("#schoolAged").prop('checked', false);
+                } else {
+                    $("#ages-checkboxes").removeClass("disabled");
+                }            
+            });
+
+            $("#center-3").click(function () {
+                if (isAllCenterSubtypesChecked() === false) {
+                    $("#center").prop("checked", false);
+                } else {
+                    $("#center").prop('checked', true);
+                }  
+
+                if (isAllChecked() === false) {
+                    $("#ages-checkboxes").addClass("disabled");
+                    $("#infant").prop('checked', false);
+                    $("#preschool").prop('checked', false);
+                    $("#schoolAged").prop('checked', false);
+                } else {
+                    $("#ages-checkboxes").removeClass("disabled");
+                }            
+            });
+
+            $("#home-1").click(function () {
+                if (isAllHomesSubtypesChecked() === false){
+                    $("#home").prop("checked", false);
+                } else {
+                    $("#home").prop("checked", true);
+                } 
+
+                if (isAllChecked() === false) {
+                    $("#ages-checkboxes").addClass("disabled");
+                    $("#infant").prop('checked', false);
+                    $("#preschool").prop('checked', false);
+                    $("#schoolAged").prop('checked', false);
+                } else {
+                    $("#ages-checkboxes").removeClass("disabled");
+                }             
+            });
+
+            $("#home-2").click(function () {
+                if (isAllHomesSubtypesChecked() === false){
+                    $("#home").prop("checked", false);
+                } else {
+                    $("#home").prop("checked", true);
+                }  
+
+                if (isAllChecked() === false) {
+                    $("#ages-checkboxes").addClass("disabled");
+                    $("#infant").prop('checked', false);
+                    $("#preschool").prop('checked', false);
+                    $("#schoolAged").prop('checked', false);
+                } else {
+                    $("#ages-checkboxes").removeClass("disabled");
+                }            
+            });
+
+            $("#center").click(function () {
+                if ($("#center").prop("checked") === true) {
+                    $("#center-1").prop("checked", true);
+                    $("#center-2").prop("checked", true);
+                    $("#center-3").prop("checked", true);
+                } else {
+                    $("#center").prop("checked", false);
+                    $("#center-1").prop("checked", false);
+                    $("#center-2").prop("checked", false);
+                    $("#center-3").prop("checked", false);
+                }  
+
+                if (($("#center").prop("checked") === true && 
+                    ($("#home-1").prop("checked") === true || $("#home-2").prop("checked") === true) && 
+                    $("#home").prop("checked") === false) || 
+                    ($("#center").prop("checked") === false && ($("#home-1").prop("checked") === true ||
+                    $("#home-2").prop("checked") === true) && $("#home").prop("checked") === false)) {
+                    $("#ages-checkboxes").addClass("disabled");
+                } else {
+                    $("#ages-checkboxes").removeClass("disabled");
+                }
+            });
+
+            $("#home").click(function () {
+                if ($("#home").prop("checked") === true) {
+                    $("#home-1").prop("checked", true);
+                    $("#home-2").prop("checked", true);
+                } else {
+                    $("#home").prop("checked", false);
+                    $("#home-1").prop("checked", false);
+                    $("#home-2").prop("checked", false);
+                }   
+                
+                if (($("#home").prop("checked") === true && 
+                    ($("#center-1").prop("checked") === true || $("#center-2").prop("checked") === true || $("#center-3").prop("checked") === true) && 
+                    $("#center").prop("checked") === false) || 
+                    ($("#home").prop("checked") === false && 
+                ($("#center-1").prop("checked") === true || $("#center-2").prop("checked") === true || $("#center-3").prop("checked") === true) && 
+                    $("#center").prop("checked") === false)) {
+                    $("#ages-checkboxes").addClass("disabled");
+                } else {
+                    $("#ages-checkboxes").removeClass("disabled");
+                }
+            });
+
+            function isAllCenterSubtypesChecked() {
+                return $("#center-1").prop("checked") === true &&
+                    $("#center-2").prop("checked") === true && 
+                    $("#center-3").prop("checked") === true;
+            }
+
+            function isAllHomesSubtypesChecked() {
+                return $("#home-1").prop("checked") === true &&
+                    $("#home-2").prop("checked") === true;
+            }
+
+            function isAllChecked() {
+                if ($("#center-1").prop("checked") === true && 
+                    $("#center-2").prop("checked") === true && 
+                    $("#center-3").prop("checked") === true && 
+                    $("#home-1").prop("checked") === true && 
+                    $("#home-2").prop("checked") === true) {
+                        return true;
+                }
+
+                if ($("#center-1").prop("checked") === false && 
+                    $("#center-2").prop("checked") === false && 
+                    $("#center-3").prop("checked") === false && 
+                    $("#home-1").prop("checked") === false && 
+                    $("#home-2").prop("checked") === false) {
+                        return true;
+                }
+
+                if ($("#center-1").prop("checked") === false && 
+                    $("#center-2").prop("checked") === false && 
+                    $("#center-3").prop("checked") === false && 
+                    $("#home-1").prop("checked") === true && 
+                    $("#home-2").prop("checked") === true) {
+                        return true;
+                }
+
+                if ($("#center-1").prop("checked") === true && 
+                    $("#center-2").prop("checked") === true && 
+                    $("#center-3").prop("checked") === true && 
+                    $("#home-1").prop("checked") === false && 
+                    $("#home-2").prop("checked") === false) {
+                        return true;
+                }
+
+                return false;
+            }
+
+            // logic to uncheck/check parent if children are unselected
+            // takes advantage of the li/ul utilized in tree HTML
+            $('li :checkbox').on('click', function () {
+                var $chk = $(this),
+                    $li = $chk.closest('li'),
+                    $ul, $parent;
+                if ($li.has('ul')) {
+                    $li.find(':checkbox').not(this).prop('checked', this.checked)
+                }
+                do {
+                    $ul = $li.parent();
+                    $parent = $ul.siblings(':checkbox');
+                    if ($chk.is(':checked')) {
+                        // set parent as checked depending on number of its "children" checked in ul
+                        $parent.prop('checked', $ul.has(':checkbox:not(:checked)').length == 0)
+                    } else {
+                        $parent.prop('checked', false)
+                    }
+                    $chk = $parent;
+                    $li = $chk.closest('li');
+                } while ($ul.is(':not(.someclass)'));
+            });
+
+            // Close the modal programmatically
+            $("#modal-close-button").on("click", function () {
+                $("#helpModal").modal("hide");
+            });
+
+            $('[data-dismiss="modal"]').on("click", function () {
+                $("#helpModal").modal("hide");
+            });
+
+            $(".zipcode-tab").on("click", function () {
+                displayZipCodeTab();
+                $('.area-check-input').prop("checked", false);
+            });
+            
+            document.querySelector(".zipcode-tab").addEventListener("keydown", function (e) {
+                if (e.key === " " || e.key === "Enter") {
+                    displayZipCodeTab();
+                }
+            });
+
+            $(".area-tab").on("click", function () {
+                displayAreaTab();
+                $("#zipCode").val('');
+            });
+
+            document.querySelector(".area-tab").addEventListener("keydown", function (e) {
+                if (e.key === " " || e.key === "Enter") {
+                    displayAreaTab();
+                }
+            });
+
+            $(window).on("load", function() {
+                // Using the key defined earlier, we grab what we stored
+                // Revert back to an object with JSON.parse
+                let qString = sessionStorage.getItem('searchFilters');
+                let query = JSON.parse(qString);
+
+                let userString = sessionStorage.getItem('searchPOC');
+                let user = JSON.parse(userString);
+
+                if (performance.navigation.type == performance.navigation.TYPE_RELOAD || (query == null && user == null)) {
+                    $('#results-header').hide();
+                } else {
+                    if (query !== null) {
+                        console.log(query)
+                        $("#providerName").val(query.ProviderName);
+                    
+                        if (query.ZipCode !== '') {
+                            $("#zipCode").val(query.ZipCode);
+                            displayZipCodeTab();
+                            $('.area-check-input').prop("checked", false);
+                        }
+                        
+                        if (query.Areas !== '') {
+                            let toArr = query.Areas.split(",");
+                            toArr.forEach(function(area) {
+                                $(`#${area}`).prop('checked', true);
+                            });
+                            displayAreaTab();
+                            $("#zipCode").val('');
+                        }
+
+                        query.Type.Center === 'true' ? $("#center").prop('checked', true) : $("#center").prop('checked', false);
+                        query.Type.Center1 === 'true' ? $("#center-1").prop('checked', true) : $("#center-1").prop('checked', false);
+                        query.Type.Center2 === 'true' ? $("#center-2").prop('checked', true) : $("#center-2").prop('checked', false);
+                        query.Type.Center3 === 'true' ? $("#center-3").prop('checked', true) : $("#center-3").prop('checked', false);
+                        query.Type.Home === 'true' ? $("#home").prop('checked', true) : $("#home").prop('checked', false);
+                        query.Type.Home1 === 'true' ? $("#home-1").prop('checked', true) : $("#home-1").prop('checked', false);
+                        query.Type.Home2 === 'true' ? $("#home-2").prop('checked', true) : $("#home-2").prop('checked', false);
+
+                        query.Ages.InfantandToddler === 'true' ? $("#infant").prop('checked', true) : $("#infant").prop('checked', false);
+                        query.Ages.Preschool === 'true' ? $("#preschool").prop('checked', true) : $("#preschool").prop('checked', false);
+                        query.Ages["School-aged"] === 'true' ? $("#schoolAged").prop('checked', true) : $("#schoolAged").prop('checked', false);
+
+                        if (isAllChecked() === false) {
+                            $("#ages-checkboxes").addClass("disabled");
+                            $("#infant").prop('checked', false);
+                            $("#preschool").prop('checked', false);
+                            $("#schoolAged").prop('checked', false);
+                        } else {
+                            $("#ages-checkboxes").removeClass("disabled");
+                        }
+
+                        query.Others.Accredited === 'true' ? $("#accredited").prop('checked', true) : $("#accredited").prop('checked', false);
+                        query.Others.WeekendCare === 'true' ? $("#weekendcare").prop('checked', true) : $("#weekendcare").prop('checked', false);
+                        query.Others.MealsProvided === 'true' ? $("#mealsprovided").prop('checked', true) : $("#mealsprovided").prop('checked', false);
+                        query.Others.SnacksProvided === 'true' ? $("#snacksprovided").prop('checked', true) : $("#snacksprovided").prop('checked', false);
+                    }
+                    
+                    if (user !== null) {
+                        console.log(user)
+                        // Process response to populate providers array grouped by name
+                        user.forEach((result) => {
+                            const provider = {
+                                name: result.name,
+                                services: []
+                            };
+                            // /processed serviceTypes and areas should be in response
+                            result.services.forEach((service) => {
+                                provider.services.push({
+                                    serviceId: service.serviceId,
+                                    serviceName: service.serviceName,
+                                    serviceTypeOriginal: service.serviceTypeOriginal,
+                                    serviceType: service.serviceTypes,
+                                    area: service.area
+                                });
+                            });
+                            providersList.push(provider);
+                        });
+                        currentPage = 1;
+                        renderTable(currentPage);
+                        $('#results-header').show();
+                    }
+                }
+            })
+
+            // Handle expand/collapse in tree view
+            $(document).on("click", ".expand-collapse", function () {
+                toggleExpandCollapse($(this));
+            });
+
+            $(document).on("click", ".expand-collapse-type", function () {
+                toggleExpandCollapseType($(this));
+            });
+
+            $(document).on("keydown", ".expand-collapse", function (event) {
+                // Check if the spacebar is pressed
+                if (event.key === " " || event.keyCode === 32) {
+              event.preventDefault(); // Prevent the default spacebar action (scrolling)
+              toggleExpandCollapse($(this));
+                }
+            });
+
+            $(document).on("keydown", ".expand-collapse-type", function (event) {
+                // Check if the spacebar is pressed
+                if (event.key === " " || event.keyCode === 32) {
+              event.preventDefault(); // Prevent the default spacebar action (scrolling)
+              toggleExpandCollapse($(this));
+                }
+            });
+
+            function toggleExpandCollapse(element) {
+                element.parent().toggleClass("expanded");
+                if (element.parent().hasClass("expanded")) {
+                  element.html('<i tabindex="0" class="fa-solid fa-chevron-down"></i>');
+                  element.nextAll("ul").first().show();
+                } else {
+                  element.html('<i tabindex="0" class="fa-solid fa-chevron-right"></i>');
+                  element.nextAll("ul").first().hide();
+                }
+            }
+
+            function toggleExpandCollapseType(element) {
+                if (element.parent().hasClass("expanded")) {
+                  element.html('<i tabindex="0" class="fa-solid fa-chevron-down"></i>');
+                  element.nextAll("ul").first().show();
+                  element.parent().toggleClass("expanded");
+                } else {
+                  element.html('<i tabindex="0" class="fa-solid fa-chevron-right"></i>');
+                  element.nextAll("ul").first().hide();
+                  element.parent().toggleClass("expanded");
+                }
+            }
+        });
+    </script>
+  </body>
+</html>
+
+
+	<script onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;script&#32;=&#32;document.createElement(&#39;script&#39;);&#32;script.crossOrigin&#32;=&#32;target.crossOrigin;&#32;script.src&#32;=&#32;&#39;/dist/pcf-loader.bundle-f4a0e619b8.js&#39;;&#32;script.type&#32;=&#32;&#39;text/javascript&#39;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/pcf-loader.bundle-f4a0e619b8.js" type="text/javascript"></script>
+
+		
+		
+	
+
+	
+		<div id="pp-native-controls-react-root"></div>
+<script>window._nativeControlConfig = { "publicPath":"https://gov.content.powerapps.us/resource/powerappsportal/controls", "versions": {"pcf_loader":"0.0.51","pcf_controls":"3.24.8","mf_shared":"0.2.32","host":"0.15.1","data_grid":"1.12.3","controls_fluent_v9":"0.0.54"}, "pvaEmbedded": { "defaultWidgetMode": "normal", "useCustomTypingIndicator": false, "skipSingleBotWelcomeScreen": false } }</script>
+<script defer="defer" src="https://gov.content.powerapps.us/resource/powerappsportal/controls/host/main.3ee2491f78.chunk.js"></script>
+		
+	
+	
+		
+    <footer role="contentinfo">
+      <div class="footer-top hidden-print">
+        <div class="full-width-container">
+          <div class="row">
+            <div
+              class="xrm-editable-html xrm-attribute"
+              data-languagecontext="English"
+            >
+              <div class="xrm-attribute-value">
+                <div class="footer-eyga">
+                  <div class="footer-columns">
+                    <div class="footer-column">
+                      <p class="header">Contact Us</p>
+                      <p class="footer-text">
+                        <a
+                          style="
+                            color: #333333;
+                            font-family: 'Inter';
+                            text-decoration: none;
+                          "
+                          href="https://humanservices.hawaii.gov/bessd/files/2025/01/Statewide-Child-Care-Licensing-Units-01-25.pdf"
+                          target="_blank"
+                          >Child Care Licensing Units</a
+                        >
+                      </p>
+                    </div>
+                    <div class="footer-column">
+                      <p class="header">Quick Links</p>
+                      <ul class="footer-list">
+                        <li>
+                          <a
+                            title="Apply for Child Care"
+                            aria-label="Program Details"
+                            href="https://childcaresubsidyapplication.dhs.hawaii.gov/"
+                            >Apply for Child Care</a
+                          >
+                        </li>
+                        <li>
+                          <a
+                            title="Child Care Grant Portal"
+                            aria-label="Applications"
+                            href="https://dhsgrants.hawaii.gov/"
+                            >Child Care Grant Portal</a
+                          >
+                        </li>
+                        <li>
+                          <a
+                            id="ccps-link"
+                            title="Child Care Provider Search Portal"
+                            aria-label="Get FAQs"
+                            href="https://dhscedudev.powerappsportals.us/"
+                            onclick="sessionStorage.clear()"
+                            >Child Care Provider Search Portal</a
+                          >
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="footer-column">
+                      <p class="header">Policies</p>
+                      <ul class="footer-list">
+                        <li>
+                          <a
+                            title="Terms of Use"
+                            aria-label="Terms of Use"
+                            href="https://portal.ehawaii.gov/terms-of-use.html"
+                            >Terms of Use</a
+                          >
+                        </li>
+                        <li>
+                          <a
+                            title="Accessibility"
+                            aria-label="Accessibility"
+                            href="https://humanservices.hawaii.gov/accessibility-policy/"
+                            >Accessibility</a
+                          >
+                        </li>
+                        <li>
+                          <a
+                            title="Privacy Policy"
+                            aria-label="Privacy Policy"
+                            href="https://portal.ehawaii.gov/privacy-policy.html"
+                            >Privacy Policy</a
+                          >
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <!-- Accordion -->
+                  <div class="mobile-footer-container">
+                    <div class="accordion-container">
+                      <button
+                        id="contact-accordion-button"
+                        onclick="toggleAccordion('contact-accordion')"
+                        class="accordion-header"
+                      >
+                        <span>CONTACT US</span
+                        ><svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M6 9L12 15L18 9" fill="black" />
+                        </svg>
+                      </button>
+                      <ul style="display: none" id="contact-accordion" class="">
+                        <li>
+                          <a
+                            style="
+                              color: #333333;
+                              font-family: 'Inter';"
+                            href="https://humanservices.hawaii.gov/wp-content/uploads/2024/07/Statewide-Child-Care-Licensing-Units-07-2024.pdf"
+                            target="_blank"
+                            >Child Care Licensing Units</a
+                          >
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="accordion-container">
+                      <button
+                        id="quick-link-accordion-button"
+                        onclick="toggleAccordion('quick-link-accordion')"
+                        class="accordion-header"
+                      >
+                        <span>QUICK LINKS</span
+                        ><svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M6 9L12 15L18 9" fill="black" />
+                        </svg>
+                      </button>
+                      <ul
+                        style="display: none"
+                        id="quick-link-accordion"
+                        class=""
+                      >
+                        <li>
+                          <a
+                            title="Apply for Child Care"
+                            aria-label="Program Details"
+                            href="https://childcaresubsidyapplication.dhs.hawaii.gov/"
+                            >Apply for Child Care</a
+                          >
+                        </li>
+                        <li>
+                          <a
+                            title="Child Care Grant Portal"
+                            aria-label="Applications"
+                            href="https://dhsgrants.hawaii.gov/"
+                            >Child Care Grant Portal</a
+                          >
+                        </li>
+                        <li>
+                          <a
+                            id="ccps-link"
+                            title="Child Care Provider Search Portal"
+                            aria-label="Get FAQs"
+                            href="https://dhscedudev.powerappsportals.us/"
+                            onclick="sessionStorage.clear()"
+                            >Child Care Provider Search Portal</a
+                          >
+                        </li>
+                      </ul>
+                    </div>
+                    <div class="accordion-container">
+                      <button
+                        onclick="toggleAccordion('policies-accordion')"
+                        id="policies-accordion-button"
+                        class="accordion-header"
+                      >
+                        <span>POLICIES</span
+                        ><svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M6 9L12 15L18 9" fill="black" />
+                        </svg>
+                      </button>
+                      <ul
+                        style="display: none"
+                        id="policies-accordion"
+                        class=""
+                      >
+                        <li>
+                          <a
+                            title="Terms of Use"
+                            aria-label="Terms of Use"
+                            href="https://portal.ehawaii.gov/terms-of-use.html"
+                            >Terms of Use</a
+                          >
+                        </li>
+                        <li>
+                          <a
+                            title="Accessibility"
+                            aria-label="Accessibility"
+                            href="https://humanservices.hawaii.gov/accessibility-policy/"
+                            >Accessibility</a
+                          >
+                        </li>
+                        <li>
+                          <a
+                            title="Privacy Policy"
+                            aria-label="Privacy Policy"
+                            href="https://portal.ehawaii.gov/privacy-policy.html"
+                            >Privacy Policy</a
+                          >
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div class="footer-right">
+                    <a
+                      title="State of Hawaii Homepage"
+                      aria-label="State of Hawaii Homepage"
+                      href="https://portal.ehawaii.gov/"
+                    >
+                      <img
+                        alt="State Seal"
+                        src="/StateSeal.png"
+                        style="width: 5rem; height: 5rem"
+                      />
+                    </a>
+                    <p style="margin-top: 0.5rem">
+                      Copyright 2024, State of Hawaiʻi. All rights reserved.
+                    </p>
+                  </div>
+                </div>
+
+                <script>
+                  // doing this check specifically for screens such as iPhone 12 Pro Max
+                  if (/Mobi|Android/i.test(navigator.userAgent)) {
+                    $(".footer-eyga").css("flex-direction", "column");
+                    $(".footer-columns div").css("margin-top", "1rem");
+                  }
+                </script>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display: none !important" class="hidden-print footer-bottom">
+        <div class="container">
+          <div class="row">
+            <div
+              class="col-md-8 col-sm-12 col-xs-12 text-left"
+              data-weblinks-maxdepth="2"
+            >
+              <ul class="row list-unstyled"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <script>
+      function toggleAccordion(id) {
+        const element = document.getElementById(id);
+        element.style.display =
+          element.style.display === "none" ? "block" : "none";
+        const button = document.getElementById(`${id}-button`);
+        button.classList.toggle("active");
+      }
+    </script>
+    <style>
+      .mobile-footer-container {
+        display: none;
+      }
+      @media (max-width: 767px) {
+        .footer-eyga {
+          flex-direction: column;
+          text-align: center;
+        }
+        .mobile-footer-container {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .mobile-footer-container ul {
+          list-style: none;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+        .accordion-header {
+          display: flex;
+          justify-content: space-between;
+          width: 100%;
+          align-items: center;
+          border-bottom: 1px solid #e7e7e7;
+          border-top: 0;
+          border-right: 0;
+          border-left: 0;
+          background-color: transparent;
+        }
+        .mobile-footer-container ul li {
+          text-align: left;
+          padding: 4px 0;
+        }
+        .accordion-header.active svg {
+          transform: rotate(180deg);
+        }
+        .accordion-header span {
+          font-weight: 700;
+        }
+        .footer-columns {
+          display: none !important;
+        }
+       .footer-right {
+          align-items: baseline !important;
+          margin-left: 0 !important;
+        }
+      }
+      footer {
+        position: relative;
+        color: #555;
+        background-color: #f5f5f5;
+        margin-top: 2rem;
+        padding: 0;
+      }
+
+      .footer-top {
+        width: 100%;
+        display: flex;
+        border-top: 0.1rem solid #ccc;
+        align-items: center;
+        background-color: #f5f5f5 !important;
+      }
+
+      .footer-eyga {
+        display: flex;
+        justify-content: space-between;
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        box-sizing: border-box;
+      }
+
+      .footer-columns {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+
+      .footer-column {
+        flex: 1;
+        min-width: 15rem;
+        margin-right: 1rem;
+      }
+
+      .footer-column .header {
+        font-weight: 700;
+        color: #37474f;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+        font-size: 1rem;
+      }
+
+      .footer-column .footer-text {
+        font-weight: 400;
+        color: #333;
+        margin-bottom: 0.5rem;
+        white-space: nowrap;
+        font-size: 0.875rem;
+      }
+
+      .footer-column .footer-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .footer-column .footer-list li {
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+      }
+
+      .footer-column .footer-list a {
+        color: #333;
+        text-decoration: none;
+        font-family: "Inter";
+      }
+
+      .footer-right {
+        display: flex;
+        align-items: flex-end;
+        justify-content: flex-end;
+        flex-direction: column;
+        text-align: right;
+        padding-top: 1rem;
+        margin-left: auto;
+        min-width: 15rem;
+      }
+
+      .container {
+        width: 100% !important;
+        padding: 0;
+      }
+
+      .row {
+        margin-left: 0;
+        margin-right: 0;
+      }
+
+      .full-width-container {
+        width: 100% !important;
+        padding: 0;
+      }
+
+      .list-unstyled {
+        padding-left: 0;
+        list-style: none;
+      }
+
+      .xrm-attribute {
+        display: flex;
+        align-items: center;
+      }
+
+      .xrm-attribute-value {
+        width: 100%;
+      }
+
+      #ccps-link {
+          display: none;
+      }
+    </style>
+	
+
+	<script type="text/javascript">
+
+		function trackCopilotCustomUsage(botSchema) {
+			const request = {
+				botSchemaName: botSchema
+			}
+			var json = JSON.stringify(request);
+			shell.ajaxSafePost({
+				type: "POST",
+				contentType: "application/json",
+				url: "/_services/copilot/TrackUsage",
+				data: json
+			}).done(function () {
+			}).fail(function (jqXhr) {
+			});
+		}
+
+		function findAndLogCustomCopilotUsage() {
+			const pageSource = document.documentElement.outerHTML;
+			const customPvaBotWebchatRegex = /api\.(preprod\.|test\.)?powerplatform\.(com|us|cn|appsplatform\.us)\/powervirtualagents\/botsbyschema\/([^/]+)\/directline\/token/;
+			const customPvaBotIframeRegex = /powerva\.microsoft\.com\/environments\/([0-9a-fA-F\-]+)\/bots\/([^/]+)\/webchat/;
+			const omniChannelRegex = /livechatwidget\/scripts\/LiveChatBootstrapper\.js/;
+
+			const matchPvaBotWebchat = pageSource.match(customPvaBotWebchatRegex);
+			if (matchPvaBotWebchat && matchPvaBotWebchat[3]) {
+				trackCopilotCustomUsage(matchPvaBotWebchat[3]);
+			}
+
+			const matchPvaBotIframe = pageSource.match(customPvaBotIframeRegex);
+			if (matchPvaBotIframe && matchPvaBotIframe[2]) {
+				trackCopilotCustomUsage(matchPvaBotIframe[2]);
+			}
+
+			const matchOmniChannel = pageSource.match(omniChannelRegex);
+			if (matchOmniChannel && matchOmniChannel[0]) {
+				trackCopilotCustomUsage("omnichannelWidget");
+			}
+		}
+
+		window.addEventListener("load", function () {
+			findAndLogCustomCopilotUsage();
+		});
+	</script>
+
+		
+			
+			
+			
+			
+		
+	<script onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;script&#32;=&#32;document.createElement(&#39;script&#39;);&#32;script.crossOrigin&#32;=&#32;target.crossOrigin;&#32;script.src&#32;=&#32;&#39;/dist/bootstrap.BootstrapV5.bundle-be8391e97d.js&#39;;&#32;script.type&#32;=&#32;&#39;text/javascript&#39;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/bootstrap.BootstrapV5.bundle-be8391e97d.js" type="text/javascript"></script>
+
+	<script onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;script&#32;=&#32;document.createElement(&#39;script&#39;);&#32;script.crossOrigin&#32;=&#32;target.crossOrigin;&#32;script.src&#32;=&#32;&#39;/dist/postpreform.BootstrapV5.bundle-1e48131190.js&#39;;&#32;script.type&#32;=&#32;&#39;text/javascript&#39;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/postpreform.BootstrapV5.bundle-1e48131190.js" type="text/javascript"></script>
+
+	<script onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;script&#32;=&#32;document.createElement(&#39;script&#39;);&#32;script.crossOrigin&#32;=&#32;target.crossOrigin;&#32;script.src&#32;=&#32;&#39;/dist/app.BootstrapV5.bundle-4299f393fc.js&#39;;&#32;script.type&#32;=&#32;&#39;text/javascript&#39;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/app.BootstrapV5.bundle-4299f393fc.js" type="text/javascript"></script>
+
+	<script onerror="javascript:&#32;var&#32;target&#32;=&#32;event.target;&#32;var&#32;script&#32;=&#32;document.createElement(&#39;script&#39;);&#32;script.crossOrigin&#32;=&#32;target.crossOrigin;&#32;script.src&#32;=&#32;&#39;/dist/default-1033.moment_2_29_4.bundle-eda4e638fd.js&#39;;&#32;script.type&#32;=&#32;&#39;text/javascript&#39;;&#32;target.insertAdjacentElement(&#39;afterend&#39;,script);" src="https://gov.content.powerapps.us/resource/powerappsportal/dist/default-1033.moment_2_29_4.bundle-eda4e638fd.js" type="text/javascript"></script>
+
+	
+
+	
+	
+	
+	<script>
+        //this event will update the title of the page based on active breadcrumb
+        $('.breadcrumb').ready(function () {
+            if ($('.breadcrumb').is(':visible')) {
+                document.querySelector('title').innerHTML = ($('.breadcrumb > li.active').text() + "");
+            }
+        });
+
+        function GoToNewEditor() {
+            var editCmsUrlSegment = "EditInCms";
+            var currentUrl = window.location.href;
+            if (currentUrl.indexOf('?') > -1) {
+                var urlSegments = currentUrl.split("?");
+                window.location.href = window.location.origin + '/' + editCmsUrlSegment + window.location.pathname + '?' + urlSegments[1];
+            }
+            else {
+                window.location.href = window.location.origin + '/' + editCmsUrlSegment + window.location.pathname;
+            }
+        }
+    </script>
+	
+		
+		
+	
+		
+			<script>
+				if ('serviceWorker' in navigator) {
+					navigator.serviceWorker.register('/js/sw.js?languageCode=/&version=ve89ceea1-51d3-455c-a39c-af01b9d6c7eb', { scope: '/', updateViaCache: 'all' }).then(function (registration) {
+						console.log('Service worker registration succeeded:', registration);
+					}, function (error) {
+						console.log('Service worker registration failed:', error);
+					});
+					navigator.serviceWorker.addEventListener('message', event => {
+						showOfflineNotification();
+					});
+				} else {
+					console.log('Service workers are not supported.');
+				}
+			</script>
+			<script>
+				var notificationArea = document.getElementById("offlineNotificationBar");
+
+				function showOfflineNotification() {
+					notificationArea.style.display = "flex";
+					notificationArea.classList.remove("displayNone");
+					var navigationBar = document.getElementsByClassName("navbar navbar-inverse navbar-static-top");
+					if (navigationBar != null) {
+						var skipToMainContent = navigationBar[0].querySelectorAll(":scope > .skip-to-content");
+						if (skipToMainContent != null) {
+							skipToMainContent[0].style.display = "none";
+						}
+					}
+				}
+				window.addEventListener('offline', () => {
+					showOfflineNotification();
+				});
+				window.addEventListener('online', () => {
+					notificationArea.style.display = "none";
+					notificationArea.classList.add("displayNone");
+				});
+			</script>
+			
+	
+		
+	<!--Start Show Session Expire Warning Popup here -->
+    
+		
 </body>
 </html>
+<!-- Generated at 10/22/2026 11:10:59 PM -->
+<!-- Page OK -->

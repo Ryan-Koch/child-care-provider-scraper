@@ -1,0 +1,327 @@
+{
+  "summary": {
+    "hanaResponseStatus": {
+      "responseStatusMessage": "Success",
+      "responseCode": 200,
+      "requestReceivedAt": "2026-10-22T13:22:43.446-1000",
+      "responseReturnedAt": "2026-10-22T13:22:43.452-1000"
+    },
+    "hanaResponse": {
+      "serviceId": 11383,
+      "serviceType": "03",
+      "licensed": true,
+      "serviceName": "PAHALA PRESCHOOL",
+      "providerType": "OR",
+      "providerName": "PAHALA PRESCHOOL",
+      "effectiveDate": "2025-05-01",
+      "expirationDate": "2027-04-30",
+      "minAgeUnit": "M",
+      "minAgeValue": 32,
+      "maxAgeUnit": "M",
+      "maxAgeValue": 72,
+      "licenseNumber": 12150,
+      "licenseType": "R",
+      "capacity": 24
+    }
+  },
+  "details": {
+    "hanaResponseStatus": {
+      "responseStatusMessage": "Success",
+      "responseCode": 200,
+      "requestReceivedAt": "2026-10-22T13:22:44.262-1000",
+      "responseReturnedAt": "2026-10-22T13:22:44.270-1000"
+    },
+    "hanaResponse": {
+      "serviceId": 11383,
+      "usdaFoodProgram": false,
+      "diaperedChildrenAccepted": false,
+      "demonstrationProject": false,
+      "mailingAddress": {
+        "street1": "PO BOX 366",
+        "street2": null,
+        "building": null,
+        "city": "PAHALA",
+        "state": "HI",
+        "zipCode": 96777,
+        "zipCodeExt": null
+      },
+      "locationAddress": {
+        "street1": "961225 HUAPALA ST",
+        "street2": null,
+        "building": "PAHALA UNITED METHODIST",
+        "city": "PAHALA",
+        "state": "HI",
+        "zipCode": 96777,
+        "zipCodeExt": null
+      },
+      "meals": [],
+      "caregiverLanguages": null,
+      "contactModes": [
+        {
+          "mode": "PH",
+          "value": "NA8089288541"
+        }
+      ],
+      "accreditations": [],
+      "shifts": []
+    }
+  },
+  "history": {
+    "hanaResponseStatus": {
+      "responseStatusMessage": "Success",
+      "responseCode": 200,
+      "requestReceivedAt": "2026-10-22T13:22:45.221-1000",
+      "responseReturnedAt": "2026-10-22T13:22:45.227-1000"
+    },
+    "hanaResponse": {
+      "serviceId": 11383,
+      "histories": [
+        {
+          "status": "PE",
+          "statusDate": null
+        },
+        {
+          "status": "AC",
+          "statusDate": "2001-05-01"
+        }
+      ],
+      "licenses": [
+        {
+          "effectiveDate": "2001-05-01",
+          "expirationDate": "2003-04-30",
+          "printNumber": 5,
+          "minAgeUnit": null,
+          "minAgeValue": null,
+          "minAgeLegacy": "2 years",
+          "maxAgeUnit": null,
+          "maxAgeValue": null,
+          "maxAgeLegacy": "7 years",
+          "licenseType": "R",
+          "capacity": 24
+        },
+        {
+          "effectiveDate": "2001-05-01",
+          "expirationDate": "2003-05-31",
+          "printNumber": 5,
+          "minAgeUnit": null,
+          "minAgeValue": null,
+          "minAgeLegacy": "2 years",
+          "maxAgeUnit": null,
+          "maxAgeValue": null,
+          "maxAgeLegacy": "7 years",
+          "licenseType": "R",
+          "capacity": 24
+        },
+        {
+          "effectiveDate": "2003-05-01",
+          "expirationDate": "2003-08-31",
+          "printNumber": 5,
+          "minAgeUnit": null,
+          "minAgeValue": null,
+          "minAgeLegacy": "2 years",
+          "maxAgeUnit": null,
+          "maxAgeValue": null,
+          "maxAgeLegacy": "7 years",
+          "licenseType": "P",
+          "capacity": 24
+        },
+        {
+          "effectiveDate": "2003-07-28",
+          "expirationDate": "2005-04-30",
+          "printNumber": 5,
+          "minAgeUnit": null,
+          "minAgeValue": null,
+          "minAgeLegacy": "2 years",
+          "maxAgeUnit": null,
+          "maxAgeValue": null,
+          "maxAgeLegacy": "7 years",
+          "licenseType": "R",
+          "capacity": 24
+        },
+        {
+          "effectiveDate": "2005-05-01",
+          "expirationDate": "2007-04-30",
+          "printNumber": 3462,
+          "minAgeUnit": null,
+          "minAgeValue": null,
+          "minAgeLegacy": "two (2) years",
+          "maxAgeUnit": null,
+          "maxAgeValue": null,
+          "maxAgeLegacy": "seven (7) years",
+          "licenseType": "R",
+          "capacity": 24
+        },
+        {
+          "effectiveDate": "2007-05-01",
+          "expirationDate": "2007-08-01",
+          "printNumber": 3547,
+          "minAgeUnit": null,
+          "minAgeValue": null,
+          "minAgeLegacy": "three years",
+          "maxAgeUnit": null,
+          "maxAgeValue": null,
+          "maxAgeLegacy": "twelve years",
+          "licenseType": "P",
+          "capacity": 24
+        },
+        {
+          "effectiveDate": "2007-08-02",
+          "expirationDate": "2009-04-30",
+          "printNumber": 4075,
+          "minAgeUnit": null,
+          "minAgeValue": null,
+          "minAgeLegacy": "three years",
+          "maxAgeUnit": null,
+          "maxAgeValue": null,
+          "maxAgeLegacy": "twelve years",
+          "licenseType": "R",
+          "capacity": 24
+        },
+        {
+          "effectiveDate": "2009-05-01",
+          "expirationDate": "2009-11-11",
+          "printNumber": 74,
+          "minAgeUnit": null,
+          "minAgeValue": null,
+          "minAgeLegacy": "three (3) years",
+          "maxAgeUnit": null,
+          "maxAgeValue": null,
+          "maxAgeLegacy": "six (6) years",
+          "licenseType": "R",
+          "capacity": 24
+        },
+        {
+          "effectiveDate": "2009-11-12",
+          "expirationDate": "2011-04-30",
+          "printNumber": 3477,
+          "minAgeUnit": null,
+          "minAgeValue": null,
+          "minAgeLegacy": "two (2) years",
+          "maxAgeUnit": null,
+          "maxAgeValue": null,
+          "maxAgeLegacy": "six (6) years",
+          "licenseType": "R",
+          "capacity": 24
+        },
+        {
+          "effectiveDate": "2011-05-01",
+          "expirationDate": "2013-04-30",
+          "printNumber": 9316,
+          "minAgeUnit": null,
+          "minAgeValue": null,
+          "minAgeLegacy": "two (2) years",
+          "maxAgeUnit": null,
+          "maxAgeValue": null,
+          "maxAgeLegacy": "six (6) years",
+          "licenseType": "R",
+          "capacity": 24
+        },
+        {
+          "effectiveDate": "2013-05-01",
+          "expirationDate": "2015-04-30",
+          "printNumber": 9517,
+          "minAgeUnit": null,
+          "minAgeValue": null,
+          "minAgeLegacy": "two (2) years",
+          "maxAgeUnit": null,
+          "maxAgeValue": null,
+          "maxAgeLegacy": "six (6) years",
+          "licenseType": "R",
+          "capacity": 24
+        },
+        {
+          "effectiveDate": "2015-05-01",
+          "expirationDate": "2017-04-30",
+          "printNumber": 7054,
+          "minAgeUnit": null,
+          "minAgeValue": null,
+          "minAgeLegacy": "2 years",
+          "maxAgeUnit": null,
+          "maxAgeValue": null,
+          "maxAgeLegacy": "6 years",
+          "licenseType": "R",
+          "capacity": 24
+        },
+        {
+          "effectiveDate": "2017-05-01",
+          "expirationDate": "2019-04-30",
+          "printNumber": 1852,
+          "minAgeUnit": "M",
+          "minAgeValue": 24,
+          "minAgeLegacy": null,
+          "maxAgeUnit": "M",
+          "maxAgeValue": 72,
+          "maxAgeLegacy": null,
+          "licenseType": "R",
+          "capacity": 24
+        },
+        {
+          "effectiveDate": "2017-05-01",
+          "expirationDate": "2019-04-30",
+          "printNumber": 2997,
+          "minAgeUnit": "M",
+          "minAgeValue": 32,
+          "minAgeLegacy": null,
+          "maxAgeUnit": "M",
+          "maxAgeValue": 72,
+          "maxAgeLegacy": null,
+          "licenseType": "R",
+          "capacity": 24
+        },
+        {
+          "effectiveDate": "2019-05-01",
+          "expirationDate": "2021-04-30",
+          "printNumber": 3645,
+          "minAgeUnit": "M",
+          "minAgeValue": 32,
+          "minAgeLegacy": null,
+          "maxAgeUnit": "M",
+          "maxAgeValue": 72,
+          "maxAgeLegacy": null,
+          "licenseType": "R",
+          "capacity": 24
+        },
+        {
+          "effectiveDate": "2021-05-01",
+          "expirationDate": "2023-04-30",
+          "printNumber": 7524,
+          "minAgeUnit": "M",
+          "minAgeValue": 32,
+          "minAgeLegacy": null,
+          "maxAgeUnit": "M",
+          "maxAgeValue": 72,
+          "maxAgeLegacy": null,
+          "licenseType": "R",
+          "capacity": 24
+        },
+        {
+          "effectiveDate": "2023-05-01",
+          "expirationDate": "2025-04-30",
+          "printNumber": 9455,
+          "minAgeUnit": "M",
+          "minAgeValue": 32,
+          "minAgeLegacy": null,
+          "maxAgeUnit": "M",
+          "maxAgeValue": 72,
+          "maxAgeLegacy": null,
+          "licenseType": "R",
+          "capacity": 24
+        },
+        {
+          "effectiveDate": "2025-05-01",
+          "expirationDate": "2027-04-30",
+          "printNumber": 3711,
+          "minAgeUnit": "M",
+          "minAgeValue": 32,
+          "minAgeLegacy": null,
+          "maxAgeUnit": "M",
+          "maxAgeValue": 72,
+          "maxAgeLegacy": null,
+          "licenseType": "R",
+          "capacity": 24
+        }
+      ],
+      "listings": null
+    }
+  }
+}

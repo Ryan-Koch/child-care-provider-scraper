@@ -1,14 +1,17 @@
 """Hawaii child care provider spider.
 
 Scrapes https://childcareprovidersearch.dhs.hawaii.gov/, a Microsoft Power Apps
-portal backed by Azure Logic App endpoints that return SAP HANA data wrapped in a
-`hanaResponse` envelope. The crawl has three stages (see hawaii_plan.md):
+portal backed by Power Automate HTTP-trigger flows that return SAP HANA data
+wrapped in a `hanaResponse` envelope. The crawl has three stages (see
+hawaii_plan.md):
 
 1. Areas:  POST the area-table endpoint -> island/area tree -> `Areas` filter strings.
 2. Search: POST the search endpoint once per island, subdividing geographically
            whenever a response trips the hard 100-provider cap.
 3. Detail: GET /details/?serviceId=<id> and parse the provider data embedded
-           directly in the server-rendered HTML (no JS execution / Playwright).
+           in the server-rendered HTML (no JS execution / Playwright). When the
+           page's cache is cold the data isn't embedded, so we POST the
+           service-info endpoint the page would have called instead.
 """
 
 import json
@@ -18,48 +21,55 @@ import scrapy
 
 from ..items import InspectionItem, ProviderItem
 
-# --- Azure Logic App endpoints (hardcoded fallbacks; we prefer the live URLs
-# scraped off the landing page so a rotated SAS `sig` token doesn't break us). ---
-AREAS_URL = (
-    "https://prod-28.usgovtexas.logic.azure.us:443/workflows/"
-    "5a3c6892c14442138e4b600e03411aa2/triggers/manual/paths/invoke"
-    "?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0"
-    "&sig=sPbgvsl2Ese18mRBq1xAB51oZVzIoUG4TQuFTuzERpg"
-)
-SEARCH_URL = (
-    "https://prod-06.usgovtexas.logic.azure.us:443/workflows/"
-    "179f51f14f6a4837b49e82a3099bc3c3/triggers/manual/paths/invoke"
-    "?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0"
-    "&sig=V2SJOS2DthZkevCZtKQR-6GAHNVv1p57XZKIYJKewYo"
-)
-# Workflow ids identify each endpoint regardless of the rotating sig token.
+# --- Power Automate flow endpoints (hardcoded fallbacks; we prefer the live URLs
+# scraped off each page so a rotated SAS `sig` token or another host move doesn't
+# break us). In Oct 2026 these moved off the old `prod-NN.usgovtexas.logic.azure.us`
+# Logic App hosts (which now 502) to the environment-scoped host below; the
+# workflow ids and request/response shapes were unchanged. ---
+FLOW_HOST = "https://8c50e76eae244562b7f56a6a04974ef.c.environment.api.gov.powerplatform.microsoft.us:443"
+FLOW_QUERY = "/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig="
+
+# Workflow ids identify each endpoint regardless of host or rotating sig token.
 AREAS_WORKFLOW_ID = "5a3c6892c14442138e4b600e03411aa2"
 SEARCH_WORKFLOW_ID = "179f51f14f6a4837b49e82a3099bc3c3"
+SERVICE_INFO_WORKFLOW_ID = "a60854dc08744146bfa5a217a992cdd9"
+INSPECTION_LIST_WORKFLOW_ID = "e17345f72a8f424597023d79e2608fb2"
+VISIT_DETAIL_WORKFLOW_ID = "85cc14072d62409fbfc0c2a7ea3da2bd"
+
+AREAS_URL = (
+    f"{FLOW_HOST}/powerautomate/automations/direct/workflows/{AREAS_WORKFLOW_ID}"
+    f"{FLOW_QUERY}c2K2ljXPXz8Jw33L4AZelCtcnAOu3-c6XGoASwaYOyA"
+)
+# The search flow alone lives under a `/cu/22/` path segment on the new host.
+SEARCH_URL = (
+    f"{FLOW_HOST}/powerautomate/automations/direct/cu/22/workflows/{SEARCH_WORKFLOW_ID}"
+    f"{FLOW_QUERY}niSRw7iuksi6qFKCyFpAnxkb1WXZtkEhtbhzEvUH1MA"
+)
+# Detail-page "service info" flow ({"serviceId": id}) returning the same
+# {summary, details, history} bundle the warm-cache page embeds as `response`.
+SERVICE_INFO_URL = (
+    f"{FLOW_HOST}/powerautomate/automations/direct/workflows/{SERVICE_INFO_WORKFLOW_ID}"
+    f"{FLOW_QUERY}gZ7X-tu29CUddVznJ51QZSCxGVa4NHw2VVtjkvXtCP0"
+)
 
 LANDING_URL = "https://childcareprovidersearch.dhs.hawaii.gov/"
 DETAIL_URL = "https://childcareprovidersearch.dhs.hawaii.gov/details/?serviceId={}"
 INSPECTIONS_URL = "https://childcareprovidersearch.dhs.hawaii.gov/inspections/?serviceId={}"
 # The inspections page embeds the visit list only when the portal's Dataverse
 # cache is warm; when it's cold the page fetches the list client-side from this
-# HANA "inspection list" Logic App. We POST it directly (hardcoded fallback; we
+# HANA "inspection list" flow. We POST it directly (hardcoded fallback; we
 # prefer the live URL scraped off the page since the SAS sig can rotate).
 INSPECTION_LIST_URL = (
-    "https://prod-26.usgovtexas.logic.azure.us:443/workflows/"
-    "e17345f72a8f424597023d79e2608fb2/triggers/manual/paths/invoke"
-    "?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0"
-    "&sig=9USvXoJj-AHbEUd_pghs1DNXnAfkkgCflxND6gJwlkQ"
+    f"{FLOW_HOST}/powerautomate/automations/direct/workflows/{INSPECTION_LIST_WORKFLOW_ID}"
+    f"{FLOW_QUERY}1x0DSt9S0E6vL2j6oDD9lVyQSzwFxJ7Xs3YZSJV-xc4"
 )
-INSPECTION_LIST_WORKFLOW_ID = "e17345f72a8f424597023d79e2608fb2"
-# Per-visit detail Logic App ({"visitId": id}); we POST it for every visit to get
+# Per-visit detail flow ({"visitId": id}); we POST it for every visit to get
 # the visitDetails needed for the requirements-not-met count. Same resilience as
 # the list endpoint: prefer the live URL off the page, fall back to this.
 VISIT_DETAIL_URL = (
-    "https://prod-05.usgovtexas.logic.azure.us:443/workflows/"
-    "85cc14072d62409fbfc0c2a7ea3da2bd/triggers/manual/paths/invoke"
-    "?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0"
-    "&sig=Jh6IG3_Akdzz9bShSSqdKfnft2CqlQvWublcR0LMwLI"
+    f"{FLOW_HOST}/powerautomate/automations/direct/workflows/{VISIT_DETAIL_WORKFLOW_ID}"
+    f"{FLOW_QUERY}0ufEn9blbR7OEZnSboRSS32zYQbl1obNYk0OvmWqlPw"
 )
-VISIT_DETAIL_WORKFLOW_ID = "85cc14072d62409fbfc0c2a7ea3da2bd"
 
 # visitType codes on the inspections page (ported from the site's getInspectionType).
 VISIT_TYPE_MAP = {
@@ -100,20 +110,25 @@ PHONE_MODES = {"PH", "P2", "MO"}
 # ---------------------------------------------------------------------------
 
 
-def extract_endpoint_urls(html):
-    """Pull the area-table and search Logic App URLs off the landing page.
+def _find_workflow_url(html, workflow_id):
+    """Return the first embedded flow URL carrying `workflow_id`, or None.
 
-    Returns (areas_url, search_url), each None when the regex finds no URL with
-    the matching workflow id (the caller falls back to the hardcoded constants).
+    Matches on the workflow id rather than the host so a platform move (e.g. the
+    Logic App -> Power Automate host change) doesn't silently break discovery.
     """
-    urls = re.findall(r"https://prod-\d+\.usgovtexas\.logic\.azure\.us[^'\"\s]+", html)
-    areas_url = search_url = None
-    for url in urls:
-        if AREAS_WORKFLOW_ID in url and areas_url is None:
-            areas_url = url
-        elif SEARCH_WORKFLOW_ID in url and search_url is None:
-            search_url = url
-    return areas_url, search_url
+    for url in re.findall(r"https://[^'\"`\s]+", html):
+        if workflow_id in url:
+            return url
+    return None
+
+
+def extract_endpoint_urls(html):
+    """Pull the area-table and search flow URLs off the landing page.
+
+    Returns (areas_url, search_url), each None when no URL with the matching
+    workflow id is found (the caller falls back to the hardcoded constants).
+    """
+    return _find_workflow_url(html, AREAS_WORKFLOW_ID), _find_workflow_url(html, SEARCH_WORKFLOW_ID)
 
 
 def extract_embedded_json(html, var_name):
@@ -211,21 +226,18 @@ def extract_inspection_details(html):
     return details
 
 
-def _find_workflow_url(html, workflow_id):
-    """Return the first embedded Logic App URL carrying `workflow_id`, or None."""
-    for url in re.findall(r"https://prod-\d+\.usgovtexas\.logic\.azure\.us[^'\"\s]+", html):
-        if workflow_id in url:
-            return url
-    return None
+def extract_service_info_url(html):
+    """Find the live detail-page service-info flow URL embedded in the page, or None."""
+    return _find_workflow_url(html, SERVICE_INFO_WORKFLOW_ID)
 
 
 def extract_inspection_list_url(html):
-    """Find the live inspection-list Logic App URL embedded in the page, or None."""
+    """Find the live inspection-list flow URL embedded in the page, or None."""
     return _find_workflow_url(html, INSPECTION_LIST_WORKFLOW_ID)
 
 
 def extract_visit_detail_url(html):
-    """Find the live per-visit detail Logic App URL embedded in the page, or None."""
+    """Find the live per-visit detail flow URL embedded in the page, or None."""
     return _find_workflow_url(html, VISIT_DETAIL_WORKFLOW_ID)
 
 
@@ -467,7 +479,7 @@ class HawaiiSpider(scrapy.Spider):
     name = "hawaii"
     allowed_domains = [
         "childcareprovidersearch.dhs.hawaii.gov",
-        "usgovtexas.logic.azure.us",
+        "powerplatform.microsoft.us",
     ]
 
     custom_settings = {
@@ -479,8 +491,12 @@ class HawaiiSpider(scrapy.Spider):
         },
         "CONCURRENT_REQUESTS": 4,
         "DOWNLOAD_DELAY": 1.0,  # the backend 502s on rapid resends
+        # The Power Automate gateway is slow (successful flow calls take 20-90s)
+        # and intermittently 504s after ~121s, so keep the timeout above that and
+        # retry generously.
+        "DOWNLOAD_TIMEOUT": 180,
         "RETRY_ENABLED": True,
-        "RETRY_TIMES": 3,
+        "RETRY_TIMES": 5,
         "RETRY_HTTP_CODES": [429, 500, 502, 503, 504],
         "ROBOTSTXT_OBEY": False,
     }
@@ -658,14 +674,52 @@ class HawaiiSpider(scrapy.Spider):
         self._load_code_tables(response.text)
 
         bundle = extract_embedded_json(response.text, "response")
-        if bundle is None:
+        if bundle is not None:
+            yield from self._emit_from_bundle(item, bundle)
+            return
+
+        # Cold cache: the page would fetch the bundle client-side from the
+        # service-info flow, so POST it ourselves.
+        service_info_url = extract_service_info_url(response.text)
+        if not service_info_url:
             self.logger.warning(
-                "No embedded data on detail page for serviceId %s; keeping partial item",
+                "Service-info URL not found for serviceId %s; using fallback",
+                item.get("hi_service_id"),
+            )
+            service_info_url = SERVICE_INFO_URL
+        self.logger.info(
+            "No embedded data on detail page for serviceId %s; fetching service-info endpoint",
+            item.get("hi_service_id"),
+        )
+        yield scrapy.Request(
+            service_info_url,
+            method="POST",
+            body=json.dumps({"serviceId": str(item["hi_service_id"])}),
+            headers=AZURE_HEADERS,
+            callback=self.parse_service_info,
+            errback=self.detail_errback,
+            meta={"partial_item": item, "playwright": False},
+            dont_filter=True,
+        )
+
+    def parse_service_info(self, response):
+        """Fill the item from the service-info flow (cold-cache detail fallback)."""
+        item = response.meta["partial_item"]
+        try:
+            bundle = json.loads(response.text)
+        except json.JSONDecodeError:
+            bundle = None
+        if not isinstance(bundle, dict) or "summary" not in bundle:
+            self.logger.warning(
+                "Service-info endpoint returned no usable data for serviceId %s; keeping partial item",
                 item.get("hi_service_id"),
             )
             yield item
             return
+        yield from self._emit_from_bundle(item, bundle)
 
+    def _emit_from_bundle(self, item, bundle):
+        """Fill the item from a {summary, details, history} bundle, then chain to inspections."""
         summary = bundle.get("summary", {})
         if summary.get("hanaResponseStatus", {}).get("responseCode") == 400:
             self.logger.info(

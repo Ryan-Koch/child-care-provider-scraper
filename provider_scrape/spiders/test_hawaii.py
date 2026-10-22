@@ -16,6 +16,8 @@ from provider_scrape.spiders.hawaii import (
     extract_endpoint_urls,
     extract_inspection_details,
     extract_inspection_list_url,
+    extract_service_info_url,
+    extract_visit_detail_url,
     format_address,
     format_age_range,
     format_hours,
@@ -62,7 +64,37 @@ def test_extract_endpoint_urls_finds_both():
     areas_url, search_url = extract_endpoint_urls(_load_text("hawaii_landing.html"))
     assert "5a3c6892c14442138e4b600e03411aa2" in areas_url
     assert "179f51f14f6a4837b49e82a3099bc3c3" in search_url
-    assert areas_url.startswith("https://prod-28.usgovtexas.logic.azure.us")
+    # Since Oct 2026 the flows live on the Power Platform environment host.
+    assert ".environment.api.gov.powerplatform.microsoft.us" in areas_url
+    assert "/cu/22/workflows/" in search_url
+    assert "sig=" in areas_url and "sig=" in search_url
+
+
+def test_extract_endpoint_urls_still_matches_legacy_logic_app_host():
+    # Discovery keys on the workflow id, not the host, so either host works.
+    html = (
+        "url: 'https://prod-28.usgovtexas.logic.azure.us:443/workflows/"
+        "5a3c6892c14442138e4b600e03411aa2/triggers/manual/paths/invoke?sig=abc',"
+        "url: 'https://prod-06.usgovtexas.logic.azure.us:443/workflows/"
+        "179f51f14f6a4837b49e82a3099bc3c3/triggers/manual/paths/invoke?sig=def',"
+    )
+    areas_url, search_url = extract_endpoint_urls(html)
+    assert areas_url.endswith("sig=abc")
+    assert search_url.endswith("sig=def")
+
+
+def test_fallback_urls_target_power_platform_host():
+    from provider_scrape.spiders.hawaii import (
+        AREAS_URL,
+        INSPECTION_LIST_URL,
+        SEARCH_URL,
+        SERVICE_INFO_URL,
+        VISIT_DETAIL_URL,
+    )
+
+    for url in (AREAS_URL, SEARCH_URL, SERVICE_INFO_URL, INSPECTION_LIST_URL, VISIT_DETAIL_URL):
+        assert "powerplatform.microsoft.us" in url
+        assert "api-version=1&" in url
 
 
 def test_extract_endpoint_urls_returns_none_when_absent():
@@ -340,6 +372,98 @@ def test_parse_detail_loads_code_tables(spider):
     assert len(spider.languages_map) > 0
 
 
+def _cold_detail_response(service_id=11383, html=None):
+    item = ProviderItem()
+    item["source_state"] = "Hawaii"
+    item["hi_service_id"] = service_id
+    item["hi_provider_kind"] = "OR"
+    item["inspections"] = []
+    body = html if html is not None else _load_text("hawaii_detail_nocache.html")
+    resp = HtmlResponse(
+        url=f"https://childcareprovidersearch.dhs.hawaii.gov/details/?serviceId={service_id}",
+        body=body.encode(),
+        encoding="utf-8",
+        request=Request(url="https://x", meta={"partial_item": item}),
+    )
+    resp.meta["partial_item"] = item
+    return resp
+
+
+def test_extract_service_info_url_finds_live_endpoint():
+    url = extract_service_info_url(_load_text("hawaii_detail_nocache.html"))
+    assert "a60854dc08744146bfa5a217a992cdd9" in url
+    assert "powerplatform.microsoft.us" in url
+
+
+def test_parse_detail_cold_cache_posts_service_info_endpoint(spider):
+    out = list(spider.parse_detail(_cold_detail_response()))
+    # No embedded `response` bundle -> a POST to the service-info flow, no item yet.
+    assert len(out) == 1
+    request = out[0]
+    assert request.method == "POST"
+    assert "a60854dc08744146bfa5a217a992cdd9" in request.url
+    assert json.loads(request.body) == {"serviceId": "11383"}
+    assert request.callback == spider.parse_service_info
+    assert request.errback == spider.detail_errback
+    # Code tables are still loaded off the cold page.
+    assert spider.service_type_map["03"]
+
+
+def test_parse_detail_cold_cache_uses_fallback_url_when_absent(spider):
+    from provider_scrape.spiders.hawaii import SERVICE_INFO_URL
+
+    out = list(spider.parse_detail(_cold_detail_response(html="<html><body>nothing</body></html>")))
+    assert out[0].url == SERVICE_INFO_URL
+
+
+def test_parse_service_info_golden_path(spider):
+    request = next(iter(spider.parse_detail(_cold_detail_response())))
+    resp = _text_response(request.url, _load_text("hawaii_service_info.json"), meta=request.meta)
+    out = list(spider.parse_service_info(resp))
+    # Same chaining as the warm-cache path: on to the inspections page.
+    assert len(out) == 1
+    assert "inspections/?serviceId=11383" in out[0].url
+    item = out[0].meta["partial_item"]
+    assert item["provider_name"] == "PAHALA PRESCHOOL"
+    assert item["license_number"] == 12150
+    assert item["capacity"] == 24
+    assert "PAHALA, HI 96777" in item["address"]
+    assert item["status"] == "Active"
+    assert item["status_date"] == "2001-05-01"
+
+
+def test_parse_service_info_gateway_error_keeps_partial_item(spider):
+    item = ProviderItem()
+    item["hi_service_id"] = 11383
+    item["provider_name"] = "PARTIAL"
+    # What the Power Automate gateway returns on its ~121s timeout.
+    resp = _text_response(
+        "https://x",
+        '{"code":"UnexpectedError","message":"An unexpected error occurred."}',
+        meta={"partial_item": item},
+    )
+    assert list(spider.parse_service_info(resp)) == [item]
+
+
+def test_parse_service_info_non_json_keeps_partial_item(spider):
+    item = ProviderItem()
+    item["hi_service_id"] = 11383
+    resp = _text_response("https://x", "<html>bad gateway</html>", meta={"partial_item": item})
+    assert list(spider.parse_service_info(resp)) == [item]
+
+
+def test_parse_service_info_invalid_service_id_yields_no_item(spider):
+    item = ProviderItem()
+    item["hi_service_id"] = 99999
+    payload = {
+        "summary": {"hanaResponseStatus": {"responseCode": 400}, "hanaResponse": {}},
+        "details": {"hanaResponse": {}},
+        "history": {"hanaResponse": {}},
+    }
+    resp = _text_response("https://x", json.dumps(payload), meta={"partial_item": item})
+    assert list(spider.parse_service_info(resp)) == []
+
+
 def test_detail_errback_emits_partial_item(spider):
     item = ProviderItem()
     item["hi_service_id"] = 555
@@ -539,6 +663,17 @@ def test_extract_inspection_list_url_finds_cold_cache_endpoint():
     url = extract_inspection_list_url(_load_text("hawaii_inspections_nocache.html"))
     assert url is not None
     assert "e17345f72a8f424597023d79e2608fb2" in url
+
+
+def test_extract_visit_detail_url_matches_power_platform_host():
+    html = (
+        "url: 'https://8c50e76eae244562b7f56a6a04974ef.c.environment.api.gov.powerplatform.microsoft.us:443"
+        "/powerautomate/automations/direct/workflows/85cc14072d62409fbfc0c2a7ea3da2bd"
+        "/triggers/manual/paths/invoke?api-version=1&sig=xyz',"
+    )
+    url = extract_visit_detail_url(html)
+    assert url.startswith("https://8c50e76eae244562b7f56a6a04974ef.c.environment")
+    assert url.endswith("sig=xyz")
 
 
 def test_parse_inspections_cold_cache_falls_back_to_list_endpoint(spider):
