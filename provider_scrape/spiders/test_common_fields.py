@@ -810,3 +810,74 @@ def test_early_head_start_and_head_start_are_independent():
     item = _ehs("washington", wa_head_start="No", wa_early_head_start="Yes")
     assert item["head_start"] is False
     assert item["early_head_start"] is True
+
+
+# --------------------------------------------------------------------------- #
+# Wheelchair accessible
+# --------------------------------------------------------------------------- #
+def _wheelchair(state, **source):
+    return norm.normalize_item(dict(source), state)
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "raw", "expected"),
+    [
+        ("connecticut", "ct_wheelchair_accessible", True, True),
+        ("connecticut", "ct_wheelchair_accessible", False, False),
+        ("tennessee", "tn_wheelchair_accessible", "Yes", True),
+        ("tennessee", "tn_wheelchair_accessible", "No", False),
+    ],
+)
+def test_wheelchair_accessible_ct_tn(state, field, raw, expected):
+    item = _wheelchair(state, **{field: raw})
+    assert item["wheelchair_accessible"] is expected
+    assert item[field] == raw  # additive: source kept
+
+
+@pytest.mark.parametrize(
+    ("state", "field"),
+    [("connecticut", "ct_wheelchair_accessible"), ("tennessee", "tn_wheelchair_accessible")],
+)
+def test_wheelchair_accessible_absent_is_unset(state, field):
+    assert "wheelchair_accessible" not in _wheelchair(state, **{field: ""})
+    assert "wheelchair_accessible" not in _wheelchair(state, **{field: None})
+    assert "wheelchair_accessible" not in _wheelchair(state)
+
+
+def test_wheelchair_accessible_nh_token_present():
+    env = "WHEELCHAIR ACCESSIBLE, NO CAT, NO TV USE, OUTDOOR PLAY EQUIPMENT, MIXED AGE (3-5)"
+    item = _wheelchair("new_hampshire", nh_environment=env)
+    assert item["wheelchair_accessible"] is True
+    assert item["nh_environment"] == env  # additive: source kept
+
+
+def test_wheelchair_accessible_nh_token_anywhere_and_case_insensitive():
+    item = _wheelchair("new_hampshire", nh_environment="NO CAT, wheelchair accessible ,NO TV USE")
+    assert item["wheelchair_accessible"] is True
+
+
+def test_wheelchair_accessible_nh_list_without_token_is_none_not_false():
+    item = _wheelchair("new_hampshire", nh_environment="NO CAT, NO TV USE, MIXED AGE (3-5)")
+    assert item.get("wheelchair_accessible") is None
+    assert item.get("wheelchair_accessible") is not False
+    assert item["nh_environment"] == "NO CAT, NO TV USE, MIXED AGE (3-5)"
+
+
+def test_wheelchair_accessible_nh_negated_token_does_not_match():
+    item = _wheelchair("new_hampshire", nh_environment="NOT WHEELCHAIR ACCESSIBLE, NO CAT")
+    assert item.get("wheelchair_accessible") is None
+    item = _wheelchair("new_hampshire", nh_environment="NO CAT, WHEELCHAIR ACCESSIBLE ONLY BY RAMP")
+    assert item.get("wheelchair_accessible") is None
+
+
+def test_wheelchair_accessible_nh_blank_environment_is_unset():
+    assert "wheelchair_accessible" not in _wheelchair("new_hampshire", nh_environment="")
+    assert "wheelchair_accessible" not in _wheelchair("new_hampshire")
+
+
+def test_has_list_token_is_reusable_for_other_tokens():
+    no_cat = cf.has_list_token("NO CAT")
+    assert no_cat("WHEELCHAIR ACCESSIBLE, no cat") is True
+    assert no_cat("NO CATS, WHEELCHAIR ACCESSIBLE") is None
+    assert no_cat(None) is None
+    assert no_cat(["X", " NO CAT "]) is True

@@ -26,6 +26,7 @@ from datetime import datetime
 
 from provider_scrape.common_fields import (
     INSPECTION_LEVEL,
+    has_list_token,
     is_present,
     last_first_name,
     lower_email,
@@ -1102,6 +1103,14 @@ FIELD_COLLAPSE_MAP = {
             "nh_early_head_start",
             "wa_early_head_start",
         )
+    ],
+    # CT stores real bools, TN Yes/No text. NH lists it as one token in a
+    # comma-separated environment checklist: token present -> True, absent ->
+    # None (a checklist omission is not a confirmed "no").
+    "wheelchair_accessible": [
+        ("ct_wheelchair_accessible", _coerce_bool),
+        ("tn_wheelchair_accessible", _coerce_bool),
+        ("nh_environment", has_list_token("WHEELCHAIR ACCESSIBLE")),
     ],
     "curriculum": ["ga_curriculum", "nj_curriculum"],
     # Assigned licensing specialist. VA (va_inspector packs name +

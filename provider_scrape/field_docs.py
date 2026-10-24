@@ -72,6 +72,8 @@ FIELD_DOCS = {
     "head_start": "Head Start participation, collapsed from a single state source and coerced to a boolean.",
     "early_head_start": "Early Head Start participation (federal infant/toddler program), coerced to a boolean. "
     "MS, NH, WA. Distinct from `head_start`: EHS sources never feed it.",
+    "wheelchair_accessible": "Whether the facility is wheelchair accessible (True/False/None). CT bool, TN Yes/No; "
+    "NH from the WHEELCHAIR ACCESSIBLE token in its environment checklist (token present -> True, absent -> None, never False).",
     "curriculum": "Curriculum, collapsed from a single populated state source (VPK-specific curriculum is excluded).",
     # Pass-through common fields (whitespace cleanup only)
     "phone": "Contact phone number (whitespace-cleaned only).",

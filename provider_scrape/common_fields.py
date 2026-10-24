@@ -187,6 +187,25 @@ def has_token(pattern):
     return transform
 
 
+def has_list_token(token):
+    """Build a transform: ``True`` if ``token`` is one whole entry of a
+    comma-separated checklist string (case-insensitive), else ``None``.
+
+    Built on :func:`has_token`. Each entry must equal ``token`` exactly (after
+    trimming), so "NOT WHEELCHAIR ACCESSIBLE" does not match
+    "WHEELCHAIR ACCESSIBLE". Absence is ``None``, never ``False``.
+    """
+    entry_matcher = has_token(rf"^\s*{re.escape(token)}\s*$")
+
+    def transform(value):
+        if isinstance(value, str):
+            return entry_matcher(value.split(","))
+        return entry_matcher(value)
+
+    transform.label = f"has_list_token({token})"
+    return transform
+
+
 def to_iso_date(value):
     """Normalize a date string to ISO 8601 via ``normalization.normalize_date``.
 

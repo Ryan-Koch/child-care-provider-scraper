@@ -57,6 +57,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `vacancies_school_age` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots for the school-age band (int; `0` = full, empty = not reported). State-defined band; IA sums its before/after-school and school-age rows. See `vacancies_infant`. |
 | `vacancies_toddler` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots for the toddler age band (int; `0` = full, empty = not reported). State-defined band; see `vacancies_infant`. |
 | `vacancies_updated_date` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_iso_date, wi_vacancies_updated_date) | Date the provider last updated its vacancy counts (`YYYY-MM-DD`; empty = not reported). Freshness for `total_vacancies` / `vacancies_*`. IA, ME, ND, VT; WI's date is parsed from the `Last updated on` text in its vacancy prose. |
+| `wheelchair_accessible` | Whitespace cleanup; Field collapse from state-specific source (transforms: coerce_bool, has_list_token(WHEELCHAIR ACCESSIBLE)) | Whether the facility is wheelchair accessible (True/False/None). CT bool, TN Yes/No; NH from the WHEELCHAIR ACCESSIBLE token in its environment checklist (token present -> True, absent -> None, never False). |
 
 > Inspections are normalized too: every string value gets whitespace cleanup, and the date fields (`date`, `status_updated`, `az_date_resolved`, `in_correction_date`, `ms_end_date`, `mo_disposition_date`) are converted to ISO 8601. The `status` vocabulary does not apply to inspections.
 
@@ -100,6 +101,7 @@ Each common field is populated from a single populated source field (additive â€
 | `vacancies_school_age` | `co_school_age_openings` (to_int), `me_school_age_slots` (to_int), `nh_school_age_openings` (to_int), `vt_school_age_vacancies` (to_int) |
 | `vacancies_toddler` | `co_toddler_openings` (to_int), `me_toddler_slots` (to_int), `nh_toddler_openings` (to_int), `vt_toddler_vacancies` (to_int) |
 | `vacancies_updated_date` | `ia_openings_as_of` (to_iso_date), `me_openings_updated` (to_iso_date), `nd_vacancies_updated` (to_iso_date), `vt_vacancy_as_of` (to_iso_date), `wi_vacancies` (wi_vacancies_updated_date) |
+| `wheelchair_accessible` | `ct_wheelchair_accessible` (coerce_bool), `nh_environment` (has_list_token(WHEELCHAIR ACCESSIBLE)), `tn_wheelchair_accessible` (coerce_bool) |
 
 ## Inspection field-collapse map
 
@@ -284,7 +286,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ct_type_of_care` -> pass-through
 - `ct_violations` -> pass-through
 - `ct_violations_count` -> pass-through
-- `ct_wheelchair_accessible` -> pass-through
+- `ct_wheelchair_accessible` -> collapses into `wheelchair_accessible` (via coerce_bool)
 
 ### District Of Columbia (DC)
 
@@ -711,7 +713,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nh_domains` -> pass-through
 - `nh_early_head_start` -> collapses into `early_head_start` (via coerce_bool)
 - `nh_endorsements` -> pass-through
-- `nh_environment` -> pass-through
+- `nh_environment` -> collapses into `wheelchair_accessible` (via has_list_token(WHEELCHAIR ACCESSIBLE))
 - `nh_financial_assistance` -> pass-through
 - `nh_gsq_step` -> pass-through
 - `nh_head_start` -> collapses into `head_start` (via coerce_bool)
@@ -913,7 +915,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `tn_regulatory_agency` -> pass-through
 - `tn_regulatory_individual` -> collapses into `licensing_specialist` (via person_name)
 - `tn_vacancy` -> collapses into `total_vacancies` (via to_int)
-- `tn_wheelchair_accessible` -> pass-through
+- `tn_wheelchair_accessible` -> collapses into `wheelchair_accessible` (via coerce_bool)
 
 ### Texas (TX)
 
