@@ -619,3 +619,253 @@ def new_york_suppressed(record):
         "address_suppressed": _ny_omitted_flag(record, "ny_address_omitted"),
         "phone_suppressed": _ny_omitted_flag(record, "ny_phone_number_omitted"),
     }
+
+
+# --------------------------------------------------------------------------- #
+# Weekly schedule (CT, IN, NH, OK, WY, MA, FL)
+# --------------------------------------------------------------------------- #
+# Every source is a per-day open/close structure; they differ in key names and
+# in how the time is written. One time parser and one range splitter feed all
+# of them, and each state adapter only maps its own container shape onto rows.
+# Output rows: {"day": "Monday", "open": "07:00", "close": "18:00"}.
+_TIME_RE = re.compile(
+    r"""^(?P<hour>\d{1,2})
+        (?::(?P<minute>\d{2}))?        # minutes optional only with AM/PM
+        (?::[0-5]\d)?                  # seconds (MA: 07:00:00 AM), ignored
+        \s*(?P<meridiem>[ap])?\.?(?:m\.?)?$""",
+    re.IGNORECASE | re.VERBOSE,
+)
+# "A - B", "A to B" (also en/em dashes); the first separator wins.
+_RANGE_SPLIT_RE = re.compile(r"\s+to\s+|\s*[-–—]\s*", re.IGNORECASE)
+
+
+def parse_time(value):
+    """One clock time -> 24h ``HH:MM``, or ``None`` when it cannot be read.
+
+    Accepts ``6:00 AM``, ``7:00AM``, ``07:00 AM``, ``07:00`` and ``6 PM``;
+    trailing seconds (``07:00:00 AM``) are dropped. ``12:00 AM`` -> ``00:00``
+    and ``12:00 PM`` -> ``12:00``; MA's ``00:15 AM`` is read as ``00:15``. A
+    time without AM/PM must already be 24h and carry minutes. CT's ``24:00``
+    (open until midnight) is kept as ``24:00``, the ISO 8601 end of day.
+    """
+    if not isinstance(value, str):
+        return None
+    match = _TIME_RE.match(value.strip())
+    if match is None:
+        return None
+    hour = int(match.group("hour"))
+    minute = int(match.group("minute") or 0)
+    meridiem = (match.group("meridiem") or "").lower()
+    if minute > 59:
+        return None
+    if meridiem:
+        if not 1 <= hour <= 12 and not (hour == 0 and meridiem == "a"):
+            return None
+        hour = hour % 12 + (12 if meridiem == "p" else 0)
+    elif hour == 24 and minute == 0:
+        pass
+    elif match.group("minute") is None or hour > 23:
+        return None
+    return f"{hour:02d}:{minute:02d}"
+
+
+def split_time_range(value):
+    """``"6:30AM - 6:00PM"`` / ``"6:30AM to 6:00PM"`` -> ``("6:30AM", "6:00PM")``.
+
+    Returns ``None`` unless the text splits into exactly two non-empty parts.
+    """
+    if not isinstance(value, str):
+        return None
+    parts = [part.strip() for part in _RANGE_SPLIT_RE.split(value.strip())]
+    if len(parts) != 2 or not all(parts):
+        return None
+    return parts[0], parts[1]
+
+
+def _schedule_row(day, open_raw, close_raw, context, **extra):
+    """Build one validated row, or log and return ``None`` (the row is dropped)."""
+    full_day = _DAY_ALIASES.get(str(day).strip().lower()) if day is not None else None
+    opens, closes = parse_time(open_raw), parse_time(close_raw)
+    if full_day is None or opens is None or closes is None:
+        logger.warning(
+            "weekly_schedule(%s): unparseable row day=%r open=%r close=%r dropped",
+            context,
+            day,
+            open_raw,
+            close_raw,
+        )
+        return None
+    return {"day": full_day, "open": opens, "close": closes, **extra}
+
+
+def _sorted_rows(rows):
+    """Monday -> Sunday; the sort is stable so a day keeps its source order."""
+    return sorted(rows, key=lambda row: _DAY_ORDER[row["day"]])
+
+
+def _schedule_fields(rows):
+    """Adapter result: ``weekly_schedule`` plus the ``days_of_operation`` it implies.
+
+    The adapter runs after the direct-source collapse and the pipeline never
+    overwrites a populated field, so a state with a direct days source keeps it.
+    """
+    rows = _sorted_rows(rows)
+    if not rows:
+        return {}
+    return {
+        "weekly_schedule": rows,
+        "days_of_operation": day_names([row["day"] for row in rows]),
+    }
+
+
+def _rows_from_entries(entries, context, day_key, open_key, close_key):
+    """Rows from a list of ``{day, <open>, <close>}`` dicts (CT, IN, NH, WY)."""
+    if not isinstance(entries, list):
+        return []
+    rows = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            logger.warning("weekly_schedule(%s): non-dict entry %r dropped", context, entry)
+            continue
+        row = _schedule_row(entry.get(day_key), entry.get(open_key), entry.get(close_key), context)
+        if row is not None:
+            rows.append(row)
+    return rows
+
+
+def _is_closed(text):
+    """True for an explicit "Closed" (or empty) day, which yields no row."""
+    return text is None or not str(text).strip() or str(text).strip().lower().startswith("closed")
+
+
+def _rows_from_range_text(day, text, context, **extra):
+    """Rows for one day from ``"A - B"`` / ``"A to B"``; ``;`` separates ranges."""
+    if _is_closed(text):
+        return []
+    rows = []
+    for chunk in str(text).split(";"):
+        if not chunk.strip():
+            continue
+        bounds = split_time_range(chunk)
+        row = _schedule_row(day, *(bounds or (None, None)), context, **extra)
+        if row is None and bounds is None:
+            logger.warning("weekly_schedule(%s): no time range in %r", context, chunk)
+        if row is not None:
+            rows.append(row)
+    return rows
+
+
+@register_adapter(
+    "connecticut",
+    sources=["ct_schedule"],
+    fills=["weekly_schedule", "days_of_operation"],
+)
+def connecticut_schedule(record):
+    """CT `ct_schedule` rows (already 24h `open`/`close`) -> `weekly_schedule`; days derived."""
+    return _schedule_fields(_rows_from_entries(record.get("ct_schedule"), "connecticut", "day", "open", "close"))
+
+
+@register_adapter(
+    "indiana",
+    sources=["in_schedule"],
+    fills=["weekly_schedule", "days_of_operation"],
+)
+def indiana_schedule(record):
+    """IN `in_schedule` rows (12h `open`/`close`) -> 24h `weekly_schedule`; days derived."""
+    return _schedule_fields(_rows_from_entries(record.get("in_schedule"), "indiana", "day", "open", "close"))
+
+
+@register_adapter(
+    "new_hampshire",
+    sources=["nh_schedule"],
+    fills=["weekly_schedule", "days_of_operation"],
+)
+def new_hampshire_schedule(record):
+    """NH `nh_schedule` sessions (`start`/`end`, 12h) -> one `weekly_schedule` row each; days derived."""
+    return _schedule_fields(_rows_from_entries(record.get("nh_schedule"), "new_hampshire", "day", "start", "end"))
+
+
+@register_adapter(
+    "wyoming",
+    sources=["wy_schedule"],
+    fills=["weekly_schedule", "days_of_operation"],
+)
+def wyoming_schedule(record):
+    """WY `wy_schedule` rows (`start`/`end`, 24h) -> `weekly_schedule`; days derived."""
+    return _schedule_fields(_rows_from_entries(record.get("wy_schedule"), "wyoming", "day", "start", "end"))
+
+
+@register_adapter(
+    "oklahoma",
+    sources=["ok_schedule"],
+    fills=["weekly_schedule", "days_of_operation"],
+)
+def oklahoma_schedule(record):
+    """OK `ok_schedule` `hours` ("6:30AM - 6:00PM", None when closed) -> `weekly_schedule`; days derived."""
+    entries = record.get("ok_schedule")
+    rows = []
+    for entry in entries if isinstance(entries, list) else []:
+        if not isinstance(entry, dict):
+            logger.warning("weekly_schedule(oklahoma): non-dict entry %r dropped", entry)
+            continue
+        rows.extend(_rows_from_range_text(entry.get("day"), entry.get("hours"), "oklahoma"))
+    return _schedule_fields(rows)
+
+
+# Preference order when a Massachusetts provider lists several schedules.
+_MA_SCHEDULE_PREFERENCE = ("full year schedule", "school year schedule", "summer schedule")
+
+
+def _pick_massachusetts_schedule(schedules):
+    """Full Year, else first School Year, else first Summer, else first listed.
+
+    Only schedules that actually list days are candidates, so an empty
+    preferred schedule does not hide a usable one.
+    """
+    candidates = [s for s in schedules if isinstance(s, dict) and s.get("days")]
+    for wanted in _MA_SCHEDULE_PREFERENCE:
+        for schedule in candidates:
+            if str(schedule.get("schedule_type") or "").strip().lower() == wanted:
+                return schedule
+    return candidates[0] if candidates else None
+
+
+@register_adapter(
+    "massachusetts",
+    sources=["ma_schedules"],
+    fills=["weekly_schedule", "days_of_operation"],
+)
+def massachusetts_schedule(record):
+    """MA `ma_schedules`: ONE schedule (Full Year > School Year > Summer > first) -> rows tagged `schedule_type`."""
+    schedules = record.get("ma_schedules")
+    chosen = _pick_massachusetts_schedule(schedules) if isinstance(schedules, list) else None
+    if chosen is None:
+        return {}
+    schedule_type = str(chosen.get("schedule_type") or "").strip()
+    rows = []
+    for entry in chosen["days"] if isinstance(chosen["days"], list) else []:
+        if not isinstance(entry, dict):
+            logger.warning("weekly_schedule(massachusetts): non-dict entry %r dropped", entry)
+            continue
+        row = _schedule_row(
+            entry.get("day"), entry.get("start"), entry.get("end"), "massachusetts", schedule_type=schedule_type
+        )
+        if row is not None:
+            rows.append(row)
+    return _schedule_fields(rows)
+
+
+@register_adapter(
+    "florida",
+    sources=["hours"],
+    fills=["weekly_schedule", "days_of_operation"],
+)
+def florida_schedule(record):
+    """FL dict-shaped `hours` ({"monday": "6:45AM to 6:00PM; ...", "sunday": "Closed"}) -> `weekly_schedule`; `hours` kept."""
+    hours = record.get("hours")
+    if not isinstance(hours, dict):
+        return {}
+    rows = []
+    for day, text in hours.items():
+        rows.extend(_rows_from_range_text(day, text, "florida"))
+    return _schedule_fields(rows)

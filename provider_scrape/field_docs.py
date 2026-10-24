@@ -92,7 +92,12 @@ FIELD_DOCS = {
     "county": "County (whitespace-cleaned only).",
     "hours": "Operating hours, as emitted by the state (whitespace-cleaned only).",
     "days_of_operation": "Weekdays the provider is open: list of full day names in Monday -> Sunday order (e.g. `[\"Monday\", \"Tuesday\"]`). "
-    "GA (`MO,TU`), IA (`Mon, Tue`) and VT (`Monday, Tuesday`) via day_names: case/whitespace tolerant, de-duplicated, unrecognised tokens logged and dropped, none left -> unset.",
+    "GA (`MO,TU`), IA (`Mon, Tue`) and VT (`Monday, Tuesday`) via day_names: case/whitespace tolerant, de-duplicated, unrecognised tokens logged and dropped, none left -> unset. CT/IN/NH/OK/WY/MA/FL derive it from `weekly_schedule` (distinct days present); a direct source always wins.",
+    "weekly_schedule": "Per-day opening hours: list of `{\"day\": \"Monday\", \"open\": \"07:00\", \"close\": \"18:00\"}` rows, 24h `HH:MM`, full day names, "
+    "sorted Monday -> Sunday (source order kept within a day; several rows per day allowed, e.g. NH sessions). CT, IN, NH, OK, WY, MA and FL (from its dict-shaped `hours`, which is left as-is) "
+    "via one shared time parser. Closed days give no row; an unparseable row is logged and dropped; none left -> unset. "
+    "MA lists several schedules: one is chosen (Full Year, else first School Year, else first Summer, else first listed) and its rows carry a `schedule_type` key. "
+    "Overnight ranges (close earlier than open) are kept as reported.",
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
     "deficiencies": "Deficiency/violation count for the provider, coerced to an "
     "integer (bug_10). Digit strings, comma-grouped counts, and integral "

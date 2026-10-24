@@ -1213,3 +1213,328 @@ def test_days_of_operation_list_survives_pipeline():
         "Monday",
         "Saturday",
     ]
+
+
+# --------------------------------------------------------------------------- #
+# Weekly schedule
+# --------------------------------------------------------------------------- #
+def _row(day, open_, close, **extra):
+    return {"day": day, "open": open_, "close": close, **extra}
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("6:00 AM", "06:00"),
+        ("7:00AM", "07:00"),
+        ("07:00 AM", "07:00"),
+        ("07:00", "07:00"),
+        ("17:30", "17:30"),
+        ("12:00 AM", "00:00"),
+        ("12:00 PM", "12:00"),
+        ("12:30 AM", "00:30"),
+        ("12:30PM", "12:30"),
+        ("11:59 PM", "23:59"),
+        ("6:30pm", "18:30"),
+        ("6 PM", "18:00"),
+        ("  5:00 PM ", "17:00"),
+        ("00:00", "00:00"),
+        ("23:59", "23:59"),
+        ("07:00:00 AM", "07:00"),
+        ("06:30:00 PM", "18:30"),
+        ("17:30:00", "17:30"),
+        ("00:00 AM", "00:00"),
+        ("0:30 AM", "00:30"),
+        ("24:00", "24:00"),
+    ],
+)
+def test_parse_time_formats(raw, expected):
+    assert cf.parse_time(raw) == expected
+
+
+@pytest.mark.parametrize(
+    "raw", [None, "", "Closed", "25:00", "13:00 PM", "0:30 PM", "6:75 AM", "07:00:75 AM", "24:30", "24 AM", "7", "noon", 7, "6:00 XM"]
+)
+def test_parse_time_unparseable_is_none(raw):
+    assert cf.parse_time(raw) is None
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("6:30AM - 6:00PM", ("6:30AM", "6:00PM")),
+        ("6:30AM to 6:00PM", ("6:30AM", "6:00PM")),
+        ("07:00-17:30", ("07:00", "17:30")),
+        ("6:30 AM – 6:00 PM", ("6:30 AM", "6:00 PM")),
+        ("7:00 AM TO 5:00 PM", ("7:00 AM", "5:00 PM")),
+    ],
+)
+def test_split_time_range(raw, expected):
+    assert cf.split_time_range(raw) == expected
+
+
+@pytest.mark.parametrize("raw", [None, "", "Closed", "6:00AM", "1 - 2 - 3", " - 5PM"])
+def test_split_time_range_bad_is_none(raw):
+    assert cf.split_time_range(raw) is None
+
+
+def test_weekly_schedule_connecticut_copied():
+    sched = [_row("Monday", "07:30", "17:30"), _row("Tuesday", "07:30", "17:30")]
+    item = norm.normalize_item({"ct_schedule": [dict(r) for r in sched]}, "connecticut")
+    assert item["weekly_schedule"] == sched
+    assert item["ct_schedule"] == sched  # additive: source kept
+    assert item["days_of_operation"] == ["Monday", "Tuesday"]
+
+
+def test_weekly_schedule_indiana_12h_to_24h_including_24h_care():
+    raw = [
+        {"day": "Monday", "open": "6:00 AM", "close": "6:00 PM"},
+        {"day": "Tuesday", "open": "12:00 AM", "close": "11:59 PM"},
+        {"day": "Wednesday", "open": "12:00 PM", "close": "12:00 AM"},
+    ]
+    item = norm.normalize_item({"in_schedule": raw}, "indiana")
+    assert item["weekly_schedule"] == [
+        _row("Monday", "06:00", "18:00"),
+        _row("Tuesday", "00:00", "23:59"),
+        _row("Wednesday", "12:00", "00:00"),
+    ]
+    assert item["in_schedule"] == raw
+
+
+def test_weekly_schedule_new_hampshire_multi_session_rows_kept():
+    raw = [
+        {"day": "Tuesday", "start": "07:00 AM", "end": "08:30 AM"},
+        {"day": "Monday", "start": "07:00 AM", "end": "08:30 AM"},
+        {"day": "Monday", "start": "03:00 PM", "end": "05:00 PM"},
+    ]
+    item = norm.normalize_item({"nh_schedule": raw}, "new_hampshire")
+    assert item["weekly_schedule"] == [
+        _row("Monday", "07:00", "08:30"),
+        _row("Monday", "15:00", "17:00"),  # same day: source order kept
+        _row("Tuesday", "07:00", "08:30"),
+    ]
+    assert item["days_of_operation"] == ["Monday", "Tuesday"]
+    assert item["nh_schedule"] == raw
+
+
+def test_weekly_schedule_oklahoma_closed_days_have_no_row():
+    raw = [
+        {"day": "Monday", "hours": "6:30AM - 6:00PM"},
+        {"day": "Saturday", "hours": None},
+        {"day": "Sunday", "hours": "Closed"},
+        {"day": "Friday", "hours": "7:00AM - 12:00PM"},
+    ]
+    item = norm.normalize_item({"ok_schedule": raw}, "oklahoma")
+    assert item["weekly_schedule"] == [
+        _row("Monday", "06:30", "18:00"),
+        _row("Friday", "07:00", "12:00"),
+    ]
+    assert item["days_of_operation"] == ["Monday", "Friday"]
+    assert item["ok_schedule"] == raw
+
+
+def test_weekly_schedule_wyoming_renamed_keys():
+    raw = [{"day": "Monday", "start": "07:00", "end": "17:30"}]
+    item = norm.normalize_item({"wy_schedule": raw}, "wyoming")
+    assert item["weekly_schedule"] == [_row("Monday", "07:00", "17:30")]
+    assert item["wy_schedule"] == raw
+
+
+def _ma_sched(kind, *days):
+    return {
+        "schedule_type": kind,
+        "drop_in": False,
+        "extended_day": False,
+        "days": [{"day": d, "start": "08:15 AM", "end": "04:15 PM"} for d in days],
+    }
+
+
+def _ma(schedules):
+    return norm.normalize_item({"ma_schedules": schedules}, "massachusetts")
+
+
+def test_ma_prefers_full_year_and_tags_rows():
+    item = _ma(
+        [
+            _ma_sched("Summer Schedule", "Monday"),
+            _ma_sched("School Year Schedule", "Tuesday"),
+            _ma_sched("Full Year Schedule", "Monday", "Wednesday"),
+        ]
+    )
+    assert item["weekly_schedule"] == [
+        _row("Monday", "08:15", "16:15", schedule_type="Full Year Schedule"),
+        _row("Wednesday", "08:15", "16:15", schedule_type="Full Year Schedule"),
+    ]
+    assert item["days_of_operation"] == ["Monday", "Wednesday"]
+    assert len(item["ma_schedules"]) == 3  # source kept
+
+
+def test_ma_falls_back_to_first_school_year():
+    item = _ma(
+        [
+            _ma_sched("Temporary Schedule", "Monday"),
+            _ma_sched("Summer Schedule", "Friday"),
+            _ma_sched("School Year Schedule", "Tuesday"),
+            _ma_sched("School Year Schedule", "Thursday"),
+        ]
+    )
+    assert item["weekly_schedule"] == [
+        _row("Tuesday", "08:15", "16:15", schedule_type="School Year Schedule")
+    ]
+
+
+def test_ma_falls_back_to_first_summer():
+    item = _ma(
+        [
+            _ma_sched("Weekend Schedule", "Saturday"),
+            _ma_sched("Summer Schedule", "Monday"),
+            _ma_sched("Summer Schedule", "Friday"),
+        ]
+    )
+    assert item["weekly_schedule"] == [
+        _row("Monday", "08:15", "16:15", schedule_type="Summer Schedule")
+    ]
+
+
+def test_ma_falls_back_to_first_in_source_order_even_when_type_blank():
+    item = _ma([_ma_sched("", "Monday"), _ma_sched("Evening Schedule", "Friday")])
+    assert item["weekly_schedule"] == [_row("Monday", "08:15", "16:15", schedule_type="")]
+    item = _ma([_ma_sched("Evening Schedule", "Friday"), _ma_sched("AM Session", "Monday")])
+    assert item["weekly_schedule"][0]["schedule_type"] == "Evening Schedule"
+
+
+def test_ma_schedule_without_days_is_not_picked_over_usable_one():
+    item = _ma([_ma_sched("Full Year Schedule"), _ma_sched("Summer Schedule", "Monday")])
+    assert item["weekly_schedule"][0]["schedule_type"] == "Summer Schedule"
+
+
+def test_ma_no_usable_schedule_leaves_field_unset():
+    assert "weekly_schedule" not in _ma([_ma_sched("Full Year Schedule")])
+    assert "weekly_schedule" not in _ma([])
+
+
+FL_HOURS = {
+    "monday": "6:45AM to 6:00PM",
+    "tuesday": "6:45AM to 6:00PM",
+    "wednesday": "6:00PM to 11:59PM; 12:00AM to 6:00AM",
+    "thursday": "10:00PM to 6:00AM",
+    "friday": None,
+    "saturday": "Closed",
+    "sunday": "Closed",
+}
+
+
+def test_weekly_schedule_florida_from_dict_hours():
+    original = dict(FL_HOURS)
+    item = norm.normalize_item({"hours": dict(FL_HOURS)}, "florida")
+    assert item["weekly_schedule"] == [
+        _row("Monday", "06:45", "18:00"),
+        _row("Tuesday", "06:45", "18:00"),
+        _row("Wednesday", "18:00", "23:59"),
+        _row("Wednesday", "00:00", "06:00"),  # multi-range split on ';'
+        _row("Thursday", "22:00", "06:00"),  # overnight kept as reported
+    ]
+    assert item["days_of_operation"] == ["Monday", "Tuesday", "Wednesday", "Thursday"]
+    assert item["hours"] == original  # hours left exactly as it was
+
+
+def test_florida_closed_all_week_leaves_field_unset():
+    item = norm.normalize_item({"hours": {"monday": "Closed", "sunday": "Closed"}}, "florida")
+    assert "weekly_schedule" not in item
+    assert "days_of_operation" not in item
+
+
+@pytest.mark.parametrize("state", ["florida", "georgia", "ohio", "texas"])
+def test_string_hours_never_feed_weekly_schedule(state):
+    item = norm.normalize_item({"hours": "Mon-Fri 6:00 AM - 6:00 PM"}, state)
+    assert "weekly_schedule" not in item
+    assert item["hours"] == "Mon-Fri 6:00 AM - 6:00 PM"
+
+
+def test_dict_hours_outside_florida_does_not_feed_weekly_schedule():
+    item = norm.normalize_item({"hours": {"monday": "6:45AM to 6:00PM"}}, "texas")
+    assert "weekly_schedule" not in item
+
+
+def test_bad_rows_dropped_and_logged_rest_kept(caplog):
+    raw = [
+        {"day": "Monday", "open": "7:00 AM", "close": "5:00 PM"},
+        {"day": "Funday", "open": "7:00 AM", "close": "5:00 PM"},
+        {"day": "Tuesday", "open": "soon", "close": "5:00 PM"},
+        {"day": "Wednesday", "open": "7:00 AM", "close": None},
+        "garbage",
+        {"day": "Friday", "open": "8:00 AM", "close": "4:00 PM"},
+    ]
+    with caplog.at_level(logging.WARNING, logger="provider_scrape.common_fields"):
+        item = norm.normalize_item({"in_schedule": raw}, "indiana")
+    assert item["weekly_schedule"] == [
+        _row("Monday", "07:00", "17:00"),
+        _row("Friday", "08:00", "16:00"),
+    ]
+    assert "Funday" in caplog.text
+    assert "soon" in caplog.text
+    assert "garbage" in caplog.text
+
+
+def test_bad_range_text_dropped_and_logged(caplog):
+    raw = [{"day": "Monday", "hours": "whenever"}, {"day": "Tuesday", "hours": "7:00AM - 5:00PM"}]
+    with caplog.at_level(logging.WARNING, logger="provider_scrape.common_fields"):
+        item = norm.normalize_item({"ok_schedule": raw}, "oklahoma")
+    assert item["weekly_schedule"] == [_row("Tuesday", "07:00", "17:00")]
+    assert "whenever" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "raw"),
+    [
+        ("connecticut", "ct_schedule", [{"day": "Moonday", "open": "07:00", "close": "08:00"}]),
+        ("indiana", "in_schedule", []),
+        ("new_hampshire", "nh_schedule", "not a list"),
+        ("oklahoma", "ok_schedule", [{"day": "Monday", "hours": None}]),
+    ],
+)
+def test_nothing_usable_leaves_schedule_and_days_unset(state, field, raw):
+    item = norm.normalize_item({field: raw}, state)
+    assert "weekly_schedule" not in item
+    assert "days_of_operation" not in item
+
+
+def test_days_derived_from_schedule_are_canonical_and_distinct():
+    raw = [
+        {"day": "sunday", "open": "08:00", "close": "12:00"},
+        {"day": "Mon", "open": "08:00", "close": "12:00"},
+        {"day": "Monday", "open": "13:00", "close": "17:00"},
+    ]
+    item = norm.normalize_item({"ct_schedule": raw}, "connecticut")
+    assert [r["day"] for r in item["weekly_schedule"]] == ["Monday", "Monday", "Sunday"]
+    assert item["days_of_operation"] == ["Monday", "Sunday"]
+
+
+def test_derived_days_never_overwrite_a_direct_source():
+    # A direct source is collapsed before the schedule adapter runs.
+    record = {
+        "ga_operating_days": "MO,TU",
+        "ct_schedule": [{"day": "Friday", "open": "07:00", "close": "08:00"}],
+    }
+    item = norm.normalize_item(record, "georgia")
+    assert item["days_of_operation"] == ["Monday", "Tuesday"]
+    # Even if an adapter state already carries days, they stay.
+    record = {
+        "days_of_operation": ["Saturday"],
+        "ct_schedule": [{"day": "Friday", "open": "07:00", "close": "08:00"}],
+    }
+    item = norm.normalize_item(record, "connecticut")
+    assert item["days_of_operation"] == ["Saturday"]
+    assert item["weekly_schedule"] == [_row("Friday", "07:00", "08:00")]
+
+
+def test_weekly_schedule_idempotent_through_pipeline():
+    raw = [{"day": "Monday", "open": "6:00 AM", "close": "6:00 PM"}]
+    once = norm.normalize_item({"in_schedule": raw}, "indiana")
+    twice = norm.normalize_item(dict(once), "indiana")
+    assert twice["weekly_schedule"] == once["weekly_schedule"]
+    assert twice["days_of_operation"] == ["Monday"]
+
+
+def test_weekly_schedule_absent_when_no_source():
+    assert "weekly_schedule" not in norm.normalize_item({}, "connecticut")

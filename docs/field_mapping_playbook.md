@@ -59,7 +59,8 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `phone_extension` | Extension for `phone` | Digits-only **string** (NJ/NY via `phone_extension_digits`: trim, strip `_` mask padding, non-digits -> None) |
 | `capacity` | Licensed capacity | Integer (when a clean number) |
 | `hours` | Operating hours | String |
-| `days_of_operation` | Weekdays open | List of full day names, Mon->Sun (GA/IA/VT via `day_names`: 2-/3-letter/full names, de-duped, unknown tokens logged and dropped) |
+| `days_of_operation` | Weekdays open | List of full day names, Mon->Sun (GA/IA/VT via `day_names`: 2-/3-letter/full names, de-duped, unknown tokens logged and dropped; CT/IN/NH/OK/WY/MA/FL derived from `weekly_schedule`, never overwriting a direct source) |
+| `weekly_schedule` | Per-day open/close rows | List of `{day, open, close}`: full day names, 24h `HH:MM`, Mon->Sun, several rows per day allowed (CT/IN/NH/OK/WY/MA/FL via per-state adapters sharing `parse_time`/`split_time_range`; FL parsed from its dict `hours`, which stays as-is; MA picks one schedule - Full Year, else School Year, else Summer, else first - and tags rows with `schedule_type`) |
 | `ages_served` | Ages accepted | String (lists joined with `, `) |
 | `county` | County | String |
 | `scholarships_accepted` | Subsidy/scholarship acceptance | As emitted (string/bool) |

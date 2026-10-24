@@ -21,7 +21,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `capacity` | Whitespace cleanup; Integer coercion | Licensed capacity coerced to an integer when it is a clean number; ranges/free text are left unchanged and logged. |
 | `county` | Whitespace cleanup | County (whitespace-cleaned only). |
 | `curriculum` | Whitespace cleanup; Field collapse from state-specific source | Curriculum, collapsed from a single populated state source (VPK-specific curriculum is excluded). |
-| `days_of_operation` | Whitespace cleanup; Field collapse from state-specific source (transforms: day_names) | Weekdays the provider is open: list of full day names in Monday -> Sunday order (e.g. `["Monday", "Tuesday"]`). GA (`MO,TU`), IA (`Mon, Tue`) and VT (`Monday, Tuesday`) via day_names: case/whitespace tolerant, de-duplicated, unrecognised tokens logged and dropped, none left -> unset. |
+| `days_of_operation` | Whitespace cleanup; Field collapse from state-specific source (transforms: day_names) | Weekdays the provider is open: list of full day names in Monday -> Sunday order (e.g. `["Monday", "Tuesday"]`). GA (`MO,TU`), IA (`Mon, Tue`) and VT (`Monday, Tuesday`) via day_names: case/whitespace tolerant, de-duplicated, unrecognised tokens logged and dropped, none left -> unset. CT/IN/NH/OK/WY/MA/FL derive it from `weekly_schedule` (distinct days present); a direct source always wins. |
 | `deficiencies` | Whitespace cleanup; Integer coercion (bug_10) | Deficiency/violation count for the provider, coerced to an integer (bug_10). Digit strings, comma-grouped counts, and integral floats (e.g. 2.0) all become int; blank/None stays None; negative or non-numeric values (and stray booleans) become None rather than a guessed number. |
 | `doing_business_as` | Whitespace cleanup; Field collapse from state-specific source (transforms: none_if_sentinel) | Trade name (doing business as) alongside the licensed name, free text. FL, OK; sentinels such as `N/A` -> unset. FL's value always equals provider_name (its API already returns the DBA as the name). WA license name and MA umbrella org are not DBAs and are not mapped. |
 | `early_head_start` | Whitespace cleanup; Field collapse from state-specific source (-> boolean) | Early Head Start participation (federal infant/toddler program), coerced to a boolean. MS, NH, WA. Distinct from `head_start`: EHS sources never feed it. |
@@ -63,6 +63,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `vacancies_school_age` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots for the school-age band (int; `0` = full, empty = not reported). State-defined band; IA sums its before/after-school and school-age rows. See `vacancies_infant`. |
 | `vacancies_toddler` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots for the toddler age band (int; `0` = full, empty = not reported). State-defined band; see `vacancies_infant`. |
 | `vacancies_updated_date` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_iso_date, wi_vacancies_updated_date) | Date the provider last updated its vacancy counts (`YYYY-MM-DD`; empty = not reported). Freshness for `total_vacancies` / `vacancies_*`. IA, ME, ND, VT; WI's date is parsed from the `Last updated on` text in its vacancy prose. |
+| `weekly_schedule` | Whitespace cleanup | Per-day opening hours: list of `{"day": "Monday", "open": "07:00", "close": "18:00"}` rows, 24h `HH:MM`, full day names, sorted Monday -> Sunday (source order kept within a day; several rows per day allowed, e.g. NH sessions). CT, IN, NH, OK, WY, MA and FL (from its dict-shaped `hours`, which is left as-is) via one shared time parser. Closed days give no row; an unparseable row is logged and dropped; none left -> unset. MA lists several schedules: one is chosen (Full Year, else first School Year, else first Summer, else first listed) and its rows carry a `schedule_type` key. Overnight ranges (close earlier than open) are kept as reported. |
 | `wheelchair_accessible` | Whitespace cleanup; Field collapse from state-specific source (transforms: coerce_bool, has_list_token(WHEELCHAIR ACCESSIBLE)) | Whether the facility is wheelchair accessible (True/False/None). CT bool, TN Yes/No; NH from the WHEELCHAIR ACCESSIBLE token in its environment checklist (token present -> True, absent -> None, never False). |
 
 > Inspections are normalized too: every string value gets whitespace cleanup, and the date fields (`date`, `status_updated`, `az_date_resolved`, `in_correction_date`, `ms_end_date`, `mo_disposition_date`) are converted to ISO 8601. The `status` vocabulary does not apply to inspections.
@@ -140,11 +141,18 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 
 | State | Level | Reads | Fills | Description |
 |---|---|---|---|---|
+| `connecticut` | provider | `ct_schedule` | `weekly_schedule`, `days_of_operation` | CT `ct_schedule` rows (already 24h `open`/`close`) -> `weekly_schedule`; days derived. |
+| `florida` | provider | `hours` | `weekly_schedule`, `days_of_operation` | FL dict-shaped `hours` ({"monday": "6:45AM to 6:00PM; ...", "sunday": "Closed"}) -> `weekly_schedule`; `hours` kept. |
+| `indiana` | provider | `in_schedule` | `weekly_schedule`, `days_of_operation` | IN `in_schedule` rows (12h `open`/`close`) -> 24h `weekly_schedule`; days derived. |
 | `iowa` | provider | `ia_openings_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Sum IA `fullTime` + `partTime` openings per band across the 7 age labels. |
+| `massachusetts` | provider | `ma_schedules` | `weekly_schedule`, `days_of_operation` | MA `ma_schedules`: ONE schedule (Full Year > School Year > Summer > first) -> rows tagged `schedule_type`. |
+| `new_hampshire` | provider | `nh_schedule` | `weekly_schedule`, `days_of_operation` | NH `nh_schedule` sessions (`start`/`end`, 12h) -> one `weekly_schedule` row each; days derived. |
 | `new_york` | provider | `ny_address_omitted`, `ny_phone_number_omitted` | `address_suppressed`, `phone_suppressed` | NY `Address Omitted` / `Phone Number Omitted`: `Y` -> True, blank or absent -> False. |
 | `north_dakota` | provider | `nd_vacancies_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map ND `nd_vacancies_by_age` rows (by age label) onto the four vacancy bands. |
+| `oklahoma` | provider | `ok_schedule` | `weekly_schedule`, `days_of_operation` | OK `ok_schedule` `hours` ("6:30AM - 6:00PM", None when closed) -> `weekly_schedule`; days derived. |
 | `virginia` | provider | `va_inspector` | `licensing_specialist`, `licensing_specialist_phone` | Split `va_inspector` ("Name: (555) 555-5555") into specialist name + phone; `N/A` -> None. |
 | `washington_dc` | provider | `dc_enrollment` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map DC `dc_enrollment` `openings` (text; `Not Applicable` -> None) onto the four vacancy bands. |
+| `wyoming` | provider | `wy_schedule` | `weekly_schedule`, `days_of_operation` | WY `wy_schedule` rows (`start`/`end`, 24h) -> `weekly_schedule`; days derived. |
 
 ## Controlled vocabulary: `status`
 
@@ -290,7 +298,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ct_rates` -> pass-through
 - `ct_reason` -> pass-through
 - `ct_resolution` -> pass-through
-- `ct_schedule` -> pass-through
+- `ct_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `ct_school_districts` -> collapses into `school_district`
 - `ct_searchable` -> pass-through
 - `ct_severity` -> pass-through
@@ -486,7 +494,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `in_ptq_level` -> pass-through
 - `in_rule_code` -> pass-through
 - `in_rule_description` -> pass-through
-- `in_schedule` -> pass-through
+- `in_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `in_temporarily_closed_message` -> pass-through
 
 ### Kansas (KS)
@@ -569,7 +577,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ma_regional_office_address` -> pass-through
 - `ma_regional_website` -> pass-through
 - `ma_schedule_options` -> pass-through
-- `ma_schedules` -> pass-through
+- `ma_schedules` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `ma_special_needs` -> pass-through
 - `ma_special_skills` -> pass-through
 - `ma_temporary_status` -> pass-through
@@ -739,7 +747,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nh_preventive_protective` -> pass-through
 - `nh_qris_rating` -> pass-through
 - `nh_rates` -> pass-through
-- `nh_schedule` -> pass-through
+- `nh_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `nh_schedule_options` -> pass-through
 - `nh_school_age_openings` -> collapses into `vacancies_school_age` (via to_int)
 - `nh_special_needs` -> pass-through
@@ -864,7 +872,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ok_licensing_specialist_phone` -> collapses into `licensing_specialist_phone` (via none_if_sentinel)
 - `ok_noncompliances` -> pass-through
 - `ok_revocation_sent` -> pass-through
-- `ok_schedule` -> pass-through
+- `ok_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `ok_star_level` -> pass-through
 - `ok_subsidy_contract_number` -> pass-through
 - `ok_visit_purpose` -> pass-through
@@ -1053,7 +1061,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wy_programs` -> pass-through
 - `wy_record_type` -> pass-through
 - `wy_registration_fee` -> pass-through
-- `wy_schedule` -> pass-through
+- `wy_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `wy_services` -> pass-through
 - `wy_violation_found` -> pass-through
 - `wy_violations` -> pass-through
