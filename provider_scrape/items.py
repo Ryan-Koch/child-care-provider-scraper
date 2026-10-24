@@ -11,6 +11,7 @@ class InspectionItem(scrapy.Item):
     status_updated = scrapy.Field()
     report_url = scrapy.Field()
     inspector = scrapy.Field()  # staff member who ran the visit, `First Last`
+    inspection_id = scrapy.Field()  # state's own key for the visit, opaque string
     va_shsi = scrapy.Field()
     va_complaint_related = scrapy.Field()
     va_violations = scrapy.Field()

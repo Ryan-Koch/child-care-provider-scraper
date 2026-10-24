@@ -1813,3 +1813,90 @@ def test_inspector_does_not_touch_provider_level_licensing_specialist():
     assert "inspector" not in item
     insp = norm.normalize_inspection({"ma_licensor": "Madelyn Marichal"}, "massachusetts")
     assert "licensing_specialist" not in insp
+
+
+# --- inspection_id (inspection-level) -------------------------------------
+
+INSPECTION_ID_SOURCES = [
+    ("connecticut", "ct_inspection_id", 12345, "12345"),
+    ("florida", "fl_inspection_id", "0b1f2c3d-aaaa-bbbb-cccc-1234567890ab",
+     "0b1f2c3d-aaaa-bbbb-cccc-1234567890ab"),
+    ("hawaii", "hi_visit_id", 987, "987"),
+    ("kentucky", "ky_inspection_id", 55001, "55001"),
+    ("massachusetts", "ma_visit_id", "a0X5e000001AbCdEAK", "a0X5e000001AbCdEAK"),
+    ("massachusetts", "ma_investigation_id", "a0Y5e000002ZyXwEAK",
+     "a0Y5e000002ZyXwEAK"),
+    ("missouri", "mo_inspection_id", "2507905226", "2507905226"),
+    ("new_hampshire", "nh_visit_id", "a1B5e000003QrStEAK", "a1B5e000003QrStEAK"),
+    ("nevada", "nv_inspection_number", "79452", "79452"),
+    ("kansas", "ks_nosf_id", "161446", "161446"),
+    ("arizona", "az_enforcement_name", "D-2029537", "D-2029537"),
+]
+
+
+@pytest.mark.parametrize(
+    ("state", "source", "raw", "expected"), INSPECTION_ID_SOURCES
+)
+def test_inspection_id_per_state(state, source, raw, expected):
+    insp = norm.normalize_inspection({source: raw}, state)
+    assert insp["inspection_id"] == expected
+    assert isinstance(insp["inspection_id"], str)
+    assert insp[source] == raw  # source kept (collapse is additive)
+
+
+def test_inspection_id_int_has_no_decimal_suffix():
+    insp = norm.normalize_inspection({"ct_inspection_id": 12345}, "connecticut")
+    assert insp["inspection_id"] == "12345"
+    floaty = norm.normalize_inspection({"hi_visit_id": 987.0}, "hawaii")
+    assert floaty["inspection_id"] == "987"
+
+
+def test_inspection_id_string_only_trimmed():
+    insp = norm.normalize_inspection({"ks_nosf_id": " 000161 "}, "kansas")
+    assert insp["inspection_id"] == "000161"
+
+
+def test_inspection_id_ma_visit_row():
+    insp = norm.normalize_inspection({"ma_visit_id": "a0X1"}, "massachusetts")
+    assert insp["inspection_id"] == "a0X1"
+    assert "ma_investigation_id" not in insp
+
+
+def test_inspection_id_ma_investigation_row():
+    insp = norm.normalize_inspection(
+        {"ma_investigation_id": "a0Y2"}, "massachusetts"
+    )
+    assert insp["inspection_id"] == "a0Y2"
+    assert "ma_visit_id" not in insp
+
+
+def test_inspection_id_kansas_survey_number_alone_unset():
+    insp = norm.normalize_inspection({"ks_survey_number": "25-001610"}, "kansas")
+    assert not insp.get("inspection_id")
+    assert insp["ks_survey_number"] == "25-001610"
+
+
+def test_inspection_id_kansas_uses_nosf_id_not_survey_number():
+    insp = norm.normalize_inspection(
+        {"ks_nosf_id": "161446", "ks_survey_number": "25-001610"}, "kansas"
+    )
+    assert insp["inspection_id"] == "161446"
+    assert insp["ks_survey_number"] == "25-001610"
+
+
+@pytest.mark.parametrize(
+    ("state", "source"),
+    [(s, src) for s, src, _raw, _exp in INSPECTION_ID_SOURCES],
+)
+@pytest.mark.parametrize("blank", ["", "   ", None])
+def test_inspection_id_blank_unset(state, source, blank):
+    insp = norm.normalize_inspection({source: blank}, state)
+    assert not insp.get("inspection_id")
+
+
+def test_inspection_id_does_not_touch_source_provider_id():
+    item = norm.normalize_item({"ct_provider_id": 4321}, "connecticut")
+    assert item["source_provider_id"] == "4321"
+    assert "inspection_id" not in item
+    insp = norm.normalize_inspection({"ct_inspection_id": 12345}, "connecticut")
+    assert "source_provider_id" not in insp

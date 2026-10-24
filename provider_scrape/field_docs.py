@@ -123,6 +123,12 @@ FIELD_DOCS = {
     "inspector": "Inspection field: the staff member who ran the visit, as `First Last` (ALL-CAPS Title-cased; MO's "
     "`Last, First M` flipped; blank/`N/A` -> unset). Collapsed from AK, MA (licensor on routine visits, investigator on "
     "investigation rows), MO, MT, NH, RI. If a row carried two populated sources it would stay unset.",
+    "inspection_id": "Inspection field: the state's own key for the visit/report, as an opaque string (ints stringified "
+    "with no `.0`, strings only trimmed). State-specific: not comparable across states, and unique per provider record "
+    "rather than guaranteed globally unique. Collapsed from CT, FL, HI, KY, MA (visit id on routine visits, "
+    "investigation id on investigation rows), MO, NH, NV, KS (`ks_nosf_id` only; the survey number repeats) and AZ. "
+    "CT occasionally has two provider records (different `ct_provider_id`, same license) carrying the same "
+    "inspections, so one CT inspection_id can appear under both.",
     "licensing_specialist_phone": "Phone number of the assigned licensing specialist, as emitted by the state "
     "(OK, SC, and VA's split-out number); empty when not published.",
     "licensing_specialist_email": "Lower-cased email of the assigned licensing specialist (published by ME).",

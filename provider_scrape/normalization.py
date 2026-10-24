@@ -1307,6 +1307,25 @@ INSPECTION_FIELD_COLLAPSE_MAP = {
         ("nh_licensor", person_name),
         ("ri_licensor", person_name),
     ],
+    # The state's own key for the visit/report, as an opaque string via
+    # to_id_string (ints stringified with no `.0`, strings only trimmed). MA has
+    # two sources, never both filled: ma_visit_id on routine visits and
+    # ma_investigation_id on investigation rows (different Salesforce objects).
+    # KS maps ks_nosf_id only: ks_survey_number repeats across rows, so it is
+    # not a row key.
+    "inspection_id": [
+        ("ct_inspection_id", to_id_string),
+        ("fl_inspection_id", to_id_string),
+        ("hi_visit_id", to_id_string),
+        ("ky_inspection_id", to_id_string),
+        ("ma_visit_id", to_id_string),
+        ("ma_investigation_id", to_id_string),
+        ("mo_inspection_id", to_id_string),
+        ("nh_visit_id", to_id_string),
+        ("nv_inspection_number", to_id_string),
+        ("ks_nosf_id", to_id_string),
+        ("az_enforcement_name", to_id_string),
+    ],
 }
 
 
