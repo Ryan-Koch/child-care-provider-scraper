@@ -1042,3 +1042,41 @@ def test_phone_extension_collapse(state, field, raw, expected):
 
 def test_phone_extension_absent_when_no_source():
     assert "phone_extension" not in norm.normalize_item({}, "new_york")
+
+
+# --------------------------------------------------------------------------- #
+# Doing business as
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    ("state", "field", "raw", "expected"),
+    [
+        ("florida", "fl_dba", "The Learning Experience", "The Learning Experience"),
+        ("florida", "fl_dba", "  Sunny Days  ", "Sunny Days"),
+        ("florida", "fl_dba", "N/A", None),
+        ("florida", "fl_dba", "   ", None),
+        ("oklahoma", "ok_doing_business_as", "Lil Bison Learning", "Lil Bison Learning"),
+        ("oklahoma", "ok_doing_business_as", "N/A", None),
+        ("oklahoma", "ok_doing_business_as", "", None),
+    ],
+)
+def test_doing_business_as_collapse(state, field, raw, expected):
+    item = norm.normalize_item({field: raw}, state)
+    if expected is None:
+        assert "doing_business_as" not in item
+    else:
+        assert item["doing_business_as"] == expected
+    assert field in item  # additive: source kept
+
+
+@pytest.mark.parametrize(
+    ("state", "field"),
+    [("washington", "wa_license_name"), ("massachusetts", "ma_umbrella_name")],
+)
+def test_doing_business_as_not_fed_by_license_name_or_umbrella(state, field):
+    item = norm.normalize_item({field: "Some Legal Entity LLC"}, state)
+    assert "doing_business_as" not in item
+    assert item[field] == "Some Legal Entity LLC"
+
+
+def test_doing_business_as_absent_when_no_source():
+    assert "doing_business_as" not in norm.normalize_item({}, "florida")

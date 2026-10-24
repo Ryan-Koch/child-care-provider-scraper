@@ -22,6 +22,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `county` | Whitespace cleanup | County (whitespace-cleaned only). |
 | `curriculum` | Whitespace cleanup; Field collapse from state-specific source | Curriculum, collapsed from a single populated state source (VPK-specific curriculum is excluded). |
 | `deficiencies` | Whitespace cleanup; Integer coercion (bug_10) | Deficiency/violation count for the provider, coerced to an integer (bug_10). Digit strings, comma-grouped counts, and integral floats (e.g. 2.0) all become int; blank/None stays None; negative or non-numeric values (and stray booleans) become None rather than a guessed number. |
+| `doing_business_as` | Whitespace cleanup; Field collapse from state-specific source (transforms: none_if_sentinel) | Trade name (doing business as) alongside the licensed name, free text. FL, OK; sentinels such as `N/A` -> unset. FL's value always equals provider_name (its API already returns the DBA as the name). WA license name and MA umbrella org are not DBAs and are not mapped. |
 | `early_head_start` | Whitespace cleanup; Field collapse from state-specific source (-> boolean) | Early Head Start participation (federal infant/toddler program), coerced to a boolean. MS, NH, WA. Distinct from `head_start`: EHS sources never feed it. |
 | `email` | Whitespace cleanup | Contact email (whitespace-cleaned only). |
 | `head_start` | Whitespace cleanup; Field collapse from state-specific source (-> boolean) | Head Start participation, collapsed from a single state source and coerced to a boolean. |
@@ -89,6 +90,7 @@ Each common field is populated from a single populated source field (additive â€
 | `accreditation` | `al_accreditations`, `ct_accreditations`, `ga_accreditation`, `hi_accreditations`, `md_accreditation`, `nj_accreditation_labels` |
 | `address_suppressed` | `ct_address_suppressed` (to_bool), `fl_display_address_on_web` (invert), `ks_address_suppressed` (to_bool), `ma_contact_redacted` (to_bool) |
 | `curriculum` | `ga_curriculum`, `nj_curriculum` |
+| `doing_business_as` | `fl_dba` (none_if_sentinel), `ok_doing_business_as` (none_if_sentinel) |
 | `early_head_start` | `ms_early_head_start` (coerce_bool), `nh_early_head_start` (coerce_bool), `wa_early_head_start` (coerce_bool) |
 | `head_start` | `az_headstart` (coerce_bool), `co_head_start` (coerce_bool), `ct_head_start` (coerce_bool), `fl_is_head_start` (coerce_bool), `nh_head_start` (coerce_bool), `ri_head_start` (coerce_bool), `wa_head_start` (coerce_bool) |
 | `license_type` | `ak_license_type`, `az_license_type`, `co_license_type`, `ct_license_type`, `hi_license_type`, `mt_license_type`, `nc_license_type`, `nj_license_type_label`, `ut_license_type`, `va_license_type`, `wa_license_type`, `wv_license_type` |
@@ -321,7 +323,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `fl_alternate_provider_number` -> pass-through
 - `fl_city` -> pass-through
-- `fl_dba` -> pass-through
+- `fl_dba` -> collapses into `doing_business_as` (via none_if_sentinel)
 - `fl_display_address_on_web` -> collapses into `address_suppressed` (via invert)
 - `fl_display_email_on_web` -> pass-through
 - `fl_display_phone_on_web` -> collapses into `phone_suppressed` (via invert)
@@ -852,7 +854,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ok_compliance_total` -> pass-through
 - `ok_denial_sent` -> pass-through
 - `ok_detail_unavailable` -> pass-through
-- `ok_doing_business_as` -> pass-through
+- `ok_doing_business_as` -> collapses into `doing_business_as` (via none_if_sentinel)
 - `ok_emergency_issued` -> pass-through
 - `ok_licensing_specialist` -> collapses into `licensing_specialist` (via person_name)
 - `ok_licensing_specialist_phone` -> collapses into `licensing_specialist_phone` (via none_if_sentinel)

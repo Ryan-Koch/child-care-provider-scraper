@@ -43,6 +43,7 @@ maintained in `items.py`; this table is the human-readable gloss.
 | Field | Meaning | Canonical format |
 |---|---|---|
 | `provider_name` | Facility name | String; ALL-CAPS names → Title Case |
+| `doing_business_as` | Trade name (DBA) | Free-text string (FL/OK via `none_if_sentinel`: trim, `N/A`-style sentinels -> unset). FL's equals `provider_name` |
 | `license_number` | License/registration id | String (as emitted) |
 | `license_holder` | Licensee / holder name | String; ALL-CAPS → Title Case |
 | `administrator` | On-site administrator/director | String; ALL-CAPS → Title Case |

@@ -278,6 +278,7 @@ class InspectionItem(scrapy.Item):
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
     provider_name = scrapy.Field()
+    doing_business_as = scrapy.Field()  # trade name, free text
     license_number = scrapy.Field()
     license_holder = scrapy.Field()
     provider_type = scrapy.Field()

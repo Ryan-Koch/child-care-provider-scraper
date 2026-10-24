@@ -1028,6 +1028,14 @@ def _coerce_bool(value):
 # addresses (nc_owner_mailing_address, mi_licensee_address) and VPK-specific
 # curriculum (fl_vpk_curriculum) OUT of these lists.
 FIELD_COLLAPSE_MAP = {
+    # Trade name ("doing business as"). FL note: the FL API already returns the
+    # DBA as `providerName`, so fl_dba always equals provider_name; mapping it
+    # marks provider_name as a trade name rather than adding a new one. WA's
+    # license name and MA's umbrella org are different concepts: not mapped.
+    "doing_business_as": [
+        ("fl_dba", none_if_sentinel),
+        ("ok_doing_business_as", none_if_sentinel),
+    ],
     "license_type": [
         "va_license_type",
         "mt_license_type",
