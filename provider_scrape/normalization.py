@@ -30,6 +30,7 @@ from provider_scrape.common_fields import (
     day_names,
     has_list_token,
     invert,
+    md_finding_flag,
     is_present,
     last_first_name,
     license_holder_address,
@@ -1336,6 +1337,20 @@ INSPECTION_FIELD_COLLAPSE_MAP = {
         ("ma_announcement_type", announced_flag),
         ("nh_announcement_type", announced_flag),
         ("mo_notice", announced_flag),
+    ],
+    # Any noncompliance recorded on this row (True), none (False), unknown
+    # (None). MO's source says "in compliance", so it is inverted. VA's
+    # Yes/No goes through to_bool, not the lenient _coerce_bool. MD's finding
+    # text is classified (one row per finding). AK and WI encode it in the
+    # common `original_status` and are inspection-level adapters in
+    # common_fields.py; no other state's `original_status` feeds this field.
+    "violation_found": [
+        ("fl_has_violation", to_bool),
+        ("va_violations", to_bool),
+        ("ma_noncompliance_identified", to_bool),
+        ("mo_in_compliance", invert),
+        ("wy_violation_found", to_bool),
+        ("md_finding", md_finding_flag),
     ],
 }
 

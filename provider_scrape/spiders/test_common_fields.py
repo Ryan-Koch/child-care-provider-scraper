@@ -1988,3 +1988,114 @@ def test_announced_not_read_from_type_in_other_states(state):
 def test_announced_ri_typo_type_is_unannounced():
     insp = norm.normalize_inspection({"type": "Unannounced Monitoring Visit"}, "rhode_island")
     assert insp["announced"] is False
+
+
+# --- violation_found (inspection-level) -----------------------------------
+
+VIOLATION_BOOL_SOURCES = [
+    ("florida", "fl_has_violation"),
+    ("massachusetts", "ma_noncompliance_identified"),
+    ("wyoming", "wy_violation_found"),
+]
+
+
+@pytest.mark.parametrize(("state", "source"), VIOLATION_BOOL_SOURCES)
+@pytest.mark.parametrize(("raw", "expected"), [(True, True), (False, False)])
+def test_violation_found_bool_sources(state, source, raw, expected):
+    insp = norm.normalize_inspection({source: raw}, state)
+    assert insp["violation_found"] is expected
+    assert insp[source] is raw  # source kept
+
+
+@pytest.mark.parametrize("state", ["massachusetts"])
+def test_violation_found_ma_visit_none_stays_unset(state):
+    insp = norm.normalize_inspection({"ma_noncompliance_identified": None}, state)
+    assert not cf.is_present(insp.get("violation_found"))
+
+
+@pytest.mark.parametrize(("raw", "expected"), [("Yes", True), ("No", False)])
+def test_violation_found_virginia_yes_no(raw, expected):
+    insp = norm.normalize_inspection({"va_violations": raw}, "virginia")
+    assert insp["violation_found"] is expected
+    assert insp["va_violations"] == raw
+
+
+@pytest.mark.parametrize(("in_compliance", "expected"), [(True, False), (False, True)])
+def test_violation_found_missouri_inverted(in_compliance, expected):
+    insp = norm.normalize_inspection({"mo_in_compliance": in_compliance}, "missouri")
+    assert insp["violation_found"] is expected
+    assert insp["mo_in_compliance"] is in_compliance
+
+
+@pytest.mark.parametrize(
+    ("state", "raw", "expected"),
+    [
+        ("alaska", "In Compliance", False),
+        ("alaska", "Non-Compliance", True),
+        ("wisconsin", "See Violations below", True),
+        ("wisconsin", "No Violations found ***", False),
+    ],
+)
+def test_violation_found_from_original_status(state, raw, expected):
+    insp = norm.normalize_inspection({"original_status": raw}, state)
+    assert insp["violation_found"] is expected
+    assert insp["original_status"] == raw
+
+
+@pytest.mark.parametrize("state", ["alaska", "wisconsin"])
+def test_violation_found_unmatched_status_unset_and_logged(state, caplog):
+    with caplog.at_level("WARNING"):
+        insp = norm.normalize_inspection({"original_status": "Something Else"}, state)
+    assert "violation_found" not in insp
+    assert any("Something Else" in r.getMessage() for r in caplog.records)
+
+
+@pytest.mark.parametrize("state", ["alaska", "wisconsin"])
+def test_violation_found_blank_status_unset(state):
+    for blank in (None, ""):
+        insp = norm.normalize_inspection({"original_status": blank}, state)
+        assert "violation_found" not in insp
+
+
+def test_violation_found_status_vocabs_are_state_scoped():
+    # WI's text means nothing in AK and vice versa.
+    insp = norm.normalize_inspection({"original_status": "See Violations below"}, "alaska")
+    assert "violation_found" not in insp
+    insp = norm.normalize_inspection({"original_status": "Non-Compliance"}, "wisconsin")
+    assert "violation_found" not in insp
+
+
+@pytest.mark.parametrize("state", ["florida", "missouri", "virginia", "montana", "maryland"])
+def test_violation_found_not_read_from_original_status_elsewhere(state):
+    for raw in ("Non-Compliance", "See Violations below", "In Compliance"):
+        insp = norm.normalize_inspection({"original_status": raw}, state)
+        assert "violation_found" not in insp
+        assert insp["original_status"] == raw
+
+
+@pytest.mark.parametrize(
+    ("finding", "expected"),
+    [
+        ("No Noncompliances Found", False),
+        ("no noncompliances found", False),
+        ("A child was picked up abruptly and placed down on the floor.", True),
+        # A regulation is cited, so this is a violation despite "no evidence".
+        ("Specialist observed no evidence of lead test results on file.", True),
+        ("5", None),
+        ("12", None),
+        ("", None),
+        (None, None),
+    ],
+)
+def test_violation_found_maryland_finding(finding, expected):
+    insp = norm.normalize_inspection({"md_finding": finding}, "maryland")
+    if expected is None:
+        assert "violation_found" not in insp
+    else:
+        assert insp["violation_found"] is expected
+    assert insp["md_finding"] == (finding or None)  # source kept (blank cleaned to None)
+
+
+def test_violation_found_not_derived_from_other_fields():
+    insp = norm.normalize_inspection({"type": "Non-Compliance", "md_regulation": "13A.1"}, "maryland")
+    assert "violation_found" not in insp

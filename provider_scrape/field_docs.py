@@ -133,6 +133,12 @@ FIELD_DOCS = {
     "Collapsed from AK, MA, NH and MO's dedicated fields; NC, CT and RI read it from the inspection `type` text. "
     "Matching is case-insensitive and typo tolerant (RI has `Uannounced`, `Unannounce`), unannounced checked first. "
     "Text naming neither word (follow-ups, complaints, `N/A`) stays unset; `type` itself is unchanged.",
+    "violation_found": "Inspection field: whether this row recorded any noncompliance (`True`), none (`False`) or "
+    "unknown (unset). Collapsed from FL, VA, MA (investigation rows only), WY and MO (inverted: MO's source says "
+    "`in compliance`); AK and WI read the status text (`Non-Compliance`, `See Violations below` -> True; "
+    "`In Compliance`, `No Violations found ***` -> False). MD has one row per finding: `No Noncompliances Found` "
+    "-> False, any other narrative -> True (a cited regulation is a violation even when worded `no evidence of ...`). "
+    "Not derived from a violation count; states without an explicit flag stay unset here.",
     "licensing_specialist_phone": "Phone number of the assigned licensing specialist, as emitted by the state "
     "(OK, SC, and VA's split-out number); empty when not published.",
     "licensing_specialist_email": "Lower-cased email of the assigned licensing specialist (published by ME).",

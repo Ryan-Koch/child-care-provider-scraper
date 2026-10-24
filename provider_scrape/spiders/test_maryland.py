@@ -1313,3 +1313,53 @@ async def test_parse_inspection_pdf_keeps_fallback_on_ocr_failure(spider):
 
     assert len(results) == 1
     assert results[0]["address"] == "Howard Street, Baltimore, MD 21201"
+
+
+PAGED_INSPECTION_GRID_HTML = """
+<html><body>
+<table id="MainContent_grdInspection">
+  <tr><th>Inspection Report</th><th>Summary</th><th>Date</th><th>Type</th><th>Reg</th><th>Finding</th><th>Status</th></tr>
+  <tr><td><a href="PublicReports/PrintTask.aspx?t=1&amp;d=9">Inspection Report</a></td><td>&nbsp;</td>
+      <td>01/02/2025</td><td>Full</td><td>&nbsp;</td><td>No Noncompliances Found</td><td>&nbsp;</td></tr>
+  <tr><td><a href="PublicReports/PrintTask.aspx?t=2&amp;d=9">Inspection Report</a></td><td>&nbsp;</td>
+      <td>03/04/2024</td><td>Complaint</td><td>13A.16.07.03A(1)</td><td>A finding.</td><td>Corrected</td></tr>
+  <tr class="{pager_class}">
+    <td><a href="javascript:__doPostBack('ctl00$MainContent$grdInspection','Page$2')">2</a></td>
+    <td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td></tr>
+</table>
+</body></html>
+"""
+
+
+@pytest.mark.parametrize("pager_class", ["dataPager", "somethingElse", ""])
+def test_extract_inspections_skips_grid_pager_row(spider, caplog, pager_class):
+    body = PAGED_INSPECTION_GRID_HTML.replace("{pager_class}", pager_class)
+    response = HtmlResponse(url="https://www.checkccmd.org/FacilityDetail.aspx?fi=9", body=body, encoding="utf-8")
+    with caplog.at_level("WARNING"):
+        inspections = spider._extract_inspections(response, "Acme (license 123)")
+    assert [i["date"] for i in inspections] == ["01/02/2025", "03/04/2024"]
+    assert all(not (i.get("report_url") or "").startswith("javascript:") for i in inspections)
+    assert any("Acme (license 123)" in r.getMessage() and "bug_14" in r.getMessage() for r in caplog.records)
+
+
+def test_extract_inspections_pager_row_of_bare_numbers_skipped(spider):
+    body = PAGED_INSPECTION_GRID_HTML.replace("{pager_class}", "").replace(
+        "<a href=\"javascript:__doPostBack('ctl00$MainContent$grdInspection','Page$2')\">2</a>", "2"
+    )
+    response = HtmlResponse(url="https://www.checkccmd.org/FacilityDetail.aspx?fi=9", body=body, encoding="utf-8")
+    assert len(spider._extract_inspections(response)) == 2
+
+
+def test_extract_inspections_no_pager_no_warning(spider, caplog):
+    response = HtmlResponse(url="https://www.checkccmd.org/FacilityDetail.aspx?fi=134978",
+                            body=DETAIL_HTML, encoding="utf-8")
+    with caplog.at_level("WARNING"):
+        assert len(spider._extract_inspections(response)) == 3
+    assert not any("bug_14" in r.getMessage() for r in caplog.records)
+
+
+def test_get_first_report_url_skips_javascript_links(spider):
+    body = PAGED_INSPECTION_GRID_HTML.replace("{pager_class}", "dataPager")
+    body = body.replace('<a href="PublicReports/PrintTask.aspx?t=1&amp;d=9">', "<a href=\"javascript:__doPostBack('x','Page$2')\">")
+    response = HtmlResponse(url="https://www.checkccmd.org/FacilityDetail.aspx?fi=9", body=body, encoding="utf-8")
+    assert spider._get_first_report_url(response) == "https://www.checkccmd.org/PublicReports/PrintTask.aspx?t=2&d=9"

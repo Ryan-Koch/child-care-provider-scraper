@@ -222,6 +222,28 @@ def announced_flag(value):
     return None
 
 
+# Maryland writes one inspection row per finding. The only "clean" text is this
+# sentinel; every other narrative cites a regulation and so is a violation
+# (including "Specialist observed no evidence of ..." -- deliberately NOT
+# matched on the words "no evidence").
+MD_NO_NONCOMPLIANCE_TEXT = "no noncompliances found"
+
+
+def md_finding_flag(value):
+    """Classify a Maryland finding as violation (``True``) / clean (``False``) / unknown (``None``).
+
+    ``No Noncompliances Found`` (case-insensitive) -> ``False``; any other
+    narrative -> ``True``. Blank, sentinel and digit-only text (a leaked grid
+    pager cell) -> ``None``.
+    """
+    if not isinstance(value, str) or _is_sentinel(value):
+        return None
+    text = value.strip()
+    if not text or text.isdigit():
+        return None
+    return text.lower().rstrip(".") != MD_NO_NONCOMPLIANCE_TEXT
+
+
 def has_token(pattern):
     """Build a transform: ``True`` if ``pattern`` (regex, case-insensitive)
     matches the value (a string, or any element of a list); otherwise ``None``.
@@ -562,6 +584,38 @@ def _register_announced_from_type(state):
 
 for _state in ("north_carolina", "connecticut", "rhode_island"):
     _register_announced_from_type(_state)
+
+
+# --------------------------------------------------------------------------- #
+# Violation found, read from the common inspection `original_status`
+# --------------------------------------------------------------------------- #
+# `original_status` is every state's field, so AK and WI get state-scoped
+# adapters with their own explicit tables. Unmatched text is logged by `vocab`
+# and leaves `violation_found` unset.
+AK_VIOLATION_STATUS = {
+    "In Compliance": False,
+    "Non-Compliance": True,
+}
+WI_VIOLATION_STATUS = {
+    "See Violations below": True,
+    "No Violations found ***": False,
+}
+
+
+def _register_violation_from_status(state, table):
+    classify = vocab(table, name=f"{state} violation status")
+
+    @register_adapter(state, level=INSPECTION_LEVEL, sources=["original_status"], fills=["violation_found"])
+    def violation_from_status(record):
+        """Read violation_found from the `original_status` text via an explicit table; unmatched -> unset."""
+        return {"violation_found": classify(record.get("original_status"))}
+
+    violation_from_status.__name__ = f"{state}_violation_from_status"
+    return violation_from_status
+
+
+_register_violation_from_status("alaska", AK_VIOLATION_STATUS)
+_register_violation_from_status("wisconsin", WI_VIOLATION_STATUS)
 
 
 # --------------------------------------------------------------------------- #
