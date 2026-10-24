@@ -50,11 +50,7 @@ import logging
 import os
 import re
 import sys
-import time
 from datetime import UTC, datetime, timedelta
-from urllib.error import HTTPError, URLError
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
-from urllib.request import Request, urlopen
 
 import yaml
 from huggingface_hub import CommitOperationAdd, HfApi
@@ -65,14 +61,18 @@ from huggingface_hub.errors import (
 )
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+
+# The Discord transport is shared with the spiders' progress notifications.
+from provider_scrape.discord_notify import DISCORD_CONTENT_LIMIT, send_discord_messages
+
 DEFAULT_ENV_FILE = os.path.join(REPO_ROOT, "huggingface.env")
 DEFAULT_DISCORD_ENV_FILE = os.path.join(REPO_ROOT, "discord.env")
 TOKEN_KEY = "hugging_face_token"
 REPO_KEY = "hugging_face_repo"
 WEBHOOK_KEY = "webhook_url"
 MAX_AGE = timedelta(days=5)
-DISCORD_CONTENT_LIMIT = 2000
-DISCORD_USER_AGENT = "Mozilla/5.0 (compatible; ChildCareProviderScraper/1.0)"
 # JSON validation streams state files (some exceed 1 GB) instead of loading them.
 JSON_CHUNK_CHARS = 1 << 20
 # A record that still won't parse with this much lookahead is malformed rather
@@ -328,51 +328,6 @@ def discord_messages(failures):
             current += "\n" + line
     messages.append(current)
     return messages
-
-
-def send_discord_messages(webhook_url, messages):
-    """Send confirmed Discord messages, never including the secret in errors."""
-    try:
-        parts = urlsplit(webhook_url)
-        valid_host = parts.hostname in {"discord.com", "discordapp.com"} and parts.port is None
-    except ValueError:
-        raise ValueError("discord.env has no valid Discord incoming webhook URL") from None
-    if (
-        parts.scheme != "https"
-        or not valid_host
-        or parts.username is not None
-        or not re.fullmatch(r"/api(?:/v\d+)?/webhooks/\d+/[^/]+", parts.path)
-    ):
-        raise ValueError("discord.env has no valid Discord incoming webhook URL")
-    query = urlencode([(key, value) for key, value in parse_qsl(parts.query) if key != "wait"] + [("wait", "true")])
-    url = urlunsplit((parts.scheme, parts.netloc, parts.path, query, ""))
-    for content in messages:
-        payload = json.dumps({"content": content, "allowed_mentions": {"parse": []}}).encode("utf-8")
-        # Discord's Cloudflare layer rejects urllib's default Python-urllib UA (403 / 1010).
-        request = Request(
-            url,
-            data=payload,
-            headers={"Content-Type": "application/json", "User-Agent": DISCORD_USER_AGENT},
-            method="POST",
-        )
-        for attempt in range(3):
-            try:
-                with urlopen(request, timeout=10) as response:
-                    if response.status != 200:
-                        raise RuntimeError(f"Discord returned HTTP {response.status}")
-                break
-            except HTTPError as error:
-                if error.code == 429 and attempt < 2:
-                    try:
-                        delay = float((error.headers or {}).get("Retry-After", ""))
-                    except (TypeError, ValueError):
-                        delay = 0
-                    if 0 < delay <= 5:
-                        time.sleep(delay)
-                        continue
-                raise RuntimeError(f"Discord returned HTTP {error.code}") from None
-            except (URLError, OSError):
-                raise RuntimeError("Could not connect to Discord") from None
 
 
 def send_discord_alert(webhook_url, failures):

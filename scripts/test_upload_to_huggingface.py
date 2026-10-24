@@ -18,6 +18,8 @@ import pytest
 import upload_to_huggingface as up
 import yaml
 
+from provider_scrape import discord_notify
+
 
 # --------------------------------------------------------------------------- #
 # config_name_for / build_configs
@@ -329,14 +331,14 @@ def test_discord_sends_json_with_confirmation_and_no_mentions(monkeypatch):
         requests.append((request, timeout))
         return Response()
 
-    monkeypatch.setattr(up, "urlopen", fake_urlopen)
+    monkeypatch.setattr(discord_notify, "urlopen", fake_urlopen)
     up.send_discord_alert("https://discord.com/api/webhooks/123/secret", {"ohio": ["empty JSON"]})
 
     request, timeout = requests[0]
     assert timeout == 10
     assert request.full_url.endswith("?wait=true")
     assert request.get_header("Content-type") == "application/json"
-    assert request.get_header("User-agent") == up.DISCORD_USER_AGENT
+    assert request.get_header("User-agent") == discord_notify.DISCORD_USER_AGENT
     assert b'"allowed_mentions": {"parse": []}' in request.data
     assert b"ohio: empty JSON" in request.data
 
@@ -357,13 +359,13 @@ def test_discord_success_message_uses_same_transport(monkeypatch):
         requests.append(request)
         return Response()
 
-    monkeypatch.setattr(up, "urlopen", fake_urlopen)
+    monkeypatch.setattr(discord_notify, "urlopen", fake_urlopen)
     message = "Uploaded 1 file(s) to owner/data (https://huggingface.co/owner/data)"
     up.send_discord_messages("https://discord.com/api/webhooks/123/secret", [message])
 
     assert len(requests) == 1
     assert json.loads(requests[0].data) == {"content": message, "allowed_mentions": {"parse": []}}
-    assert requests[0].get_header("User-agent") == up.DISCORD_USER_AGENT
+    assert requests[0].get_header("User-agent") == discord_notify.DISCORD_USER_AGENT
 
 
 def test_discord_retries_429_after_retry_after(monkeypatch):
@@ -385,8 +387,8 @@ def test_discord_retries_429_after_retry_after(monkeypatch):
             raise HTTPError(request.full_url, 429, "rate limited", {"Retry-After": "0.1"}, None)
         return Response()
 
-    monkeypatch.setattr(up, "urlopen", fake_urlopen)
-    monkeypatch.setattr(up.time, "sleep", waits.append)
+    monkeypatch.setattr(discord_notify, "urlopen", fake_urlopen)
+    monkeypatch.setattr(discord_notify.time, "sleep", waits.append)
     up.send_discord_alert("https://discord.com/api/webhooks/123/secret", {"ohio": ["empty JSON"]})
     assert len(calls) == 2
     assert waits == [0.1]
@@ -396,7 +398,7 @@ def test_discord_nonretryable_http_error_does_not_expose_webhook(monkeypatch):
     def fake_urlopen(request, timeout):
         raise HTTPError(request.full_url, 404, "Not Found", {}, None)
 
-    monkeypatch.setattr(up, "urlopen", fake_urlopen)
+    monkeypatch.setattr(discord_notify, "urlopen", fake_urlopen)
     with pytest.raises(RuntimeError, match="Discord returned HTTP 404") as failure:
         up.send_discord_alert("https://discord.com/api/webhooks/123/secret", {"ohio": ["empty JSON"]})
     assert "secret" not in str(failure.value)
@@ -406,8 +408,8 @@ def test_discord_rate_limit_wait_is_bounded(monkeypatch):
     def fake_urlopen(request, timeout):
         raise HTTPError(request.full_url, 429, "rate limited", {"Retry-After": "65"}, None)
 
-    monkeypatch.setattr(up, "urlopen", fake_urlopen)
-    monkeypatch.setattr(up.time, "sleep", lambda *_args: pytest.fail("should not sleep for a minute"))
+    monkeypatch.setattr(discord_notify, "urlopen", fake_urlopen)
+    monkeypatch.setattr(discord_notify.time, "sleep", lambda *_args: pytest.fail("should not sleep for a minute"))
     with pytest.raises(RuntimeError, match="Discord returned HTTP 429"):
         up.send_discord_alert("https://discord.com/api/webhooks/123/secret", {"ohio": ["empty JSON"]})
 
@@ -457,7 +459,7 @@ def test_failing_discord_still_blocks_invalid_json(tmp_path, monkeypatch):
 
     discord_env = tmp_path / "discord.env"
     discord_env.write_text("webhook_url=https://discord.com/api/webhooks/123/secret\n", encoding="utf-8")
-    monkeypatch.setattr(up, "urlopen", lambda *_args, **_kwargs: (_ for _ in ()).throw(URLError("secret")))
+    monkeypatch.setattr(discord_notify, "urlopen", lambda *_args, **_kwargs: (_ for _ in ()).throw(URLError("secret")))
     with pytest.raises(RuntimeError, match="Could not connect to Discord") as failure:
         up.main(["--dry-run", "--discord-env-file", str(discord_env), str(tmp_path)])
     assert "ohio" in str(failure.value)

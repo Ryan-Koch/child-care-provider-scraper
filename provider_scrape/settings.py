@@ -75,9 +75,12 @@ PROXY_POOL_STATS_INTERVAL = 300.0
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
-# EXTENSIONS = {
-#    "scrapy.extensions.telnet.TelnetConsole": None,
-# }
+EXTENSIONS = {
+    # Discord start / every-N-items / finish messages. Disabled unless a spider
+    # sets DISCORD_PROGRESS_ENABLED (e.g. maryland) and discord.env has a URL.
+    "provider_scrape.discord_notify.DiscordProgressExtension": 500,
+}
+DISCORD_PROGRESS_ITEMS = 1000
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
