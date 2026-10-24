@@ -166,6 +166,14 @@ FIELD_DOCS = {
     "(`R6-5-5203.4, R6-5-5203.4.B`) or a non-rule label (`DES CONTRACT`, `INCIDENT`), kept as emitted with no "
     "splitting or filtering. Citation formats are state-specific (`AAC R9-5-208.C.`, `13A.15.03.04A(3)`, "
     "`470 IAC 3-4.5-4(1)`, `251.05(2)(a)2.`), so values cannot be compared across states.",
+    "compliance_domains": "Inspection field (MA and NH, which share a licensing platform): per-visit list of "
+    'per-domain checklist roll-ups, `[{"domain": str, "compliant": int, "reviewed": int}]`, counts only. '
+    "`compliant` / `reviewed` are checklist items in that domain, so any finding means `compliant < reviewed`. "
+    "NH splits the source `x / y` ratio (`19 / 20` = 19 compliant of 20 reviewed; verified against a domain with "
+    "one violation). MA rolls up per-domain status counts: `compliant` = Compliant + Complete, `reviewed` = every "
+    "known status (Non-Compliant and Not Complete count as reviewed only; blank statuses are excluded). Rows are in "
+    "source order (NH) or first-seen order (MA). Unset when the visit has no domain data. MA values appear only "
+    "after an MA re-scrape that emits `ma_domain_counts`. Finding detail lives in the violation fields.",
     "licensing_specialist_phone": "Phone number of the assigned licensing specialist, as emitted by the state "
     "(OK, SC, and VA's split-out number); empty when not published.",
     "licensing_specialist_email": "Lower-cased email of the assigned licensing specialist (published by ME).",

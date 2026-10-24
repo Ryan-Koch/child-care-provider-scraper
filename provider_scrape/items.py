@@ -15,6 +15,8 @@ class InspectionItem(scrapy.Item):
     announced = scrapy.Field()  # True announced / False unannounced / None unknown
     violation_found = scrapy.Field()  # True any noncompliance / False none / None unknown
     violation_count = scrapy.Field()  # int, violations / deficiencies / findings on the visit; 0 kept
+    # list of {"domain": str, "compliant": int, "reviewed": int} per-domain checklist roll-ups (MA, NH)
+    compliance_domains = scrapy.Field()
     regulation_cited = scrapy.Field()  # rule/code section cited on a one-citation-per-row inspection, as emitted
     va_shsi = scrapy.Field()
     va_complaint_related = scrapy.Field()
@@ -203,6 +205,9 @@ class InspectionItem(scrapy.Item):
     # Every visitDomainList row counted by status, e.g.
     # {"Compliant": 40, "Non-Compliant": 2}; blank status -> "Unknown".
     ma_domain_compliance_counts = scrapy.Field()
+    # The same status tally split per domain, first-seen order:
+    # {"Administration": {"Compliant": 12, "Non-Compliant": 1}}
+    ma_domain_counts = scrapy.Field()
     ma_investigation_id = scrapy.Field()  # investigation `id`
     ma_investigator = scrapy.Field()  # investigator assigned
     ma_noncompliance_identified = scrapy.Field()  # bool

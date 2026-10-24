@@ -158,7 +158,9 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `delaware` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
 | `hawaii` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
 | `kansas` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
+| `massachusetts` | inspection | `ma_domain_counts` | `compliance_domains` | Roll `ma_domain_counts` ({domain: {status: n}}) up to compliant (Compliant + Complete) / reviewed per domain. |
 | `nevada` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
+| `new_hampshire` | inspection | `nh_domains` | `compliance_domains` | Split each `nh_domains` `level_of_compliance` ("19 / 20") into compliant / reviewed ints per domain. |
 | `north_carolina` | inspection | `type` | `announced` | Read announced (True) / unannounced (False) from the `type` text; neither word -> unset. |
 | `rhode_island` | inspection | `type` | `announced` | Read announced (True) / unannounced (False) from the `type` text; neither word -> unset. |
 | `south_carolina` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
@@ -582,6 +584,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ma_contact_redacted` -> collapses into `phone_suppressed` (via to_bool)
 - `ma_cost_table` -> pass-through
 - `ma_domain_compliance_counts` -> pass-through
+- `ma_domain_counts` -> pass-through
 - `ma_domains` -> pass-through
 - `ma_dph_summer_camp` -> pass-through
 - `ma_encrypted_id` -> pass-through

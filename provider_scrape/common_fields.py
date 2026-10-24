@@ -649,6 +649,69 @@ for _state in VIOLATION_FROM_COUNT_STATES:
 
 
 # --------------------------------------------------------------------------- #
+# Per-domain compliance roll-up (MA, NH)
+# --------------------------------------------------------------------------- #
+_RATIO_RE = re.compile(r"^\s*(\d+)\s*/\s*(\d+)\s*$")
+
+
+def parse_ratio(value):
+    """Parse a "x / y" checklist ratio ("19 / 20", "17/17") into ``(x, y)`` ints.
+
+    Returns ``None`` for anything that is not two non-negative integers
+    separated by a slash, or when ``x > y`` (more compliant than reviewed).
+    """
+    if not isinstance(value, str):
+        return None
+    match = _RATIO_RE.match(value)
+    if not match:
+        return None
+    numerator, denominator = int(match.group(1)), int(match.group(2))
+    if numerator > denominator:
+        return None
+    return numerator, denominator
+
+
+@register_adapter("new_hampshire", level=INSPECTION_LEVEL, sources=["nh_domains"], fills=["compliance_domains"])
+def nh_compliance_domains(record):
+    """Split each `nh_domains` `level_of_compliance` ("19 / 20") into compliant / reviewed ints per domain."""
+    rows = []
+    for row in record.get("nh_domains") or []:
+        ratio = parse_ratio(row.get("level_of_compliance")) if isinstance(row, dict) else None
+        if ratio is None or not row.get("domain"):
+            logger.warning("new_hampshire: dropping unparseable nh_domains row %r", row)
+            continue
+        rows.append({"domain": row["domain"], "compliant": ratio[0], "reviewed": ratio[1]})
+    return {"compliance_domains": rows}
+
+
+@register_adapter("massachusetts", level=INSPECTION_LEVEL, sources=["ma_domain_counts"], fills=["compliance_domains"])
+def ma_compliance_domains(record):
+    """Roll `ma_domain_counts` ({domain: {status: n}}) up to compliant (Compliant + Complete) / reviewed per domain."""
+    # Imported here: the spider module imports normalization, which imports this module.
+    from provider_scrape.spiders.massachusetts import PASSING_DOMAIN_COMPLIANCE
+
+    counts = record.get("ma_domain_counts")
+    if not isinstance(counts, dict):
+        return {}
+    rows = []
+    for domain, statuses in counts.items():
+        if not isinstance(statuses, dict):
+            continue
+        if not domain:
+            logger.warning("massachusetts: dropping domain counts with no domain name: %r", statuses)
+            continue
+        if "Unknown" in statuses:
+            logger.debug("massachusetts: excluding %s 'Unknown' status row(s) from %r", statuses["Unknown"], domain)
+        known = {status: n for status, n in statuses.items() if status != "Unknown"}
+        reviewed = sum(known.values())
+        if not reviewed:  # every status Unknown: nothing was actually reported
+            continue
+        compliant = sum(n for status, n in known.items() if status in PASSING_DOMAIN_COMPLIANCE)
+        rows.append({"domain": domain, "compliant": compliant, "reviewed": reviewed})
+    return {"compliance_domains": rows}
+
+
+# --------------------------------------------------------------------------- #
 # Vacancies by age band (IA, ND, DC)
 # --------------------------------------------------------------------------- #
 # Each state labels its age bands differently (and defines them differently:

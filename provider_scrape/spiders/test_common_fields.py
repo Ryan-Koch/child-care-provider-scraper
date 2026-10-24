@@ -2202,3 +2202,105 @@ def test_regulation_cited_blank_and_sentinel_unset(state, source, _vals, raw):
 def test_regulation_cited_trimmed():
     insp = norm.normalize_inspection({"md_regulation": "  13A.15.03.04A(3) "}, "maryland")
     assert insp["regulation_cited"] == "13A.15.03.04A(3)"
+
+
+# --------------------------------------------------------------------------- #
+# compliance_domains (MA, NH) and the shared ratio parser
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("12 / 12", (12, 12)),
+        ("17/17", (17, 17)),
+        ("0 / 1", (0, 1)),
+        ("  19  /  20  ", (19, 20)),
+        ("5 / 3", None),
+        ("N/A", None),
+        ("-1 / 2", None),
+        ("1 / 2 / 3", None),
+        ("", None),
+        (None, None),
+        (12, None),
+    ],
+)
+def test_parse_ratio(raw, expected):
+    assert cf.parse_ratio(raw) == expected
+
+
+def test_compliance_domains_new_hampshire():
+    domains = [
+        {"domain": "Administration", "level_of_compliance": "23 / 23"},
+        {"domain": "Medication", "level_of_compliance": "19 / 20"},
+        {"domain": "Care of Children", "level_of_compliance": "41/41"},
+    ]
+    insp = norm.normalize_inspection({"nh_domains": domains}, "new_hampshire")
+    assert insp["compliance_domains"] == [
+        {"domain": "Administration", "compliant": 23, "reviewed": 23},
+        {"domain": "Medication", "compliant": 19, "reviewed": 20},
+        {"domain": "Care of Children", "compliant": 41, "reviewed": 41},
+    ]
+    assert insp["nh_domains"] == domains  # source kept
+
+
+def test_compliance_domains_new_hampshire_bad_row_dropped_and_logged(caplog):
+    domains = [
+        {"domain": "Administration", "level_of_compliance": "23 / 23"},
+        {"domain": "Medication", "level_of_compliance": "N/A"},
+        {"domain": "Safety", "level_of_compliance": "5 / 3"},
+        {"domain": "Care of Children", "level_of_compliance": "1 / 2"},
+    ]
+    with caplog.at_level(logging.WARNING):
+        insp = norm.normalize_inspection({"nh_domains": domains}, "new_hampshire")
+    assert [r["domain"] for r in insp["compliance_domains"]] == ["Administration", "Care of Children"]
+    assert "Medication" in caplog.text
+    assert "Safety" in caplog.text
+
+
+@pytest.mark.parametrize("domains", [None, [], [{"domain": "Medication", "level_of_compliance": "bad"}]])
+def test_compliance_domains_new_hampshire_empty_unset(domains):
+    insp = norm.normalize_inspection({"nh_domains": domains}, "new_hampshire")
+    assert "compliance_domains" not in insp
+
+
+def test_compliance_domains_massachusetts_rollup_and_order():
+    counts = {
+        "Medication": {"Non-Compliant": 1, "Compliant": 19},
+        "Administration": {"Compliant": 10, "Complete": 2, "Not Complete": 1},
+        "Care of Children": {"Unknown": 2},
+        "Safety": {"Compliant": 4, "Unknown": 1},
+    }
+    insp = norm.normalize_inspection({"ma_domain_counts": counts}, "massachusetts")
+    assert insp["compliance_domains"] == [
+        {"domain": "Medication", "compliant": 19, "reviewed": 20},
+        {"domain": "Administration", "compliant": 12, "reviewed": 13},
+        # "Care of Children" is all Unknown: nothing reported, so no row.
+        {"domain": "Safety", "compliant": 4, "reviewed": 4},
+    ]
+    assert insp["ma_domain_counts"] == counts  # source kept
+
+
+def test_compliance_domains_massachusetts_drops_unnamed_domain(caplog):
+    counts = {None: {"Compliant": 3}, "Health": {"Compliant": 2}}
+    with caplog.at_level("WARNING"):
+        insp = norm.normalize_inspection({"ma_domain_counts": counts}, "massachusetts")
+    assert insp["compliance_domains"] == [{"domain": "Health", "compliant": 2, "reviewed": 2}]
+    assert "no domain name" in caplog.text
+
+
+def test_compliance_domains_massachusetts_all_unknown_unset():
+    insp = norm.normalize_inspection({"ma_domain_counts": {"Health": {"Unknown": 4}}}, "massachusetts")
+    assert "compliance_domains" not in insp
+
+
+def test_compliance_domains_massachusetts_old_fields_only_unset():
+    raw = {
+        "ma_domain_compliance_counts": {"Compliant": 40, "Non-Compliant": 2},
+        "ma_domains": [{"domain": "Medication", "level_of_compliance": "Non-Compliant"}],
+    }
+    insp = norm.normalize_inspection(raw, "massachusetts")
+    assert "compliance_domains" not in insp
+
+
+def test_compliance_domains_not_derived_for_other_states():
+    insp = norm.normalize_inspection({"nh_domains": [{"domain": "A", "level_of_compliance": "1 / 1"}]}, "ohio")
+    assert "compliance_domains" not in insp
