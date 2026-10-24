@@ -100,4 +100,13 @@ FIELD_DOCS = {
     "licensing_specialist_phone": "Phone number of the assigned licensing specialist, as emitted by the state "
     "(OK, SC, and VA's split-out number); empty when not published.",
     "licensing_specialist_email": "Lower-cased email of the assigned licensing specialist (published by ME).",
+    "vacancies_infant": "Open slots the provider reports for the infant age band (int; `0` = full, empty = not "
+    "reported). Bands are each state's OWN age definitions (e.g. ND infant = 0-17 months, DC = 0-12 months, IA = "
+    "0-23 months). Not the infant age-served flag. CO, DC, IA, ME, ND, NH, VT; IA sums full-time + part-time openings.",
+    "vacancies_toddler": "Open slots for the toddler age band (int; `0` = full, empty = not reported). State-defined "
+    "band; see `vacancies_infant`.",
+    "vacancies_preschool": "Open slots for the preschool age band (int; `0` = full, empty = not reported). "
+    "State-defined band; IA sums its 3-year-old and 4-5-year-old rows. See `vacancies_infant`.",
+    "vacancies_school_age": "Open slots for the school-age band (int; `0` = full, empty = not reported). "
+    "State-defined band; IA sums its before/after-school and school-age rows. See `vacancies_infant`.",
 }

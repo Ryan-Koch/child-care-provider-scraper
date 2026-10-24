@@ -32,6 +32,7 @@ from provider_scrape.common_fields import (
     none_if_sentinel,
     person_name,
     run_adapters,
+    to_int,
 )
 
 logger = logging.getLogger(__name__)
@@ -1107,6 +1108,32 @@ FIELD_COLLAPSE_MAP = {
         ("sc_licensing_specialist_phone", none_if_sentinel),
     ],
     "licensing_specialist_email": [("me_licensing_specialist_email", lower_email)],
+    # Story 02: open slots per age band (the state's own band definitions).
+    # IA, ND and DC are adapters in common_fields.py (one list -> four fields).
+    "vacancies_infant": [
+        ("co_infant_openings", to_int),
+        ("me_infant_slots", to_int),
+        ("nh_infant_openings", to_int),
+        ("vt_infant_vacancies", to_int),
+    ],
+    "vacancies_toddler": [
+        ("co_toddler_openings", to_int),
+        ("me_toddler_slots", to_int),
+        ("nh_toddler_openings", to_int),
+        ("vt_toddler_vacancies", to_int),
+    ],
+    "vacancies_preschool": [
+        ("co_preschool_openings", to_int),
+        ("me_preschool_slots", to_int),
+        ("nh_preschool_openings", to_int),
+        ("vt_preschool_vacancies", to_int),
+    ],
+    "vacancies_school_age": [
+        ("co_school_age_openings", to_int),
+        ("me_school_age_slots", to_int),
+        ("nh_school_age_openings", to_int),
+        ("vt_school_age_vacancies", to_int),
+    ],
 }
 # NOTE (bug_06): `scholarships_accepted` is deliberately NOT in this map --
 # every state that fills it sets the common field directly in the spider

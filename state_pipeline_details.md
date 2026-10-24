@@ -50,6 +50,10 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `status_date` | Whitespace cleanup; ISO 8601 date | Date the current status took effect, normalized to ISO 8601 (YYYY-MM-DD). |
 | `toddler` | Whitespace cleanup | Whether the provider serves toddlers: bool-or-None. See infant. |
 | `transportation` | Whitespace cleanup; Field collapse from state-specific source | Transportation offered, collapsed from a single populated state source. |
+| `vacancies_infant` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots the provider reports for the infant age band (int; `0` = full, empty = not reported). Bands are each state's OWN age definitions (e.g. ND infant = 0-17 months, DC = 0-12 months, IA = 0-23 months). Not the infant age-served flag. CO, DC, IA, ME, ND, NH, VT; IA sums full-time + part-time openings. |
+| `vacancies_preschool` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots for the preschool age band (int; `0` = full, empty = not reported). State-defined band; IA sums its 3-year-old and 4-5-year-old rows. See `vacancies_infant`. |
+| `vacancies_school_age` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots for the school-age band (int; `0` = full, empty = not reported). State-defined band; IA sums its before/after-school and school-age rows. See `vacancies_infant`. |
+| `vacancies_toddler` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots for the toddler age band (int; `0` = full, empty = not reported). State-defined band; see `vacancies_infant`. |
 
 > Inspections are normalized too: every string value gets whitespace cleanup, and the date fields (`date`, `status_updated`, `az_date_resolved`, `in_correction_date`, `ms_end_date`, `mo_disposition_date`) are converted to ISO 8601. The `status` vocabulary does not apply to inspections.
 
@@ -86,6 +90,10 @@ Each common field is populated from a single populated source field (additive â€
 | `meals` | `ga_meals`, `hi_meals`, `nj_meal_options_labels`, `nm_meals`, `pa_meal_options`, `ut_meals` |
 | `school_district` | `co_school_district`, `ct_school_districts`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
 | `transportation` | `ct_transportation`, `ga_transportation`, `nj_transportation_labels` |
+| `vacancies_infant` | `co_infant_openings` (to_int), `me_infant_slots` (to_int), `nh_infant_openings` (to_int), `vt_infant_vacancies` (to_int) |
+| `vacancies_preschool` | `co_preschool_openings` (to_int), `me_preschool_slots` (to_int), `nh_preschool_openings` (to_int), `vt_preschool_vacancies` (to_int) |
+| `vacancies_school_age` | `co_school_age_openings` (to_int), `me_school_age_slots` (to_int), `nh_school_age_openings` (to_int), `vt_school_age_vacancies` (to_int) |
+| `vacancies_toddler` | `co_toddler_openings` (to_int), `me_toddler_slots` (to_int), `nh_toddler_openings` (to_int), `vt_toddler_vacancies` (to_int) |
 
 ## Inspection field-collapse map
 
@@ -112,7 +120,10 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 
 | State | Level | Reads | Fills | Description |
 |---|---|---|---|---|
+| `iowa` | provider | `ia_openings_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Sum IA `fullTime` + `partTime` openings per band across the 7 age labels. |
+| `north_dakota` | provider | `nd_vacancies_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map ND `nd_vacancies_by_age` rows (by age label) onto the four vacancy bands. |
 | `virginia` | provider | `va_inspector` | `licensing_specialist`, `licensing_specialist_phone` | Split `va_inspector` ("Name: (555) 555-5555") into specialist name + phone; `N/A` -> None. |
+| `washington_dc` | provider | `dc_enrollment` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map DC `dc_enrollment` `openings` (text; `Not Applicable` -> None) onto the four vacancy bands. |
 
 ## Controlled vocabulary: `status`
 
@@ -219,16 +230,16 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `co_ecc` -> pass-through
 - `co_governing_body` -> pass-through
 - `co_head_start` -> collapses into `head_start` (via coerce_bool)
-- `co_infant_openings` -> pass-through
+- `co_infant_openings` -> collapses into `vacancies_infant` (via to_int)
 - `co_license_issue_date` -> pass-through
 - `co_license_type` -> collapses into `license_type`
 - `co_licensed_to_serve` -> pass-through
-- `co_preschool_openings` -> pass-through
+- `co_preschool_openings` -> collapses into `vacancies_preschool` (via to_int)
 - `co_quality_rating` -> pass-through
-- `co_school_age_openings` -> pass-through
+- `co_school_age_openings` -> collapses into `vacancies_school_age` (via to_int)
 - `co_school_district` -> collapses into `school_district`
 - `co_special_needs` -> pass-through
-- `co_toddler_openings` -> pass-through
+- `co_toddler_openings` -> collapses into `vacancies_toddler` (via to_int)
 
 ### Connecticut (CT)
 
@@ -273,7 +284,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `dc_capital_quality_designation` -> pass-through
 - `dc_capital_quality_participant` -> pass-through
-- `dc_enrollment` -> pass-through
+- `dc_enrollment` -> feeds adapter, fills `vacancies_infant`, `vacancies_preschool`, `vacancies_school_age`, `vacancies_toddler`
 - `dc_nontraditional_hours` -> pass-through
 - `dc_pay_equity_fund` -> pass-through
 - `dc_prek_enhancement` -> pass-through
@@ -393,7 +404,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ia_days_of_operation` -> pass-through
 - `ia_iq4k_level` -> pass-through
 - `ia_openings_as_of` -> pass-through
-- `ia_openings_by_age` -> pass-through
+- `ia_openings_by_age` -> feeds adapter, fills `vacancies_infant`, `vacancies_preschool`, `vacancies_school_age`, `vacancies_toddler`
 - `ia_padded_license_id` -> pass-through
 - `ia_referral_listed` -> pass-through
 - `ia_region` -> pass-through
@@ -560,18 +571,18 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### Maine (ME)
 
-- `me_infant_slots` -> pass-through
+- `me_infant_slots` -> collapses into `vacancies_infant` (via to_int)
 - `me_licensed_from` -> pass-through
 - `me_licensed_to` -> pass-through
 - `me_licensing_specialist` -> collapses into `licensing_specialist` (via person_name)
 - `me_licensing_specialist_email` -> collapses into `licensing_specialist_email` (via lower_email)
 - `me_openings_updated` -> pass-through
-- `me_preschool_slots` -> pass-through
-- `me_school_age_slots` -> pass-through
+- `me_preschool_slots` -> collapses into `vacancies_preschool` (via to_int)
+- `me_school_age_slots` -> collapses into `vacancies_school_age` (via to_int)
 - `me_star_rating` -> pass-through
 - `me_temporarily_closed` -> pass-through
 - `me_times_renewed` -> pass-through
-- `me_toddler_slots` -> pass-through
+- `me_toddler_slots` -> collapses into `vacancies_toddler` (via to_int)
 
 ### Michigan (MI)
 
@@ -667,7 +678,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nd_supplemental_care` -> pass-through
 - `nd_total_enrollment` -> pass-through
 - `nd_total_vacancies` -> pass-through
-- `nd_vacancies_by_age` -> pass-through
+- `nd_vacancies_by_age` -> feeds adapter, fills `vacancies_infant`, `vacancies_preschool`, `vacancies_school_age`, `vacancies_toddler`
 - `nd_vacancies_details` -> pass-through
 - `nd_vacancies_updated` -> pass-through
 
@@ -698,21 +709,21 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nh_financial_assistance` -> pass-through
 - `nh_gsq_step` -> pass-through
 - `nh_head_start` -> collapses into `head_start` (via coerce_bool)
-- `nh_infant_openings` -> pass-through
+- `nh_infant_openings` -> collapses into `vacancies_infant` (via to_int)
 - `nh_level_of_compliance` -> pass-through
 - `nh_licensed` -> pass-through
 - `nh_licensed_plus` -> pass-through
 - `nh_licensor` -> pass-through
-- `nh_preschool_openings` -> pass-through
+- `nh_preschool_openings` -> collapses into `vacancies_preschool` (via to_int)
 - `nh_preventive_protective` -> pass-through
 - `nh_qris_rating` -> pass-through
 - `nh_rates` -> pass-through
 - `nh_schedule` -> pass-through
 - `nh_schedule_options` -> pass-through
-- `nh_school_age_openings` -> pass-through
+- `nh_school_age_openings` -> collapses into `vacancies_school_age` (via to_int)
 - `nh_special_needs` -> pass-through
 - `nh_special_skills` -> pass-through
-- `nh_toddler_openings` -> pass-through
+- `nh_toddler_openings` -> collapses into `vacancies_toddler` (via to_int)
 - `nh_violations` -> pass-through
 - `nh_visit_document_id` -> pass-through
 - `nh_visit_id` -> pass-through
@@ -938,23 +949,23 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `vt_days_of_operation` -> pass-through
 - `vt_guidance` -> pass-through
 - `vt_infant_capacity` -> pass-through
-- `vt_infant_vacancies` -> pass-through
+- `vt_infant_vacancies` -> collapses into `vacancies_infant` (via to_int)
 - `vt_original_license_date` -> pass-through
 - `vt_pets` -> pass-through
 - `vt_preschool_capacity` -> pass-through
-- `vt_preschool_vacancies` -> pass-through
+- `vt_preschool_vacancies` -> collapses into `vacancies_preschool` (via to_int)
 - `vt_program_description` -> pass-through
 - `vt_program_participation` -> pass-through
 - `vt_provider_id` -> pass-through
 - `vt_religious_activity` -> pass-through
 - `vt_school_age_capacity` -> pass-through
-- `vt_school_age_vacancies` -> pass-through
+- `vt_school_age_vacancies` -> collapses into `vacancies_school_age` (via to_int)
 - `vt_sibling_discount` -> pass-through
 - `vt_special_schedule` -> pass-through
 - `vt_special_services` -> pass-through
 - `vt_star_level` -> pass-through
 - `vt_toddler_capacity` -> pass-through
-- `vt_toddler_vacancies` -> pass-through
+- `vt_toddler_vacancies` -> collapses into `vacancies_toddler` (via to_int)
 - `vt_type_of_care` -> pass-through
 - `vt_vacancy_as_of` -> pass-through
 

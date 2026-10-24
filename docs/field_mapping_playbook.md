@@ -72,6 +72,7 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `curriculum` | Curriculum | String (collapsed) |
 | `licensing_specialist` | Assigned state licensing specialist | `First Last` string (collapsed; SC `Last, First` flipped; VA split by adapter; `N/A` -> None) |
 | `licensing_specialist_phone` / `licensing_specialist_email` | Specialist contact | Phone as emitted / lower-cased email |
+| `vacancies_infant` / `_toddler` / `_preschool` / `_school_age` | Open slots per age band (state's own band definitions) | Int, `0` kept (collapsed CO/ME/NH/VT via `to_int`; IA/ND/DC by label-table adapters, IA sums full+part time) |
 | `languages` | Languages | String/list |
 
 ---

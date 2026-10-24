@@ -55,6 +55,7 @@ SENTINELS = {
     "not applicable",
     "unknown",
     "tbd",
+    "no data available",  # DC enrollment table
 }
 
 _TRUE_TOKENS = {"yes", "y", "true", "t", "1"}
@@ -317,6 +318,7 @@ def run_adapters(record, state, level=PROVIDER_LEVEL):
             record[field] = value
     return record
 
+
 # Virginia packs "Angela Farmer: (276) 608-2283" into one string; the name and
 # phone are split on the first colon. "N/A" (no inspector assigned) and a
 # colon-less string (name only) are both observed.
@@ -338,3 +340,90 @@ def virginia_inspector(record):
         "licensing_specialist": person_name(match.group("name")),
         "licensing_specialist_phone": none_if_sentinel(match.group("phone")),
     }
+
+
+# --------------------------------------------------------------------------- #
+# Story 02 -- vacancies by age band (IA, ND, DC)
+# --------------------------------------------------------------------------- #
+# Each state labels its age bands differently (and defines them differently:
+# ND infant = 0-17 months, IA = 0-12 + 13-23 months, DC = 0-12 months). The
+# tables below map the state's own label to the common band; a label that is
+# not listed is logged and skipped, never guessed.
+VACANCY_FIELDS = {
+    "infant": "vacancies_infant",
+    "toddler": "vacancies_toddler",
+    "preschool": "vacancies_preschool",
+    "school_age": "vacancies_school_age",
+}
+
+IOWA_AGE_BANDS = {
+    "Infant (0-12 mo.)": "infant",
+    "Infant (13-23 mo.)": "infant",
+    "Toddler (2 yo.)": "toddler",
+    "Preschool (3 yo.)": "preschool",
+    "Preschool (4-5 yo.)": "preschool",
+    "Before & After School": "school_age",
+    "School Age Full Time": "school_age",
+}
+
+NORTH_DAKOTA_AGE_BANDS = {
+    "Infant (0-17 months)": "infant",
+    "Toddler (18-35 months)": "toddler",
+    "Preschool (3-5 years)": "preschool",
+    "School Age (6-11 years)": "school_age",
+}
+
+DC_AGE_BANDS = {
+    "Infant (0 - 12 Months)": "infant",
+    "Toddler (12 - 36 Months)": "toddler",
+    "Preschool (3 - 5 Years)": "preschool",
+    "School Age (5 - 19 Years)": "school_age",
+}
+
+
+def _vacancies_by_band(rows, label_key, band_table, value_keys, state):
+    """Fold a list of per-age-label rows into ``{vacancies_<band>: int}``.
+
+    Values from every row mapping to the same band (and from every key in
+    ``value_keys``) are summed. A band whose contributing values are all
+    ``None`` is left out (not reported); a genuine ``0`` is kept. Unknown
+    labels are logged and skipped.
+    """
+    if not isinstance(rows, list):
+        return {}
+    totals = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        label = row.get(label_key)
+        band = band_table.get(label.strip()) if isinstance(label, str) else None
+        if band is None:
+            logger.warning("%s: unknown vacancy age-band label %r (skipped)", state, label)
+            continue
+        for key in value_keys:
+            number = to_int(row.get(key))
+            if number is not None:
+                totals[band] = totals.get(band, 0) + number
+    return {VACANCY_FIELDS[band]: total for band, total in totals.items()}
+
+
+@register_adapter("iowa", sources=["ia_openings_by_age"], fills=list(VACANCY_FIELDS.values()))
+def iowa_vacancies(record):
+    """Sum IA `fullTime` + `partTime` openings per band across the 7 age labels."""
+    return _vacancies_by_band(
+        record.get("ia_openings_by_age"), "ageGroup", IOWA_AGE_BANDS, ("fullTime", "partTime"), "iowa"
+    )
+
+
+@register_adapter("north_dakota", sources=["nd_vacancies_by_age"], fills=list(VACANCY_FIELDS.values()))
+def north_dakota_vacancies(record):
+    """Map ND `nd_vacancies_by_age` rows (by age label) onto the four vacancy bands."""
+    return _vacancies_by_band(
+        record.get("nd_vacancies_by_age"), "age_group", NORTH_DAKOTA_AGE_BANDS, ("vacancies",), "north_dakota"
+    )
+
+
+@register_adapter("washington_dc", sources=["dc_enrollment"], fills=list(VACANCY_FIELDS.values()))
+def washington_dc_vacancies(record):
+    """Map DC `dc_enrollment` `openings` (text; `Not Applicable` -> None) onto the four vacancy bands."""
+    return _vacancies_by_band(record.get("dc_enrollment"), "age_group", DC_AGE_BANDS, ("openings",), "washington_dc")

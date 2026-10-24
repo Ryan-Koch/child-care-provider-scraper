@@ -471,3 +471,112 @@ def test_specialist_transforms():
     assert cf.lower_email("") is None
     assert cf.none_if_sentinel("N/A") is None
     assert cf.none_if_sentinel(" (405) 343-2186 ") == "(405) 343-2186"
+
+
+# --------------------------------------------------------------------------- #
+# Story 02 -- vacancies by age band
+# --------------------------------------------------------------------------- #
+_VACANCY_FIELDS = ("vacancies_infant", "vacancies_toddler", "vacancies_preschool", "vacancies_school_age")
+
+
+def _vacancies(state, **source):
+    item = norm.normalize_item(dict(source), state)
+    return tuple(item.get(f) for f in _VACANCY_FIELDS), item
+
+
+@pytest.mark.parametrize(
+    ("state", "pattern", "raw", "expected"),
+    [
+        ("colorado", "co_{}_openings", ("0", "2", "", "5"), (0, 2, None, 5)),
+        ("maine", "me_{}_slots", (0, 1, 3, 0), (0, 1, 3, 0)),
+        ("new_hampshire", "nh_{}_openings", ("0", 2, 1, "4"), (0, 2, 1, 4)),
+        ("vermont", "vt_{}_vacancies", (0, 1, 2, 0), (0, 1, 2, 0)),
+    ],
+)
+def test_vacancies_map_states(state, pattern, raw, expected):
+    bands = ("infant", "toddler", "preschool", "school_age")
+    source = {pattern.format(b): v for b, v in zip(bands, raw, strict=True)}
+    values, item = _vacancies(state, **source)
+    assert values == expected
+    assert all(item[k] == v or v == "" for k, v in source.items())  # additive (blank is nulled)
+
+
+def test_vacancies_map_is_not_applied_to_other_states_or_overwriting():
+    values, _ = _vacancies("ohio", co_infant_openings="3")
+    assert values == (3, None, None, None)  # the map is state-agnostic by design
+    values, _ = _vacancies("colorado", co_infant_openings="3", vacancies_infant=9)
+    assert values[0] == 9
+
+
+IA_ROWS = [
+    {"ageGroup": "Infant (0-12 mo.)", "fullTime": 1, "partTime": 2},
+    {"ageGroup": "Infant (13-23 mo.)", "fullTime": 3, "partTime": 0},
+    {"ageGroup": "Toddler (2 yo.)", "fullTime": 0, "partTime": 0},
+    {"ageGroup": "Preschool (3 yo.)", "fullTime": 1, "partTime": 1},
+    {"ageGroup": "Preschool (4-5 yo.)", "fullTime": 2, "partTime": 0},
+    {"ageGroup": "Before & After School", "fullTime": 0, "partTime": 4},
+    {"ageGroup": "School Age Full Time", "fullTime": 5, "partTime": 0},
+]
+
+
+def test_vacancies_iowa_sums_full_and_part_time_across_rows_in_a_band():
+    values, item = _vacancies("iowa", ia_openings_by_age=IA_ROWS)
+    assert values == (6, 0, 4, 9)  # toddler is a genuine 0, not None
+    assert item["ia_openings_by_age"] == IA_ROWS
+
+
+def test_vacancies_iowa_none_handling():
+    rows = [
+        {"ageGroup": "Infant (0-12 mo.)", "fullTime": None, "partTime": None},
+        {"ageGroup": "Infant (13-23 mo.)", "fullTime": None, "partTime": None},
+        {"ageGroup": "Toddler (2 yo.)", "fullTime": None, "partTime": 2},
+    ]
+    values, _ = _vacancies("iowa", ia_openings_by_age=rows)
+    assert values == (None, 2, None, None)
+
+
+def test_vacancies_north_dakota():
+    rows = [
+        {"age_group": "Infant (0-17 months)", "vacancies": 1},
+        {"age_group": "Toddler (18-35 months)", "vacancies": 0},
+        {"age_group": "Preschool (3-5 years)", "vacancies": None},
+    ]
+    values, _ = _vacancies("north_dakota", nd_vacancies_by_age=rows)
+    assert values == (1, 0, None, None)
+
+
+def test_vacancies_dc_text_values():
+    rows = [
+        {"age_group": "Infant (0 - 12 Months)", "openings": "0"},
+        {"age_group": "Toddler (12 - 36 Months)", "openings": "Not Applicable"},
+        {"age_group": "Preschool (3 - 5 Years)", "openings": "12"},
+        {"age_group": "School Age (5 - 19 Years)", "openings": "No Data Available"},
+    ]
+    values, _ = _vacancies("washington_dc", dc_enrollment=rows)
+    assert values == (0, None, 12, None)
+
+
+def test_vacancies_unknown_label_is_logged_and_skipped(caplog):
+    rows = [{"age_group": "Infant (0-17 months)", "vacancies": 2}, {"age_group": "Gifted (9 years)", "vacancies": 7}]
+    with caplog.at_level(logging.WARNING, logger=cf.logger.name):
+        values, _ = _vacancies("north_dakota", nd_vacancies_by_age=rows)
+    assert values == (2, None, None, None)
+    assert "Gifted (9 years)" in caplog.text
+
+
+def test_vacancies_adapters_tolerate_missing_and_malformed_sources():
+    for state, field in (
+        ("iowa", "ia_openings_by_age"),
+        ("north_dakota", "nd_vacancies_by_age"),
+        ("washington_dc", "dc_enrollment"),
+    ):
+        for bad in (None, [], "oops", [None]):
+            values, _ = _vacancies(state, **{field: bad})
+            assert values == (None, None, None, None)
+
+
+def test_vacancies_ri_is_deliberately_excluded():
+    values, _ = _vacancies(
+        "rhode_island", ri_availability=[{"age_group": "Infant (0-12 mo.)", "slot_info": "Slots available"}]
+    )
+    assert values == (None, None, None, None)

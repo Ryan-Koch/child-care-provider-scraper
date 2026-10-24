@@ -323,6 +323,12 @@ class ProviderItem(scrapy.Item):
     licensing_specialist = scrapy.Field()
     licensing_specialist_phone = scrapy.Field()
     licensing_specialist_email = scrapy.Field()
+    # Open slots per age band (int; 0 = full, None = not reported). Bands are the
+    # state's own definitions; unrelated to the infant/toddler/... age-served flags.
+    vacancies_infant = scrapy.Field()
+    vacancies_toddler = scrapy.Field()
+    vacancies_preschool = scrapy.Field()
+    vacancies_school_age = scrapy.Field()
 
     # Best-effort address components parsed from `address` by the normalization
     # pipeline (additive; `address` is preserved). Left None when ambiguous.
