@@ -35,6 +35,7 @@ from provider_scrape.common_fields import (
     license_holder_address,
     lower_email,
     md_finding_flag,
+    nd_year_round,
     none_if_sentinel,
     person_name,
     phone_extension_digits,
@@ -43,6 +44,7 @@ from provider_scrape.common_fields import (
     to_id_string,
     to_int,
     to_iso_date,
+    vt_year_round,
     wi_total_vacancies,
     wi_vacancies_updated_date,
 )
@@ -1107,6 +1109,12 @@ FIELD_COLLAPSE_MAP = {
         ("wa_provider_id", to_id_string),
         ("wi_facility_number", to_id_string),
         ("wy_facility_id", to_id_string),
+    ],
+    # All 12 months. GA/MS/WI (months) and SD/OK (categories) are adapters in
+    # common_fields.py; ND and VT are single-category labels.
+    "year_round": [
+        ("nd_enrollment_schedule", nd_year_round),
+        ("vt_special_schedule", vt_year_round),
     ],
     "license_type": [
         "va_license_type",

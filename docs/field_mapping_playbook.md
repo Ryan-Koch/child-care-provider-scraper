@@ -62,6 +62,8 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `hours` | Operating hours | String |
 | `days_of_operation` | Weekdays open | List of full day names, Mon->Sun (GA/IA/VT via `day_names`: 2-/3-letter/full names, de-duped, unknown tokens logged and dropped; CT/IN/NH/OK/WY/MA/FL derived from `weekly_schedule`, never overwriting a direct source) |
 | `weekly_schedule` | Per-day open/close rows | List of `{day, open, close}`: full day names, 24h `HH:MM`, Mon->Sun, several rows per day allowed (CT/IN/NH/OK/WY/MA/FL via per-state adapters sharing `parse_time`/`split_time_range`; FL parsed from its dict `hours`, which stays as-is; MA picks one schedule - Full Year, else School Year, else Summer, else first - and tags rows with `schedule_type`) |
+| `operating_months` | Months open | List of 3-letter months `Jan`..`Dec`, calendar order (GA/MS/WI via `month_names`/`month_range`: WI ranges wrap the year, GA `OtherSchoolBreak` dropped) |
+| `year_round` | Operates all 12 months | Bool (GA/MS/WI: all 12 months listed; SD/ND/VT/OK by explicit label lookup, seasonal-only -> False, unknown/blank -> unset) |
 | `ages_served` | Ages accepted | String (lists joined with `, `) |
 | `county` | County | String |
 | `scholarships_accepted` | Subsidy/scholarship acceptance | bool-or-None via `coerce_scholarships_accepted_flag`; FL/VA/WA collapsed from their subsidy flags (WA empty -> unset), NH from the `STATE CC ASSISTANCE (SCHOLARSHIP)` token as a fallback only; OK set by its spider |

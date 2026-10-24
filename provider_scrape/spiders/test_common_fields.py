@@ -2304,3 +2304,183 @@ def test_compliance_domains_massachusetts_old_fields_only_unset():
 def test_compliance_domains_not_derived_for_other_states():
     insp = norm.normalize_inspection({"nh_domains": [{"domain": "A", "level_of_compliance": "1 / 1"}]}, "ohio")
     assert "compliance_domains" not in insp
+
+
+# --------------------------------------------------------------------------- #
+# year_round / operating_months
+# --------------------------------------------------------------------------- #
+ALL_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+
+def test_months_georgia_all_twelve():
+    raw = ",".join(m.upper() for m in ALL_MONTHS)
+    item = norm.normalize_item({"ga_operating_months": raw}, "georgia")
+    assert item["operating_months"] == ALL_MONTHS
+    assert item["year_round"] is True
+    assert item["ga_operating_months"] == raw  # additive: source kept
+
+
+def test_months_georgia_ten_months_is_not_year_round():
+    item = norm.normalize_item({"ga_operating_months": "JAN,FEB,MAR,APR,MAY,AUG,SEP,OCT,NOV,DEC"}, "georgia")
+    assert item["operating_months"] == ["Jan", "Feb", "Mar", "Apr", "May", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    assert item["year_round"] is False
+
+
+def test_months_georgia_other_school_break_dropped_silently(caplog):
+    raw = ",".join(m.upper() for m in ALL_MONTHS) + ",OtherSchoolBreak"
+    with caplog.at_level(logging.WARNING):
+        item = norm.normalize_item({"ga_operating_months": raw}, "georgia")
+    assert item["operating_months"] == ALL_MONTHS
+    assert item["year_round"] is True
+    assert "OtherSchoolBreak" not in caplog.text
+
+
+def test_months_georgia_unknown_token_logged_and_unsorted_input_ordered(caplog):
+    with caplog.at_level(logging.WARNING):
+        item = norm.normalize_item({"ga_operating_months": "DEC, JAN,JAN,Smarch"}, "georgia")
+    assert item["operating_months"] == ["Jan", "Dec"]
+    assert item["year_round"] is False
+    assert "Smarch" in caplog.text
+
+
+def test_months_mississippi_list():
+    item = norm.normalize_item({"ms_months_of_operation": list(ALL_MONTHS)}, "mississippi")
+    assert item["operating_months"] == ALL_MONTHS
+    assert item["year_round"] is True
+    partial = norm.normalize_item({"ms_months_of_operation": ["Aug", "Sep", "Oct"]}, "mississippi")
+    assert partial["operating_months"] == ["Aug", "Sep", "Oct"]
+    assert partial["year_round"] is False
+    assert partial["ms_months_of_operation"] == ["Aug", "Sep", "Oct"]
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("Jan - Dec", ALL_MONTHS),
+        ("Sep - Jun", ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Sep", "Oct", "Nov", "Dec"]),
+        ("Aug - May", ["Jan", "Feb", "Mar", "Apr", "May", "Aug", "Sep", "Oct", "Nov", "Dec"]),
+        ("Jun - Aug", ["Jun", "Jul", "Aug"]),
+    ],
+)
+def test_months_wisconsin_ranges(raw, expected):
+    item = norm.normalize_item({"wi_months_open": raw}, "wisconsin")
+    assert item["operating_months"] == expected
+    assert item["year_round"] is (len(expected) == 12)
+    assert item["wi_months_open"] == raw
+
+
+def test_months_wisconsin_unparseable_logged_and_unset(caplog):
+    with caplog.at_level(logging.WARNING):
+        item = norm.normalize_item({"wi_months_open": "Varies"}, "wisconsin")
+    assert "operating_months" not in item
+    assert "year_round" not in item
+    assert "Varies" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "raw"),
+    [
+        ("georgia", "ga_operating_months", ""),
+        ("georgia", "ga_operating_months", "OtherSchoolBreak"),
+        ("mississippi", "ms_months_of_operation", []),
+        ("wisconsin", "wi_months_open", None),
+    ],
+)
+def test_months_empty_leave_both_unset(state, field, raw):
+    item = norm.normalize_item({field: raw}, state)
+    assert "operating_months" not in item
+    assert "year_round" not in item
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        (["12 Months"], True),
+        (["School Year Only"], False),
+        (["Summer Only"], False),
+        (["Other"], None),
+        ([], None),
+    ],
+)
+def test_year_round_south_dakota(raw, expected):
+    item = norm.normalize_item({"sd_months_of_operation": list(raw)}, "south_dakota")
+    if expected is None:
+        assert "year_round" not in item
+    else:
+        assert item["year_round"] is expected
+    assert "operating_months" not in item
+    assert item["sd_months_of_operation"] == raw
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("Full calendar year", True),
+        ("School year only (typically September-May)", False),
+    ],
+)
+def test_year_round_north_dakota(raw, expected):
+    item = norm.normalize_item({"nd_enrollment_schedule": raw}, "north_dakota")
+    assert item["year_round"] is expected
+    assert item["nd_enrollment_schedule"] == raw
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [("School Year Only", False), ("Summer Only", False), ("In-Service Days", None), ("", None), (None, None)],
+)
+def test_year_round_vermont(raw, expected):
+    item = norm.normalize_item({"vt_special_schedule": raw}, "vermont")
+    if expected is None:
+        assert "year_round" not in item
+    else:
+        assert item["year_round"] is expected
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        (["Year Round", "Daytime Hours"], True),
+        (["Year Round", "Summer Only"], True),
+        (["School Year Only", "Daytime Hours"], False),
+        (["Summer Only"], False),
+        (["School Vacation Only"], False),
+        (["Daytime Hours", "Evening Hours"], None),
+        ([], None),
+    ],
+)
+def test_year_round_oklahoma(raw, expected):
+    item = norm.normalize_item({"ok_care_types": list(raw)}, "oklahoma")
+    if expected is None:
+        assert "year_round" not in item
+    else:
+        assert item["year_round"] is expected
+    assert item["ok_care_types"] == raw if raw else True
+
+
+def test_ok_care_type_set_is_reusable_for_other_ok_tokens():
+    labels = cf.ok_care_type_set(["Year Round", " Evening Hours "])
+    assert labels == {"year round", "evening hours"}
+    assert cf.ok_care_type_set("Weekend Hours, Overnight Hours") == {"weekend hours", "overnight hours"}
+    assert cf.ok_care_type_set(None) == set()
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "value"),
+    [
+        ("north_dakota", "nd_enrollment_schedule", "Sometimes"),
+        ("vermont", "vt_special_schedule", "Weird Value"),
+        ("south_dakota", "sd_months_of_operation", ["Weird Value"]),
+    ],
+)
+def test_year_round_unknown_label_logged_and_unset(state, field, value, caplog):
+    with caplog.at_level(logging.WARNING):
+        item = norm.normalize_item({field: value}, state)
+    assert "year_round" not in item
+    assert "Weird Value" in caplog.text or "Sometimes" in caplog.text
+
+
+def test_year_round_adapters_never_overwrite():
+    item = norm.normalize_item({"ga_operating_months": "JAN,FEB", "year_round": True}, "georgia")
+    assert item["year_round"] is True
+    assert item["operating_months"] == ["Jan", "Feb"]

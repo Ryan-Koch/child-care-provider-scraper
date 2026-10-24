@@ -109,6 +109,16 @@ FIELD_DOCS = {
     "MA lists several schedules: one is chosen (Full Year, else first School Year, else first Summer, else first "
     "listed) and its rows carry a `schedule_type` key. Overnight ranges (close earlier than open) are kept as "
     "reported.",
+    "operating_months": "Months the provider operates: list of 3-letter Title-case months (`Jan`..`Dec`) "
+    "in calendar order, de-duplicated. Only where the state lists months: GA (`JAN,FEB,...`; GA's non-month "
+    "`OtherSchoolBreak` marker is dropped, other unknown tokens logged), MS (list) and WI (range `Sep - Jun`, "
+    "expanded inclusively and wrapping the year). Unparseable or empty -> unset.",
+    "year_round": "Whether the provider operates all 12 months (bool). GA/MS/WI: True when all 12 months are "
+    "listed, else False. SD (`12 Months` True; `School Year Only`/`Summer Only` False; `Other` unset), "
+    "ND (`Full calendar year` True; `School year only` False), VT (`School Year Only`/`Summer Only` False; "
+    "`In-Service Days` and blank unset -- never assumed True) and OK (`Year Round` in `ok_care_types` True; "
+    "else `School Year Only`/`Summer Only`/`School Vacation Only` False; else unset) use explicit "
+    "case-insensitive lookups; unknown labels are logged and leave it unset.",
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
     "deficiencies": "Deficiency/violation count for the provider, coerced to an "
     "integer (bug_10). Digit strings, comma-grouped counts, and integral "

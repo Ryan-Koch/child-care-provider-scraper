@@ -315,6 +315,8 @@ class ProviderItem(scrapy.Item):
     capacity = scrapy.Field()
     hours = scrapy.Field()
     days_of_operation = scrapy.Field()  # list of full day names, Monday -> Sunday
+    operating_months = scrapy.Field()  # list of 3-letter months (Jan..Dec), calendar order
+    year_round = scrapy.Field()  # bool: True = operates all 12 months
     weekly_schedule = scrapy.Field()  # list of {day, open, close} rows, 24h HH:MM
     ages_served = scrapy.Field()
     infant = scrapy.Field()

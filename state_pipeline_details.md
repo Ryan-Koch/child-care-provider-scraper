@@ -43,6 +43,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `longitude` | Whitespace cleanup; Coordinate -> string | Longitude kept as a trimmed string to avoid float precision drift. |
 | `mailing_address` | Whitespace cleanup; Field collapse from state-specific source; Address cleanup | Facility mailing address, collapsed from a single populated state source (owner/licensee addresses are excluded). |
 | `meals` | Whitespace cleanup; Field collapse from state-specific source | Meals / food program, collapsed from a single populated state source. |
+| `operating_months` | Whitespace cleanup | Months the provider operates: list of 3-letter Title-case months (`Jan`..`Dec`) in calendar order, de-duplicated. Only where the state lists months: GA (`JAN,FEB,...`; GA's non-month `OtherSchoolBreak` marker is dropped, other unknown tokens logged), MS (list) and WI (range `Sep - Jun`, expanded inclusively and wrapping the year). Unparseable or empty -> unset. |
 | `phone` | Whitespace cleanup | Contact phone number (whitespace-cleaned only). |
 | `phone_extension` | Whitespace cleanup; Field collapse from state-specific source (transforms: phone_extension_digits) | Extension that goes with `phone`, digits only, kept as a string (leading zeros survive). NJ, NY; NY input-mask underscores are stripped, and non-numeric junk (`NJ`, `class`) -> None. |
 | `phone_suppressed` | Whitespace cleanup; Field collapse from state-specific source (transforms: invert, to_bool) | True = the state deliberately withheld the phone number. FL inverted from displayPhoneOnWeb; NY `Y` -> True, blank -> False; MA's single contact-redacted flag feeds this too. |
@@ -66,6 +67,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `vacancies_updated_date` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_iso_date, wi_vacancies_updated_date) | Date the provider last updated its vacancy counts (`YYYY-MM-DD`; empty = not reported). Freshness for `total_vacancies` / `vacancies_*`. IA, ME, ND, VT; WI's date is parsed from the `Last updated on` text in its vacancy prose. |
 | `weekly_schedule` | Whitespace cleanup | Per-day opening hours: list of `{"day": "Monday", "open": "07:00", "close": "18:00"}` rows, 24h `HH:MM`, full day names, sorted Monday -> Sunday (source order kept within a day; several rows per day allowed, e.g. NH sessions). CT, IN, NH, OK, WY, MA and FL (from its dict-shaped `hours`, which is left as-is) via one shared time parser. Closed days give no row; an unparseable row is logged and dropped; none left -> unset. MA lists several schedules: one is chosen (Full Year, else first School Year, else first Summer, else first listed) and its rows carry a `schedule_type` key. Overnight ranges (close earlier than open) are kept as reported. |
 | `wheelchair_accessible` | Whitespace cleanup; Field collapse from state-specific source (transforms: coerce_bool, has_list_token(WHEELCHAIR ACCESSIBLE)) | Whether the facility is wheelchair accessible (True/False/None). CT bool, TN Yes/No; NH from the WHEELCHAIR ACCESSIBLE token in its environment checklist (token present -> True, absent -> None, never False). |
+| `year_round` | Whitespace cleanup; Field collapse from state-specific source (transforms: vocab(nd_year_round), vocab(vt_year_round)) | Whether the provider operates all 12 months (bool). GA/MS/WI: True when all 12 months are listed, else False. SD (`12 Months` True; `School Year Only`/`Summer Only` False; `Other` unset), ND (`Full calendar year` True; `School year only` False), VT (`School Year Only`/`Summer Only` False; `In-Service Days` and blank unset -- never assumed True) and OK (`Year Round` in `ok_care_types` True; else `School Year Only`/`Summer Only`/`School Vacation Only` False; else unset) use explicit case-insensitive lookups; unknown labels are logged and leave it unset. |
 
 > Inspections are normalized too: every string value gets whitespace cleanup, and the date fields (`date`, `status_updated`, `az_date_resolved`, `in_correction_date`, `ms_end_date`, `mo_disposition_date`) are converted to ISO 8601. The `status` vocabulary does not apply to inspections.
 
@@ -119,6 +121,7 @@ Each common field is populated from a single populated source field (additive â€
 | `vacancies_toddler` | `co_toddler_openings` (to_int), `me_toddler_slots` (to_int), `nh_toddler_openings` (to_int), `vt_toddler_vacancies` (to_int) |
 | `vacancies_updated_date` | `ia_openings_as_of` (to_iso_date), `me_openings_updated` (to_iso_date), `nd_vacancies_updated` (to_iso_date), `vt_vacancy_as_of` (to_iso_date), `wi_vacancies` (wi_vacancies_updated_date) |
 | `wheelchair_accessible` | `ct_wheelchair_accessible` (coerce_bool), `nh_environment` (has_list_token(WHEELCHAIR ACCESSIBLE)), `tn_wheelchair_accessible` (coerce_bool) |
+| `year_round` | `nd_enrollment_schedule` (vocab(nd_year_round)), `vt_special_schedule` (vocab(vt_year_round)) |
 
 ## Inspection field-collapse map
 
@@ -167,15 +170,20 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `wisconsin` | inspection | `original_status` | `violation_found` | Read violation_found from the `original_status` text via an explicit table; unmatched -> unset. |
 | `connecticut` | provider | `ct_schedule` | `weekly_schedule`, `days_of_operation` | CT `ct_schedule` rows (already 24h `open`/`close`) -> `weekly_schedule`; days derived. |
 | `florida` | provider | `hours` | `weekly_schedule`, `days_of_operation` | FL dict-shaped `hours` ({"monday": "6:45AM to 6:00PM", ...}) -> `weekly_schedule`; `hours` kept. |
+| `georgia` | provider | `ga_operating_months` | `operating_months`, `year_round` | GA `ga_operating_months` (`JAN,FEB,...`) -> `operating_months`; year_round = all 12. |
 | `indiana` | provider | `in_schedule` | `weekly_schedule`, `days_of_operation` | IN `in_schedule` rows (12h `open`/`close`) -> 24h `weekly_schedule`; days derived. |
 | `iowa` | provider | `ia_openings_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Sum IA `fullTime` + `partTime` openings per band across the 7 age labels. |
 | `massachusetts` | provider | `ma_schedules` | `weekly_schedule`, `days_of_operation` | MA `ma_schedules`: ONE schedule (Full Year > School Year > Summer > first) -> rows tagged `schedule_type`. |
+| `mississippi` | provider | `ms_months_of_operation` | `operating_months`, `year_round` | MS `ms_months_of_operation` (list of month names) -> `operating_months`; year_round = all 12. |
 | `new_hampshire` | provider | `nh_schedule` | `weekly_schedule`, `days_of_operation` | NH `nh_schedule` sessions (`start`/`end`, 12h) -> one `weekly_schedule` row each; days derived. |
 | `new_york` | provider | `ny_address_omitted`, `ny_phone_number_omitted` | `address_suppressed`, `phone_suppressed` | NY `Address Omitted` / `Phone Number Omitted`: `Y` -> True, blank or absent -> False. |
 | `north_dakota` | provider | `nd_vacancies_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map ND `nd_vacancies_by_age` rows (by age label) onto the four vacancy bands. |
 | `oklahoma` | provider | `ok_schedule` | `weekly_schedule`, `days_of_operation` | OK `ok_schedule` `hours` ("6:30AM - 6:00PM", None when closed) -> `weekly_schedule`; days derived. |
+| `oklahoma` | provider | `ok_care_types` | `year_round` | OK `ok_care_types`: `Year Round` -> True; else a seasonal-only label -> False; else unset. |
+| `south_dakota` | provider | `sd_months_of_operation` | `year_round` | SD `sd_months_of_operation` category list (`12 Months` / seasonal) -> `year_round`. |
 | `virginia` | provider | `va_inspector` | `licensing_specialist`, `licensing_specialist_phone` | Split `va_inspector` ("Name: (555) 555-5555") into specialist name + phone; `N/A` -> None. |
 | `washington_dc` | provider | `dc_enrollment` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map DC `dc_enrollment` `openings` (text; `Not Applicable` -> None) onto the four vacancy bands. |
+| `wisconsin` | provider | `wi_months_open` | `operating_months`, `year_round` | WI `wi_months_open` (`Sep - Jun`, wraps the year) -> `operating_months`; year_round = all 12. |
 | `wyoming` | provider | `wy_schedule` | `weekly_schedule`, `days_of_operation` | WY `wy_schedule` rows (`start`/`end`, 24h) -> `weekly_schedule`; days derived. |
 
 ## Controlled vocabulary: `status`
@@ -412,7 +420,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ga_mailing_address` -> collapses into `mailing_address`
 - `ga_meals` -> collapses into `meals`
 - `ga_operating_days` -> collapses into `days_of_operation` (via day_names)
-- `ga_operating_months` -> pass-through
+- `ga_operating_months` -> feeds adapter, fills `operating_months`, `year_round`
 - `ga_other_care_type` -> pass-through
 - `ga_profit_status` -> pass-through
 - `ga_program_status` -> pass-through
@@ -685,7 +693,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ms_end_date` -> pass-through
 - `ms_exam_type` -> pass-through
 - `ms_facility_id` -> collapses into `source_provider_id` (via to_id_string)
-- `ms_months_of_operation` -> pass-through
+- `ms_months_of_operation` -> feeds adapter, fills `operating_months`, `year_round`
 - `ms_services` -> pass-through
 - `ms_subsidy` -> pass-through
 
@@ -722,7 +730,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 ### North Dakota (ND)
 
 - `nd_desired_capacity` -> pass-through
-- `nd_enrollment_schedule` -> pass-through
+- `nd_enrollment_schedule` -> collapses into `year_round` (via vocab(nd_year_round))
 - `nd_max_age` -> pass-through
 - `nd_min_age` -> pass-through
 - `nd_org_id` -> pass-through
@@ -887,7 +895,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `ok_administrator_title` -> pass-through
 - `ok_allegations` -> pass-through
-- `ok_care_types` -> pass-through
+- `ok_care_types` -> feeds adapter, fills `year_round`
 - `ok_compliance_count` -> pass-through
 - `ok_compliance_total` -> pass-through
 - `ok_denial_sent` -> pass-through
@@ -947,7 +955,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### South Dakota (SD)
 
-- `sd_months_of_operation` -> pass-through
+- `sd_months_of_operation` -> feeds adapter, fills `year_round`
 - `sd_services_offered` -> pass-through
 
 ### Tennessee (TN)
@@ -1016,7 +1024,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `vt_school_age_capacity` -> pass-through
 - `vt_school_age_vacancies` -> collapses into `vacancies_school_age` (via to_int)
 - `vt_sibling_discount` -> pass-through
-- `vt_special_schedule` -> pass-through
+- `vt_special_schedule` -> collapses into `year_round` (via vocab(vt_year_round))
 - `vt_special_services` -> pass-through
 - `vt_star_level` -> pass-through
 - `vt_toddler_capacity` -> pass-through
@@ -1052,7 +1060,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wi_enforcement_type` -> pass-through
 - `wi_facility_number` -> collapses into `source_provider_id` (via to_id_string)
 - `wi_location_number` -> pass-through
-- `wi_months_open` -> pass-through
+- `wi_months_open` -> feeds adapter, fills `operating_months`, `year_round`
 - `wi_night_capacity` -> pass-through
 - `wi_program_philosophy` -> pass-through
 - `wi_rule_number` -> pass-through

@@ -1077,3 +1077,173 @@ def florida_schedule(record):
     for day, text in hours.items():
         rows.extend(_rows_from_range_text(day, text, "florida"))
     return _schedule_fields(rows)
+
+
+# --------------------------------------------------------------------------- #
+# Year-round operation and operating months (GA, MS, WI, SD, ND, VT, OK)
+# --------------------------------------------------------------------------- #
+# GA/MS/WI publish months; SD/ND/VT/OK only a season category. Months are kept
+# only where the state lists them; every state can fill ``year_round``.
+_MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+_MONTH_ALIASES = {
+    alias: month
+    for month, full in zip(
+        _MONTHS,
+        (
+            "january",
+            "february",
+            "march",
+            "april",
+            "may",
+            "june",
+            "july",
+            "august",
+            "september",
+            "october",
+            "november",
+            "december",
+        ),
+        strict=True,
+    )
+    for alias in (month.lower(), full)
+}
+_MONTH_ALIASES["sept"] = "Sep"
+# GA appends this non-month marker to `Operation_Months`; it carries no month.
+_IGNORED_MONTH_TOKENS = {"otherschoolbreak"}
+_MONTH_RANGE_RE = re.compile(r"^\s*([A-Za-z]+)\s*[-–—]\s*([A-Za-z]+)\s*$")
+
+
+def month_names(value):
+    """Month tokens -> 3-letter Title-case months in calendar order, de-duplicated.
+
+    Accepts a comma-separated string (``JAN,FEB``) or a list of month names.
+    Full names and ``Sept`` are tolerated. GA's ``OtherSchoolBreak`` marker is
+    dropped silently; any other unknown token is logged and dropped. Nothing
+    usable -> ``None``.
+    """
+    value = none_if_sentinel(value) if isinstance(value, str) else value
+    if value is None:
+        return None
+    raw_tokens = value if isinstance(value, (list, tuple)) else [value]
+    found = set()
+    for raw in raw_tokens:
+        for token in str(raw).split(","):
+            token = token.strip()
+            if not token or token.lower() in _IGNORED_MONTH_TOKENS:
+                continue
+            month = _MONTH_ALIASES.get(token.lower())
+            if month is None:
+                logger.warning("month_names: unrecognised month %r dropped", token)
+                continue
+            found.add(month)
+    if not found:
+        return None
+    return sorted(found, key=_MONTHS.index)
+
+
+def month_range(value):
+    """``"Sep - Jun"`` -> inclusive month list, wrapping across the year end.
+
+    ``Jan - Dec`` is all 12; ``Sep - Jun`` is Sep..Dec + Jan..Jun (10 months).
+    Result is in calendar order. An unparseable value is logged -> ``None``.
+    """
+    if not isinstance(value, str) or none_if_sentinel(value) is None:
+        return None
+    match = _MONTH_RANGE_RE.match(value)
+    start = _MONTH_ALIASES.get(match.group(1).lower()) if match else None
+    end = _MONTH_ALIASES.get(match.group(2).lower()) if match else None
+    if start is None or end is None:
+        logger.warning("month_range: unparseable month range %r", value)
+        return None
+    first, last = _MONTHS.index(start), _MONTHS.index(end)
+    span = range(first, last + 1) if first <= last else [*range(first, 12), *range(0, last + 1)]
+    return sorted((_MONTHS[i] for i in span), key=_MONTHS.index)
+
+
+def _months_fields(months):
+    """Adapter result: ``operating_months`` plus the ``year_round`` it implies."""
+    if not months:
+        return {}
+    return {"operating_months": months, "year_round": len(months) == len(_MONTHS)}
+
+
+@register_adapter("georgia", sources=["ga_operating_months"], fills=["operating_months", "year_round"])
+def georgia_months(record):
+    """GA `ga_operating_months` (`JAN,FEB,...`) -> `operating_months`; year_round = all 12."""
+    return _months_fields(month_names(record.get("ga_operating_months")))
+
+
+@register_adapter("mississippi", sources=["ms_months_of_operation"], fills=["operating_months", "year_round"])
+def mississippi_months(record):
+    """MS `ms_months_of_operation` (list of month names) -> `operating_months`; year_round = all 12."""
+    return _months_fields(month_names(record.get("ms_months_of_operation")))
+
+
+@register_adapter("wisconsin", sources=["wi_months_open"], fills=["operating_months", "year_round"])
+def wisconsin_months(record):
+    """WI `wi_months_open` (`Sep - Jun`, wraps the year) -> `operating_months`; year_round = all 12."""
+    return _months_fields(month_range(record.get("wi_months_open")))
+
+
+# Category labels -> year_round. ``None`` marks a known label that says nothing
+# about the season. Lookups are case-insensitive (see :func:`vocab`).
+SD_YEAR_ROUND_LABELS = {
+    "12 months": True,
+    "school year only": False,
+    "summer only": False,
+    "other": None,
+}
+ND_YEAR_ROUND_LABELS = {
+    "full calendar year": True,
+    "school year only (typically september-may)": False,
+}
+# VT: seasonal-only values mean not year-round; `In-Service Days` is not a
+# season and a blank value is never assumed to mean year-round.
+VT_YEAR_ROUND_LABELS = {
+    "school year only": False,
+    "summer only": False,
+    "in-service days": None,
+}
+nd_year_round = vocab(ND_YEAR_ROUND_LABELS, name="nd_year_round")
+vt_year_round = vocab(VT_YEAR_ROUND_LABELS, name="vt_year_round")
+_sd_year_round_label = vocab(SD_YEAR_ROUND_LABELS, name="sd_year_round")
+
+
+def ok_care_type_set(value):
+    """OK-style care-type labels (list, or comma-separated string) -> lower-case set.
+
+    Shared by every field parsed from the OK ``ok_care_types`` tokens
+    (``Year Round``, ``Evening Hours``, ``Weekend Hours``, ...).
+    """
+    if value is None:
+        return set()
+    raw = value if isinstance(value, (list, tuple)) else str(value).split(",")
+    return {str(label).strip().lower() for label in raw if label is not None and str(label).strip()}
+
+
+_OK_SEASONAL_LABELS = ("school year only", "summer only", "school vacation only")
+
+
+@register_adapter("south_dakota", sources=["sd_months_of_operation"], fills=["year_round"])
+def south_dakota_year_round(record):
+    """SD `sd_months_of_operation` category list (`12 Months` / seasonal) -> `year_round`."""
+    labels = record.get("sd_months_of_operation")
+    if isinstance(labels, str):
+        labels = [labels]
+    results = [_sd_year_round_label(label) for label in labels or []]
+    if True in results:
+        return {"year_round": True}
+    if False in results:
+        return {"year_round": False}
+    return {}
+
+
+@register_adapter("oklahoma", sources=["ok_care_types"], fills=["year_round"])
+def oklahoma_year_round(record):
+    """OK `ok_care_types`: `Year Round` -> True; else a seasonal-only label -> False; else unset."""
+    labels = ok_care_type_set(record.get("ok_care_types"))
+    if "year round" in labels:
+        return {"year_round": True}
+    if labels.intersection(_OK_SEASONAL_LABELS):
+        return {"year_round": False}
+    return {}
