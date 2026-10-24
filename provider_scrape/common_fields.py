@@ -243,6 +243,32 @@ def last_first_name(value):
     return person_name(cleaned)
 
 
+# Wisconsin publishes vacancies as prose: "None Reported." or
+# "0 vacancies have been reported. Last updated on 9/1/2026Vacancies Age Range ...".
+# One pattern captures both the count and the "Last updated" date so story 04
+# (vacancies_updated_date) can reuse it instead of re-parsing the string.
+WI_VACANCIES_RE = re.compile(
+    r"^\s*(?P<count>\d+)\s+vacanc(?:y|ies)\s+(?:has|have)\s+been\s+reported"
+    r"(?:\.\s*Last updated on\s*(?P<updated>\d{1,2}/\d{1,2}/\d{4}))?",
+    re.IGNORECASE,
+)
+
+
+def wi_total_vacancies(value):
+    """Take the leading count from WI's vacancy prose; `None Reported.` -> None.
+
+    ``"0 vacancies have been reported..."`` is a real ``0``. Text that is neither a
+    sentinel nor matches the sentence shape is logged and left unset, never 0.
+    """
+    if value is None or _is_sentinel(value):
+        return None
+    match = WI_VACANCIES_RE.match(value) if isinstance(value, str) else None
+    if match is None:
+        logger.warning("wi_total_vacancies: unrecognised vacancies text %r -> None", value)
+        return None
+    return int(match.group("count"))
+
+
 # --------------------------------------------------------------------------- #
 # Per-state adapters
 # --------------------------------------------------------------------------- #

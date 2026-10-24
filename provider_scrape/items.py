@@ -329,6 +329,8 @@ class ProviderItem(scrapy.Item):
     vacancies_toddler = scrapy.Field()
     vacancies_preschool = scrapy.Field()
     vacancies_school_age = scrapy.Field()
+    # Total open slots the provider reports (int; 0 = full, None = not reported).
+    total_vacancies = scrapy.Field()
 
     # Best-effort address components parsed from `address` by the normalization
     # pipeline (additive; `address` is preserved). Left None when ambiguous.

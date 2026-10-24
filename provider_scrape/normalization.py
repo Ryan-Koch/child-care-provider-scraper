@@ -33,6 +33,7 @@ from provider_scrape.common_fields import (
     person_name,
     run_adapters,
     to_int,
+    wi_total_vacancies,
 )
 
 logger = logging.getLogger(__name__)
@@ -1133,6 +1134,19 @@ FIELD_COLLAPSE_MAP = {
         ("me_school_age_slots", to_int),
         ("nh_school_age_openings", to_int),
         ("vt_school_age_vacancies", to_int),
+    ],
+    # Total open slots as reported (never summed from vacancies_*).
+    # ID's id_openings_available is a yes/no ("Are there openings available"),
+    # deliberately NOT mapped. WI's prose is parsed by wi_total_vacancies.
+    "total_vacancies": [
+        ("ia_total_openings", to_int),
+        ("id_number_of_openings", to_int),
+        ("nd_total_vacancies", to_int),
+        ("tn_vacancy", to_int),
+        ("ut_vacancies", to_int),
+        ("vt_current_vacancy", to_int),
+        ("wa_available_slots", to_int),
+        ("wi_vacancies", wi_total_vacancies),
     ],
 }
 # NOTE (bug_06): `scholarships_accepted` is deliberately NOT in this map --

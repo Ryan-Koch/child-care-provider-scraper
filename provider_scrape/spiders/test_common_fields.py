@@ -580,3 +580,105 @@ def test_vacancies_ri_is_deliberately_excluded():
         "rhode_island", ri_availability=[{"age_group": "Infant (0-12 mo.)", "slot_info": "Slots available"}]
     )
     assert values == (None, None, None, None)
+
+
+# --------------------------------------------------------------------------- #
+# Story 03 -- total vacancies
+# --------------------------------------------------------------------------- #
+def _total(state, **source):
+    item = norm.normalize_item(dict(source), state)
+    return item.get("total_vacancies"), item
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "raw", "expected"),
+    [
+        ("iowa", "ia_total_openings", 2, 2),
+        ("iowa", "ia_total_openings", 0, 0),
+        ("north_dakota", "nd_total_vacancies", 7, 7),
+        ("tennessee", "tn_vacancy", "5", 5),
+        ("tennessee", "tn_vacancy", "0", 0),
+        ("utah", "ut_vacancies", 0, 0),
+        ("utah", "ut_vacancies", 12, 12),
+        ("vermont", "vt_current_vacancy", 3, 3),
+        ("washington", "wa_available_slots", "2", 2),
+        ("washington", "wa_available_slots", "0", 0),
+        ("idaho", "id_number_of_openings", "4", 4),
+        ("idaho", "id_number_of_openings", 4, 4),
+    ],
+)
+def test_total_vacancies_map_states(state, field, raw, expected):
+    total, item = _total(state, **{field: raw})
+    assert total == expected
+    assert item[field] == raw  # additive
+
+
+@pytest.mark.parametrize(
+    ("state", "field"),
+    [
+        ("iowa", "ia_total_openings"),
+        ("north_dakota", "nd_total_vacancies"),
+        ("tennessee", "tn_vacancy"),
+        ("utah", "ut_vacancies"),
+        ("vermont", "vt_current_vacancy"),
+        ("washington", "wa_available_slots"),
+        ("idaho", "id_number_of_openings"),
+        ("wisconsin", "wi_vacancies"),
+    ],
+)
+def test_total_vacancies_missing_or_blank_is_none(state, field):
+    for raw in (None, "", "N/A"):
+        total, _ = _total(state, **{field: raw})
+        assert total is None
+    assert _total(state)[0] is None
+
+
+def test_total_vacancies_idaho_yes_no_flag_is_not_mapped():
+    total, _ = _total("idaho", id_openings_available="Yes")
+    assert total is None
+
+
+def test_total_vacancies_non_numeric_text_is_logged_not_zero(caplog):
+    with caplog.at_level(logging.WARNING):
+        total, _ = _total("tennessee", tn_vacancy="Call for availability")
+    assert total is None
+    assert "Call for availability" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("None Reported.", None),
+        ("0 vacancies have been reported. Last updated on 9/1/2026Vacancies Age Range", 0),
+        ("12 vacancies have been reported. Last updated on 10/14/2026Vacancies Age Range Under 1 Year", 12),
+        ("1 vacancy have been reported. Last updated on 8/5/2026Vacancies Age Range 2-years-old", 1),
+        (None, None),
+    ],
+)
+def test_total_vacancies_wisconsin_prose(raw, expected):
+    total, item = _total("wisconsin", wi_vacancies=raw)
+    assert total == expected
+    assert item["wi_vacancies"] == raw
+
+
+def test_total_vacancies_wisconsin_unrecognised_prose_is_logged(caplog):
+    with caplog.at_level(logging.WARNING):
+        total, _ = _total("wisconsin", wi_vacancies="Ask the provider")
+    assert total is None
+    assert "Ask the provider" in caplog.text
+
+
+def test_total_vacancies_wisconsin_regex_exposes_updated_date_for_story_04():
+    match = cf.WI_VACANCIES_RE.match("3 vacancies have been reported. Last updated on 9/14/2026Vacancies Age Range")
+    assert match.group("count") == "3"
+    assert match.group("updated") == "9/14/2026"
+
+
+def test_total_vacancies_not_derived_from_age_bands():
+    total, _ = _total("colorado", co_infant_openings="3", co_toddler_openings="2")
+    assert total is None
+
+
+def test_total_vacancies_does_not_overwrite_existing():
+    total, _ = _total("iowa", ia_total_openings=4, total_vacancies=9)
+    assert total == 9

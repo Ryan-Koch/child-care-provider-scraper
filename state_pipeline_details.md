@@ -49,6 +49,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `status` | Whitespace cleanup; Controlled vocabulary (status) | License status mapped to the 5-bucket canonical vocabulary (active/provisional/pending/enforcement/closed, else unknown). Replaced in place. |
 | `status_date` | Whitespace cleanup; ISO 8601 date | Date the current status took effect, normalized to ISO 8601 (YYYY-MM-DD). |
 | `toddler` | Whitespace cleanup | Whether the provider serves toddlers: bool-or-None. See infant. |
+| `total_vacancies` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int, wi_total_vacancies) | Total open slots the provider reports (int; `0` = full, empty = not reported). Only what the state publishes -- never summed from the per-age `vacancies_*`. IA, ID, ND, TN, UT, VT, WA, WI; WI's prose (`0 vacancies have been reported...`) is parsed for the leading count and `None Reported.` is empty. |
 | `transportation` | Whitespace cleanup; Field collapse from state-specific source | Transportation offered, collapsed from a single populated state source. |
 | `vacancies_infant` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots the provider reports for the infant age band (int; `0` = full, empty = not reported). Bands are each state's OWN age definitions (e.g. ND infant = 0-17 months, DC = 0-12 months, IA = 0-23 months). Not the infant age-served flag. CO, DC, IA, ME, ND, NH, VT; IA sums full-time + part-time openings. |
 | `vacancies_preschool` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots for the preschool age band (int; `0` = full, empty = not reported). State-defined band; IA sums its 3-year-old and 4-5-year-old rows. See `vacancies_infant`. |
@@ -89,6 +90,7 @@ Each common field is populated from a single populated source field (additive â€
 | `mailing_address` | `al_mailing_address`, `ga_mailing_address`, `hi_mailing_address` |
 | `meals` | `ga_meals`, `hi_meals`, `nj_meal_options_labels`, `nm_meals`, `pa_meal_options`, `ut_meals` |
 | `school_district` | `co_school_district`, `ct_school_districts`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
+| `total_vacancies` | `ia_total_openings` (to_int), `id_number_of_openings` (to_int), `nd_total_vacancies` (to_int), `tn_vacancy` (to_int), `ut_vacancies` (to_int), `vt_current_vacancy` (to_int), `wa_available_slots` (to_int), `wi_vacancies` (wi_total_vacancies) |
 | `transportation` | `ct_transportation`, `ga_transportation`, `nj_transportation_labels` |
 | `vacancies_infant` | `co_infant_openings` (to_int), `me_infant_slots` (to_int), `nh_infant_openings` (to_int), `vt_infant_vacancies` (to_int) |
 | `vacancies_preschool` | `co_preschool_openings` (to_int), `me_preschool_slots` (to_int), `nh_preschool_openings` (to_int), `vt_preschool_vacancies` (to_int) |
@@ -410,7 +412,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ia_region` -> pass-through
 - `ia_regulation_checklist_count` -> pass-through
 - `ia_serves_special_needs` -> pass-through
-- `ia_total_openings` -> pass-through
+- `ia_total_openings` -> collapses into `total_vacancies` (via to_int)
 
 ### Idaho (ID)
 
@@ -425,7 +427,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `id_investigation_resolved` -> pass-through
 - `id_license_status` -> pass-through
 - `id_national_accreditation` -> pass-through
-- `id_number_of_openings` -> pass-through
+- `id_number_of_openings` -> collapses into `total_vacancies` (via to_int)
 - `id_openings_available` -> pass-through
 - `id_opportunities_comment` -> pass-through
 - `id_other_opportunities` -> pass-through
@@ -677,7 +679,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nd_special_populations` -> pass-through
 - `nd_supplemental_care` -> pass-through
 - `nd_total_enrollment` -> pass-through
-- `nd_total_vacancies` -> pass-through
+- `nd_total_vacancies` -> collapses into `total_vacancies` (via to_int)
 - `nd_vacancies_by_age` -> feeds adapter, fills `vacancies_infant`, `vacancies_preschool`, `vacancies_school_age`, `vacancies_toddler`
 - `nd_vacancies_details` -> pass-through
 - `nd_vacancies_updated` -> pass-through
@@ -906,7 +908,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `tn_rating_scorecard` -> pass-through
 - `tn_regulatory_agency` -> pass-through
 - `tn_regulatory_individual` -> collapses into `licensing_specialist` (via person_name)
-- `tn_vacancy` -> pass-through
+- `tn_vacancy` -> collapses into `total_vacancies` (via to_int)
 - `tn_wheelchair_accessible` -> pass-through
 
 ### Texas (TX)
@@ -923,7 +925,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ut_meals` -> collapses into `meals`
 - `ut_quality_rating` -> pass-through
 - `ut_school_district` -> collapses into `school_district`
-- `ut_vacancies` -> pass-through
+- `ut_vacancies` -> collapses into `total_vacancies` (via to_int)
 
 ### Virginia (VA)
 
@@ -945,7 +947,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `vt_area_description` -> pass-through
 - `vt_building_type` -> pass-through
-- `vt_current_vacancy` -> pass-through
+- `vt_current_vacancy` -> collapses into `total_vacancies` (via to_int)
 - `vt_days_of_operation` -> pass-through
 - `vt_guidance` -> pass-through
 - `vt_infant_capacity` -> pass-through
@@ -971,7 +973,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### Washington (WA)
 
-- `wa_available_slots` -> pass-through
+- `wa_available_slots` -> collapses into `total_vacancies` (via to_int)
 - `wa_contacts` -> pass-through
 - `wa_early_achievers_status` -> pass-through
 - `wa_early_head_start` -> pass-through
@@ -1004,7 +1006,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wi_rule_summary` -> pass-through
 - `wi_special_care_types` -> pass-through
 - `wi_unique_services` -> pass-through
-- `wi_vacancies` -> pass-through
+- `wi_vacancies` -> collapses into `total_vacancies` (via wi_total_vacancies)
 - `wi_waitlist` -> pass-through
 - `wi_youngstar_rating` -> pass-through
 

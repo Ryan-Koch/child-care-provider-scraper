@@ -109,4 +109,7 @@ FIELD_DOCS = {
     "State-defined band; IA sums its 3-year-old and 4-5-year-old rows. See `vacancies_infant`.",
     "vacancies_school_age": "Open slots for the school-age band (int; `0` = full, empty = not reported). "
     "State-defined band; IA sums its before/after-school and school-age rows. See `vacancies_infant`.",
+    "total_vacancies": "Total open slots the provider reports (int; `0` = full, empty = not reported). Only what the "
+    "state publishes -- never summed from the per-age `vacancies_*`. IA, ID, ND, TN, UT, VT, WA, WI; WI's prose "
+    "(`0 vacancies have been reported...`) is parsed for the leading count and `None Reported.` is empty.",
 }
