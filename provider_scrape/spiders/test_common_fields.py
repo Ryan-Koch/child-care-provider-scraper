@@ -2484,3 +2484,221 @@ def test_year_round_adapters_never_overwrite():
     item = norm.normalize_item({"ga_operating_months": "JAN,FEB", "year_round": True}, "georgia")
     assert item["year_round"] is True
     assert item["operating_months"] == ["Jan", "Feb"]
+
+
+# --------------------------------------------------------------------------- #
+# serves_special_needs / special_needs_types
+# --------------------------------------------------------------------------- #
+SPECIAL_NEEDS_CASES = [
+    ("Autism Spectrum Disorders", "Autism"),
+    ("Autism", "Autism"),
+    ("Social Emotional Behaviors", "Behavioral/Social-Emotional"),
+    ("Social/Emotional/Behavior Concerns", "Behavioral/Social-Emotional"),
+    ("Behavioral", "Behavioral/Social-Emotional"),
+    ("Emotional/Social", "Behavioral/Social-Emotional"),
+    ("Emotional/Behavioral", "Behavioral/Social-Emotional"),
+    ("ADD/ADHD", "ADHD"),
+    ("ADHD/ADD", "ADHD"),
+    ("Cognitive Delays", "Developmental/Cognitive"),
+    ("Developmental Delays/Learning Disabilities", "Developmental/Cognitive"),
+    ("Intellectual Disabilities", "Developmental/Cognitive"),
+    ("Developmental", "Developmental/Cognitive"),
+    ("Developmental Delay", "Developmental/Cognitive"),
+    ("Speech/Communication", "Speech/Language"),
+    ("Speech/Language Impairment", "Speech/Language"),
+    ("Speech/Language", "Speech/Language"),
+    ("Physical Delays/Limitations", "Physical"),
+    ("Physical Disabilities", "Physical"),
+    ("Physical", "Physical"),
+    ("Hearing/Visual Impairment", "Hearing/Vision"),
+    ("Visual", "Hearing/Vision"),
+    ("Hearing/Sign Language", "Hearing/Vision"),
+    ("Medical/Special Procedures", "Medical/Health"),
+    ("Respiratory Illness", "Medical/Health"),
+    ("Diabetes", "Medical/Health"),
+    ("Seizure Disorders", "Medical/Health"),
+    ("Health Impairment", "Medical/Health"),
+    ("Special Health Needs", "Medical/Health"),
+    ("Seizures", "Medical/Health"),
+    ("Monitors", "Medical/Health"),
+    ("HIV/Hepatitis B", "Medical/Health"),
+    ("Asthma/Allergies", "Medical/Health"),
+    ("Asthma/Severe Allergies", "Medical/Health"),
+    ("Food/Dietary", "Dietary"),
+    ("Special Diet", "Dietary"),
+    ("Sensory Integration", "Sensory"),
+    ("At risk", "At Risk"),
+]
+
+
+def test_special_needs_table_covers_all_categories_and_cases():
+    assert set(cf.SPECIAL_NEEDS_LABELS.values()) == set(cf.SPECIAL_NEEDS_CATEGORIES)
+    assert len(cf.SPECIAL_NEEDS_CATEGORIES) == 11
+    assert {label for label, _ in SPECIAL_NEEDS_CASES} == set(cf.SPECIAL_NEEDS_LABELS)
+
+
+@pytest.mark.parametrize(("label", "category"), SPECIAL_NEEDS_CASES)
+def test_special_needs_label_maps_to_category(label, category):
+    # Case-insensitive and whitespace-trimmed; the same table serves every state.
+    for variant in (label, label.upper(), f"  {label.lower()} "):
+        item = norm.normalize_item({"ma_special_needs": variant}, "massachusetts")
+        assert item["special_needs_types"] == [category]
+        assert item["serves_special_needs"] is True
+
+
+def test_special_needs_iowa():
+    assert norm.normalize_item({"ia_serves_special_needs": "Yes"}, "iowa")["serves_special_needs"] is True
+    item = norm.normalize_item({"ia_serves_special_needs": "No"}, "iowa")
+    assert item["serves_special_needs"] is False
+    assert item["ia_serves_special_needs"] == "No"
+    assert "special_needs_types" not in item
+    assert "serves_special_needs" not in norm.normalize_item({"ia_serves_special_needs": None}, "iowa")
+
+
+def test_special_needs_nebraska():
+    assert norm.normalize_item({"ne_serves_special_needs": True}, "nebraska")["serves_special_needs"] is True
+    item = norm.normalize_item({"ne_serves_special_needs": False}, "nebraska")
+    assert item["serves_special_needs"] is False
+    assert item["ne_serves_special_needs"] is False
+    assert "special_needs_types" not in item
+
+
+def test_special_needs_north_carolina_token():
+    features = ["Provides transportation", "Will enroll children with special needs"]
+    item = norm.normalize_item({"nc_special_features": list(features)}, "north_carolina")
+    assert item["serves_special_needs"] is True
+    assert "special_needs_types" not in item
+    assert item["nc_special_features"] == features
+
+
+@pytest.mark.parametrize("raw", [["Provides transportation"], [], None])
+def test_special_needs_north_carolina_token_absent_is_unset(raw):
+    item = norm.normalize_item({"nc_special_features": raw}, "north_carolina")
+    assert "serves_special_needs" not in item
+    assert "special_needs_types" not in item
+
+
+def test_special_needs_colorado_mapped_labels():
+    raw = "Social Emotional Behaviors; Food/Dietary"
+    item = norm.normalize_item({"co_special_needs": raw}, "colorado")
+    assert item["serves_special_needs"] is True
+    assert item["special_needs_types"] == ["Behavioral/Social-Emotional", "Dietary"]
+    assert item["co_special_needs"] == raw
+
+
+def test_special_needs_colorado_none_is_false():
+    item = norm.normalize_item({"co_special_needs": "None"}, "colorado")
+    assert item["serves_special_needs"] is False
+    assert "special_needs_types" not in item
+
+
+def test_special_needs_colorado_willing_to_support_is_true_without_types():
+    item = norm.normalize_item({"co_special_needs": "Willing to Support"}, "colorado")
+    assert item["serves_special_needs"] is True
+    assert "special_needs_types" not in item
+
+
+def test_special_needs_colorado_willing_plus_label():
+    item = norm.normalize_item({"co_special_needs": "Willing to Support;Diabetes"}, "colorado")
+    assert item["serves_special_needs"] is True
+    assert item["special_needs_types"] == ["Medical/Health"]
+
+
+def test_special_needs_colorado_only_unmapped_is_unset_and_logged(caplog):
+    with caplog.at_level(logging.WARNING):
+        item = norm.normalize_item({"co_special_needs": "Mystery Condition"}, "colorado")
+    assert "serves_special_needs" not in item
+    assert "special_needs_types" not in item
+    assert "Mystery Condition" in caplog.text
+
+
+@pytest.mark.parametrize("raw", ["", None])
+def test_special_needs_colorado_blank_is_unset(raw):
+    item = norm.normalize_item({"co_special_needs": raw}, "colorado")
+    assert "serves_special_needs" not in item
+    assert "special_needs_types" not in item
+
+
+def test_special_needs_connecticut_list():
+    raw = ["Autism Spectrum Disorders", "Intellectual Disabilities", "Developmental Delays/Learning Disabilities"]
+    item = norm.normalize_item({"ct_special_needs": list(raw)}, "connecticut")
+    assert item["serves_special_needs"] is True
+    assert item["special_needs_types"] == ["Autism", "Developmental/Cognitive"]
+    assert item["ct_special_needs"] == raw
+
+
+def test_special_needs_north_dakota_list():
+    raw = ["Special Health Needs", "ADHD/ADD", "Autism"]
+    item = norm.normalize_item({"nd_special_populations": list(raw)}, "north_dakota")
+    assert item["serves_special_needs"] is True
+    assert item["special_needs_types"] == ["Autism", "ADHD", "Medical/Health"]
+    assert item["nd_special_populations"] == raw
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "raw"),
+    [
+        ("connecticut", "ct_special_needs", []),
+        ("connecticut", "ct_special_needs", None),
+        ("north_dakota", "nd_special_populations", []),
+        ("north_dakota", "nd_special_populations", ["N/A"]),
+        ("north_dakota", "nd_special_populations", ["None"]),
+    ],
+)
+def test_special_needs_list_states_empty_or_sentinel_are_unset(state, field, raw):
+    item = norm.normalize_item({field: raw}, state)
+    assert "serves_special_needs" not in item
+    assert "special_needs_types" not in item
+
+
+def test_special_needs_massachusetts_mixed():
+    raw = "Experience;Behavioral;Emotional/Social;ADD/ADHD;Special Diet"
+    item = norm.normalize_item({"ma_special_needs": raw}, "massachusetts")
+    assert item["serves_special_needs"] is True
+    assert item["special_needs_types"] == ["Behavioral/Social-Emotional", "ADHD", "Dietary"]
+    assert item["ma_special_needs"] == raw
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "raw"),
+    [
+        ("massachusetts", "ma_special_needs", "Experience"),
+        ("massachusetts", "ma_special_needs", "EXPERIENCE"),
+        ("new_hampshire", "nh_special_needs", "EXPERIENCE"),
+        ("new_hampshire", "nh_special_needs", "Experience"),
+    ],
+)
+def test_special_needs_experience_alone_is_true_without_types(state, field, raw):
+    item = norm.normalize_item({field: raw}, state)
+    assert item["serves_special_needs"] is True
+    assert "special_needs_types" not in item
+
+
+def test_special_needs_new_hampshire_uppercase_split():
+    raw = "EXPERIENCE, BEHAVIORAL, DEVELOPMENTAL"
+    item = norm.normalize_item({"nh_special_needs": raw}, "new_hampshire")
+    assert item["serves_special_needs"] is True
+    assert item["special_needs_types"] == ["Behavioral/Social-Emotional", "Developmental/Cognitive"]
+    assert item["nh_special_needs"] == raw
+
+
+def test_special_needs_new_hampshire_unmapped_label_logged_and_dropped(caplog):
+    with caplog.at_level(logging.WARNING):
+        item = norm.normalize_item({"nh_special_needs": "BEHAVIORAL, SOMETHING ODD"}, "new_hampshire")
+    assert item["special_needs_types"] == ["Behavioral/Social-Emotional"]
+    assert "SOMETHING ODD" in caplog.text
+
+
+def test_special_needs_duplicate_categories_collapse_in_canonical_order():
+    raw = ["Seizures", "Physical", "Autism", "Monitors", "Autism", "Visual", "Hearing/Sign Language"]
+    item = norm.normalize_item({"nd_special_populations": raw}, "north_dakota")
+    assert item["special_needs_types"] == ["Autism", "Physical", "Hearing/Vision", "Medical/Health"]
+
+
+def test_special_needs_adapters_never_overwrite():
+    item = norm.normalize_item(
+        {"ma_special_needs": "Behavioral", "serves_special_needs": False, "special_needs_types": ["Autism"]},
+        "massachusetts",
+    )
+    assert item["serves_special_needs"] is False
+    assert item["special_needs_types"] == ["Autism"]

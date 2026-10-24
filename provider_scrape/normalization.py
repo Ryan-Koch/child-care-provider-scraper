@@ -1116,6 +1116,13 @@ FIELD_COLLAPSE_MAP = {
         ("nd_enrollment_schedule", nd_year_round),
         ("vt_special_schedule", vt_year_round),
     ],
+    # Yes/No and bool sources; NC is a checklist token (absence -> unset). CO/CT/MA/NH/ND
+    # also fill special_needs_types and are adapters in common_fields.py.
+    "serves_special_needs": [
+        ("ia_serves_special_needs", to_bool),
+        ("ne_serves_special_needs", to_bool),
+        ("nc_special_features", has_list_token("Will enroll children with special needs")),
+    ],
     "license_type": [
         "va_license_type",
         "mt_license_type",

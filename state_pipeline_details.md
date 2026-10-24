@@ -54,7 +54,9 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `scholarships_accepted` | Whitespace cleanup; Field collapse from state-specific source (transforms: has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP)), scholarships_flag) | Whether the provider accepts child-care subsidies/scholarships: bool-or-None. States that emit "Yes"/"No" or NM's "Accepted"/"Not Accepted" are coerced via the shared strict token rule (bug_06); an unparseable token becomes None rather than a guessed True. |
 | `school` | Whitespace cleanup | Whether the provider serves school-age children: bool-or-None. See infant. |
 | `school_district` | Whitespace cleanup; Field collapse from state-specific source | Associated school district, collapsed from a single populated state-specific source field. |
+| `serves_special_needs` | Whitespace cleanup; Field collapse from state-specific source (transforms: has_list_token(Will enroll children with special needs), to_bool) | Whether the provider accommodates children with special needs (bool). IA (`Yes`/`No`) and NE (bool) are copied; NC is True when `nc_special_features` has the `Will enroll children with special needs` entry, else unset (never False). CO: `None` -> False, `Willing to Support` or any mapped label -> True, only unmapped labels -> unset. CT/ND: True when the list has a real entry. MA/NH: True for a mapped label or `Experience` (which is never a type). Absent/empty source -> unset. |
 | `source_provider_id` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_id_string) | The state system's own record key for the provider, as an opaque string (leading zeros kept, ints stringified). State-specific: not comparable across states and not guaranteed unique. One source per state (AK facility_gen_id; VT excluded, NV/WI have no fallback). |
+| `special_needs_types` | Whitespace cleanup | Kinds of special needs accommodated: list of canonical categories from a fixed 11-category list, de-duplicated, in this order: Autism, Behavioral/Social-Emotional, ADHD, Developmental/Cognitive, Speech/Language, Physical, Hearing/Vision, Medical/Health, Dietary, Sensory, At Risk. From CO (`;`-separated), CT/ND (list), MA (`;`-separated) and NH (`, `-separated, UPPERCASE) by an explicit case-insensitive label lookup; `Experience`, `Willing to Support`, `None` and `N/A` are never types and an unmapped label is logged and dropped. Empty -> unset. The state labels stay in the `xx_` source fields. |
 | `status` | Whitespace cleanup; Controlled vocabulary (status) | License status mapped to the 5-bucket canonical vocabulary (active/provisional/pending/enforcement/closed, else unknown). Replaced in place. |
 | `status_date` | Whitespace cleanup; ISO 8601 date | Date the current status took effect, normalized to ISO 8601 (YYYY-MM-DD). |
 | `toddler` | Whitespace cleanup | Whether the provider serves toddlers: bool-or-None. See infant. |
@@ -112,6 +114,7 @@ Each common field is populated from a single populated source field (additive â€
 | `phone_suppressed` | `fl_display_phone_on_web` (invert), `ma_contact_redacted` (to_bool) |
 | `scholarships_accepted` | `fl_is_offering_school_readiness` (scholarships_flag), `nh_financial_assistance` (has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP))), `va_current_subsidy_provider` (scholarships_flag), `wa_subsidy` (scholarships_flag) |
 | `school_district` | `co_school_district`, `ct_school_districts`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
+| `serves_special_needs` | `ia_serves_special_needs` (to_bool), `nc_special_features` (has_list_token(Will enroll children with special needs)), `ne_serves_special_needs` (to_bool) |
 | `source_provider_id` | `ak_facility_gen_id` (to_id_string), `az_facility_id` (to_id_string), `ct_provider_id` (to_id_string), `hi_service_id` (to_id_string), `il_provider_id` (to_id_string), `in_provider_id` (to_id_string), `ky_provider_id` (to_id_string), `la_unique_id` (to_id_string), `ma_program_number` (to_id_string), `ms_facility_id` (to_id_string), `nd_program_id` (to_id_string), `ne_resource_id` (to_id_string), `nh_account_id` (to_id_string), `nj_unique_program_id` (to_id_string), `nv_operation_id` (to_id_string), `ny_facility_id` (to_id_string), `sc_provider_id` (to_id_string), `tn_provider_id` (to_id_string), `tx_operation_id` (to_id_string), `va_ID` (to_id_string), `wa_provider_id` (to_id_string), `wi_facility_number` (to_id_string), `wy_facility_id` (to_id_string) |
 | `total_vacancies` | `ia_total_openings` (to_int), `id_number_of_openings` (to_int), `nd_total_vacancies` (to_int), `tn_vacancy` (to_int), `ut_vacancies` (to_int), `vt_current_vacancy` (to_int), `wa_available_slots` (to_int), `wi_vacancies` (wi_total_vacancies) |
 | `transportation` | `ct_transportation`, `ga_transportation`, `nj_transportation_labels` |
@@ -168,16 +171,21 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `rhode_island` | inspection | `type` | `announced` | Read announced (True) / unannounced (False) from the `type` text; neither word -> unset. |
 | `south_carolina` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
 | `wisconsin` | inspection | `original_status` | `violation_found` | Read violation_found from the `original_status` text via an explicit table; unmatched -> unset. |
+| `colorado` | provider | `co_special_needs` | `serves_special_needs`, `special_needs_types` | CO `co_special_needs` (`;`-separated) -> `serves_special_needs` + `special_needs_types`; `None` -> False. |
 | `connecticut` | provider | `ct_schedule` | `weekly_schedule`, `days_of_operation` | CT `ct_schedule` rows (already 24h `open`/`close`) -> `weekly_schedule`; days derived. |
+| `connecticut` | provider | `ct_special_needs` | `serves_special_needs`, `special_needs_types` | CT `ct_special_needs` (list) -> `special_needs_types`; serves True when non-empty. |
 | `florida` | provider | `hours` | `weekly_schedule`, `days_of_operation` | FL dict-shaped `hours` ({"monday": "6:45AM to 6:00PM", ...}) -> `weekly_schedule`; `hours` kept. |
 | `georgia` | provider | `ga_operating_months` | `operating_months`, `year_round` | GA `ga_operating_months` (`JAN,FEB,...`) -> `operating_months`; year_round = all 12. |
 | `indiana` | provider | `in_schedule` | `weekly_schedule`, `days_of_operation` | IN `in_schedule` rows (12h `open`/`close`) -> 24h `weekly_schedule`; days derived. |
 | `iowa` | provider | `ia_openings_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Sum IA `fullTime` + `partTime` openings per band across the 7 age labels. |
 | `massachusetts` | provider | `ma_schedules` | `weekly_schedule`, `days_of_operation` | MA `ma_schedules`: ONE schedule (Full Year > School Year > Summer > first) -> rows tagged `schedule_type`. |
+| `massachusetts` | provider | `ma_special_needs` | `serves_special_needs`, `special_needs_types` | MA `ma_special_needs` (`;`-separated) -> types; `Experience` -> serves True, never a type. |
 | `mississippi` | provider | `ms_months_of_operation` | `operating_months`, `year_round` | MS `ms_months_of_operation` (list of month names) -> `operating_months`; year_round = all 12. |
 | `new_hampshire` | provider | `nh_schedule` | `weekly_schedule`, `days_of_operation` | NH `nh_schedule` sessions (`start`/`end`, 12h) -> one `weekly_schedule` row each; days derived. |
+| `new_hampshire` | provider | `nh_special_needs` | `serves_special_needs`, `special_needs_types` | NH `nh_special_needs` (`, `-separated UPPERCASE) -> types; `EXPERIENCE` -> serves True, never a type. |
 | `new_york` | provider | `ny_address_omitted`, `ny_phone_number_omitted` | `address_suppressed`, `phone_suppressed` | NY `Address Omitted` / `Phone Number Omitted`: `Y` -> True, blank or absent -> False. |
 | `north_dakota` | provider | `nd_vacancies_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map ND `nd_vacancies_by_age` rows (by age label) onto the four vacancy bands. |
+| `north_dakota` | provider | `nd_special_populations` | `serves_special_needs`, `special_needs_types` | ND `nd_special_populations` (list) -> `special_needs_types`; serves True when non-empty. |
 | `oklahoma` | provider | `ok_schedule` | `weekly_schedule`, `days_of_operation` | OK `ok_schedule` `hours` ("6:30AM - 6:00PM", None when closed) -> `weekly_schedule`; days derived. |
 | `oklahoma` | provider | `ok_care_types` | `year_round` | OK `ok_care_types`: `Year Round` -> True; else a seasonal-only label -> False; else unset. |
 | `south_dakota` | provider | `sd_months_of_operation` | `year_round` | SD `sd_months_of_operation` category list (`12 Months` / seasonal) -> `year_round`. |
@@ -299,7 +307,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `co_quality_rating` -> pass-through
 - `co_school_age_openings` -> collapses into `vacancies_school_age` (via to_int)
 - `co_school_district` -> collapses into `school_district`
-- `co_special_needs` -> pass-through
+- `co_special_needs` -> feeds adapter, fills `serves_special_needs`, `special_needs_types`
 - `co_toddler_openings` -> collapses into `vacancies_toddler` (via to_int)
 
 ### Connecticut (CT)
@@ -334,7 +342,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ct_school_districts` -> collapses into `school_district`
 - `ct_searchable` -> pass-through
 - `ct_severity` -> pass-through
-- `ct_special_needs` -> pass-through
+- `ct_special_needs` -> feeds adapter, fills `serves_special_needs`, `special_needs_types`
 - `ct_transportation` -> collapses into `transportation`
 - `ct_type_of_care` -> pass-through
 - `ct_violations` -> pass-through
@@ -470,7 +478,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ia_referral_listed` -> pass-through
 - `ia_region` -> pass-through
 - `ia_regulation_checklist_count` -> pass-through
-- `ia_serves_special_needs` -> pass-through
+- `ia_serves_special_needs` -> collapses into `serves_special_needs` (via to_bool)
 - `ia_total_openings` -> collapses into `total_vacancies` (via to_int)
 
 ### Idaho (ID)
@@ -612,7 +620,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ma_regional_website` -> pass-through
 - `ma_schedule_options` -> pass-through
 - `ma_schedules` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
-- `ma_special_needs` -> pass-through
+- `ma_special_needs` -> feeds adapter, fills `serves_special_needs`, `special_needs_types`
 - `ma_special_skills` -> pass-through
 - `ma_temporary_status` -> pass-through
 - `ma_umbrella_name` -> pass-through
@@ -721,7 +729,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nc_sanitation_classification` -> pass-through
 - `nc_sanitation_inspection_date` -> pass-through
 - `nc_sanitation_score` -> pass-through
-- `nc_special_features` -> pass-through
+- `nc_special_features` -> collapses into `serves_special_needs` (via has_list_token(Will enroll children with special needs))
 - `nc_staff_child_ratios` -> pass-through
 - `nc_star_rating_max_points` -> pass-through
 - `nc_star_rating_total_points` -> pass-through
@@ -737,7 +745,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nd_philosophy` -> pass-through
 - `nd_program_id` -> collapses into `source_provider_id` (via to_id_string)
 - `nd_quality_rating` -> pass-through
-- `nd_special_populations` -> pass-through
+- `nd_special_populations` -> feeds adapter, fills `serves_special_needs`, `special_needs_types`
 - `nd_supplemental_care` -> pass-through
 - `nd_total_enrollment` -> pass-through
 - `nd_total_vacancies` -> collapses into `total_vacancies` (via to_int)
@@ -752,7 +760,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ne_match_method` -> pass-through
 - `ne_part_time_staff` -> pass-through
 - `ne_resource_id` -> collapses into `source_provider_id` (via to_id_string)
-- `ne_serves_special_needs` -> pass-through
+- `ne_serves_special_needs` -> collapses into `serves_special_needs` (via to_bool)
 - `ne_step_participating` -> pass-through
 - `ne_step_rating` -> pass-through
 - `ne_stepup_only` -> pass-through
@@ -784,7 +792,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nh_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `nh_schedule_options` -> pass-through
 - `nh_school_age_openings` -> collapses into `vacancies_school_age` (via to_int)
-- `nh_special_needs` -> pass-through
+- `nh_special_needs` -> feeds adapter, fills `serves_special_needs`, `special_needs_types`
 - `nh_special_skills` -> pass-through
 - `nh_toddler_openings` -> collapses into `vacancies_toddler` (via to_int)
 - `nh_violations` -> pass-through

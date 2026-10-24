@@ -119,6 +119,17 @@ FIELD_DOCS = {
     "`In-Service Days` and blank unset -- never assumed True) and OK (`Year Round` in `ok_care_types` True; "
     "else `School Year Only`/`Summer Only`/`School Vacation Only` False; else unset) use explicit "
     "case-insensitive lookups; unknown labels are logged and leave it unset.",
+    "serves_special_needs": "Whether the provider accommodates children with special needs (bool). IA "
+    "(`Yes`/`No`) and NE (bool) are copied; NC is True when `nc_special_features` has the `Will enroll children "
+    "with special needs` entry, else unset (never False). CO: `None` -> False, `Willing to Support` or any mapped "
+    "label -> True, only unmapped labels -> unset. CT/ND: True when the list has a real entry. MA/NH: True for a "
+    "mapped label or `Experience` (which is never a type). Absent/empty source -> unset.",
+    "special_needs_types": "Kinds of special needs accommodated: list of canonical categories from a fixed "
+    "11-category list, de-duplicated, in this order: Autism, Behavioral/Social-Emotional, ADHD, "
+    "Developmental/Cognitive, Speech/Language, Physical, Hearing/Vision, Medical/Health, Dietary, Sensory, At Risk. "
+    "From CO (`;`-separated), CT/ND (list), MA (`;`-separated) and NH (`, `-separated, UPPERCASE) by an explicit "
+    "case-insensitive label lookup; `Experience`, `Willing to Support`, `None` and `N/A` are never types and an "
+    "unmapped label is logged and dropped. Empty -> unset. The state labels stay in the `xx_` source fields.",
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
     "deficiencies": "Deficiency/violation count for the provider, coerced to an "
     "integer (bug_10). Digit strings, comma-grouped counts, and integral "

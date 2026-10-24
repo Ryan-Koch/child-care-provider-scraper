@@ -1247,3 +1247,161 @@ def oklahoma_year_round(record):
     if labels.intersection(_OK_SEASONAL_LABELS):
         return {"year_round": False}
     return {}
+
+
+# --------------------------------------------------------------------------- #
+# Special needs (IA, NE, NC, CO, CT, MA, NH, ND)
+# --------------------------------------------------------------------------- #
+# Fixed category list, in the order ``special_needs_types`` is emitted.
+SPECIAL_NEEDS_CATEGORIES = (
+    "Autism",
+    "Behavioral/Social-Emotional",
+    "ADHD",
+    "Developmental/Cognitive",
+    "Speech/Language",
+    "Physical",
+    "Hearing/Vision",
+    "Medical/Health",
+    "Dietary",
+    "Sensory",
+    "At Risk",
+)
+# State label -> canonical category. Lookups are case-insensitive and
+# whitespace-trimmed (see :func:`vocab`), which also covers NH's UPPERCASE
+# MA-style labels. An unmapped label is logged and dropped.
+SPECIAL_NEEDS_LABELS = {
+    # Autism
+    "Autism Spectrum Disorders": "Autism",  # CT
+    "Autism": "Autism",  # ND
+    # Behavioral/Social-Emotional
+    "Social Emotional Behaviors": "Behavioral/Social-Emotional",  # CO
+    "Social/Emotional/Behavior Concerns": "Behavioral/Social-Emotional",  # CT
+    "Behavioral": "Behavioral/Social-Emotional",  # MA
+    "Emotional/Social": "Behavioral/Social-Emotional",  # MA
+    "Emotional/Behavioral": "Behavioral/Social-Emotional",  # ND
+    # ADHD
+    "ADD/ADHD": "ADHD",  # MA
+    "ADHD/ADD": "ADHD",  # ND
+    # Developmental/Cognitive
+    "Cognitive Delays": "Developmental/Cognitive",  # CO
+    "Developmental Delays/Learning Disabilities": "Developmental/Cognitive",  # CT
+    "Intellectual Disabilities": "Developmental/Cognitive",  # CT
+    "Developmental": "Developmental/Cognitive",  # MA
+    "Developmental Delay": "Developmental/Cognitive",  # ND
+    # Speech/Language
+    "Speech/Communication": "Speech/Language",  # CO
+    "Speech/Language Impairment": "Speech/Language",  # CT
+    "Speech/Language": "Speech/Language",  # MA
+    # Physical
+    "Physical Delays/Limitations": "Physical",  # CO
+    "Physical Disabilities": "Physical",  # CT
+    "Physical": "Physical",  # MA, ND
+    # Hearing/Vision
+    "Hearing/Visual Impairment": "Hearing/Vision",  # CT
+    "Visual": "Hearing/Vision",  # ND
+    "Hearing/Sign Language": "Hearing/Vision",  # ND
+    # Medical/Health
+    "Medical/Special Procedures": "Medical/Health",  # CO
+    "Respiratory Illness": "Medical/Health",  # CO
+    "Diabetes": "Medical/Health",  # CO
+    "Seizure Disorders": "Medical/Health",  # CO
+    "Health Impairment": "Medical/Health",  # CT
+    "Special Health Needs": "Medical/Health",  # ND
+    "Seizures": "Medical/Health",  # ND
+    "Monitors": "Medical/Health",  # ND
+    "HIV/Hepatitis B": "Medical/Health",  # ND
+    "Asthma/Allergies": "Medical/Health",  # MA
+    "Asthma/Severe Allergies": "Medical/Health",  # ND
+    # Dietary
+    "Food/Dietary": "Dietary",  # CO
+    "Special Diet": "Dietary",  # MA
+    # Sensory
+    "Sensory Integration": "Sensory",  # MA
+    # At Risk
+    "At risk": "At Risk",  # MA
+}
+_special_needs_category = vocab(SPECIAL_NEEDS_LABELS, name="special_needs")
+
+# Labels that say the provider accepts children with special needs but name no
+# condition: they set ``serves_special_needs`` and are never a type.
+_SPECIAL_NEEDS_MARKERS_CO = {"willing to support"}
+_SPECIAL_NEEDS_MARKERS_MA_NH = {"experience"}
+
+
+def _special_needs_labels(value, separator):
+    """A list, or a ``separator``-joined string, -> trimmed non-empty labels."""
+    if value is None:
+        return []
+    raw = value if isinstance(value, (list, tuple)) else str(value).split(separator)
+    return [str(label).strip() for label in raw if label is not None and str(label).strip()]
+
+
+def _special_needs_fields(labels, *, markers=(), any_label_serves=False):
+    """Adapter result for a list of state labels.
+
+    Mapped labels become de-duplicated ``special_needs_types`` in canonical
+    order. A mapped label or a marker means ``serves_special_needs`` True. With
+    ``any_label_serves`` any non-sentinel label does too (list sources whose
+    mere presence says the provider serves special needs). Nothing usable ->
+    ``{}`` (never False).
+    """
+    categories = set()
+    serves = False
+    for label in labels:
+        if label.lower() in markers:
+            serves = True
+            continue
+        if _is_sentinel(label):
+            continue
+        if any_label_serves:
+            serves = True
+        category = _special_needs_category(label)
+        if category is not None:
+            categories.add(category)
+            serves = True
+    fields = {}
+    if serves:
+        fields["serves_special_needs"] = True
+    if categories:
+        fields["special_needs_types"] = sorted(categories, key=SPECIAL_NEEDS_CATEGORIES.index)
+    return fields
+
+
+@register_adapter("colorado", sources=["co_special_needs"], fills=["serves_special_needs", "special_needs_types"])
+def colorado_special_needs(record):
+    """CO `co_special_needs` (`;`-separated) -> `serves_special_needs` + `special_needs_types`; `None` -> False."""
+    value = record.get("co_special_needs")
+    if isinstance(value, str) and value.strip().lower() == "none":
+        return {"serves_special_needs": False}
+    labels = _special_needs_labels(value, ";")
+    return _special_needs_fields(labels, markers=_SPECIAL_NEEDS_MARKERS_CO)
+
+
+@register_adapter("connecticut", sources=["ct_special_needs"], fills=["serves_special_needs", "special_needs_types"])
+def connecticut_special_needs(record):
+    """CT `ct_special_needs` (list) -> `special_needs_types`; serves True when non-empty."""
+    labels = _special_needs_labels(record.get("ct_special_needs"), ";")
+    return _special_needs_fields(labels, any_label_serves=True)
+
+
+@register_adapter("massachusetts", sources=["ma_special_needs"], fills=["serves_special_needs", "special_needs_types"])
+def massachusetts_special_needs(record):
+    """MA `ma_special_needs` (`;`-separated) -> types; `Experience` -> serves True, never a type."""
+    labels = _special_needs_labels(record.get("ma_special_needs"), ";")
+    return _special_needs_fields(labels, markers=_SPECIAL_NEEDS_MARKERS_MA_NH)
+
+
+@register_adapter("new_hampshire", sources=["nh_special_needs"], fills=["serves_special_needs", "special_needs_types"])
+def new_hampshire_special_needs(record):
+    """NH `nh_special_needs` (`, `-separated UPPERCASE) -> types; `EXPERIENCE` -> serves True, never a type."""
+    labels = _special_needs_labels(record.get("nh_special_needs"), ",")
+    return _special_needs_fields(labels, markers=_SPECIAL_NEEDS_MARKERS_MA_NH)
+
+
+@register_adapter(
+    "north_dakota", sources=["nd_special_populations"], fills=["serves_special_needs", "special_needs_types"]
+)
+def north_dakota_special_needs(record):
+    """ND `nd_special_populations` (list) -> `special_needs_types`; serves True when non-empty."""
+    labels = _special_needs_labels(record.get("nd_special_populations"), ";")
+    return _special_needs_fields(labels, any_label_serves=True)

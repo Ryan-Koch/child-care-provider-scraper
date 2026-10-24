@@ -64,6 +64,8 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `weekly_schedule` | Per-day open/close rows | List of `{day, open, close}`: full day names, 24h `HH:MM`, Mon->Sun, several rows per day allowed (CT/IN/NH/OK/WY/MA/FL via per-state adapters sharing `parse_time`/`split_time_range`; FL parsed from its dict `hours`, which stays as-is; MA picks one schedule - Full Year, else School Year, else Summer, else first - and tags rows with `schedule_type`) |
 | `operating_months` | Months open | List of 3-letter months `Jan`..`Dec`, calendar order (GA/MS/WI via `month_names`/`month_range`: WI ranges wrap the year, GA `OtherSchoolBreak` dropped) |
 | `year_round` | Operates all 12 months | Bool (GA/MS/WI: all 12 months listed; SD/ND/VT/OK by explicit label lookup, seasonal-only -> False, unknown/blank -> unset) |
+| `serves_special_needs` | Accommodates special needs | Bool (IA/NE via `to_bool`; NC from the `Will enroll children with special needs` token, absence -> unset; CO/CT/MA/NH/ND via per-state adapters; CO `None` -> False, `Willing to Support`/`Experience` -> True with no type) |
+| `special_needs_types` | Kinds of special needs | List from a fixed 11-category list (`SPECIAL_NEEDS_LABELS` in `common_fields.py`: explicit case-insensitive label lookup, canonical order, de-duped, unmapped labels logged and dropped; CO/CT/MA/NH/ND) |
 | `ages_served` | Ages accepted | String (lists joined with `, `) |
 | `county` | County | String |
 | `scholarships_accepted` | Subsidy/scholarship acceptance | bool-or-None via `coerce_scholarships_accepted_flag`; FL/VA/WA collapsed from their subsidy flags (WA empty -> unset), NH from the `STATE CC ASSISTANCE (SCHOLARSHIP)` token as a fallback only; OK set by its spider |
