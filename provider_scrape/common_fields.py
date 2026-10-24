@@ -1427,3 +1427,86 @@ def _food_program_from_meals(record):
 # itself is left untouched.
 for _state in ("utah", "pennsylvania", "washington_dc"):
     register_adapter(_state, sources=["meals"], fills=["food_program"])(_food_program_from_meals)
+
+
+# --------------------------------------------------------------------------- #
+# State pre-K participation
+# --------------------------------------------------------------------------- #
+# Program brand per state, set on ``state_prek_program`` only when ``state_prek`` is True.
+STATE_PREK_PROGRAMS = {
+    "florida": "VPK",
+    "rhode_island": "RI Pre-K",
+    "washington": "ECEAP",
+    "washington_dc": "Pre-K Enhancement and Expansion",
+    "kentucky": "Preschool Partnership",
+    "indiana": "On My Way Pre-K",
+    "georgia": "Georgia's Pre-K",
+    "south_carolina": "First Steps 4K",
+    "vermont": "Vermont Universal Pre-K",
+    "nevada": "Nevada Ready! Pre-K",  # official spelling; the source data has no "!"
+}
+
+# State -> bool source field (``to_bool``; False is real, blank/None stays unset).
+_STATE_PREK_BOOL_SOURCES = {
+    "florida": "fl_is_vpk",
+    "rhode_island": "ri_state_prek",
+    "washington": "wa_eceap",
+    "washington_dc": "dc_prek_enhancement",
+    "kentucky": "ky_prek_partnership",
+}
+
+# State -> (token source field, exact whole-entry token, entry separators). Absence -> unset.
+# GA joins entries with ``; `` (and ``Georgia's Pre-K Transition`` is a different entry that
+# does not count), VT with ``, ``; IN/SC are real lists; NV is one value per record, split on
+# both separators defensively.
+_STATE_PREK_TOKEN_SOURCES = {
+    "indiana": ("in_programs", "On My Way Pre-K", ",;"),
+    "georgia": ("ga_other_care_type", "Georgia's Pre-K", ";"),
+    "south_carolina": ("sc_program_participation", "First Steps 4K", ",;"),
+    "vermont": ("vt_program_participation", "Pre-K Program", ","),
+    "nevada": ("nv_site_characteristic", "Nevada Ready Pre-K", ",;"),
+}
+
+
+def _has_entry(value, token, separators):
+    """True if ``token`` equals one whole entry (case-insensitive) of a list or delimited string."""
+    if value is None:
+        return False
+    entries = value if isinstance(value, (list, tuple)) else re.split(f"[{re.escape(separators)}]", str(value))
+    wanted = token.lower()
+    return any(entry is not None and str(entry).strip().lower() == wanted for entry in entries)
+
+
+def _state_prek_fields(state, flag, record):
+    """``state_prek`` plus the brand, which is set only when the flag is True."""
+    if flag is None or record.get("state_prek") is not None:
+        return {}  # nothing to say, or `state_prek` already set (the brand must agree with it)
+    fields = {"state_prek": flag}
+    if flag:
+        fields["state_prek_program"] = STATE_PREK_PROGRAMS[state]
+    return fields
+
+
+def _register_state_prek_bool(state, source):
+    @register_adapter(state, sources=[source], fills=["state_prek", "state_prek_program"])
+    def adapter(record):
+        """Bool `{source}` -> `state_prek`; program brand set only when True."""
+        return _state_prek_fields(state, to_bool(record.get(source)), record)
+
+    adapter.__doc__ = f"`{source}` (bool/Yes-No) -> `state_prek`; program brand set only when True."
+    return adapter
+
+
+def _register_state_prek_token(state, source, token, separators):
+    @register_adapter(state, sources=[source], fills=["state_prek", "state_prek_program"])
+    def adapter(record):
+        return _state_prek_fields(state, True if _has_entry(record.get(source), token, separators) else None, record)
+
+    adapter.__doc__ = f"`{source}` entry `{token}` -> `state_prek` True; absent -> unset (never False)."
+    return adapter
+
+
+for _state, _source in _STATE_PREK_BOOL_SOURCES.items():
+    _register_state_prek_bool(_state, _source)
+for _state, (_source, _token, _separators) in _STATE_PREK_TOKEN_SOURCES.items():
+    _register_state_prek_token(_state, _source, _token, _separators)

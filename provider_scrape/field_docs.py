@@ -135,6 +135,13 @@ FIELD_DOCS = {
     "(`vt_program_participation`), WY (`wy_services`) and UT/PA/DC (the common `meals` text) are matched with one "
     "case-insensitive phrase, `food program|CACFP`: present -> True, absent -> unset (never False). `meals` is "
     "unchanged; the `xx_` sources are kept.",
+    "state_prek": "Whether the provider participates in a publicly funded state pre-K program (bool). FL/RI/WA/DC/KY "
+    "copy their flag (`Yes`/`No` or bool; blank -> unset, False is real). IN/GA/SC/VT/NV match one exact whole entry "
+    "(case-insensitive) in their program list/text: present -> True, absent -> unset (never False). GA "
+    "`Georgia's Pre-K Transition` does not count. The `xx_` sources are kept.",
+    "state_prek_program": "The state's pre-K program brand (string), set only when `state_prek` is True: VPK, RI "
+    "Pre-K, ECEAP, Pre-K Enhancement and Expansion, Preschool Partnership, On My Way Pre-K, Georgia's Pre-K, First "
+    "Steps 4K, Vermont Universal Pre-K, Nevada Ready! Pre-K. One constant per state (`STATE_PREK_PROGRAMS`).",
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
     "deficiencies": "Deficiency/violation count for the provider, coerced to an "
     "integer (bug_10). Digit strings, comma-grouped counts, and integral "

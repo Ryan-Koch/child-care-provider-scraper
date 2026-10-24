@@ -2790,3 +2790,99 @@ def test_food_program_phrase_absent_token_is_none():
 def test_food_program_adapters_never_overwrite():
     item = norm.normalize_item({"ut_meals": "On USDA Food Program", "food_program": False}, "utah")
     assert item["food_program"] is False
+
+
+# --------------------------------------------------------------------------- #
+# State pre-K participation
+# --------------------------------------------------------------------------- #
+PREK_BOOL_CASES = [
+    ("florida", "fl_is_vpk", True, False, "VPK"),
+    ("rhode_island", "ri_state_prek", "Yes", "No", "RI Pre-K"),
+    ("washington", "wa_eceap", "Yes", "No", "ECEAP"),
+    ("washington_dc", "dc_prek_enhancement", True, False, "Pre-K Enhancement and Expansion"),
+    ("kentucky", "ky_prek_partnership", True, False, "Preschool Partnership"),
+]
+PREK_TOKEN_CASES = [
+    ("indiana", "in_programs", ["CCDF Provider", "On My Way Pre-K"], ["CCDF Provider"], "On My Way Pre-K"),
+    ("georgia", "ga_other_care_type", "Summer Camp; Georgia's Pre-K", "Summer Camp", "Georgia's Pre-K"),
+    ("south_carolina", "sc_program_participation", ["First Steps 4K"], ["ABC Quality"], "First Steps 4K"),
+    ("vermont", "vt_program_participation", "Food Program, Pre-K Program", "Food Program", "Vermont Universal Pre-K"),
+    ("nevada", "nv_site_characteristic", "Nevada Ready Pre-K", "Montessori", "Nevada Ready! Pre-K"),
+]
+
+
+@pytest.mark.parametrize(("state", "field", "yes", "no", "brand"), PREK_BOOL_CASES)
+def test_state_prek_bool_states(state, field, yes, no, brand):
+    item = norm.normalize_item({field: yes}, state)
+    assert item["state_prek"] is True
+    assert item["state_prek_program"] == brand
+    assert item[field] == yes
+    item = norm.normalize_item({field: no}, state)
+    assert item["state_prek"] is False
+    assert "state_prek_program" not in item
+    assert item[field] == no
+    for blank in (None, ""):
+        item = norm.normalize_item({field: blank}, state)
+        assert "state_prek" not in item
+        assert "state_prek_program" not in item
+
+
+@pytest.mark.parametrize(("state", "field", "yes", "no", "brand"), PREK_TOKEN_CASES)
+def test_state_prek_token_states(state, field, yes, no, brand):
+    item = norm.normalize_item({field: yes}, state)
+    assert item["state_prek"] is True
+    assert item["state_prek_program"] == brand
+    assert item[field] == yes
+    for absent in (no, None, "", []):
+        item = norm.normalize_item({field: absent}, state)
+        assert "state_prek" not in item
+        assert "state_prek_program" not in item
+
+
+def test_state_prek_georgia_transition_alone_is_unset():
+    item = norm.normalize_item({"ga_other_care_type": "Georgia's Pre-K Transition"}, "georgia")
+    assert "state_prek" not in item
+    assert "state_prek_program" not in item
+
+
+def test_state_prek_georgia_both_entries_is_true():
+    raw = "Georgia's Pre-K Transition; Summer Camp; Georgia's Pre-K"
+    item = norm.normalize_item({"ga_other_care_type": raw}, "georgia")
+    assert item["state_prek"] is True
+    assert item["state_prek_program"] == "Georgia's Pre-K"
+
+
+def test_state_prek_vermont_head_start_alone_is_unset():
+    item = norm.normalize_item({"vt_program_participation": "Head Start Program"}, "vermont")
+    assert "state_prek" not in item
+
+
+def test_state_prek_rhode_island_none_is_unset():
+    item = norm.normalize_item({"ri_state_prek": None}, "rhode_island")
+    assert "state_prek" not in item
+    assert "state_prek_program" not in item
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "raw"),
+    [
+        ("georgia", "ga_other_care_type", "GEORGIA'S PRE-K"),
+        ("vermont", "vt_program_participation", "pre-k program"),
+        ("nevada", "nv_site_characteristic", "nevada ready pre-k"),
+        ("indiana", "in_programs", ["on my way pre-k"]),
+        ("rhode_island", "ri_state_prek", "yes"),
+    ],
+)
+def test_state_prek_is_case_insensitive(state, field, raw):
+    assert norm.normalize_item({field: raw}, state)["state_prek"] is True
+
+
+def test_state_prek_adapters_never_overwrite():
+    item = norm.normalize_item({"fl_is_vpk": True, "state_prek": False}, "florida")
+    assert item["state_prek"] is False
+    assert "state_prek_program" not in item
+
+
+def test_state_prek_other_state_is_not_read():
+    item = norm.normalize_item({"fl_is_vpk": True}, "georgia")
+    assert "state_prek" not in item

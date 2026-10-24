@@ -67,6 +67,8 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `serves_special_needs` | Accommodates special needs | Bool (IA/NE via `to_bool`; NC from the `Will enroll children with special needs` token, absence -> unset; CO/CT/MA/NH/ND via per-state adapters; CO `None` -> False, `Willing to Support`/`Experience` -> True with no type) |
 | `special_needs_types` | Kinds of special needs | List from a fixed 11-category list (`SPECIAL_NEEDS_LABELS` in `common_fields.py`: explicit case-insensitive label lookup, canonical order, de-duped, unmapped labels logged and dropped; CO/CT/MA/NH/ND) |
 | `food_program` | Participates in USDA CACFP | Bool (HI/ID/WA via `to_bool`, WA blank -> unset; DE/VT/WY via the shared `food program\|CACFP` phrase match in the map; UT/PA/DC via state-scoped adapters matching the same phrase in the common `meals`, which is unchanged; phrase absent -> unset, never False) |
+| `state_prek` | Publicly funded state pre-K participation | Bool (FL/RI/WA/DC/KY via `to_bool` in per-state adapters, False real, blank -> unset; IN/GA/SC/VT/NV exact whole-entry token match, absent -> unset, never False; GA `Georgia's Pre-K Transition` excluded) |
+| `state_prek_program` | Pre-K program brand | String from `STATE_PREK_PROGRAMS` in `common_fields.py` (e.g. `VPK`, `ECEAP`), set only when `state_prek` is True |
 | `ages_served` | Ages accepted | String (lists joined with `, `) |
 | `county` | County | String |
 | `scholarships_accepted` | Subsidy/scholarship acceptance | bool-or-None via `coerce_scholarships_accepted_flag`; FL/VA/WA collapsed from their subsidy flags (WA empty -> unset), NH from the `STATE CC ASSISTANCE (SCHOLARSHIP)` token as a fallback only; OK set by its spider |

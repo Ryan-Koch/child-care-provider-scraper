@@ -58,6 +58,8 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `serves_special_needs` | Whitespace cleanup; Field collapse from state-specific source (transforms: has_list_token(Will enroll children with special needs), to_bool) | Whether the provider accommodates children with special needs (bool). IA (`Yes`/`No`) and NE (bool) are copied; NC is True when `nc_special_features` has the `Will enroll children with special needs` entry, else unset (never False). CO: `None` -> False, `Willing to Support` or any mapped label -> True, only unmapped labels -> unset. CT/ND: True when the list has a real entry. MA/NH: True for a mapped label or `Experience` (which is never a type). Absent/empty source -> unset. |
 | `source_provider_id` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_id_string) | The state system's own record key for the provider, as an opaque string (leading zeros kept, ints stringified). State-specific: not comparable across states and not guaranteed unique. One source per state (AK facility_gen_id; VT excluded, NV/WI have no fallback). |
 | `special_needs_types` | Whitespace cleanup | Kinds of special needs accommodated: list of canonical categories from a fixed 11-category list, de-duplicated, in this order: Autism, Behavioral/Social-Emotional, ADHD, Developmental/Cognitive, Speech/Language, Physical, Hearing/Vision, Medical/Health, Dietary, Sensory, At Risk. From CO (`;`-separated), CT/ND (list), MA (`;`-separated) and NH (`, `-separated, UPPERCASE) by an explicit case-insensitive label lookup; `Experience`, `Willing to Support`, `None` and `N/A` are never types and an unmapped label is logged and dropped. Empty -> unset. The state labels stay in the `xx_` source fields. |
+| `state_prek` | Whitespace cleanup | Whether the provider participates in a publicly funded state pre-K program (bool). FL/RI/WA/DC/KY copy their flag (`Yes`/`No` or bool; blank -> unset, False is real). IN/GA/SC/VT/NV match one exact whole entry (case-insensitive) in their program list/text: present -> True, absent -> unset (never False). GA `Georgia's Pre-K Transition` does not count. The `xx_` sources are kept. |
+| `state_prek_program` | Whitespace cleanup | The state's pre-K program brand (string), set only when `state_prek` is True: VPK, RI Pre-K, ECEAP, Pre-K Enhancement and Expansion, Preschool Partnership, On My Way Pre-K, Georgia's Pre-K, First Steps 4K, Vermont Universal Pre-K, Nevada Ready! Pre-K. One constant per state (`STATE_PREK_PROGRAMS`). |
 | `status` | Whitespace cleanup; Controlled vocabulary (status) | License status mapped to the 5-bucket canonical vocabulary (active/provisional/pending/enforcement/closed, else unknown). Replaced in place. |
 | `status_date` | Whitespace cleanup; ISO 8601 date | Date the current status took effect, normalized to ISO 8601 (YYYY-MM-DD). |
 | `toddler` | Whitespace cleanup | Whether the provider serves toddlers: bool-or-None. See infant. |
@@ -177,12 +179,17 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `connecticut` | provider | `ct_schedule` | `weekly_schedule`, `days_of_operation` | CT `ct_schedule` rows (already 24h `open`/`close`) -> `weekly_schedule`; days derived. |
 | `connecticut` | provider | `ct_special_needs` | `serves_special_needs`, `special_needs_types` | CT `ct_special_needs` (list) -> `special_needs_types`; serves True when non-empty. |
 | `florida` | provider | `hours` | `weekly_schedule`, `days_of_operation` | FL dict-shaped `hours` ({"monday": "6:45AM to 6:00PM", ...}) -> `weekly_schedule`; `hours` kept. |
+| `florida` | provider | `fl_is_vpk` | `state_prek`, `state_prek_program` | `fl_is_vpk` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
 | `georgia` | provider | `ga_operating_months` | `operating_months`, `year_round` | GA `ga_operating_months` (`JAN,FEB,...`) -> `operating_months`; year_round = all 12. |
+| `georgia` | provider | `ga_other_care_type` | `state_prek`, `state_prek_program` | `ga_other_care_type` entry `Georgia's Pre-K` -> `state_prek` True; absent -> unset (never False). |
 | `indiana` | provider | `in_schedule` | `weekly_schedule`, `days_of_operation` | IN `in_schedule` rows (12h `open`/`close`) -> 24h `weekly_schedule`; days derived. |
+| `indiana` | provider | `in_programs` | `state_prek`, `state_prek_program` | `in_programs` entry `On My Way Pre-K` -> `state_prek` True; absent -> unset (never False). |
 | `iowa` | provider | `ia_openings_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Sum IA `fullTime` + `partTime` openings per band across the 7 age labels. |
+| `kentucky` | provider | `ky_prek_partnership` | `state_prek`, `state_prek_program` | `ky_prek_partnership` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
 | `massachusetts` | provider | `ma_schedules` | `weekly_schedule`, `days_of_operation` | MA `ma_schedules`: ONE schedule (Full Year > School Year > Summer > first) -> rows tagged `schedule_type`. |
 | `massachusetts` | provider | `ma_special_needs` | `serves_special_needs`, `special_needs_types` | MA `ma_special_needs` (`;`-separated) -> types; `Experience` -> serves True, never a type. |
 | `mississippi` | provider | `ms_months_of_operation` | `operating_months`, `year_round` | MS `ms_months_of_operation` (list of month names) -> `operating_months`; year_round = all 12. |
+| `nevada` | provider | `nv_site_characteristic` | `state_prek`, `state_prek_program` | `nv_site_characteristic` entry `Nevada Ready Pre-K` -> `state_prek` True; absent -> unset (never False). |
 | `new_hampshire` | provider | `nh_schedule` | `weekly_schedule`, `days_of_operation` | NH `nh_schedule` sessions (`start`/`end`, 12h) -> one `weekly_schedule` row each; days derived. |
 | `new_hampshire` | provider | `nh_special_needs` | `serves_special_needs`, `special_needs_types` | NH `nh_special_needs` (`, `-separated UPPERCASE) -> types; `EXPERIENCE` -> serves True, never a type. |
 | `new_york` | provider | `ny_address_omitted`, `ny_phone_number_omitted` | `address_suppressed`, `phone_suppressed` | NY `Address Omitted` / `Phone Number Omitted`: `Y` -> True, blank or absent -> False. |
@@ -191,11 +198,16 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `oklahoma` | provider | `ok_schedule` | `weekly_schedule`, `days_of_operation` | OK `ok_schedule` `hours` ("6:30AM - 6:00PM", None when closed) -> `weekly_schedule`; days derived. |
 | `oklahoma` | provider | `ok_care_types` | `year_round` | OK `ok_care_types`: `Year Round` -> True; else a seasonal-only label -> False; else unset. |
 | `pennsylvania` | provider | `meals` | `food_program` | The common `meals` text mentioning the food program -> `food_program` True; else unset. |
+| `rhode_island` | provider | `ri_state_prek` | `state_prek`, `state_prek_program` | `ri_state_prek` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
+| `south_carolina` | provider | `sc_program_participation` | `state_prek`, `state_prek_program` | `sc_program_participation` entry `First Steps 4K` -> `state_prek` True; absent -> unset (never False). |
 | `south_dakota` | provider | `sd_months_of_operation` | `year_round` | SD `sd_months_of_operation` category list (`12 Months` / seasonal) -> `year_round`. |
 | `utah` | provider | `meals` | `food_program` | The common `meals` text mentioning the food program -> `food_program` True; else unset. |
+| `vermont` | provider | `vt_program_participation` | `state_prek`, `state_prek_program` | `vt_program_participation` entry `Pre-K Program` -> `state_prek` True; absent -> unset (never False). |
 | `virginia` | provider | `va_inspector` | `licensing_specialist`, `licensing_specialist_phone` | Split `va_inspector` ("Name: (555) 555-5555") into specialist name + phone; `N/A` -> None. |
+| `washington` | provider | `wa_eceap` | `state_prek`, `state_prek_program` | `wa_eceap` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
 | `washington_dc` | provider | `dc_enrollment` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map DC `dc_enrollment` `openings` (text; `Not Applicable` -> None) onto the four vacancy bands. |
 | `washington_dc` | provider | `meals` | `food_program` | The common `meals` text mentioning the food program -> `food_program` True; else unset. |
+| `washington_dc` | provider | `dc_prek_enhancement` | `state_prek`, `state_prek_program` | `dc_prek_enhancement` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
 | `wisconsin` | provider | `wi_months_open` | `operating_months`, `year_round` | WI `wi_months_open` (`Sep - Jun`, wraps the year) -> `operating_months`; year_round = all 12. |
 | `wyoming` | provider | `wy_schedule` | `weekly_schedule`, `days_of_operation` | WY `wy_schedule` rows (`start`/`end`, 24h) -> `weekly_schedule`; days derived. |
 
@@ -361,7 +373,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `dc_enrollment` -> feeds adapter, fills `vacancies_infant`, `vacancies_preschool`, `vacancies_school_age`, `vacancies_toddler`
 - `dc_nontraditional_hours` -> pass-through
 - `dc_pay_equity_fund` -> pass-through
-- `dc_prek_enhancement` -> pass-through
+- `dc_prek_enhancement` -> feeds adapter, fills `state_prek`, `state_prek_program`
 
 ### Delaware (DE)
 
@@ -400,7 +412,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `fl_is_public_school` -> pass-through
 - `fl_is_religious_exempt` -> pass-through
 - `fl_is_trauma_badge` -> pass-through
-- `fl_is_vpk` -> pass-through
+- `fl_is_vpk` -> feeds adapter, fills `state_prek`, `state_prek_program`
 - `fl_license_status` -> pass-through
 - `fl_programs` -> pass-through
 - `fl_services` -> pass-through
@@ -434,7 +446,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ga_meals` -> collapses into `meals`
 - `ga_operating_days` -> collapses into `days_of_operation` (via day_names)
 - `ga_operating_months` -> feeds adapter, fills `operating_months`, `year_round`
-- `ga_other_care_type` -> pass-through
+- `ga_other_care_type` -> feeds adapter, fills `state_prek`, `state_prek_program`
 - `ga_profit_status` -> pass-through
 - `ga_program_status` -> pass-through
 - `ga_quality_rated_level` -> pass-through
@@ -534,7 +546,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `in_licensed_ages` -> pass-through
 - `in_location_id` -> pass-through
 - `in_noncompliance` -> pass-through
-- `in_programs` -> pass-through
+- `in_programs` -> feeds adapter, fills `state_prek`, `state_prek_program`
 - `in_provider_id` -> collapses into `source_provider_id` (via to_id_string)
 - `in_ptq_level` -> pass-through
 - `in_rule_code` -> pass-through
@@ -569,7 +581,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ky_ongoing_process` -> pass-through
 - `ky_ongoing_processes` -> pass-through
 - `ky_poc_id` -> pass-through
-- `ky_prek_partnership` -> pass-through
+- `ky_prek_partnership` -> feeds adapter, fills `state_prek`, `state_prek_program`
 - `ky_provider_id` -> collapses into `source_provider_id` (via to_id_string)
 - `ky_report_name` -> pass-through
 - `ky_service_costs` -> pass-through
@@ -882,7 +894,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nv_rating_period_start` -> pass-through
 - `nv_rating_priority` -> pass-through
 - `nv_region` -> pass-through
-- `nv_site_characteristic` -> pass-through
+- `nv_site_characteristic` -> feeds adapter, fills `state_prek`, `state_prek_program`
 - `nv_star_rating` -> pass-through
 
 ### New York (NY)
@@ -951,7 +963,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ri_provider_contact_name` -> pass-through
 - `ri_provider_email` -> pass-through
 - `ri_services_offered` -> pass-through
-- `ri_state_prek` -> pass-through
+- `ri_state_prek` -> feeds adapter, fills `state_prek`, `state_prek_program`
 
 ### South Carolina (SC)
 
@@ -963,7 +975,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `sc_license_category` -> pass-through
 - `sc_licensing_specialist_name` -> collapses into `licensing_specialist` (via last_first_name)
 - `sc_licensing_specialist_phone` -> collapses into `licensing_specialist_phone` (via none_if_sentinel)
-- `sc_program_participation` -> pass-through
+- `sc_program_participation` -> feeds adapter, fills `state_prek`, `state_prek_program`
 - `sc_provider_id` -> collapses into `source_provider_id` (via to_id_string)
 
 ### South Dakota (SD)
@@ -1051,7 +1063,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wa_contacts` -> pass-through
 - `wa_early_achievers_status` -> pass-through
 - `wa_early_head_start` -> collapses into `early_head_start` (via coerce_bool)
-- `wa_eceap` -> pass-through
+- `wa_eceap` -> feeds adapter, fills `state_prek`, `state_prek_program`
 - `wa_food_program` -> collapses into `food_program` (via to_bool)
 - `wa_head_start` -> collapses into `head_start` (via coerce_bool)
 - `wa_languages_of_instruction` -> pass-through
