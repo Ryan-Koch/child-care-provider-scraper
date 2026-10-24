@@ -33,7 +33,9 @@ from provider_scrape.common_fields import (
     person_name,
     run_adapters,
     to_int,
+    to_iso_date,
     wi_total_vacancies,
+    wi_vacancies_updated_date,
 )
 
 logger = logging.getLogger(__name__)
@@ -1147,6 +1149,15 @@ FIELD_COLLAPSE_MAP = {
         ("vt_current_vacancy", to_int),
         ("wa_available_slots", to_int),
         ("wi_vacancies", wi_total_vacancies),
+    ],
+    # "As of" date of the provider's self-reported openings (ISO). ME/ND are
+    # already ISO (to_iso_date is idempotent); WI's date is inside the prose.
+    "vacancies_updated_date": [
+        ("ia_openings_as_of", to_iso_date),
+        ("me_openings_updated", to_iso_date),
+        ("nd_vacancies_updated", to_iso_date),
+        ("vt_vacancy_as_of", to_iso_date),
+        ("wi_vacancies", wi_vacancies_updated_date),
     ],
 }
 # NOTE (bug_06): `scholarships_accepted` is deliberately NOT in this map --

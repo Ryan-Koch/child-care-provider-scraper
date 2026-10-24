@@ -583,7 +583,7 @@ def test_vacancies_ri_is_deliberately_excluded():
 
 
 # --------------------------------------------------------------------------- #
-# Story 03 -- total vacancies
+# Total vacancies
 # --------------------------------------------------------------------------- #
 def _total(state, **source):
     item = norm.normalize_item(dict(source), state)
@@ -668,7 +668,7 @@ def test_total_vacancies_wisconsin_unrecognised_prose_is_logged(caplog):
     assert "Ask the provider" in caplog.text
 
 
-def test_total_vacancies_wisconsin_regex_exposes_updated_date_for_story_04():
+def test_total_vacancies_wisconsin_regex_exposes_updated_date():
     match = cf.WI_VACANCIES_RE.match("3 vacancies have been reported. Last updated on 9/14/2026Vacancies Age Range")
     assert match.group("count") == "3"
     assert match.group("updated") == "9/14/2026"
@@ -682,3 +682,71 @@ def test_total_vacancies_not_derived_from_age_bands():
 def test_total_vacancies_does_not_overwrite_existing():
     total, _ = _total("iowa", ia_total_openings=4, total_vacancies=9)
     assert total == 9
+
+
+# --------------------------------------------------------------------------- #
+# Vacancies updated date
+# --------------------------------------------------------------------------- #
+def _updated(state, **source):
+    item = norm.normalize_item(dict(source), state)
+    return item.get("vacancies_updated_date"), item
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "raw", "expected"),
+    [
+        ("iowa", "ia_openings_as_of", "09/15/2026", "2026-09-15"),
+        ("maine", "me_openings_updated", "2025-05-29", "2025-05-29"),
+        ("north_dakota", "nd_vacancies_updated", "2025-05-29", "2025-05-29"),
+        ("vermont", "vt_vacancy_as_of", "09/08/2026", "2026-09-08"),
+    ],
+)
+def test_vacancies_updated_date_map_states(state, field, raw, expected):
+    updated, item = _updated(state, **{field: raw})
+    assert updated == expected
+    assert item[field] == raw  # additive
+
+
+@pytest.mark.parametrize(
+    ("state", "field"),
+    [
+        ("iowa", "ia_openings_as_of"),
+        ("maine", "me_openings_updated"),
+        ("north_dakota", "nd_vacancies_updated"),
+        ("vermont", "vt_vacancy_as_of"),
+        ("wisconsin", "wi_vacancies"),
+    ],
+)
+def test_vacancies_updated_date_missing_or_blank_is_none(state, field):
+    for raw in (None, "", "N/A"):
+        updated, _ = _updated(state, **{field: raw})
+        assert updated is None
+    assert _updated(state)[0] is None
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("None Reported.", None),
+        ("0 vacancies have been reported. Last updated on 9/1/2026Vacancies Age Range", "2026-09-01"),
+        ("12 vacancies have been reported. Last updated on 10/14/2026Vacancies Age Range", "2026-10-14"),
+        ("1 vacancy have been reported.", None),  # no date in the prose
+        (None, None),
+    ],
+)
+def test_vacancies_updated_date_wisconsin_prose(raw, expected):
+    updated, item = _updated("wisconsin", wi_vacancies=raw)
+    assert updated == expected
+    assert item["wi_vacancies"] == raw
+
+
+def test_vacancies_updated_date_wisconsin_unrecognised_prose_is_logged(caplog):
+    with caplog.at_level(logging.WARNING):
+        updated, _ = _updated("wisconsin", wi_vacancies="Ask the provider")
+    assert updated is None
+    assert "Ask the provider" in caplog.text
+
+
+def test_vacancies_updated_date_does_not_overwrite_existing():
+    updated, _ = _updated("iowa", ia_openings_as_of="09/15/2026", vacancies_updated_date="2026-01-01")
+    assert updated == "2026-01-01"

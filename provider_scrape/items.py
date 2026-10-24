@@ -331,6 +331,8 @@ class ProviderItem(scrapy.Item):
     vacancies_school_age = scrapy.Field()
     # Total open slots the provider reports (int; 0 = full, None = not reported).
     total_vacancies = scrapy.Field()
+    # Date the provider last updated its vacancy counts (ISO YYYY-MM-DD).
+    vacancies_updated_date = scrapy.Field()
 
     # Best-effort address components parsed from `address` by the normalization
     # pipeline (additive; `address` is preserved). Left None when ambiguous.

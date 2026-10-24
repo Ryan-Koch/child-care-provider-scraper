@@ -112,4 +112,7 @@ FIELD_DOCS = {
     "total_vacancies": "Total open slots the provider reports (int; `0` = full, empty = not reported). Only what the "
     "state publishes -- never summed from the per-age `vacancies_*`. IA, ID, ND, TN, UT, VT, WA, WI; WI's prose "
     "(`0 vacancies have been reported...`) is parsed for the leading count and `None Reported.` is empty.",
+    "vacancies_updated_date": "Date the provider last updated its vacancy counts (`YYYY-MM-DD`; empty = not reported). "
+    "Freshness for `total_vacancies` / `vacancies_*`. IA, ME, ND, VT; WI's date is parsed from the `Last updated on` "
+    "text in its vacancy prose.",
 }

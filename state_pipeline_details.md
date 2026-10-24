@@ -55,6 +55,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `vacancies_preschool` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots for the preschool age band (int; `0` = full, empty = not reported). State-defined band; IA sums its 3-year-old and 4-5-year-old rows. See `vacancies_infant`. |
 | `vacancies_school_age` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots for the school-age band (int; `0` = full, empty = not reported). State-defined band; IA sums its before/after-school and school-age rows. See `vacancies_infant`. |
 | `vacancies_toddler` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots for the toddler age band (int; `0` = full, empty = not reported). State-defined band; see `vacancies_infant`. |
+| `vacancies_updated_date` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_iso_date, wi_vacancies_updated_date) | Date the provider last updated its vacancy counts (`YYYY-MM-DD`; empty = not reported). Freshness for `total_vacancies` / `vacancies_*`. IA, ME, ND, VT; WI's date is parsed from the `Last updated on` text in its vacancy prose. |
 
 > Inspections are normalized too: every string value gets whitespace cleanup, and the date fields (`date`, `status_updated`, `az_date_resolved`, `in_correction_date`, `ms_end_date`, `mo_disposition_date`) are converted to ISO 8601. The `status` vocabulary does not apply to inspections.
 
@@ -96,6 +97,7 @@ Each common field is populated from a single populated source field (additive â€
 | `vacancies_preschool` | `co_preschool_openings` (to_int), `me_preschool_slots` (to_int), `nh_preschool_openings` (to_int), `vt_preschool_vacancies` (to_int) |
 | `vacancies_school_age` | `co_school_age_openings` (to_int), `me_school_age_slots` (to_int), `nh_school_age_openings` (to_int), `vt_school_age_vacancies` (to_int) |
 | `vacancies_toddler` | `co_toddler_openings` (to_int), `me_toddler_slots` (to_int), `nh_toddler_openings` (to_int), `vt_toddler_vacancies` (to_int) |
+| `vacancies_updated_date` | `ia_openings_as_of` (to_iso_date), `me_openings_updated` (to_iso_date), `nd_vacancies_updated` (to_iso_date), `vt_vacancy_as_of` (to_iso_date), `wi_vacancies` (wi_vacancies_updated_date) |
 
 ## Inspection field-collapse map
 
@@ -405,7 +407,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ia_compliance_report_count` -> pass-through
 - `ia_days_of_operation` -> pass-through
 - `ia_iq4k_level` -> pass-through
-- `ia_openings_as_of` -> pass-through
+- `ia_openings_as_of` -> collapses into `vacancies_updated_date` (via to_iso_date)
 - `ia_openings_by_age` -> feeds adapter, fills `vacancies_infant`, `vacancies_preschool`, `vacancies_school_age`, `vacancies_toddler`
 - `ia_padded_license_id` -> pass-through
 - `ia_referral_listed` -> pass-through
@@ -578,7 +580,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `me_licensed_to` -> pass-through
 - `me_licensing_specialist` -> collapses into `licensing_specialist` (via person_name)
 - `me_licensing_specialist_email` -> collapses into `licensing_specialist_email` (via lower_email)
-- `me_openings_updated` -> pass-through
+- `me_openings_updated` -> collapses into `vacancies_updated_date` (via to_iso_date)
 - `me_preschool_slots` -> collapses into `vacancies_preschool` (via to_int)
 - `me_school_age_slots` -> collapses into `vacancies_school_age` (via to_int)
 - `me_star_rating` -> pass-through
@@ -682,7 +684,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nd_total_vacancies` -> collapses into `total_vacancies` (via to_int)
 - `nd_vacancies_by_age` -> feeds adapter, fills `vacancies_infant`, `vacancies_preschool`, `vacancies_school_age`, `vacancies_toddler`
 - `nd_vacancies_details` -> pass-through
-- `nd_vacancies_updated` -> pass-through
+- `nd_vacancies_updated` -> collapses into `vacancies_updated_date` (via to_iso_date)
 
 ### Nebraska (NE)
 
@@ -969,7 +971,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `vt_toddler_capacity` -> pass-through
 - `vt_toddler_vacancies` -> collapses into `vacancies_toddler` (via to_int)
 - `vt_type_of_care` -> pass-through
-- `vt_vacancy_as_of` -> pass-through
+- `vt_vacancy_as_of` -> collapses into `vacancies_updated_date` (via to_iso_date)
 
 ### Washington (WA)
 
@@ -1006,7 +1008,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wi_rule_summary` -> pass-through
 - `wi_special_care_types` -> pass-through
 - `wi_unique_services` -> pass-through
-- `wi_vacancies` -> collapses into `total_vacancies` (via wi_total_vacancies)
+- `wi_vacancies` -> collapses into `vacancies_updated_date` (via wi_vacancies_updated_date)
 - `wi_waitlist` -> pass-through
 - `wi_youngstar_rating` -> pass-through
 
