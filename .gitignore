@@ -26,3 +26,6 @@ webshare.env
 
 # Local docker-compose overrides (host-specific DOCKER_UID/DOCKER_GID, etc.)
 .env
+
+# sample data 
+hf_sample/ 

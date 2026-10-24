@@ -24,6 +24,29 @@ import logging
 import re
 from datetime import datetime
 
+from provider_scrape.common_fields import (
+    INSPECTION_LEVEL,
+    announced_flag,
+    day_names,
+    has_list_token,
+    invert,
+    is_present,
+    last_first_name,
+    license_holder_address,
+    lower_email,
+    md_finding_flag,
+    none_if_sentinel,
+    person_name,
+    phone_extension_digits,
+    run_adapters,
+    to_bool,
+    to_id_string,
+    to_int,
+    to_iso_date,
+    wi_total_vacancies,
+    wi_vacancies_updated_date,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -970,13 +993,121 @@ def facility_category_from_type(provider_type):
 # Task 07 — field collapse (state-specific -> common, additive D2)
 # --------------------------------------------------------------------------- #
 
+_AFFIRMATIVE = {"yes", "y", "true", "t", "1"}
+_NEGATIVE = {"no", "n", "false", "f", "0", "none", "n/a", "na", "not applicable"}
+
+
+# Shared with provider_scrape.common_fields (adapters use the same rule).
+_is_present = is_present
+
+
+def _coerce_bool(value):
+    """Best-effort map of a mixed boolean/text value to ``True``/``False``."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        token = value.strip().lower()
+        if token in _NEGATIVE:
+            return False
+        if token in _AFFIRMATIVE:
+            return True
+        # Any other descriptive, non-empty text (e.g. a program name) is
+        # treated as affirmative presence of the program.
+        return True
+    return bool(value)
+
+
+def _scholarships_flag(value):
+    """Forward reference to :func:`coerce_scholarships_accepted_flag`, which is
+    defined below this map (late binding keeps the map near the top)."""
+    return coerce_scholarships_accepted_flag(value)
+
+
 # common field -> source state-specific fields. Populating the common field
-# never removes the source field (D2). Approved set from plan §6; the
-# license_begin_date date-merge is intentionally excluded, and quality ratings
-# are never collapsed (they stay state-specific). Keep owner/licensee mailing
-# addresses (nc_owner_mailing_address, mi_licensee_address) and VPK-specific
-# curriculum (fl_vpk_curriculum) OUT of these lists.
+# never removes the source field (D2). Each entry is either a plain source
+# field name (copied as-is) or a ``(source, transform)`` tuple, where
+# ``transform`` is a ``value -> value`` callable (see common_fields.py; ``None``
+# means copy as-is) -- e.g. ``("fl_display_address_on_web", invert)``. The
+# transform runs on the one populated source; a ``None`` result leaves the
+# common field unset. Multi-source / one-source-to-several-fields cases do not
+# belong here: register a per-state adapter in common_fields.py instead.
+# Approved set from plan §6; the round-1 cross-state license_begin_date
+# merge stays excluded (only NC's current-license effective date feeds it,
+# below), and quality ratings are never collapsed (they stay state-specific).
+# Keep VPK-specific curriculum (fl_vpk_curriculum) OUT of these lists. Owner/licensee mailing addresses
+# (nc_owner_mailing_address, mi_licensee_address) stay out of
+# `mailing_address`; they feed `license_holder_address` instead.
 FIELD_COLLAPSE_MAP = {
+    # Trade name ("doing business as"). FL note: the FL API already returns the
+    # DBA as `providerName`, so fl_dba always equals provider_name; mapping it
+    # marks provider_name as a trade name rather than adding a new one. WA's
+    # license name and MA's umbrella org are different concepts: not mapped.
+    "doing_business_as": [
+        ("fl_dba", none_if_sentinel),
+        ("ok_doing_business_as", none_if_sentinel),
+    ],
+    # License holder's own address (distinct from the facility's mailing
+    # address). The transform cleans it, so it does not depend on the
+    # `address` cleanup step. MO's mo_mailing_address is deferred, not mapped.
+    "license_holder_address": [
+        ("mi_licensee_address", license_holder_address),
+        ("nc_owner_mailing_address", license_holder_address),
+    ],
+    # Weekdays open, as full day names in Monday -> Sunday order. GA uses
+    # 2-letter codes, IA 3-letter abbreviations, VT full names.
+    "days_of_operation": [
+        ("ga_operating_days", day_names),
+        ("ia_days_of_operation", day_names),
+        ("vt_days_of_operation", day_names),
+    ],
+    # Subsidy acceptance. WA's "Yes"/None only ever says yes (empty -> unset,
+    # never False). NH's checklist is a fallback only: the NH spider sets the
+    # field from its detail-page label, which wins; token absent -> unset.
+    "scholarships_accepted": [
+        ("fl_is_offering_school_readiness", _scholarships_flag),
+        ("va_current_subsidy_provider", _scholarships_flag),
+        ("wa_subsidy", _scholarships_flag),
+        ("nh_financial_assistance", has_list_token("STATE CC ASSISTANCE (SCHOLARSHIP)")),
+    ],
+    # Start of the CURRENT license term. NC's spider takes licenses[0] as the
+    # current license (older ones go to nc_license_history), so its effective
+    # date is the term start. Other states' license_begin_date are untouched.
+    "license_begin_date": [
+        ("nc_license_effective_date", to_iso_date),
+    ],
+    # The state system's own record key, one source per state. Opaque and
+    # state-specific. AK uses facility_gen_id (the key in its profile and
+    # inspection URLs), not ak_facility_number; NV has no fallback to
+    # nv_license_base and WI does not use wi_location_number. VT is excluded
+    # on purpose: vt_provider_id equals license_number in every row and has
+    # duplicates, so it adds nothing.
+    "source_provider_id": [
+        ("ak_facility_gen_id", to_id_string),
+        ("az_facility_id", to_id_string),
+        ("ct_provider_id", to_id_string),
+        ("hi_service_id", to_id_string),
+        ("il_provider_id", to_id_string),
+        ("in_provider_id", to_id_string),
+        ("ky_provider_id", to_id_string),
+        ("la_unique_id", to_id_string),
+        ("ma_program_number", to_id_string),
+        ("ms_facility_id", to_id_string),
+        ("ne_resource_id", to_id_string),
+        ("nh_account_id", to_id_string),
+        ("nj_unique_program_id", to_id_string),
+        ("nv_operation_id", to_id_string),
+        ("ny_facility_id", to_id_string),
+        ("nd_program_id", to_id_string),
+        ("sc_provider_id", to_id_string),
+        ("tn_provider_id", to_id_string),
+        ("tx_operation_id", to_id_string),
+        ("va_ID", to_id_string),
+        ("wa_provider_id", to_id_string),
+        ("wi_facility_number", to_id_string),
+        ("wy_facility_id", to_id_string),
+    ],
     "license_type": [
         "va_license_type",
         "mt_license_type",
@@ -1033,75 +1164,247 @@ FIELD_COLLAPSE_MAP = {
     ],
     # bug_07: nj_transportation renamed to resolved nj_transportation_labels.
     "transportation": ["ga_transportation", "nj_transportation_labels", "ct_transportation"],
+    # Every head_start source is coerced to a boolean.
     "head_start": [
-        "co_head_start",
-        "az_headstart",
-        "wa_head_start",
-        "ri_head_start",
-        "fl_is_head_start",
-        "ct_head_start",
-        "nh_head_start",
+        (source, _coerce_bool)
+        for source in (
+            "co_head_start",
+            "az_headstart",
+            "wa_head_start",
+            "ri_head_start",
+            "fl_is_head_start",
+            "ct_head_start",
+            "nh_head_start",
+        )
+    ],
+    # Early Head Start is a distinct program from head_start: its sources are
+    # never added to the head_start list above.
+    "early_head_start": [
+        (source, _coerce_bool)
+        for source in (
+            "ms_early_head_start",
+            "nh_early_head_start",
+            "wa_early_head_start",
+        )
+    ],
+    # CT stores real bools, TN Yes/No text. NH lists it as one token in a
+    # comma-separated environment checklist: token present -> True, absent ->
+    # None (a checklist omission is not a confirmed "no").
+    "wheelchair_accessible": [
+        ("ct_wheelchair_accessible", _coerce_bool),
+        ("tn_wheelchair_accessible", _coerce_bool),
+        ("nh_environment", has_list_token("WHEELCHAIR ACCESSIBLE")),
+    ],
+    # True = the state deliberately withheld it. FL publishes the opposite
+    # ("display on web"), so it is inverted. MA's single "contact redacted" flag
+    # feeds both fields. NY (blank -> False) is an adapter in common_fields.py.
+    "address_suppressed": [
+        ("ct_address_suppressed", to_bool),
+        ("ks_address_suppressed", to_bool),
+        ("fl_display_address_on_web", invert),
+        ("ma_contact_redacted", to_bool),
+    ],
+    "phone_suppressed": [
+        ("fl_display_phone_on_web", invert),
+        ("ma_contact_redacted", to_bool),
+    ],
+    # Extension that goes with `phone`. NY's input mask leaves underscore padding
+    # (`11202_____`); both states carry stray words, which become None.
+    "phone_extension": [
+        ("nj_phone_extension", phone_extension_digits),
+        ("ny_phone_extension", phone_extension_digits),
     ],
     "curriculum": ["ga_curriculum", "nj_curriculum"],
+    # Assigned licensing specialist. VA (va_inspector packs name +
+    # phone) is an adapter in common_fields.py. ma_licensor is the provider-level
+    # field only; the inspection-level one is the inspector field.
+    "licensing_specialist": [
+        ("ak_licensing_specialist", person_name),
+        ("ma_licensor", person_name),
+        ("me_licensing_specialist", person_name),
+        ("ok_licensing_specialist", person_name),
+        ("sc_licensing_specialist_name", last_first_name),  # "Last, First" -> "First Last"
+        ("tn_regulatory_individual", person_name),
+        ("wv_licensing_specialist", person_name),  # ALL-CAPS -> Title Case
+    ],
+    "licensing_specialist_phone": [
+        ("ok_licensing_specialist_phone", none_if_sentinel),
+        ("sc_licensing_specialist_phone", none_if_sentinel),
+    ],
+    "licensing_specialist_email": [("me_licensing_specialist_email", lower_email)],
+    # Open slots per age band (the state's own band definitions).
+    # IA, ND and DC are adapters in common_fields.py (one list -> four fields).
+    "vacancies_infant": [
+        ("co_infant_openings", to_int),
+        ("me_infant_slots", to_int),
+        ("nh_infant_openings", to_int),
+        ("vt_infant_vacancies", to_int),
+    ],
+    "vacancies_toddler": [
+        ("co_toddler_openings", to_int),
+        ("me_toddler_slots", to_int),
+        ("nh_toddler_openings", to_int),
+        ("vt_toddler_vacancies", to_int),
+    ],
+    "vacancies_preschool": [
+        ("co_preschool_openings", to_int),
+        ("me_preschool_slots", to_int),
+        ("nh_preschool_openings", to_int),
+        ("vt_preschool_vacancies", to_int),
+    ],
+    "vacancies_school_age": [
+        ("co_school_age_openings", to_int),
+        ("me_school_age_slots", to_int),
+        ("nh_school_age_openings", to_int),
+        ("vt_school_age_vacancies", to_int),
+    ],
+    # Total open slots as reported (never summed from vacancies_*).
+    # ID's id_openings_available is a yes/no ("Are there openings available"),
+    # deliberately NOT mapped. WI's prose is parsed by wi_total_vacancies.
+    "total_vacancies": [
+        ("ia_total_openings", to_int),
+        ("id_number_of_openings", to_int),
+        ("nd_total_vacancies", to_int),
+        ("tn_vacancy", to_int),
+        ("ut_vacancies", to_int),
+        ("vt_current_vacancy", to_int),
+        ("wa_available_slots", to_int),
+        ("wi_vacancies", wi_total_vacancies),
+    ],
+    # "As of" date of the provider's self-reported openings (ISO). ME/ND are
+    # already ISO (to_iso_date is idempotent); WI's date is inside the prose.
+    "vacancies_updated_date": [
+        ("ia_openings_as_of", to_iso_date),
+        ("me_openings_updated", to_iso_date),
+        ("nd_vacancies_updated", to_iso_date),
+        ("vt_vacancy_as_of", to_iso_date),
+        ("wi_vacancies", wi_vacancies_updated_date),
+    ],
 }
-# NOTE (bug_06): `scholarships_accepted` is deliberately NOT in this map --
-# every state that fills it sets the common field directly in the spider
-# (no xx_* source field to collapse from). Its bool-or-None coercion lives at
-# the end of normalize_item (step 9), after this collapse step runs, via
-# coerce_scholarships_accepted_flag. If a future story (e.g. story 13) adds a
-# collapse source for it here, keep _BOOLEAN_COLLAPSE_FIELDS/_coerce_bool out
-# of that path -- reuse coerce_scholarships_accepted_flag instead, since
-# plain _coerce_bool would misread "Not Accepted"-shaped text as True.
+# NOTE Most states set `scholarships_accepted` directly in the spider.
+# The few xx_* sources mapped above are only fallbacks -- the collapse never
+# overwrites a spider-set value (including False). The final bool-or-None
+# coercion still lives at the end of normalize_item (step 9), after this
+# collapse step runs, via coerce_scholarships_accepted_flag. Per-source
+# transforms for this field must use coerce_scholarships_accepted_flag (via
+# _scholarships_flag), NOT _coerce_bool, since plain _coerce_bool would misread
+# "Not Accepted"-shaped text as True. OK's ok_subsidy_contract_number is deliberately not mapped: the
+# OK spider sets the field from the state's explicit isSubsidyAccepted flag.
 
-# Common fields whose collapsed value is coerced to a boolean.
-_BOOLEAN_COLLAPSE_FIELDS = {"head_start"}
+# Same shape as FIELD_COLLAPSE_MAP, for inspection rows (normalize_inspection).
+# Each common inspection field lists its state-specific sources; as with the
+# provider map, exactly one source may be populated on a row.
+INSPECTION_FIELD_COLLAPSE_MAP = {
+    # Staff member who ran the visit, as `First Last`. MA has two sources:
+    # ma_licensor on routine visits and ma_investigator on investigation rows;
+    # they are never both filled, but if a row did carry both the collapse
+    # leaves `inspector` unset rather than guessing. MO's specialist is either
+    # ALL CAPS (`CHARMEL WILLIAMS`) or `LAST, FIRST M`, so it is flipped.
+    "inspector": [
+        ("ak_licensing_specialist", person_name),
+        ("ma_licensor", person_name),
+        ("ma_investigator", person_name),
+        ("mo_specialist", last_first_name),
+        ("mt_inspector_name", person_name),
+        ("nh_licensor", person_name),
+        ("ri_licensor", person_name),
+    ],
+    # The state's own key for the visit/report, as an opaque string via
+    # to_id_string (ints stringified with no `.0`, strings only trimmed). MA has
+    # two sources, never both filled: ma_visit_id on routine visits and
+    # ma_investigation_id on investigation rows (different Salesforce objects).
+    # KS maps ks_nosf_id only: ks_survey_number repeats across rows, so it is
+    # not a row key.
+    "inspection_id": [
+        ("ct_inspection_id", to_id_string),
+        ("fl_inspection_id", to_id_string),
+        ("hi_visit_id", to_id_string),
+        ("ky_inspection_id", to_id_string),
+        ("ma_visit_id", to_id_string),
+        ("ma_investigation_id", to_id_string),
+        ("mo_inspection_id", to_id_string),
+        ("nh_visit_id", to_id_string),
+        ("nv_inspection_number", to_id_string),
+        ("ks_nosf_id", to_id_string),
+        ("az_enforcement_name", to_id_string),
+    ],
+    # Announced (True) / unannounced (False) visit. Dedicated source fields only;
+    # NC, CT and RI encode it in the common `type` and are inspection-level
+    # adapters in common_fields.py. announced_flag, not a bool coercion: the
+    # text "Unannounced" must read False, and "N/A" / no signal stays unset.
+    "announced": [
+        ("ak_visit_type", announced_flag),
+        ("ma_announcement_type", announced_flag),
+        ("nh_announcement_type", announced_flag),
+        ("mo_notice", announced_flag),
+    ],
+    # Any noncompliance recorded on this row (True), none (False), unknown
+    # (None). MO's source says "in compliance", so it is inverted. VA's
+    # Yes/No goes through to_bool, not the lenient _coerce_bool. MD's finding
+    # text is classified (one row per finding). AK and WI encode it in the
+    # common `original_status` and are inspection-level adapters in
+    # common_fields.py; no other state's `original_status` feeds this field.
+    "violation_found": [
+        ("fl_has_violation", to_bool),
+        ("va_violations", to_bool),
+        ("ma_noncompliance_identified", to_bool),
+        ("mo_in_compliance", invert),
+        ("wy_violation_found", to_bool),
+        ("md_finding", md_finding_flag),
+    ],
+    # Number of violations / deficiencies / findings on the visit; 0 is a real
+    # value. SC's count comes from an "N Alert" badge and stays unset when the
+    # badge is absent (unverified, not zero). MO's `mo_open_violations` is
+    # deliberately NOT mapped: it counts only violations still open, not the
+    # total found, and MO already has `violation_found` via `mo_in_compliance`
+    # (user decision). `violation_found` is derived from this count for
+    # CT/DE/NV/KS/HI/SC by inspection-level adapters in common_fields.py.
+    "violation_count": [
+        ("ct_violations_count", to_int),
+        ("de_violation_count", to_int),
+        ("nv_deficiency_count", to_int),
+        ("ks_findings_count", to_int),
+        ("hi_requirements_not_met", to_int),
+        ("sc_alert_count", to_int),
+    ],
+}
 
-_AFFIRMATIVE = {"yes", "y", "true", "t", "1"}
-_NEGATIVE = {"no", "n", "false", "f", "0", "none", "n/a", "na", "not applicable"}
+
+def split_collapse_entry(entry):
+    """Normalize a collapse-map entry to ``(source_field, transform_or_None)``."""
+    if isinstance(entry, str):
+        return entry, None
+    source, transform = entry
+    return source, transform
 
 
-def _is_present(value):
-    """True if a value carries signal. ``False``/``0`` count as present (a state
-    explicitly saying "no"); ``None``/``""``/``[]`` do not."""
-    return value is not None and value != "" and value != []
-
-
-def _coerce_bool(value):
-    """Best-effort map of a mixed boolean/text value to ``True``/``False``."""
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, (int, float)):
-        return bool(value)
-    if isinstance(value, str):
-        token = value.strip().lower()
-        if token in _NEGATIVE:
-            return False
-        if token in _AFFIRMATIVE:
-            return True
-        # Any other descriptive, non-empty text (e.g. a program name) is
-        # treated as affirmative presence of the program.
-        return True
-    return bool(value)
-
-
-def collapse_state_fields(item: dict) -> dict:
+def collapse_state_fields(item: dict, collapse_map: dict | None = None) -> dict:
     """Populate common fields from their single populated source field.
+
+    ``collapse_map`` defaults to ``FIELD_COLLAPSE_MAP``; inspections pass
+    ``INSPECTION_FIELD_COLLAPSE_MAP``.
 
     Rules (plan §6, D2):
       - Never overwrite an already-populated common field.
       - Copy only when **exactly one** source field is populated (never guess).
       - Keep the source field in place (additive).
-      - ``head_start`` is coerced to a boolean.
+      - If the map entry names a transform, it is applied to the source value;
+        a transform result with no signal (``None``) leaves the field unset.
     """
-    for common, sources in FIELD_COLLAPSE_MAP.items():
+    if collapse_map is None:
+        collapse_map = FIELD_COLLAPSE_MAP
+    for common, entries in collapse_map.items():
         if _is_present(item.get(common)):
             continue
-        present = [item[src] for src in sources if _is_present(item.get(src))]
+        present = [(src, tf) for src, tf in map(split_collapse_entry, entries) if _is_present(item.get(src))]
         if len(present) != 1:
             continue
-        value = present[0]
-        if common in _BOOLEAN_COLLAPSE_FIELDS:
-            value = _coerce_bool(value)
+        source, transform = present[0]
+        value = item[source]
+        if transform is not None:
+            value = transform(value)
+            if not _is_present(value):
+                continue
         item[common] = value
     return item
 
@@ -1550,7 +1853,9 @@ def normalize_item(item: dict, state: str) -> dict:
 
     # 2. field collapse (state-specific -> common) before format/vocab steps,
     #    so a collapsed value is then format-normalized by the steps below.
+    #    Per-state adapters (common_fields.py) run right after the map.
     collapse_state_fields(item)
+    run_adapters(item, state)
 
     # 3. date normalization -> ISO 8601.
     for field in DATE_FIELDS:
@@ -1624,7 +1929,11 @@ def normalize_item(item: dict, state: str) -> dict:
 
 
 def normalize_inspection(inspection: dict, state: str) -> dict:
-    """Normalize one inspection entry (whitespace + dates only).
+    """Normalize one inspection entry (whitespace, field collapse, dates).
+
+    Field collapse (``INSPECTION_FIELD_COLLAPSE_MAP`` + inspection-level
+    adapters) is additive and runs before date normalization, mirroring
+    ``normalize_item``.
 
     The ``status`` controlled vocabulary deliberately does **not** apply to
     inspections. Mutates and returns the same ``dict``.
@@ -1632,6 +1941,8 @@ def normalize_inspection(inspection: dict, state: str) -> dict:
     for key, value in list(inspection.items()):
         if isinstance(value, (str, list)):
             inspection[key] = clean_whitespace(value)
+    collapse_state_fields(inspection, INSPECTION_FIELD_COLLAPSE_MAP)
+    run_adapters(inspection, state, INSPECTION_LEVEL)
     for field in INSPECTION_DATE_FIELDS:
         if inspection.get(field) is not None:
             inspection[field] = normalize_date(inspection[field])

@@ -21,6 +21,7 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
+from provider_scrape import common_fields as cf
 from provider_scrape import normalization as norm
 from provider_scrape.field_docs import FIELD_DOCS
 from provider_scrape.items import InspectionItem, ProviderItem
@@ -62,11 +63,37 @@ def common_provider_fields():
 
 
 def collapse_source_to_common():
+    """source field -> (common field, transform label or "")."""
     mapping = {}
-    for common, sources in norm.FIELD_COLLAPSE_MAP.items():
-        for source in sources:
-            mapping[source] = common
+    for common, entries in norm.FIELD_COLLAPSE_MAP.items():
+        for entry in entries:
+            source, transform = norm.split_collapse_entry(entry)
+            mapping[source] = (common, cf.describe_transform(transform))
     return mapping
+
+
+def adapter_source_to_fills():
+    """provider-level adapter source field -> sorted common fields it feeds."""
+    mapping = {}
+    for adapter in cf.all_adapters():
+        if adapter.level != cf.PROVIDER_LEVEL:
+            continue
+        for source in adapter.sources:
+            mapping.setdefault(source, set()).update(adapter.fills)
+    return {source: sorted(fills) for source, fills in mapping.items()}
+
+
+def render_map_rows(collapse_map):
+    """Table rows for a collapse map; transformed sources show ``(transform)``."""
+    rows = []
+    for common in sorted(collapse_map):
+        parsed = [norm.split_collapse_entry(e) for e in collapse_map[common]]
+        cells = []
+        for source, transform in sorted(parsed, key=lambda pair: pair[0]):
+            label = cf.describe_transform(transform)
+            cells.append(f"`{source}` ({md_escape(label)})" if label else f"`{source}`")
+        rows.append(f"| `{common}` | {', '.join(cells)} |")
+    return rows
 
 
 def transformation_for(field):
@@ -94,8 +121,13 @@ def transformation_for(field):
         tags = ["Whitespace cleanup", "Field collapse from state-specific source", "Address cleanup"]
     elif field in collapse_targets:
         label = "Field collapse from state-specific source"
-        if field in norm._BOOLEAN_COLLAPSE_FIELDS:
+        transforms = sorted(
+            {cf.describe_transform(norm.split_collapse_entry(e)[1]) for e in norm.FIELD_COLLAPSE_MAP[field]} - {""}
+        )
+        if transforms == ["coerce_bool"]:
             label += " (-> boolean)"
+        elif transforms:
+            label += f" (transforms: {', '.join(transforms)})"
         tags = ["Whitespace cleanup", label]
     else:
         tags = ["Whitespace cleanup"]
@@ -175,15 +207,81 @@ def build_markdown():
     add("")
     add(
         "Each common field is populated from a single populated source field "
-        "(additive — the source field is kept). Rendered from "
+        "(additive — the source field is kept; an already-populated common "
+        "field is never overwritten). A source shown with a parenthesised "
+        "transform is passed through that transform first (see "
+        "[Transform library](#transform-library)). Rendered from "
         "`FIELD_COLLAPSE_MAP`."
     )
     add("")
     add("| Common field | Source state-specific fields |")
     add("|---|---|")
-    for common in sorted(norm.FIELD_COLLAPSE_MAP):
-        sources = ", ".join(f"`{s}`" for s in sorted(norm.FIELD_COLLAPSE_MAP[common]))
-        add(f"| `{common}` | {sources} |")
+    for row in render_map_rows(norm.FIELD_COLLAPSE_MAP):
+        add(row)
+    add("")
+
+    add("## Inspection field-collapse map")
+    add("")
+    add("Same rules, applied to every inspection row. Rendered from `INSPECTION_FIELD_COLLAPSE_MAP`.")
+    add("")
+    if norm.INSPECTION_FIELD_COLLAPSE_MAP:
+        add("| Common inspection field | Source state-specific fields | Explanation |")
+        add("|---|---|---|")
+        for field, row in zip(
+            sorted(norm.INSPECTION_FIELD_COLLAPSE_MAP),
+            render_map_rows(norm.INSPECTION_FIELD_COLLAPSE_MAP),
+            strict=True,
+        ):
+            doc = FIELD_DOCS.get(field, "**TODO:** add a curated explanation to `provider_scrape/field_docs.py`.")
+            add(f"{row} {md_escape(doc)} |")
+    else:
+        add("_No entries yet._")
+    add("")
+
+    # --- Transform library ---
+    add("## Transform library")
+    add("")
+    add(
+        "Reusable `value -> value` transforms from `provider_scrape/common_fields.py` "
+        "for use per source in the collapse maps. A transform returns `None` for "
+        '"no usable value", which leaves the common field unset.'
+    )
+    add("")
+    add("| Transform | Behaviour |")
+    add("|---|---|")
+    for name, func in (
+        ("invert", cf.invert),
+        ("to_int", cf.to_int),
+        ("to_float", cf.to_float),
+        ("vocab(table)", cf.vocab),
+        ("has_token(pattern)", cf.has_token),
+        ("to_iso_date", cf.to_iso_date),
+    ):
+        doc = " ".join((func.__doc__ or "").split()).replace("``", "`")
+        add(f"| `{name}` | {md_escape(doc)} |")
+    add("")
+
+    # --- Per-state adapters ---
+    add("## Per-state adapters")
+    add("")
+    add(
+        "Adapters (registered in `provider_scrape/common_fields.py`) cover cases "
+        "a one-to-one map entry cannot: one source feeding several common "
+        "fields, or several sources feeding one. They run after the "
+        "field-collapse map, in registration order, and follow the same rules "
+        "(additive, never overwrite a populated common field)."
+    )
+    add("")
+    adapters = cf.all_adapters()
+    if adapters:
+        add("| State | Level | Reads | Fills | Description |")
+        add("|---|---|---|---|---|")
+        for adapter in adapters:
+            reads = ", ".join(f"`{f}`" for f in adapter.sources)
+            fills = ", ".join(f"`{f}`" for f in adapter.fills)
+            add(f"| `{adapter.state}` | {adapter.level} | {reads} | {fills} | {md_escape(adapter.description)} |")
+    else:
+        add("_No adapters registered yet._")
     add("")
 
     # --- Controlled-vocabulary appendices ---
@@ -219,6 +317,7 @@ def build_markdown():
     )
     add("")
     source_to_common = collapse_source_to_common()
+    source_to_fills = adapter_source_to_fills()
     all_state_fields = sorted(
         {f for f in ProviderItem.fields if is_state_specific(f)}
         | {f for f in InspectionItem.fields if is_state_specific(f)}
@@ -233,9 +332,15 @@ def build_markdown():
         add(f"### {header}")
         add("")
         for field in sorted(by_state[code]):
-            common = source_to_common.get(field)
-            if common:
-                add(f"- `{field}` -> collapses into `{common}`")
+            collapsed = source_to_common.get(field)
+            fills = source_to_fills.get(field)
+            if collapsed:
+                common, label = collapsed
+                via = f" (via {label})" if label else ""
+                add(f"- `{field}` -> collapses into `{common}`{via}")
+            elif fills:
+                targets = ", ".join(f"`{f}`" for f in fills)
+                add(f"- `{field}` -> feeds adapter, fills {targets}")
             else:
                 add(f"- `{field}` -> pass-through")
         add("")

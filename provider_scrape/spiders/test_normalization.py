@@ -659,7 +659,7 @@ def test_collapse_does_not_touch_quality_ratings():
 
 
 def test_collapse_mailing_address_excludes_owner_and_licensee():
-    flat = str(normalization.FIELD_COLLAPSE_MAP)
+    flat = str(normalization.FIELD_COLLAPSE_MAP["mailing_address"])
     assert "nc_owner_mailing_address" not in flat
     assert "mi_licensee_address" not in flat
 
@@ -976,11 +976,10 @@ def test_normalize_item_coerces_scholarships_accepted_for_every_state_shape():
 
 
 def test_normalize_item_scholarships_accepted_runs_after_collapse():
-    # scholarships_accepted is not a FIELD_COLLAPSE_MAP target (bug_06
-    # investigation), but guard the ordering contract anyway: even if a
-    # source field for it were ever collapsed in, the final value must still
-    # come out bool-or-None, not the raw collapsed text.
-    assert "scholarships_accepted" not in normalization.FIELD_COLLAPSE_MAP
+    # scholarships_accepted has a few collapse fallbacks, but the final value
+    # must still come out bool-or-None, and a spider-set value is never
+    # overwritten by the collapse.
+    assert "scholarships_accepted" in normalization.FIELD_COLLAPSE_MAP
     item = {"scholarships_accepted": "Not Accepted"}
     out = normalization.normalize_item(item, "new_mexico")
     assert out["scholarships_accepted"] is False

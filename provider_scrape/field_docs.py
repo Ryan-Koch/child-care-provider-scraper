@@ -14,7 +14,16 @@ entry, so gaps are obvious in the committed doc.
 FIELD_DOCS = {
     # Identity / names
     "provider_name": "The facility's name. ALL-CAPS values are converted to Title Case; whitespace is cleaned.",
+    "doing_business_as": "Trade name (doing business as) alongside the licensed name, free text. FL, OK; sentinels "
+    "such as `N/A` -> unset. FL's value always equals provider_name (its API already returns the DBA as the name). WA "
+    "license name and MA umbrella org are not DBAs and are not mapped.",
+    "source_provider_id": "The state system's own record key for the provider, as an opaque string (leading zeros "
+    "kept, ints stringified). State-specific: not comparable across states and not guaranteed unique. One source per "
+    "state (AK facility_gen_id; VT excluded, NV/WI have no fallback).",
     "license_holder": "Name of the license holder/licensee. ALL-CAPS values are Title-cased.",
+    "license_holder_address": "The license holder's own single-line address, separate from the facility address. MI, "
+    "NC; whitespace/comma cleanup via clean_address, case kept as-is, MI's literal `null` pieces dropped (all-null -> "
+    "unset).",
     "administrator": "On-site administrator or director name. ALL-CAPS values are Title-cased.",
     "license_number": "State-issued license/registration identifier, kept as emitted (only whitespace-cleaned).",
     # Categorical
@@ -70,13 +79,36 @@ FIELD_DOCS = {
     "accepting_new_children": "Whether the provider is accepting new children, collapsed from a single state source.",
     "transportation": "Transportation offered, collapsed from a single populated state source.",
     "head_start": "Head Start participation, collapsed from a single state source and coerced to a boolean.",
+    "early_head_start": "Early Head Start participation (federal infant/toddler program), coerced to a boolean. "
+    "MS, NH, WA. Distinct from `head_start`: EHS sources never feed it.",
+    "wheelchair_accessible": "Whether the facility is wheelchair accessible (True/False/None). CT bool, TN Yes/No; NH "
+    "from the WHEELCHAIR ACCESSIBLE token in its environment checklist (token present -> True, absent -> None, never "
+    "False).",
+    "address_suppressed": "True = the state deliberately withheld the street address (typically family homes), so a "
+    "blank address is not a data gap. CT, KS, MA bools; FL inverted from displayAddressOnWeb; NY `Y` -> True, blank -> "
+    "False.",
+    "phone_suppressed": "True = the state deliberately withheld the phone number. FL inverted from displayPhoneOnWeb; "
+    "NY `Y` -> True, blank -> False; MA's single contact-redacted flag feeds this too.",
     "curriculum": "Curriculum, collapsed from a single populated state source (VPK-specific curriculum is excluded).",
     # Pass-through common fields (whitespace cleanup only)
     "phone": "Contact phone number (whitespace-cleaned only).",
+    "phone_extension": "Extension that goes with `phone`, digits only, kept as a string (leading zeros survive). NJ, "
+    "NY; NY input-mask underscores are stripped, and non-numeric junk (`NJ`, `class`) -> None.",
     "email": "Contact email (whitespace-cleaned only).",
     "provider_website": "Provider website URL (whitespace-cleaned only).",
     "county": "County (whitespace-cleaned only).",
     "hours": "Operating hours, as emitted by the state (whitespace-cleaned only).",
+    "days_of_operation": "Weekdays the provider is open: list of full day names in Monday -> Sunday order (e.g. "
+    '`["Monday", "Tuesday"]`). GA (`MO,TU`), IA (`Mon, Tue`) and VT (`Monday, Tuesday`) via day_names: case/whitespace '
+    "tolerant, de-duplicated, unrecognised tokens logged and dropped, none left -> unset. CT/IN/NH/OK/WY/MA/FL derive "
+    "it from `weekly_schedule` (distinct days present); a direct source always wins.",
+    "weekly_schedule": 'Per-day opening hours: list of `{"day": "Monday", "open": "07:00", "close": "18:00"}` rows, '
+    "24h `HH:MM`, full day names, sorted Monday -> Sunday (source order kept within a day; several rows per day "
+    "allowed, e.g. NH sessions). CT, IN, NH, OK, WY, MA and FL (from its dict-shaped `hours`, which is left as-is) via "
+    "one shared time parser. Closed days give no row; an unparseable row is logged and dropped; none left -> unset. "
+    "MA lists several schedules: one is chosen (Full Year, else first School Year, else first Summer, else first "
+    "listed) and its rows carry a `schedule_type` key. Overnight ranges (close earlier than open) are kept as "
+    "reported.",
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
     "deficiencies": "Deficiency/violation count for the provider, coerced to an "
     "integer (bug_10). Digit strings, comma-grouped counts, and integral "
@@ -94,4 +126,55 @@ FIELD_DOCS = {
     'bool-or-None. States that emit "Yes"/"No" or NM\'s "Accepted"/"Not '
     'Accepted" are coerced via the shared strict token rule (bug_06); an '
     "unparseable token becomes None rather than a guessed True.",
+    "licensing_specialist": "State staff member assigned to oversee the provider's license, as `First Last` "
+    "(ALL-CAPS Title-cased; SC's `Last, First` flipped; `N/A` -> empty). Collapsed from AK, MA, ME, OK, SC, TN, "
+    "WV; VA's packed `Name: phone` string is split by an adapter.",
+    "inspector": "Inspection field: the staff member who ran the visit, as `First Last` (ALL-CAPS Title-cased; MO's "
+    "`Last, First M` flipped; blank/`N/A` -> unset). Collapsed from AK, MA (licensor on routine visits, investigator "
+    "on investigation rows), MO, MT, NH, RI. If a row carried two populated sources it would stay unset.",
+    "inspection_id": "Inspection field: the state's own key for the visit/report, as an opaque string (ints "
+    "stringified with no `.0`, strings only trimmed). State-specific: not comparable across states, and unique per "
+    "provider record rather than guaranteed globally unique. Collapsed from CT, FL, HI, KY, MA (visit id on routine "
+    "visits, investigation id on investigation rows), MO, NH, NV, KS (`ks_nosf_id` only; the survey number repeats) "
+    "and AZ. CT occasionally has two provider records (different `ct_provider_id`, same license) carrying the same "
+    "inspections, so one CT inspection_id can appear under both.",
+    "announced": "Inspection field: whether the visit was announced (`True`), unannounced (`False`) or unknown "
+    "(unset). Collapsed from AK, MA, NH and MO's dedicated fields; NC, CT and RI read it from the inspection `type` "
+    "text. Matching is case-insensitive and typo tolerant (RI has `Uannounced`, `Unannounce`), unannounced checked "
+    "first. Text naming neither word (follow-ups, complaints, `N/A`) stays unset; `type` itself is unchanged.",
+    "violation_found": "Inspection field: whether this row recorded any noncompliance (`True`), none (`False`) or "
+    "unknown (unset). Collapsed from FL, VA, MA (investigation rows only), WY and MO (inverted: MO's source says "
+    "`in compliance`); AK and WI read the status text (`Non-Compliance`, `See Violations below` -> True; "
+    "`In Compliance`, `No Violations found ***` -> False). MD has one row per finding: `No Noncompliances Found` "
+    "-> False, any other narrative -> True (a cited regulation is a violation even when worded `no evidence of ...`). "
+    "CT, DE, NV, KS, HI and SC have no explicit flag, so it is derived from `violation_count` "
+    "(`> 0` -> True, `0` -> False, no count -> unset); an explicit flag is never overwritten. "
+    "DE's count is always >= 1 by construction (its dataset holds only noncompliance visits), so DE is always "
+    "True and must not be used for clean-inspection rates.",
+    "violation_count": "Inspection field: number of violations / deficiencies / findings recorded on the visit "
+    "(int; `0` is a real value). Collapsed from CT `ct_violations_count`, DE `de_violation_count`, "
+    "NV `nv_deficiency_count`, KS `ks_findings_count`, HI `hi_requirements_not_met` and SC `sc_alert_count`. "
+    "SC parses it from an `N Alert` badge; a missing badge is unverified and stays unset (not 0). "
+    "DE's count is always >= 1 by construction (its dataset contains only noncompliance visits; a clean visit "
+    "produces no row), so DE can never show a clean visit and must not be used for clean-inspection rates. "
+    "MO is excluded (user decision): `mo_open_violations` counts only violations still open, not the total "
+    "found, and MO already has `violation_found` via `mo_in_compliance`.",
+    "licensing_specialist_phone": "Phone number of the assigned licensing specialist, as emitted by the state "
+    "(OK, SC, and VA's split-out number); empty when not published.",
+    "licensing_specialist_email": "Lower-cased email of the assigned licensing specialist (published by ME).",
+    "vacancies_infant": "Open slots the provider reports for the infant age band (int; `0` = full, empty = not "
+    "reported). Bands are each state's OWN age definitions (e.g. ND infant = 0-17 months, DC = 0-12 months, IA = "
+    "0-23 months). Not the infant age-served flag. CO, DC, IA, ME, ND, NH, VT; IA sums full-time + part-time openings.",
+    "vacancies_toddler": "Open slots for the toddler age band (int; `0` = full, empty = not reported). State-defined "
+    "band; see `vacancies_infant`.",
+    "vacancies_preschool": "Open slots for the preschool age band (int; `0` = full, empty = not reported). "
+    "State-defined band; IA sums its 3-year-old and 4-5-year-old rows. See `vacancies_infant`.",
+    "vacancies_school_age": "Open slots for the school-age band (int; `0` = full, empty = not reported). "
+    "State-defined band; IA sums its before/after-school and school-age rows. See `vacancies_infant`.",
+    "total_vacancies": "Total open slots the provider reports (int; `0` = full, empty = not reported). Only what the "
+    "state publishes -- never summed from the per-age `vacancies_*`. IA, ID, ND, TN, UT, VT, WA, WI; WI's prose "
+    "(`0 vacancies have been reported...`) is parsed for the leading count and `None Reported.` is empty.",
+    "vacancies_updated_date": "Date the provider last updated its vacancy counts (`YYYY-MM-DD`; empty = not reported). "
+    "Freshness for `total_vacancies` / `vacancies_*`. IA, ME, ND, VT; WI's date is parsed from the `Last updated on` "
+    "text in its vacancy prose.",
 }

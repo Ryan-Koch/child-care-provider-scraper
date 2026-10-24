@@ -15,12 +15,16 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `accepting_new_children` | Whitespace cleanup; Field collapse from state-specific source | Whether the provider is accepting new children, collapsed from a single state source. |
 | `accreditation` | Whitespace cleanup; Field collapse from state-specific source | Accreditation(s), collapsed from a single populated state source. |
 | `address` | Whitespace cleanup; Address cleanup; Component parse -> city/state/zip | Full street address; whitespace-cleaned, trailing country (", United States"/", USA") stripped, comma spacing normalized. |
+| `address_suppressed` | Whitespace cleanup; Field collapse from state-specific source (transforms: invert, to_bool) | True = the state deliberately withheld the street address (typically family homes), so a blank address is not a data gap. CT, KS, MA bools; FL inverted from displayAddressOnWeb; NY `Y` -> True, blank -> False. |
 | `administrator` | Whitespace cleanup; Title Case (ALL-CAPS names) | On-site administrator or director name. ALL-CAPS values are Title-cased. |
 | `ages_served` | Whitespace cleanup; List -> string | Ages accepted, normalized to a single string (lists are joined with ", "). |
 | `capacity` | Whitespace cleanup; Integer coercion | Licensed capacity coerced to an integer when it is a clean number; ranges/free text are left unchanged and logged. |
 | `county` | Whitespace cleanup | County (whitespace-cleaned only). |
 | `curriculum` | Whitespace cleanup; Field collapse from state-specific source | Curriculum, collapsed from a single populated state source (VPK-specific curriculum is excluded). |
+| `days_of_operation` | Whitespace cleanup; Field collapse from state-specific source (transforms: day_names) | Weekdays the provider is open: list of full day names in Monday -> Sunday order (e.g. `["Monday", "Tuesday"]`). GA (`MO,TU`), IA (`Mon, Tue`) and VT (`Monday, Tuesday`) via day_names: case/whitespace tolerant, de-duplicated, unrecognised tokens logged and dropped, none left -> unset. CT/IN/NH/OK/WY/MA/FL derive it from `weekly_schedule` (distinct days present); a direct source always wins. |
 | `deficiencies` | Whitespace cleanup; Integer coercion (bug_10) | Deficiency/violation count for the provider, coerced to an integer (bug_10). Digit strings, comma-grouped counts, and integral floats (e.g. 2.0) all become int; blank/None stays None; negative or non-numeric values (and stray booleans) become None rather than a guessed number. |
+| `doing_business_as` | Whitespace cleanup; Field collapse from state-specific source (transforms: none_if_sentinel) | Trade name (doing business as) alongside the licensed name, free text. FL, OK; sentinels such as `N/A` -> unset. FL's value always equals provider_name (its API already returns the DBA as the name). WA license name and MA umbrella org are not DBAs and are not mapped. |
+| `early_head_start` | Whitespace cleanup; Field collapse from state-specific source (-> boolean) | Early Head Start participation (federal infant/toddler program), coerced to a boolean. MS, NH, WA. Distinct from `head_start`: EHS sources never feed it. |
 | `email` | Whitespace cleanup | Contact email (whitespace-cleaned only). |
 | `head_start` | Whitespace cleanup; Field collapse from state-specific source (-> boolean) | Head Start participation, collapsed from a single state source and coerced to a boolean. |
 | `hours` | Whitespace cleanup | Operating hours, as emitted by the state (whitespace-cleaned only). |
@@ -30,23 +34,38 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `license_begin_date` | Whitespace cleanup; ISO 8601 date | Start date of the provider's CURRENT license term, normalized to ISO 8601 -- not necessarily the facility's first-ever license date (bug_11). Some states publish no current-term date at all, in which case this is left empty rather than falling back to an original/migration date; see that state's xx_original_license_date field, where published. |
 | `license_expiration` | Whitespace cleanup; ISO 8601 date | License expiration date, normalized to ISO 8601. |
 | `license_holder` | Whitespace cleanup; Title Case (ALL-CAPS names) | Name of the license holder/licensee. ALL-CAPS values are Title-cased. |
+| `license_holder_address` | Whitespace cleanup; Field collapse from state-specific source (transforms: license_holder_address) | The license holder's own single-line address, separate from the facility address. MI, NC; whitespace/comma cleanup via clean_address, case kept as-is, MI's literal `null` pieces dropped (all-null -> unset). |
 | `license_number` | Whitespace cleanup | State-issued license/registration identifier, kept as emitted (only whitespace-cleaned). |
 | `license_type` | Whitespace cleanup; Field collapse from state-specific source | Type/category of license, collapsed from a single populated state-specific *_license_type field. |
+| `licensing_specialist` | Whitespace cleanup; Field collapse from state-specific source (transforms: last_first_name, person_name) | State staff member assigned to oversee the provider's license, as `First Last` (ALL-CAPS Title-cased; SC's `Last, First` flipped; `N/A` -> empty). Collapsed from AK, MA, ME, OK, SC, TN, WV; VA's packed `Name: phone` string is split by an adapter. |
+| `licensing_specialist_email` | Whitespace cleanup; Field collapse from state-specific source (transforms: lower_email) | Lower-cased email of the assigned licensing specialist (published by ME). |
+| `licensing_specialist_phone` | Whitespace cleanup; Field collapse from state-specific source (transforms: none_if_sentinel) | Phone number of the assigned licensing specialist, as emitted by the state (OK, SC, and VA's split-out number); empty when not published. |
 | `longitude` | Whitespace cleanup; Coordinate -> string | Longitude kept as a trimmed string to avoid float precision drift. |
 | `mailing_address` | Whitespace cleanup; Field collapse from state-specific source; Address cleanup | Facility mailing address, collapsed from a single populated state source (owner/licensee addresses are excluded). |
 | `meals` | Whitespace cleanup; Field collapse from state-specific source | Meals / food program, collapsed from a single populated state source. |
 | `phone` | Whitespace cleanup | Contact phone number (whitespace-cleaned only). |
+| `phone_extension` | Whitespace cleanup; Field collapse from state-specific source (transforms: phone_extension_digits) | Extension that goes with `phone`, digits only, kept as a string (leading zeros survive). NJ, NY; NY input-mask underscores are stripped, and non-numeric junk (`NJ`, `class`) -> None. |
+| `phone_suppressed` | Whitespace cleanup; Field collapse from state-specific source (transforms: invert, to_bool) | True = the state deliberately withheld the phone number. FL inverted from displayPhoneOnWeb; NY `Y` -> True, blank -> False; MA's single contact-redacted flag feeds this too. |
 | `preschool` | Whitespace cleanup | Whether the provider serves preschoolers: bool-or-None. See infant. |
 | `provider_name` | Whitespace cleanup; Title Case (ALL-CAPS names) | The facility's name. ALL-CAPS values are converted to Title Case; whitespace is cleaned. |
 | `provider_type` | Whitespace cleanup; Preserved (drives facility_category) | The raw state license category, preserved exactly. It drives the derived facility_category facet. |
 | `provider_website` | Whitespace cleanup | Provider website URL (whitespace-cleaned only). |
-| `scholarships_accepted` | Whitespace cleanup | Whether the provider accepts child-care subsidies/scholarships: bool-or-None. States that emit "Yes"/"No" or NM's "Accepted"/"Not Accepted" are coerced via the shared strict token rule (bug_06); an unparseable token becomes None rather than a guessed True. |
+| `scholarships_accepted` | Whitespace cleanup; Field collapse from state-specific source (transforms: has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP)), scholarships_flag) | Whether the provider accepts child-care subsidies/scholarships: bool-or-None. States that emit "Yes"/"No" or NM's "Accepted"/"Not Accepted" are coerced via the shared strict token rule (bug_06); an unparseable token becomes None rather than a guessed True. |
 | `school` | Whitespace cleanup | Whether the provider serves school-age children: bool-or-None. See infant. |
 | `school_district` | Whitespace cleanup; Field collapse from state-specific source | Associated school district, collapsed from a single populated state-specific source field. |
+| `source_provider_id` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_id_string) | The state system's own record key for the provider, as an opaque string (leading zeros kept, ints stringified). State-specific: not comparable across states and not guaranteed unique. One source per state (AK facility_gen_id; VT excluded, NV/WI have no fallback). |
 | `status` | Whitespace cleanup; Controlled vocabulary (status) | License status mapped to the 5-bucket canonical vocabulary (active/provisional/pending/enforcement/closed, else unknown). Replaced in place. |
 | `status_date` | Whitespace cleanup; ISO 8601 date | Date the current status took effect, normalized to ISO 8601 (YYYY-MM-DD). |
 | `toddler` | Whitespace cleanup | Whether the provider serves toddlers: bool-or-None. See infant. |
+| `total_vacancies` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int, wi_total_vacancies) | Total open slots the provider reports (int; `0` = full, empty = not reported). Only what the state publishes -- never summed from the per-age `vacancies_*`. IA, ID, ND, TN, UT, VT, WA, WI; WI's prose (`0 vacancies have been reported...`) is parsed for the leading count and `None Reported.` is empty. |
 | `transportation` | Whitespace cleanup; Field collapse from state-specific source | Transportation offered, collapsed from a single populated state source. |
+| `vacancies_infant` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots the provider reports for the infant age band (int; `0` = full, empty = not reported). Bands are each state's OWN age definitions (e.g. ND infant = 0-17 months, DC = 0-12 months, IA = 0-23 months). Not the infant age-served flag. CO, DC, IA, ME, ND, NH, VT; IA sums full-time + part-time openings. |
+| `vacancies_preschool` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots for the preschool age band (int; `0` = full, empty = not reported). State-defined band; IA sums its 3-year-old and 4-5-year-old rows. See `vacancies_infant`. |
+| `vacancies_school_age` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots for the school-age band (int; `0` = full, empty = not reported). State-defined band; IA sums its before/after-school and school-age rows. See `vacancies_infant`. |
+| `vacancies_toddler` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots for the toddler age band (int; `0` = full, empty = not reported). State-defined band; see `vacancies_infant`. |
+| `vacancies_updated_date` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_iso_date, wi_vacancies_updated_date) | Date the provider last updated its vacancy counts (`YYYY-MM-DD`; empty = not reported). Freshness for `total_vacancies` / `vacancies_*`. IA, ME, ND, VT; WI's date is parsed from the `Last updated on` text in its vacancy prose. |
+| `weekly_schedule` | Whitespace cleanup | Per-day opening hours: list of `{"day": "Monday", "open": "07:00", "close": "18:00"}` rows, 24h `HH:MM`, full day names, sorted Monday -> Sunday (source order kept within a day; several rows per day allowed, e.g. NH sessions). CT, IN, NH, OK, WY, MA and FL (from its dict-shaped `hours`, which is left as-is) via one shared time parser. Closed days give no row; an unparseable row is logged and dropped; none left -> unset. MA lists several schedules: one is chosen (Full Year, else first School Year, else first Summer, else first listed) and its rows carry a `schedule_type` key. Overnight ranges (close earlier than open) are kept as reported. |
+| `wheelchair_accessible` | Whitespace cleanup; Field collapse from state-specific source (transforms: coerce_bool, has_list_token(WHEELCHAIR ACCESSIBLE)) | Whether the facility is wheelchair accessible (True/False/None). CT bool, TN Yes/No; NH from the WHEELCHAIR ACCESSIBLE token in its environment checklist (token present -> True, absent -> None, never False). |
 
 > Inspections are normalized too: every string value gets whitespace cleanup, and the date fields (`date`, `status_updated`, `az_date_resolved`, `in_correction_date`, `ms_end_date`, `mo_disposition_date`) are converted to ISO 8601. The `status` vocabulary does not apply to inspections.
 
@@ -67,19 +86,94 @@ These canonical fields are derived from a source field; the source is preserved 
 
 ## Field-collapse map
 
-Each common field is populated from a single populated source field (additive — the source field is kept). Rendered from `FIELD_COLLAPSE_MAP`.
+Each common field is populated from a single populated source field (additive — the source field is kept; an already-populated common field is never overwritten). A source shown with a parenthesised transform is passed through that transform first (see [Transform library](#transform-library)). Rendered from `FIELD_COLLAPSE_MAP`.
 
 | Common field | Source state-specific fields |
 |---|---|
 | `accepting_new_children` | `co_accepting_new_children`, `ct_accepting_referrals`, `ga_accepting_new_children` |
 | `accreditation` | `al_accreditations`, `ct_accreditations`, `ga_accreditation`, `hi_accreditations`, `md_accreditation`, `nj_accreditation_labels` |
+| `address_suppressed` | `ct_address_suppressed` (to_bool), `fl_display_address_on_web` (invert), `ks_address_suppressed` (to_bool), `ma_contact_redacted` (to_bool) |
 | `curriculum` | `ga_curriculum`, `nj_curriculum` |
-| `head_start` | `az_headstart`, `co_head_start`, `ct_head_start`, `fl_is_head_start`, `nh_head_start`, `ri_head_start`, `wa_head_start` |
+| `days_of_operation` | `ga_operating_days` (day_names), `ia_days_of_operation` (day_names), `vt_days_of_operation` (day_names) |
+| `doing_business_as` | `fl_dba` (none_if_sentinel), `ok_doing_business_as` (none_if_sentinel) |
+| `early_head_start` | `ms_early_head_start` (coerce_bool), `nh_early_head_start` (coerce_bool), `wa_early_head_start` (coerce_bool) |
+| `head_start` | `az_headstart` (coerce_bool), `co_head_start` (coerce_bool), `ct_head_start` (coerce_bool), `fl_is_head_start` (coerce_bool), `nh_head_start` (coerce_bool), `ri_head_start` (coerce_bool), `wa_head_start` (coerce_bool) |
+| `license_begin_date` | `nc_license_effective_date` (to_iso_date) |
+| `license_holder_address` | `mi_licensee_address` (license_holder_address), `nc_owner_mailing_address` (license_holder_address) |
 | `license_type` | `ak_license_type`, `az_license_type`, `co_license_type`, `ct_license_type`, `hi_license_type`, `mt_license_type`, `nc_license_type`, `nj_license_type_label`, `ut_license_type`, `va_license_type`, `wa_license_type`, `wv_license_type` |
+| `licensing_specialist` | `ak_licensing_specialist` (person_name), `ma_licensor` (person_name), `me_licensing_specialist` (person_name), `ok_licensing_specialist` (person_name), `sc_licensing_specialist_name` (last_first_name), `tn_regulatory_individual` (person_name), `wv_licensing_specialist` (person_name) |
+| `licensing_specialist_email` | `me_licensing_specialist_email` (lower_email) |
+| `licensing_specialist_phone` | `ok_licensing_specialist_phone` (none_if_sentinel), `sc_licensing_specialist_phone` (none_if_sentinel) |
 | `mailing_address` | `al_mailing_address`, `ga_mailing_address`, `hi_mailing_address` |
 | `meals` | `ga_meals`, `hi_meals`, `nj_meal_options_labels`, `nm_meals`, `pa_meal_options`, `ut_meals` |
+| `phone_extension` | `nj_phone_extension` (phone_extension_digits), `ny_phone_extension` (phone_extension_digits) |
+| `phone_suppressed` | `fl_display_phone_on_web` (invert), `ma_contact_redacted` (to_bool) |
+| `scholarships_accepted` | `fl_is_offering_school_readiness` (scholarships_flag), `nh_financial_assistance` (has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP))), `va_current_subsidy_provider` (scholarships_flag), `wa_subsidy` (scholarships_flag) |
 | `school_district` | `co_school_district`, `ct_school_districts`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
+| `source_provider_id` | `ak_facility_gen_id` (to_id_string), `az_facility_id` (to_id_string), `ct_provider_id` (to_id_string), `hi_service_id` (to_id_string), `il_provider_id` (to_id_string), `in_provider_id` (to_id_string), `ky_provider_id` (to_id_string), `la_unique_id` (to_id_string), `ma_program_number` (to_id_string), `ms_facility_id` (to_id_string), `nd_program_id` (to_id_string), `ne_resource_id` (to_id_string), `nh_account_id` (to_id_string), `nj_unique_program_id` (to_id_string), `nv_operation_id` (to_id_string), `ny_facility_id` (to_id_string), `sc_provider_id` (to_id_string), `tn_provider_id` (to_id_string), `tx_operation_id` (to_id_string), `va_ID` (to_id_string), `wa_provider_id` (to_id_string), `wi_facility_number` (to_id_string), `wy_facility_id` (to_id_string) |
+| `total_vacancies` | `ia_total_openings` (to_int), `id_number_of_openings` (to_int), `nd_total_vacancies` (to_int), `tn_vacancy` (to_int), `ut_vacancies` (to_int), `vt_current_vacancy` (to_int), `wa_available_slots` (to_int), `wi_vacancies` (wi_total_vacancies) |
 | `transportation` | `ct_transportation`, `ga_transportation`, `nj_transportation_labels` |
+| `vacancies_infant` | `co_infant_openings` (to_int), `me_infant_slots` (to_int), `nh_infant_openings` (to_int), `vt_infant_vacancies` (to_int) |
+| `vacancies_preschool` | `co_preschool_openings` (to_int), `me_preschool_slots` (to_int), `nh_preschool_openings` (to_int), `vt_preschool_vacancies` (to_int) |
+| `vacancies_school_age` | `co_school_age_openings` (to_int), `me_school_age_slots` (to_int), `nh_school_age_openings` (to_int), `vt_school_age_vacancies` (to_int) |
+| `vacancies_toddler` | `co_toddler_openings` (to_int), `me_toddler_slots` (to_int), `nh_toddler_openings` (to_int), `vt_toddler_vacancies` (to_int) |
+| `vacancies_updated_date` | `ia_openings_as_of` (to_iso_date), `me_openings_updated` (to_iso_date), `nd_vacancies_updated` (to_iso_date), `vt_vacancy_as_of` (to_iso_date), `wi_vacancies` (wi_vacancies_updated_date) |
+| `wheelchair_accessible` | `ct_wheelchair_accessible` (coerce_bool), `nh_environment` (has_list_token(WHEELCHAIR ACCESSIBLE)), `tn_wheelchair_accessible` (coerce_bool) |
+
+## Inspection field-collapse map
+
+Same rules, applied to every inspection row. Rendered from `INSPECTION_FIELD_COLLAPSE_MAP`.
+
+| Common inspection field | Source state-specific fields | Explanation |
+|---|---|---|
+| `announced` | `ak_visit_type` (announced_flag), `ma_announcement_type` (announced_flag), `mo_notice` (announced_flag), `nh_announcement_type` (announced_flag) | Inspection field: whether the visit was announced (`True`), unannounced (`False`) or unknown (unset). Collapsed from AK, MA, NH and MO's dedicated fields; NC, CT and RI read it from the inspection `type` text. Matching is case-insensitive and typo tolerant (RI has `Uannounced`, `Unannounce`), unannounced checked first. Text naming neither word (follow-ups, complaints, `N/A`) stays unset; `type` itself is unchanged. |
+| `inspection_id` | `az_enforcement_name` (to_id_string), `ct_inspection_id` (to_id_string), `fl_inspection_id` (to_id_string), `hi_visit_id` (to_id_string), `ks_nosf_id` (to_id_string), `ky_inspection_id` (to_id_string), `ma_investigation_id` (to_id_string), `ma_visit_id` (to_id_string), `mo_inspection_id` (to_id_string), `nh_visit_id` (to_id_string), `nv_inspection_number` (to_id_string) | Inspection field: the state's own key for the visit/report, as an opaque string (ints stringified with no `.0`, strings only trimmed). State-specific: not comparable across states, and unique per provider record rather than guaranteed globally unique. Collapsed from CT, FL, HI, KY, MA (visit id on routine visits, investigation id on investigation rows), MO, NH, NV, KS (`ks_nosf_id` only; the survey number repeats) and AZ. CT occasionally has two provider records (different `ct_provider_id`, same license) carrying the same inspections, so one CT inspection_id can appear under both. |
+| `inspector` | `ak_licensing_specialist` (person_name), `ma_investigator` (person_name), `ma_licensor` (person_name), `mo_specialist` (last_first_name), `mt_inspector_name` (person_name), `nh_licensor` (person_name), `ri_licensor` (person_name) | Inspection field: the staff member who ran the visit, as `First Last` (ALL-CAPS Title-cased; MO's `Last, First M` flipped; blank/`N/A` -> unset). Collapsed from AK, MA (licensor on routine visits, investigator on investigation rows), MO, MT, NH, RI. If a row carried two populated sources it would stay unset. |
+| `violation_count` | `ct_violations_count` (to_int), `de_violation_count` (to_int), `hi_requirements_not_met` (to_int), `ks_findings_count` (to_int), `nv_deficiency_count` (to_int), `sc_alert_count` (to_int) | Inspection field: number of violations / deficiencies / findings recorded on the visit (int; `0` is a real value). Collapsed from CT `ct_violations_count`, DE `de_violation_count`, NV `nv_deficiency_count`, KS `ks_findings_count`, HI `hi_requirements_not_met` and SC `sc_alert_count`. SC parses it from an `N Alert` badge; a missing badge is unverified and stays unset (not 0). DE's count is always >= 1 by construction (its dataset contains only noncompliance visits; a clean visit produces no row), so DE can never show a clean visit and must not be used for clean-inspection rates. MO is excluded (user decision): `mo_open_violations` counts only violations still open, not the total found, and MO already has `violation_found` via `mo_in_compliance`. |
+| `violation_found` | `fl_has_violation` (to_bool), `ma_noncompliance_identified` (to_bool), `md_finding` (md_finding_flag), `mo_in_compliance` (invert), `va_violations` (to_bool), `wy_violation_found` (to_bool) | Inspection field: whether this row recorded any noncompliance (`True`), none (`False`) or unknown (unset). Collapsed from FL, VA, MA (investigation rows only), WY and MO (inverted: MO's source says `in compliance`); AK and WI read the status text (`Non-Compliance`, `See Violations below` -> True; `In Compliance`, `No Violations found ***` -> False). MD has one row per finding: `No Noncompliances Found` -> False, any other narrative -> True (a cited regulation is a violation even when worded `no evidence of ...`). CT, DE, NV, KS, HI and SC have no explicit flag, so it is derived from `violation_count` (`> 0` -> True, `0` -> False, no count -> unset); an explicit flag is never overwritten. DE's count is always >= 1 by construction (its dataset holds only noncompliance visits), so DE is always True and must not be used for clean-inspection rates. |
+
+## Transform library
+
+Reusable `value -> value` transforms from `provider_scrape/common_fields.py` for use per source in the collapse maps. A transform returns `None` for "no usable value", which leaves the common field unset.
+
+| Transform | Behaviour |
+|---|---|
+| `invert` | Flip a boolean source into the positive sense of the common field. Accepts bools and Yes/No-style text (`"No"` -> `True`). Sentinels and unrecognised text -> `None` (never guessed; unrecognised text is logged). |
+| `to_int` | Coerce to `int`. `"12"`, `"1,200"`, `"$5.00"` and `12.0` work; sentinels (`None Reported.`, `N/A`) -> `None`; a non-integral number (`"3.5"`) -> `None` and is logged rather than truncated. |
+| `to_float` | Coerce to `float`. Same input handling as `to_int`; `"$0.00"` is a real `0.0`, not a sentinel. |
+| `vocab(table)` | Build a transform mapping raw values through `table` (like STATUS_MAP). Lookup is case-insensitive and whitespace-tolerant. A miss is **logged** so the table can be extended, and yields `None` (the common field stays unset rather than carrying an unmapped raw value). Sentinels -> `None` silently. |
+| `has_token(pattern)` | Build a transform: `True` if `pattern` (regex, case-insensitive) matches the value (a string, or any element of a list); otherwise `None`. Absence of a token in a checklist is "not reported", not `False` (epic README) -- stories that need `False` should combine this in an adapter. |
+| `to_iso_date` | Normalize a date string to ISO 8601 via `normalization.normalize_date`. Sentinels -> `None`. An unparseable value is returned unchanged (and logged by `normalize_date`) -- we never silently drop date data. |
+
+## Per-state adapters
+
+Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to-one map entry cannot: one source feeding several common fields, or several sources feeding one. They run after the field-collapse map, in registration order, and follow the same rules (additive, never overwrite a populated common field).
+
+| State | Level | Reads | Fills | Description |
+|---|---|---|---|---|
+| `alaska` | inspection | `original_status` | `violation_found` | Read violation_found from the `original_status` text via an explicit table; unmatched -> unset. |
+| `connecticut` | inspection | `type` | `announced` | Read announced (True) / unannounced (False) from the `type` text; neither word -> unset. |
+| `connecticut` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
+| `delaware` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
+| `hawaii` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
+| `kansas` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
+| `nevada` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
+| `north_carolina` | inspection | `type` | `announced` | Read announced (True) / unannounced (False) from the `type` text; neither word -> unset. |
+| `rhode_island` | inspection | `type` | `announced` | Read announced (True) / unannounced (False) from the `type` text; neither word -> unset. |
+| `south_carolina` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
+| `wisconsin` | inspection | `original_status` | `violation_found` | Read violation_found from the `original_status` text via an explicit table; unmatched -> unset. |
+| `connecticut` | provider | `ct_schedule` | `weekly_schedule`, `days_of_operation` | CT `ct_schedule` rows (already 24h `open`/`close`) -> `weekly_schedule`; days derived. |
+| `florida` | provider | `hours` | `weekly_schedule`, `days_of_operation` | FL dict-shaped `hours` ({"monday": "6:45AM to 6:00PM", ...}) -> `weekly_schedule`; `hours` kept. |
+| `indiana` | provider | `in_schedule` | `weekly_schedule`, `days_of_operation` | IN `in_schedule` rows (12h `open`/`close`) -> 24h `weekly_schedule`; days derived. |
+| `iowa` | provider | `ia_openings_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Sum IA `fullTime` + `partTime` openings per band across the 7 age labels. |
+| `massachusetts` | provider | `ma_schedules` | `weekly_schedule`, `days_of_operation` | MA `ma_schedules`: ONE schedule (Full Year > School Year > Summer > first) -> rows tagged `schedule_type`. |
+| `new_hampshire` | provider | `nh_schedule` | `weekly_schedule`, `days_of_operation` | NH `nh_schedule` sessions (`start`/`end`, 12h) -> one `weekly_schedule` row each; days derived. |
+| `new_york` | provider | `ny_address_omitted`, `ny_phone_number_omitted` | `address_suppressed`, `phone_suppressed` | NY `Address Omitted` / `Phone Number Omitted`: `Y` -> True, blank or absent -> False. |
+| `north_dakota` | provider | `nd_vacancies_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map ND `nd_vacancies_by_age` rows (by age label) onto the four vacancy bands. |
+| `oklahoma` | provider | `ok_schedule` | `weekly_schedule`, `days_of_operation` | OK `ok_schedule` `hours` ("6:30AM - 6:00PM", None when closed) -> `weekly_schedule`; days derived. |
+| `virginia` | provider | `va_inspector` | `licensing_specialist`, `licensing_specialist_phone` | Split `va_inspector` ("Name: (555) 555-5555") into specialist name + phone; `N/A` -> None. |
+| `washington_dc` | provider | `dc_enrollment` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map DC `dc_enrollment` `openings` (text; `Not Applicable` -> None) onto the four vacancy bands. |
+| `wyoming` | provider | `wy_schedule` | `weekly_schedule`, `days_of_operation` | WY `wy_schedule` rows (`start`/`end`, 24h) -> `weekly_schedule`; days derived. |
 
 ## Controlled vocabulary: `status`
 
@@ -112,12 +206,12 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### Alaska (AK)
 
-- `ak_facility_gen_id` -> pass-through
+- `ak_facility_gen_id` -> collapses into `source_provider_id` (via to_id_string)
 - `ak_facility_number` -> pass-through
 - `ak_facility_subtype` -> pass-through
 - `ak_legacy_license_number` -> pass-through
 - `ak_license_type` -> collapses into `license_type`
-- `ak_licensing_specialist` -> pass-through
+- `ak_licensing_specialist` -> collapses into `licensing_specialist` (via person_name)
 - `ak_vendor_id` -> pass-through
 - `ak_visit_type` -> pass-through
 
@@ -148,10 +242,10 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `az_decision_correction` -> pass-through
 - `az_desprovider` -> pass-through
 - `az_enforcement_name` -> pass-through
-- `az_facility_id` -> pass-through
+- `az_facility_id` -> collapses into `source_provider_id` (via to_id_string)
 - `az_first_slot_end` -> pass-through
 - `az_first_slot_start` -> pass-through
-- `az_headstart` -> collapses into `head_start`
+- `az_headstart` -> collapses into `head_start` (via coerce_bool)
 - `az_license_type` -> collapses into `license_type`
 - `az_operatinghourid` -> pass-through
 - `az_quality_rating` -> pass-through
@@ -185,23 +279,23 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `co_ccrr` -> pass-through
 - `co_ecc` -> pass-through
 - `co_governing_body` -> pass-through
-- `co_head_start` -> collapses into `head_start`
-- `co_infant_openings` -> pass-through
+- `co_head_start` -> collapses into `head_start` (via coerce_bool)
+- `co_infant_openings` -> collapses into `vacancies_infant` (via to_int)
 - `co_license_issue_date` -> pass-through
 - `co_license_type` -> collapses into `license_type`
 - `co_licensed_to_serve` -> pass-through
-- `co_preschool_openings` -> pass-through
+- `co_preschool_openings` -> collapses into `vacancies_preschool` (via to_int)
 - `co_quality_rating` -> pass-through
-- `co_school_age_openings` -> pass-through
+- `co_school_age_openings` -> collapses into `vacancies_school_age` (via to_int)
 - `co_school_district` -> collapses into `school_district`
 - `co_special_needs` -> pass-through
-- `co_toddler_openings` -> pass-through
+- `co_toddler_openings` -> collapses into `vacancies_toddler` (via to_int)
 
 ### Connecticut (CT)
 
 - `ct_accepting_referrals` -> collapses into `accepting_new_children`
 - `ct_accreditations` -> collapses into `accreditation`
-- `ct_address_suppressed` -> pass-through
+- `ct_address_suppressed` -> collapses into `address_suppressed` (via to_bool)
 - `ct_administers_meds` -> pass-through
 - `ct_age_range_max_weeks` -> pass-through
 - `ct_age_range_min_weeks` -> pass-through
@@ -214,18 +308,18 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ct_documents` -> pass-through
 - `ct_education_levels` -> pass-through
 - `ct_elevate_membership_level` -> pass-through
-- `ct_head_start` -> collapses into `head_start`
+- `ct_head_start` -> collapses into `head_start` (via coerce_bool)
 - `ct_inspection_id` -> pass-through
 - `ct_inspection_status` -> pass-through
 - `ct_license_type` -> collapses into `license_type`
 - `ct_licensed` -> pass-through
 - `ct_oec_contact_id` -> pass-through
-- `ct_provider_id` -> pass-through
+- `ct_provider_id` -> collapses into `source_provider_id` (via to_id_string)
 - `ct_provider_uid` -> pass-through
 - `ct_rates` -> pass-through
 - `ct_reason` -> pass-through
 - `ct_resolution` -> pass-through
-- `ct_schedule` -> pass-through
+- `ct_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `ct_school_districts` -> collapses into `school_district`
 - `ct_searchable` -> pass-through
 - `ct_severity` -> pass-through
@@ -234,13 +328,13 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ct_type_of_care` -> pass-through
 - `ct_violations` -> pass-through
 - `ct_violations_count` -> pass-through
-- `ct_wheelchair_accessible` -> pass-through
+- `ct_wheelchair_accessible` -> collapses into `wheelchair_accessible` (via coerce_bool)
 
 ### District Of Columbia (DC)
 
 - `dc_capital_quality_designation` -> pass-through
 - `dc_capital_quality_participant` -> pass-through
-- `dc_enrollment` -> pass-through
+- `dc_enrollment` -> feeds adapter, fills `vacancies_infant`, `vacancies_preschool`, `vacancies_school_age`, `vacancies_toddler`
 - `dc_nontraditional_hours` -> pass-through
 - `dc_pay_equity_fund` -> pass-through
 - `dc_prek_enhancement` -> pass-through
@@ -262,10 +356,10 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `fl_alternate_provider_number` -> pass-through
 - `fl_city` -> pass-through
-- `fl_dba` -> pass-through
-- `fl_display_address_on_web` -> pass-through
+- `fl_dba` -> collapses into `doing_business_as` (via none_if_sentinel)
+- `fl_display_address_on_web` -> collapses into `address_suppressed` (via invert)
 - `fl_display_email_on_web` -> pass-through
-- `fl_display_phone_on_web` -> pass-through
+- `fl_display_phone_on_web` -> collapses into `phone_suppressed` (via invert)
 - `fl_dll_badge_date` -> pass-through
 - `fl_gold_seal` -> pass-through
 - `fl_has_violation` -> pass-through
@@ -275,10 +369,10 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `fl_is_dll_badge` -> pass-through
 - `fl_is_faith_based` -> pass-through
 - `fl_is_gold_seal` -> pass-through
-- `fl_is_head_start` -> collapses into `head_start`
+- `fl_is_head_start` -> collapses into `head_start` (via coerce_bool)
 - `fl_is_inclusion_badge` -> pass-through
 - `fl_is_infant_toddler_badge` -> pass-through
-- `fl_is_offering_school_readiness` -> pass-through
+- `fl_is_offering_school_readiness` -> collapses into `scholarships_accepted` (via scholarships_flag)
 - `fl_is_public_school` -> pass-through
 - `fl_is_religious_exempt` -> pass-through
 - `fl_is_trauma_badge` -> pass-through
@@ -314,7 +408,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ga_liability_insurance` -> pass-through
 - `ga_mailing_address` -> collapses into `mailing_address`
 - `ga_meals` -> collapses into `meals`
-- `ga_operating_days` -> pass-through
+- `ga_operating_days` -> collapses into `days_of_operation` (via day_names)
 - `ga_operating_months` -> pass-through
 - `ga_other_care_type` -> pass-through
 - `ga_profit_status` -> pass-through
@@ -345,7 +439,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `hi_provider_id` -> pass-through
 - `hi_provider_kind` -> pass-through
 - `hi_requirements_not_met` -> pass-through
-- `hi_service_id` -> pass-through
+- `hi_service_id` -> collapses into `source_provider_id` (via to_id_string)
 - `hi_service_type_code` -> pass-through
 - `hi_status_history` -> pass-through
 - `hi_usda_food_program` -> pass-through
@@ -357,16 +451,16 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ia_care_types` -> pass-through
 - `ia_complaint_count` -> pass-through
 - `ia_compliance_report_count` -> pass-through
-- `ia_days_of_operation` -> pass-through
+- `ia_days_of_operation` -> collapses into `days_of_operation` (via day_names)
 - `ia_iq4k_level` -> pass-through
-- `ia_openings_as_of` -> pass-through
-- `ia_openings_by_age` -> pass-through
+- `ia_openings_as_of` -> collapses into `vacancies_updated_date` (via to_iso_date)
+- `ia_openings_by_age` -> feeds adapter, fills `vacancies_infant`, `vacancies_preschool`, `vacancies_school_age`, `vacancies_toddler`
 - `ia_padded_license_id` -> pass-through
 - `ia_referral_listed` -> pass-through
 - `ia_region` -> pass-through
 - `ia_regulation_checklist_count` -> pass-through
 - `ia_serves_special_needs` -> pass-through
-- `ia_total_openings` -> pass-through
+- `ia_total_openings` -> collapses into `total_vacancies` (via to_int)
 
 ### Idaho (ID)
 
@@ -381,7 +475,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `id_investigation_resolved` -> pass-through
 - `id_license_status` -> pass-through
 - `id_national_accreditation` -> pass-through
-- `id_number_of_openings` -> pass-through
+- `id_number_of_openings` -> collapses into `total_vacancies` (via to_int)
 - `id_openings_available` -> pass-through
 - `id_opportunities_comment` -> pass-through
 - `id_other_opportunities` -> pass-through
@@ -403,7 +497,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `il_facility_type` -> pass-through
 - `il_night_age_range` -> pass-through
 - `il_night_capacity` -> pass-through
-- `il_provider_id` -> pass-through
+- `il_provider_id` -> collapses into `source_provider_id` (via to_id_string)
 
 ### Indiana (IN)
 
@@ -417,16 +511,16 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `in_location_id` -> pass-through
 - `in_noncompliance` -> pass-through
 - `in_programs` -> pass-through
-- `in_provider_id` -> pass-through
+- `in_provider_id` -> collapses into `source_provider_id` (via to_id_string)
 - `in_ptq_level` -> pass-through
 - `in_rule_code` -> pass-through
 - `in_rule_description` -> pass-through
-- `in_schedule` -> pass-through
+- `in_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `in_temporarily_closed_message` -> pass-through
 
 ### Kansas (KS)
 
-- `ks_address_suppressed` -> pass-through
+- `ks_address_suppressed` -> collapses into `address_suppressed` (via to_bool)
 - `ks_facility_response` -> pass-through
 - `ks_facility_token` -> pass-through
 - `ks_findings` -> pass-through
@@ -452,7 +546,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ky_ongoing_processes` -> pass-through
 - `ky_poc_id` -> pass-through
 - `ky_prek_partnership` -> pass-through
-- `ky_provider_id` -> pass-through
+- `ky_provider_id` -> collapses into `source_provider_id` (via to_id_string)
 - `ky_report_name` -> pass-through
 - `ky_service_costs` -> pass-through
 - `ky_stars_rating` -> pass-through
@@ -472,7 +566,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `la_serious_injuries_url` -> pass-through
 - `la_star_rating` -> pass-through
 - `la_tips_number` -> pass-through
-- `la_unique_id` -> pass-through
+- `la_unique_id` -> collapses into `source_provider_id` (via to_id_string)
 
 ### Massachusetts (MA)
 
@@ -484,7 +578,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ma_ccrr_name` -> pass-through
 - `ma_ccrr_phone` -> pass-through
 - `ma_ccrr_website` -> pass-through
-- `ma_contact_redacted` -> pass-through
+- `ma_contact_redacted` -> collapses into `phone_suppressed` (via to_bool)
 - `ma_cost_table` -> pass-through
 - `ma_domain_compliance_counts` -> pass-through
 - `ma_domains` -> pass-through
@@ -498,14 +592,14 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ma_is_informal` -> pass-through
 - `ma_last_issue_date` -> pass-through
 - `ma_level_of_compliance` -> pass-through
-- `ma_licensor` -> pass-through
+- `ma_licensor` -> collapses into `licensing_specialist` (via person_name)
 - `ma_noncompliance_identified` -> pass-through
 - `ma_original_license_date` -> pass-through
-- `ma_program_number` -> pass-through
+- `ma_program_number` -> collapses into `source_provider_id` (via to_id_string)
 - `ma_regional_office_address` -> pass-through
 - `ma_regional_website` -> pass-through
 - `ma_schedule_options` -> pass-through
-- `ma_schedules` -> pass-through
+- `ma_schedules` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `ma_special_needs` -> pass-through
 - `ma_special_skills` -> pass-through
 - `ma_temporary_status` -> pass-through
@@ -528,24 +622,24 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### Maine (ME)
 
-- `me_infant_slots` -> pass-through
+- `me_infant_slots` -> collapses into `vacancies_infant` (via to_int)
 - `me_licensed_from` -> pass-through
 - `me_licensed_to` -> pass-through
-- `me_licensing_specialist` -> pass-through
-- `me_licensing_specialist_email` -> pass-through
-- `me_openings_updated` -> pass-through
-- `me_preschool_slots` -> pass-through
-- `me_school_age_slots` -> pass-through
+- `me_licensing_specialist` -> collapses into `licensing_specialist` (via person_name)
+- `me_licensing_specialist_email` -> collapses into `licensing_specialist_email` (via lower_email)
+- `me_openings_updated` -> collapses into `vacancies_updated_date` (via to_iso_date)
+- `me_preschool_slots` -> collapses into `vacancies_preschool` (via to_int)
+- `me_school_age_slots` -> collapses into `vacancies_school_age` (via to_int)
 - `me_star_rating` -> pass-through
 - `me_temporarily_closed` -> pass-through
 - `me_times_renewed` -> pass-through
-- `me_toddler_slots` -> pass-through
+- `me_toddler_slots` -> collapses into `vacancies_toddler` (via to_int)
 
 ### Michigan (MI)
 
 - `mi_full_day` -> pass-through
 - `mi_license_status` -> pass-through
-- `mi_licensee_address` -> pass-through
+- `mi_licensee_address` -> collapses into `license_holder_address` (via license_holder_address)
 - `mi_services_provided` -> pass-through
 
 ### Minnesota (MN)
@@ -583,10 +677,10 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 ### Mississippi (MS)
 
 - `ms_description` -> pass-through
-- `ms_early_head_start` -> pass-through
+- `ms_early_head_start` -> collapses into `early_head_start` (via coerce_bool)
 - `ms_end_date` -> pass-through
 - `ms_exam_type` -> pass-through
-- `ms_facility_id` -> pass-through
+- `ms_facility_id` -> collapses into `source_provider_id` (via to_id_string)
 - `ms_months_of_operation` -> pass-through
 - `ms_services` -> pass-through
 - `ms_subsidy` -> pass-through
@@ -602,13 +696,13 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nc_capacity_second_shift` -> pass-through
 - `nc_capacity_third_shift` -> pass-through
 - `nc_educational_standards_points` -> pass-through
-- `nc_license_effective_date` -> pass-through
+- `nc_license_effective_date` -> collapses into `license_begin_date` (via to_iso_date)
 - `nc_license_history` -> pass-through
 - `nc_license_restrictions` -> pass-through
 - `nc_license_type` -> collapses into `license_type`
 - `nc_owner_email` -> pass-through
 - `nc_owner_fax` -> pass-through
-- `nc_owner_mailing_address` -> pass-through
+- `nc_owner_mailing_address` -> collapses into `license_holder_address` (via license_holder_address)
 - `nc_owner_name` -> pass-through
 - `nc_owner_phone` -> pass-through
 - `nc_program_standards_points` -> pass-through
@@ -629,15 +723,15 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nd_min_age` -> pass-through
 - `nd_org_id` -> pass-through
 - `nd_philosophy` -> pass-through
-- `nd_program_id` -> pass-through
+- `nd_program_id` -> collapses into `source_provider_id` (via to_id_string)
 - `nd_quality_rating` -> pass-through
 - `nd_special_populations` -> pass-through
 - `nd_supplemental_care` -> pass-through
 - `nd_total_enrollment` -> pass-through
-- `nd_total_vacancies` -> pass-through
-- `nd_vacancies_by_age` -> pass-through
+- `nd_total_vacancies` -> collapses into `total_vacancies` (via to_int)
+- `nd_vacancies_by_age` -> feeds adapter, fills `vacancies_infant`, `vacancies_preschool`, `vacancies_school_age`, `vacancies_toddler`
 - `nd_vacancies_details` -> pass-through
-- `nd_vacancies_updated` -> pass-through
+- `nd_vacancies_updated` -> collapses into `vacancies_updated_date` (via to_iso_date)
 
 ### Nebraska (NE)
 
@@ -645,7 +739,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ne_full_time_staff` -> pass-through
 - `ne_match_method` -> pass-through
 - `ne_part_time_staff` -> pass-through
-- `ne_resource_id` -> pass-through
+- `ne_resource_id` -> collapses into `source_provider_id` (via to_id_string)
 - `ne_serves_special_needs` -> pass-through
 - `ne_step_participating` -> pass-through
 - `ne_step_rating` -> pass-through
@@ -654,33 +748,33 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### New Hampshire (NH)
 
-- `nh_account_id` -> pass-through
+- `nh_account_id` -> collapses into `source_provider_id` (via to_id_string)
 - `nh_accreditation` -> pass-through
 - `nh_announcement_type` -> pass-through
 - `nh_corrective_action_accepted` -> pass-through
 - `nh_covid_closure` -> pass-through
 - `nh_domains` -> pass-through
-- `nh_early_head_start` -> pass-through
+- `nh_early_head_start` -> collapses into `early_head_start` (via coerce_bool)
 - `nh_endorsements` -> pass-through
-- `nh_environment` -> pass-through
-- `nh_financial_assistance` -> pass-through
+- `nh_environment` -> collapses into `wheelchair_accessible` (via has_list_token(WHEELCHAIR ACCESSIBLE))
+- `nh_financial_assistance` -> collapses into `scholarships_accepted` (via has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP)))
 - `nh_gsq_step` -> pass-through
-- `nh_head_start` -> collapses into `head_start`
-- `nh_infant_openings` -> pass-through
+- `nh_head_start` -> collapses into `head_start` (via coerce_bool)
+- `nh_infant_openings` -> collapses into `vacancies_infant` (via to_int)
 - `nh_level_of_compliance` -> pass-through
 - `nh_licensed` -> pass-through
 - `nh_licensed_plus` -> pass-through
 - `nh_licensor` -> pass-through
-- `nh_preschool_openings` -> pass-through
+- `nh_preschool_openings` -> collapses into `vacancies_preschool` (via to_int)
 - `nh_preventive_protective` -> pass-through
 - `nh_qris_rating` -> pass-through
 - `nh_rates` -> pass-through
-- `nh_schedule` -> pass-through
+- `nh_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `nh_schedule_options` -> pass-through
-- `nh_school_age_openings` -> pass-through
+- `nh_school_age_openings` -> collapses into `vacancies_school_age` (via to_int)
 - `nh_special_needs` -> pass-through
 - `nh_special_skills` -> pass-through
-- `nh_toddler_openings` -> pass-through
+- `nh_toddler_openings` -> collapses into `vacancies_toddler` (via to_int)
 - `nh_violations` -> pass-through
 - `nh_visit_document_id` -> pass-through
 - `nh_visit_id` -> pass-through
@@ -706,7 +800,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nj_meal_options_labels` -> collapses into `meals`
 - `nj_participation_programs` -> pass-through
 - `nj_participation_programs_labels` -> pass-through
-- `nj_phone_extension` -> pass-through
+- `nj_phone_extension` -> collapses into `phone_extension` (via phone_extension_digits)
 - `nj_program_facility_type` -> pass-through
 - `nj_program_facility_type_label` -> pass-through
 - `nj_quality_rating` -> pass-through
@@ -734,7 +828,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nj_tuition_toddler_hourly` -> pass-through
 - `nj_tuition_toddler_monthly` -> pass-through
 - `nj_tuition_toddler_weekly` -> pass-through
-- `nj_unique_program_id` -> pass-through
+- `nj_unique_program_id` -> collapses into `source_provider_id` (via to_id_string)
 - `nj_yearly_schedule` -> pass-through
 - `nj_yearly_schedule_label` -> pass-through
 
@@ -754,7 +848,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nv_facility_type` -> pass-through
 - `nv_inspection_number` -> pass-through
 - `nv_license_base` -> pass-through
-- `nv_operation_id` -> pass-through
+- `nv_operation_id` -> collapses into `source_provider_id` (via to_id_string)
 - `nv_program_type` -> pass-through
 - `nv_qris_enrollment_date` -> pass-through
 - `nv_qris_status` -> pass-through
@@ -768,16 +862,16 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### New York (NY)
 
-- `ny_address_omitted` -> pass-through
+- `ny_address_omitted` -> feeds adapter, fills `address_suppressed`, `phone_suppressed`
 - `ny_capacity_description` -> pass-through
 - `ny_capacity_infant` -> pass-through
 - `ny_capacity_preschool` -> pass-through
 - `ny_capacity_school_age` -> pass-through
 - `ny_capacity_toddler` -> pass-through
-- `ny_facility_id` -> pass-through
+- `ny_facility_id` -> collapses into `source_provider_id` (via to_id_string)
 - `ny_facility_opened_date` -> pass-through
-- `ny_phone_extension` -> pass-through
-- `ny_phone_number_omitted` -> pass-through
+- `ny_phone_extension` -> collapses into `phone_extension` (via phone_extension_digits)
+- `ny_phone_number_omitted` -> feeds adapter, fills `address_suppressed`, `phone_suppressed`
 - `ny_region_code` -> pass-through
 - `ny_school_district_name` -> collapses into `school_district`
 
@@ -794,13 +888,13 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ok_compliance_total` -> pass-through
 - `ok_denial_sent` -> pass-through
 - `ok_detail_unavailable` -> pass-through
-- `ok_doing_business_as` -> pass-through
+- `ok_doing_business_as` -> collapses into `doing_business_as` (via none_if_sentinel)
 - `ok_emergency_issued` -> pass-through
-- `ok_licensing_specialist` -> pass-through
-- `ok_licensing_specialist_phone` -> pass-through
+- `ok_licensing_specialist` -> collapses into `licensing_specialist` (via person_name)
+- `ok_licensing_specialist_phone` -> collapses into `licensing_specialist_phone` (via none_if_sentinel)
 - `ok_noncompliances` -> pass-through
 - `ok_revocation_sent` -> pass-through
-- `ok_schedule` -> pass-through
+- `ok_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `ok_star_level` -> pass-through
 - `ok_subsidy_contract_number` -> pass-through
 - `ok_visit_purpose` -> pass-through
@@ -823,7 +917,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ri_ccap_expiration_date` -> pass-through
 - `ri_ccap_status` -> pass-through
 - `ri_compliance` -> pass-through
-- `ri_head_start` -> collapses into `head_start`
+- `ri_head_start` -> collapses into `head_start` (via coerce_bool)
 - `ri_is_lea` -> pass-through
 - `ri_license_decision` -> pass-through
 - `ri_licensor` -> pass-through
@@ -842,10 +936,10 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `sc_alert_resolved_count` -> pass-through
 - `sc_deficiencies` -> pass-through
 - `sc_license_category` -> pass-through
-- `sc_licensing_specialist_name` -> pass-through
-- `sc_licensing_specialist_phone` -> pass-through
+- `sc_licensing_specialist_name` -> collapses into `licensing_specialist` (via last_first_name)
+- `sc_licensing_specialist_phone` -> collapses into `licensing_specialist_phone` (via none_if_sentinel)
 - `sc_program_participation` -> pass-through
-- `sc_provider_id` -> pass-through
+- `sc_provider_id` -> collapses into `source_provider_id` (via to_id_string)
 
 ### South Dakota (SD)
 
@@ -856,20 +950,20 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `tn_age_group_rates` -> pass-through
 - `tn_participates_certificate` -> pass-through
-- `tn_provider_id` -> pass-through
+- `tn_provider_id` -> collapses into `source_provider_id` (via to_id_string)
 - `tn_quality_rating` -> pass-through
 - `tn_rating_effective_date` -> pass-through
 - `tn_rating_expiration` -> pass-through
 - `tn_rating_scorecard` -> pass-through
 - `tn_regulatory_agency` -> pass-through
-- `tn_regulatory_individual` -> pass-through
-- `tn_vacancy` -> pass-through
-- `tn_wheelchair_accessible` -> pass-through
+- `tn_regulatory_individual` -> collapses into `licensing_specialist` (via person_name)
+- `tn_vacancy` -> collapses into `total_vacancies` (via to_int)
+- `tn_wheelchair_accessible` -> collapses into `wheelchair_accessible` (via coerce_bool)
 
 ### Texas (TX)
 
 - `tx_agency_number` -> pass-through
-- `tx_operation_id` -> pass-through
+- `tx_operation_id` -> collapses into `source_provider_id` (via to_id_string)
 - `tx_rising_star` -> pass-through
 
 ### Utah (UT)
@@ -880,15 +974,15 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ut_meals` -> collapses into `meals`
 - `ut_quality_rating` -> pass-through
 - `ut_school_district` -> collapses into `school_district`
-- `ut_vacancies` -> pass-through
+- `ut_vacancies` -> collapses into `total_vacancies` (via to_int)
 
 ### Virginia (VA)
 
-- `va_ID` -> pass-through
+- `va_ID` -> collapses into `source_provider_id` (via to_id_string)
 - `va_complaint_related` -> pass-through
-- `va_current_subsidy_provider` -> pass-through
+- `va_current_subsidy_provider` -> collapses into `scholarships_accepted` (via scholarships_flag)
 - `va_curriculum_points` -> pass-through
-- `va_inspector` -> pass-through
+- `va_inspector` -> feeds adapter, fills `licensing_specialist`, `licensing_specialist_phone`
 - `va_interactions` -> pass-through
 - `va_interactions_points` -> pass-through
 - `va_license_type` -> collapses into `license_type`
@@ -902,48 +996,48 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `vt_area_description` -> pass-through
 - `vt_building_type` -> pass-through
-- `vt_current_vacancy` -> pass-through
-- `vt_days_of_operation` -> pass-through
+- `vt_current_vacancy` -> collapses into `total_vacancies` (via to_int)
+- `vt_days_of_operation` -> collapses into `days_of_operation` (via day_names)
 - `vt_guidance` -> pass-through
 - `vt_infant_capacity` -> pass-through
-- `vt_infant_vacancies` -> pass-through
+- `vt_infant_vacancies` -> collapses into `vacancies_infant` (via to_int)
 - `vt_original_license_date` -> pass-through
 - `vt_pets` -> pass-through
 - `vt_preschool_capacity` -> pass-through
-- `vt_preschool_vacancies` -> pass-through
+- `vt_preschool_vacancies` -> collapses into `vacancies_preschool` (via to_int)
 - `vt_program_description` -> pass-through
 - `vt_program_participation` -> pass-through
 - `vt_provider_id` -> pass-through
 - `vt_religious_activity` -> pass-through
 - `vt_school_age_capacity` -> pass-through
-- `vt_school_age_vacancies` -> pass-through
+- `vt_school_age_vacancies` -> collapses into `vacancies_school_age` (via to_int)
 - `vt_sibling_discount` -> pass-through
 - `vt_special_schedule` -> pass-through
 - `vt_special_services` -> pass-through
 - `vt_star_level` -> pass-through
 - `vt_toddler_capacity` -> pass-through
-- `vt_toddler_vacancies` -> pass-through
+- `vt_toddler_vacancies` -> collapses into `vacancies_toddler` (via to_int)
 - `vt_type_of_care` -> pass-through
-- `vt_vacancy_as_of` -> pass-through
+- `vt_vacancy_as_of` -> collapses into `vacancies_updated_date` (via to_iso_date)
 
 ### Washington (WA)
 
-- `wa_available_slots` -> pass-through
+- `wa_available_slots` -> collapses into `total_vacancies` (via to_int)
 - `wa_contacts` -> pass-through
 - `wa_early_achievers_status` -> pass-through
-- `wa_early_head_start` -> pass-through
+- `wa_early_head_start` -> collapses into `early_head_start` (via coerce_bool)
 - `wa_eceap` -> pass-through
 - `wa_food_program` -> pass-through
-- `wa_head_start` -> collapses into `head_start`
+- `wa_head_start` -> collapses into `head_start` (via coerce_bool)
 - `wa_languages_of_instruction` -> pass-through
 - `wa_license_history` -> pass-through
 - `wa_license_name` -> pass-through
 - `wa_license_type` -> collapses into `license_type`
-- `wa_provider_id` -> pass-through
+- `wa_provider_id` -> collapses into `source_provider_id` (via to_id_string)
 - `wa_provider_status` -> pass-through
 - `wa_school_district` -> collapses into `school_district`
 - `wa_slot_age_groups` -> pass-through
-- `wa_subsidy` -> pass-through
+- `wa_subsidy` -> collapses into `scholarships_accepted` (via scholarships_flag)
 
 ### Wisconsin (WI)
 
@@ -952,7 +1046,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wi_decision` -> pass-through
 - `wi_description` -> pass-through
 - `wi_enforcement_type` -> pass-through
-- `wi_facility_number` -> pass-through
+- `wi_facility_number` -> collapses into `source_provider_id` (via to_id_string)
 - `wi_location_number` -> pass-through
 - `wi_months_open` -> pass-through
 - `wi_night_capacity` -> pass-through
@@ -961,7 +1055,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wi_rule_summary` -> pass-through
 - `wi_special_care_types` -> pass-through
 - `wi_unique_services` -> pass-through
-- `wi_vacancies` -> pass-through
+- `wi_vacancies` -> collapses into `vacancies_updated_date` (via wi_vacancies_updated_date)
 - `wi_waitlist` -> pass-through
 - `wi_youngstar_rating` -> pass-through
 
@@ -975,7 +1069,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wv_corrective_action_plan_start` -> pass-through
 - `wv_issue_completed_date` -> pass-through
 - `wv_license_type` -> collapses into `license_type`
-- `wv_licensing_specialist` -> pass-through
+- `wv_licensing_specialist` -> collapses into `licensing_specialist` (via person_name)
 - `wv_non_compliance_code` -> pass-through
 - `wv_outcome_code` -> pass-through
 
@@ -984,12 +1078,12 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wy_coordinates_approximate` -> pass-through
 - `wy_directors` -> pass-through
 - `wy_evening_care` -> pass-through
-- `wy_facility_id` -> pass-through
+- `wy_facility_id` -> collapses into `source_provider_id` (via to_id_string)
 - `wy_pre_enrollment_visit_required` -> pass-through
 - `wy_programs` -> pass-through
 - `wy_record_type` -> pass-through
 - `wy_registration_fee` -> pass-through
-- `wy_schedule` -> pass-through
+- `wy_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `wy_services` -> pass-through
 - `wy_violation_found` -> pass-through
 - `wy_violations` -> pass-through

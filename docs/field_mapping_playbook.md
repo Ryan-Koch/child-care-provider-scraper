@@ -43,8 +43,11 @@ maintained in `items.py`; this table is the human-readable gloss.
 | Field | Meaning | Canonical format |
 |---|---|---|
 | `provider_name` | Facility name | String; ALL-CAPS names → Title Case |
+| `doing_business_as` | Trade name (DBA) | Free-text string (FL/OK via `none_if_sentinel`: trim, `N/A`-style sentinels -> unset). FL's equals `provider_name` |
 | `license_number` | License/registration id | String (as emitted) |
+| `source_provider_id` | State system's own record key | Opaque string via `to_id_string` (leading zeros kept); one source per state (AK `ak_facility_gen_id`); VT excluded; not unique/comparable across states |
 | `license_holder` | Licensee / holder name | String; ALL-CAPS → Title Case |
+| `license_holder_address` | Licensee / owner's own address | Single-line string (MI, NC): `clean_address`, case kept; MI's literal `null` pieces dropped |
 | `administrator` | On-site administrator/director | String; ALL-CAPS → Title Case |
 | `provider_type` | Raw state license category | String (preserved exactly) |
 | `facility_category` | Canonical facet of `provider_type` | Vocab: `center` / `family_home` / `group_home` / `school_age` / `exempt` / `other` |
@@ -54,12 +57,15 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `city` / `state` / `zip` | Parsed address parts | `city` string, `state` USPS 2-letter, `zip` 5-digit — **only when unambiguous** |
 | `latitude` / `longitude` | Coordinates | String (full precision preserved) |
 | `phone` / `email` / `provider_website` | Contact | String |
+| `phone_extension` | Extension for `phone` | Digits-only **string** (NJ/NY via `phone_extension_digits`: trim, strip `_` mask padding, non-digits -> None) |
 | `capacity` | Licensed capacity | Integer (when a clean number) |
 | `hours` | Operating hours | String |
+| `days_of_operation` | Weekdays open | List of full day names, Mon->Sun (GA/IA/VT via `day_names`: 2-/3-letter/full names, de-duped, unknown tokens logged and dropped; CT/IN/NH/OK/WY/MA/FL derived from `weekly_schedule`, never overwriting a direct source) |
+| `weekly_schedule` | Per-day open/close rows | List of `{day, open, close}`: full day names, 24h `HH:MM`, Mon->Sun, several rows per day allowed (CT/IN/NH/OK/WY/MA/FL via per-state adapters sharing `parse_time`/`split_time_range`; FL parsed from its dict `hours`, which stays as-is; MA picks one schedule - Full Year, else School Year, else Summer, else first - and tags rows with `schedule_type`) |
 | `ages_served` | Ages accepted | String (lists joined with `, `) |
 | `county` | County | String |
-| `scholarships_accepted` | Subsidy/scholarship acceptance | As emitted (string/bool) |
-| `license_begin_date` | License start | `YYYY-MM-DD` |
+| `scholarships_accepted` | Subsidy/scholarship acceptance | bool-or-None via `coerce_scholarships_accepted_flag`; FL/VA/WA collapsed from their subsidy flags (WA empty -> unset), NH from the `STATE CC ASSISTANCE (SCHOLARSHIP)` token as a fallback only; OK set by its spider |
+| `license_begin_date` | License start | `YYYY-MM-DD`; NC collapsed from `nc_license_effective_date` (current license's effective date; a spider-set value wins) |
 | `license_expiration` | License end | `YYYY-MM-DD` |
 | `license_type` | Type/category of license | String (collapsed from `xx_license_type`) |
 | `school_district` | Associated school district | String (collapsed) |
@@ -69,7 +75,20 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `accepting_new_children` | Open enrollment flag | As emitted (collapsed) |
 | `transportation` | Transportation offered | String (collapsed) |
 | `head_start` | Head Start program | **Boolean** (collapsed + coerced) |
+| `early_head_start` | Early Head Start program (separate from `head_start`) | **Boolean** (collapsed MS/NH/WA, coerced via `_coerce_bool`) |
+| `wheelchair_accessible` | Wheelchair-accessible facility | **Boolean** (collapsed CT/TN via `_coerce_bool`; NH from `nh_environment` token, absent -> None not False) |
+| `address_suppressed` / `phone_suppressed` | State deliberately withheld the address / phone (True = withheld) | **Boolean** (CT/KS/MA copy; FL `display_*_on_web` inverted; NY adapter: `Y` -> True, blank -> False; MA flag feeds both) |
 | `curriculum` | Curriculum | String (collapsed) |
+| `licensing_specialist` | Assigned state licensing specialist | `First Last` string (collapsed; SC `Last, First` flipped; VA split by adapter; `N/A` -> None) |
+| `inspector` | Inspection row: staff member who ran the visit | `First Last` string (collapsed from AK, MA licensor/investigator, MO, MT, NH, RI; MO `Last, First M` flipped; ALL-CAPS Title-cased) |
+| `inspection_id` | Inspection row: state's own key for the visit/report | Opaque string via `to_id_string` (collapsed from CT, FL, HI, KY, MA visit/investigation, MO, NH, NV, KS `ks_nosf_id` only, AZ); state-specific, unique per provider record, not guaranteed globally unique (CT can repeat across two provider records with the same license) |
+| `announced` | Inspection row: was the visit announced | Bool: True announced, False unannounced, None unknown (collapsed from AK, MA, NH, MO via `announced_flag`; NC, CT, RI read the common `type` text by adapter; typo-tolerant, unannounced checked first; `type` unchanged; `N/A` or neither word -> unset) |
+| `violation_found` | Inspection row: did the visit record any noncompliance | Bool: True violation, False none, None unknown (collapsed from FL, VA, MA, WY via `to_bool`, MO inverted via `invert`, MD `md_finding` text via `md_finding_flag`; AK and WI read the common `original_status` by adapter with explicit vocab tables; source fields unchanged; CT, DE, NV, KS, HI, SC derived as `violation_count > 0` by adapter, never overwriting an explicit flag; DE is always True because its count is >= 1 by construction, so it cannot show a clean visit) |
+| `violation_count` | Inspection row: number of violations / deficiencies / findings on the visit | Int via `to_int`, `0` kept (collapsed from CT, DE, NV, KS, HI, SC; SC missing badge stays unset; MO `mo_open_violations` excluded: open-only count, user decision; DE always >= 1 by construction) |
+| `licensing_specialist_phone` / `licensing_specialist_email` | Specialist contact | Phone as emitted / lower-cased email |
+| `vacancies_infant` / `_toddler` / `_preschool` / `_school_age` | Open slots per age band (state's own band definitions) | Int, `0` kept (collapsed CO/ME/NH/VT via `to_int`; IA/ND/DC by label-table adapters, IA sums full+part time) |
+| `total_vacancies` | Total open slots the provider reports (never summed from per-age bands) | Int, `0` kept (collapsed IA/ID/ND/TN/UT/VT/WA via `to_int`; WI parsed from prose by `wi_total_vacancies`, `None Reported.` -> empty) |
+| `vacancies_updated_date` | Date the provider last updated its vacancy counts | `YYYY-MM-DD` (collapsed IA/ME/ND/VT via `to_iso_date`; WI date parsed from prose by `wi_vacancies_updated_date`, `None Reported.` -> empty) |
 | `languages` | Languages | String/list |
 
 ---
@@ -114,7 +133,8 @@ concepts, route it to the listed common field.
 |---|---|---|
 | Type / category of license | `license_type` | Watch overlap with `provider_type`. |
 | School district | `school_district` | |
-| Facility mailing address | `mailing_address` | **Not** owner/licensee address — keep those `xx_`. |
+| Licensee / owner address | `license_holder_address` | Not `mailing_address`. |
+| Facility mailing address | `mailing_address` | **Not** owner/licensee address — those go to `license_holder_address`. |
 | Accreditation | `accreditation` | Normalize plural/singular naming. |
 | Meals / food program | `meals` | |
 | Accepting new children | `accepting_new_children` | |
@@ -127,7 +147,11 @@ concepts, route it to the listed common field.
 
 To add a new source field to an existing common field, append it to that
 field's list in `FIELD_COLLAPSE_MAP` (`normalization.py`). Collapse is
-**additive** — the `xx_` source field is retained.
+**additive** — the `xx_` source field is retained. A source that needs
+conversion is listed as `(source, transform)` (e.g. `invert`, `to_int`; see
+`provider_scrape/common_fields.py`). Cases a map entry can't express (one
+source feeding several fields, or several sources feeding one) get a per-state
+adapter registered in `common_fields.py`.
 
 ---
 
