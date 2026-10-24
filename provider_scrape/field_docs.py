@@ -94,4 +94,10 @@ FIELD_DOCS = {
     'bool-or-None. States that emit "Yes"/"No" or NM\'s "Accepted"/"Not '
     'Accepted" are coerced via the shared strict token rule (bug_06); an '
     "unparseable token becomes None rather than a guessed True.",
+    "licensing_specialist": "State staff member assigned to oversee the provider's license, as `First Last` "
+    "(ALL-CAPS Title-cased; SC's `Last, First` flipped; `N/A` -> empty). Collapsed from AK, MA, ME, OK, SC, TN, "
+    "WV; VA's packed `Name: phone` string is split by an adapter.",
+    "licensing_specialist_phone": "Phone number of the assigned licensing specialist, as emitted by the state "
+    "(OK, SC, and VA's split-out number); empty when not published.",
+    "licensing_specialist_email": "Lower-cased email of the assigned licensing specialist (published by ME).",
 }

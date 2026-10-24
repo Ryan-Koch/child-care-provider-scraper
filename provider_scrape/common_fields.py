@@ -199,6 +199,49 @@ def to_iso_date(value):
     return normalize_date(value)
 
 
+def none_if_sentinel(value):
+    """Whitespace-trim a string; sentinels (``N/A``, ``None``...) -> ``None``.
+
+    Non-strings are returned unchanged. Generic "copy, but drop placeholders"
+    transform (used for the specialist phone numbers).
+    """
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        return value
+    return None if _is_sentinel(value) else value.strip()
+
+
+def lower_email(value):
+    """Lower-case and trim an email address; sentinels -> ``None``."""
+    cleaned = none_if_sentinel(value)
+    return cleaned.lower() if isinstance(cleaned, str) else cleaned
+
+
+def person_name(value):
+    """Canonical ``First Last`` display name: sentinels -> ``None`` and an
+    ALL-CAPS name is Title-cased (``title_case_name``); mixed case is untouched."""
+    from provider_scrape.normalization import title_case_name
+
+    cleaned = none_if_sentinel(value)
+    return title_case_name(cleaned) if isinstance(cleaned, str) else cleaned
+
+
+def last_first_name(value):
+    """Flip a ``Last, First`` name to ``First Last`` (then ``person_name``).
+
+    Only a string with exactly one comma and text on both sides is flipped; a
+    name with no comma (or an unexpected shape such as ``Smith, Jr., John``)
+    is passed through unflipped rather than guessed at.
+    """
+    cleaned = none_if_sentinel(value)
+    if isinstance(cleaned, str):
+        parts = [part.strip() for part in cleaned.split(",")]
+        if len(parts) == 2 and all(parts):
+            cleaned = f"{parts[1]} {parts[0]}"
+    return person_name(cleaned)
+
+
 # --------------------------------------------------------------------------- #
 # Per-state adapters
 # --------------------------------------------------------------------------- #
@@ -273,3 +316,25 @@ def run_adapters(record, state, level=PROVIDER_LEVEL):
                 continue
             record[field] = value
     return record
+
+# Virginia packs "Angela Farmer: (276) 608-2283" into one string; the name and
+# phone are split on the first colon. "N/A" (no inspector assigned) and a
+# colon-less string (name only) are both observed.
+_VA_INSPECTOR_RE = re.compile(r"^\s*(?P<name>[^:]*?)\s*(?::\s*(?P<phone>.*?))?\s*$")
+
+
+@register_adapter(
+    "virginia",
+    sources=["va_inspector"],
+    fills=["licensing_specialist", "licensing_specialist_phone"],
+)
+def virginia_inspector(record):
+    """Split `va_inspector` ("Name: (555) 555-5555") into specialist name + phone; `N/A` -> None."""
+    raw = record.get("va_inspector")
+    if not isinstance(raw, str) or _is_sentinel(raw):
+        return {}
+    match = _VA_INSPECTOR_RE.match(raw)
+    return {
+        "licensing_specialist": person_name(match.group("name")),
+        "licensing_specialist_phone": none_if_sentinel(match.group("phone")),
+    }

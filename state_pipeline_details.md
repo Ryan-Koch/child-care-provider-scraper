@@ -32,6 +32,9 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `license_holder` | Whitespace cleanup; Title Case (ALL-CAPS names) | Name of the license holder/licensee. ALL-CAPS values are Title-cased. |
 | `license_number` | Whitespace cleanup | State-issued license/registration identifier, kept as emitted (only whitespace-cleaned). |
 | `license_type` | Whitespace cleanup; Field collapse from state-specific source | Type/category of license, collapsed from a single populated state-specific *_license_type field. |
+| `licensing_specialist` | Whitespace cleanup; Field collapse from state-specific source (transforms: last_first_name, person_name) | State staff member assigned to oversee the provider's license, as `First Last` (ALL-CAPS Title-cased; SC's `Last, First` flipped; `N/A` -> empty). Collapsed from AK, MA, ME, OK, SC, TN, WV; VA's packed `Name: phone` string is split by an adapter. |
+| `licensing_specialist_email` | Whitespace cleanup; Field collapse from state-specific source (transforms: lower_email) | Lower-cased email of the assigned licensing specialist (published by ME). |
+| `licensing_specialist_phone` | Whitespace cleanup; Field collapse from state-specific source (transforms: none_if_sentinel) | Phone number of the assigned licensing specialist, as emitted by the state (OK, SC, and VA's split-out number); empty when not published. |
 | `longitude` | Whitespace cleanup; Coordinate -> string | Longitude kept as a trimmed string to avoid float precision drift. |
 | `mailing_address` | Whitespace cleanup; Field collapse from state-specific source; Address cleanup | Facility mailing address, collapsed from a single populated state source (owner/licensee addresses are excluded). |
 | `meals` | Whitespace cleanup; Field collapse from state-specific source | Meals / food program, collapsed from a single populated state source. |
@@ -76,6 +79,9 @@ Each common field is populated from a single populated source field (additive â€
 | `curriculum` | `ga_curriculum`, `nj_curriculum` |
 | `head_start` | `az_headstart` (coerce_bool), `co_head_start` (coerce_bool), `ct_head_start` (coerce_bool), `fl_is_head_start` (coerce_bool), `nh_head_start` (coerce_bool), `ri_head_start` (coerce_bool), `wa_head_start` (coerce_bool) |
 | `license_type` | `ak_license_type`, `az_license_type`, `co_license_type`, `ct_license_type`, `hi_license_type`, `mt_license_type`, `nc_license_type`, `nj_license_type_label`, `ut_license_type`, `va_license_type`, `wa_license_type`, `wv_license_type` |
+| `licensing_specialist` | `ak_licensing_specialist` (person_name), `ma_licensor` (person_name), `me_licensing_specialist` (person_name), `ok_licensing_specialist` (person_name), `sc_licensing_specialist_name` (last_first_name), `tn_regulatory_individual` (person_name), `wv_licensing_specialist` (person_name) |
+| `licensing_specialist_email` | `me_licensing_specialist_email` (lower_email) |
+| `licensing_specialist_phone` | `ok_licensing_specialist_phone` (none_if_sentinel), `sc_licensing_specialist_phone` (none_if_sentinel) |
 | `mailing_address` | `al_mailing_address`, `ga_mailing_address`, `hi_mailing_address` |
 | `meals` | `ga_meals`, `hi_meals`, `nj_meal_options_labels`, `nm_meals`, `pa_meal_options`, `ut_meals` |
 | `school_district` | `co_school_district`, `ct_school_districts`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
@@ -104,7 +110,9 @@ Reusable `value -> value` transforms from `provider_scrape/common_fields.py` for
 
 Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to-one map entry cannot: one source feeding several common fields, or several sources feeding one. They run after the field-collapse map, in registration order, and follow the same rules (additive, never overwrite a populated common field).
 
-_No adapters registered yet._
+| State | Level | Reads | Fills | Description |
+|---|---|---|---|---|
+| `virginia` | provider | `va_inspector` | `licensing_specialist`, `licensing_specialist_phone` | Split `va_inspector` ("Name: (555) 555-5555") into specialist name + phone; `N/A` -> None. |
 
 ## Controlled vocabulary: `status`
 
@@ -142,7 +150,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ak_facility_subtype` -> pass-through
 - `ak_legacy_license_number` -> pass-through
 - `ak_license_type` -> collapses into `license_type`
-- `ak_licensing_specialist` -> pass-through
+- `ak_licensing_specialist` -> collapses into `licensing_specialist` (via person_name)
 - `ak_vendor_id` -> pass-through
 - `ak_visit_type` -> pass-through
 
@@ -522,7 +530,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ma_is_informal` -> pass-through
 - `ma_last_issue_date` -> pass-through
 - `ma_level_of_compliance` -> pass-through
-- `ma_licensor` -> pass-through
+- `ma_licensor` -> collapses into `licensing_specialist` (via person_name)
 - `ma_noncompliance_identified` -> pass-through
 - `ma_original_license_date` -> pass-through
 - `ma_program_number` -> pass-through
@@ -555,8 +563,8 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `me_infant_slots` -> pass-through
 - `me_licensed_from` -> pass-through
 - `me_licensed_to` -> pass-through
-- `me_licensing_specialist` -> pass-through
-- `me_licensing_specialist_email` -> pass-through
+- `me_licensing_specialist` -> collapses into `licensing_specialist` (via person_name)
+- `me_licensing_specialist_email` -> collapses into `licensing_specialist_email` (via lower_email)
 - `me_openings_updated` -> pass-through
 - `me_preschool_slots` -> pass-through
 - `me_school_age_slots` -> pass-through
@@ -820,8 +828,8 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ok_detail_unavailable` -> pass-through
 - `ok_doing_business_as` -> pass-through
 - `ok_emergency_issued` -> pass-through
-- `ok_licensing_specialist` -> pass-through
-- `ok_licensing_specialist_phone` -> pass-through
+- `ok_licensing_specialist` -> collapses into `licensing_specialist` (via person_name)
+- `ok_licensing_specialist_phone` -> collapses into `licensing_specialist_phone` (via none_if_sentinel)
 - `ok_noncompliances` -> pass-through
 - `ok_revocation_sent` -> pass-through
 - `ok_schedule` -> pass-through
@@ -866,8 +874,8 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `sc_alert_resolved_count` -> pass-through
 - `sc_deficiencies` -> pass-through
 - `sc_license_category` -> pass-through
-- `sc_licensing_specialist_name` -> pass-through
-- `sc_licensing_specialist_phone` -> pass-through
+- `sc_licensing_specialist_name` -> collapses into `licensing_specialist` (via last_first_name)
+- `sc_licensing_specialist_phone` -> collapses into `licensing_specialist_phone` (via none_if_sentinel)
 - `sc_program_participation` -> pass-through
 - `sc_provider_id` -> pass-through
 
@@ -886,7 +894,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `tn_rating_expiration` -> pass-through
 - `tn_rating_scorecard` -> pass-through
 - `tn_regulatory_agency` -> pass-through
-- `tn_regulatory_individual` -> pass-through
+- `tn_regulatory_individual` -> collapses into `licensing_specialist` (via person_name)
 - `tn_vacancy` -> pass-through
 - `tn_wheelchair_accessible` -> pass-through
 
@@ -912,7 +920,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `va_complaint_related` -> pass-through
 - `va_current_subsidy_provider` -> pass-through
 - `va_curriculum_points` -> pass-through
-- `va_inspector` -> pass-through
+- `va_inspector` -> feeds adapter, fills `licensing_specialist`, `licensing_specialist_phone`
 - `va_interactions` -> pass-through
 - `va_interactions_points` -> pass-through
 - `va_license_type` -> collapses into `license_type`
@@ -999,7 +1007,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wv_corrective_action_plan_start` -> pass-through
 - `wv_issue_completed_date` -> pass-through
 - `wv_license_type` -> collapses into `license_type`
-- `wv_licensing_specialist` -> pass-through
+- `wv_licensing_specialist` -> collapses into `licensing_specialist` (via person_name)
 - `wv_non_compliance_code` -> pass-through
 - `wv_outcome_code` -> pass-through
 

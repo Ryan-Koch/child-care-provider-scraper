@@ -70,6 +70,8 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `transportation` | Transportation offered | String (collapsed) |
 | `head_start` | Head Start program | **Boolean** (collapsed + coerced) |
 | `curriculum` | Curriculum | String (collapsed) |
+| `licensing_specialist` | Assigned state licensing specialist | `First Last` string (collapsed; SC `Last, First` flipped; VA split by adapter; `N/A` -> None) |
+| `licensing_specialist_phone` / `licensing_specialist_email` | Specialist contact | Phone as emitted / lower-cased email |
 | `languages` | Languages | String/list |
 
 ---

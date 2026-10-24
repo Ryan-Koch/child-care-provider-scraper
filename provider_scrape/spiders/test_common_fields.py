@@ -208,13 +208,17 @@ def _legacy_collapse(item):
 
 
 def test_round1_map_has_same_commons_and_sources():
+    # Round-2 stories add new commons; this pins only the round-1 ones.
     current = {
         common: [norm.split_collapse_entry(e)[0] for e in entries]
         for common, entries in norm.FIELD_COLLAPSE_MAP.items()
+        if common in _LEGACY_MAP
     }
     assert current == _LEGACY_MAP
     # Only head_start carries a transform, and it is the bool coercion.
     for common, entries in norm.FIELD_COLLAPSE_MAP.items():
+        if common not in _LEGACY_MAP:
+            continue
         transforms = {norm.split_collapse_entry(e)[1] for e in entries}
         assert transforms == ({norm._coerce_bool} if common == "head_start" else {None})
 
@@ -356,3 +360,114 @@ def test_adapter_description_uses_first_docstring_line(adapter_registry):
     _register_split_adapter()
     (adapter,) = cf.all_adapters()
     assert adapter.description == "Split `Name: phone` into specialist name and phone."
+
+
+# --------------------------------------------------------------------------- #
+# Story 01 -- assigned licensing specialist
+# --------------------------------------------------------------------------- #
+_SPECIALIST_FIELDS = ("licensing_specialist", "licensing_specialist_phone", "licensing_specialist_email")
+
+
+def _specialist(state, **source):
+    """Run one raw record through the full provider normalization."""
+    item = norm.normalize_item(dict(source), state)
+    return tuple(item.get(f) for f in _SPECIALIST_FIELDS), item
+
+
+@pytest.mark.parametrize(
+    ("state", "source", "name"),
+    [
+        ("alaska", {"ak_licensing_specialist": "Alyssa Pulice"}, "Alyssa Pulice"),
+        ("massachusetts", {"ma_licensor": "Noelia Ramirez"}, "Noelia Ramirez"),
+        ("tennessee", {"tn_regulatory_individual": "Sharon Neely"}, "Sharon Neely"),
+        ("west_virginia", {"wv_licensing_specialist": "TODD MCDANIEL"}, "Todd Mcdaniel"),
+        ("west_virginia", {"wv_licensing_specialist": "Jessica Hudson"}, "Jessica Hudson"),
+    ],
+)
+def test_specialist_name_only_states(state, source, name):
+    values, item = _specialist(state, **source)
+    assert values == (name, None, None)
+    # collapse is additive: the source field stays
+    assert all(item[k] == source[k] or k == "wv_licensing_specialist" for k in source)
+
+
+def test_specialist_maine_name_and_lowercased_email():
+    values, item = _specialist(
+        "maine", me_licensing_specialist="Karen Quinn", me_licensing_specialist_email="Karen.E.Quinn@Maine.gov"
+    )
+    assert values == ("Karen Quinn", None, "karen.e.quinn@maine.gov")
+    assert item["me_licensing_specialist_email"] == "Karen.E.Quinn@Maine.gov"
+
+
+def test_specialist_oklahoma_name_and_phone():
+    values, _ = _specialist(
+        "oklahoma", ok_licensing_specialist="Peyton Crawford", ok_licensing_specialist_phone="(405) 343-2186"
+    )
+    assert values == ("Peyton Crawford", "(405) 343-2186", None)
+
+
+def test_specialist_oklahoma_missing_phone():
+    values, _ = _specialist("oklahoma", ok_licensing_specialist="Peyton Crawford")
+    assert values == ("Peyton Crawford", None, None)
+
+
+@pytest.mark.parametrize(
+    ("raw", "name"),
+    [
+        ("Woodward, Rebecca", "Rebecca Woodward"),
+        ("Mcarthur, Wilena", "Wilena Mcarthur"),
+        ("Smith-Jones, Ann", "Ann Smith-Jones"),
+        ("WOODWARD, REBECCA", "Rebecca Woodward"),
+        ("Rebecca Woodward", "Rebecca Woodward"),  # no comma: passed through
+        ("Smith, Jr., John", "Smith, Jr., John"),  # unexpected shape: not guessed
+        ("Woodward,", "Woodward,"),
+    ],
+)
+def test_specialist_south_carolina_name_flip(raw, name):
+    values, _ = _specialist(
+        "south_carolina", sc_licensing_specialist_name=raw, sc_licensing_specialist_phone="(843) 661-6623"
+    )
+    assert values == (name, "(843) 661-6623", None)
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("Angela Farmer: (276) 608-2283", ("Angela Farmer", "(276) 608-2283")),
+        ("Mary O'Neil-Smith: (804) 629-8167", ("Mary O'Neil-Smith", "(804) 629-8167")),
+        ("Beth Velke", ("Beth Velke", None)),  # no phone
+        ("Beth Velke:", ("Beth Velke", None)),
+        ("N/A", (None, None)),
+        ("n/a", (None, None)),
+        ("", (None, None)),
+    ],
+)
+def test_specialist_virginia_split(raw, expected):
+    values, item = _specialist("virginia", va_inspector=raw)
+    assert values == (expected[0], expected[1], None)
+    assert item["va_inspector"] == (raw or None)  # source kept in place
+
+
+def test_specialist_virginia_adapter_ignores_non_strings_and_missing():
+    assert cf.virginia_inspector({}) == {}
+    assert cf.virginia_inspector({"va_inspector": None}) == {}
+
+
+def test_specialist_is_not_applied_to_other_states_and_never_overwrites():
+    values, _ = _specialist("virginia", va_inspector="Angela Farmer: (276) 608-2283", licensing_specialist="Preset")
+    assert values == ("Preset", "(276) 608-2283", None)
+    # the VA adapter is scoped to Virginia
+    values, _ = _specialist("ohio", va_inspector="Angela Farmer: (276) 608-2283")
+    assert values == (None, None, None)
+
+
+def test_specialist_transforms():
+    assert cf.last_first_name("Woodward, Rebecca") == "Rebecca Woodward"
+    assert cf.last_first_name(None) is None
+    assert cf.last_first_name("N/A") is None
+    assert cf.person_name("  N/A ") is None
+    assert cf.person_name("TODD MCDANIEL") == "Todd Mcdaniel"
+    assert cf.lower_email(" A.B@Maine.GOV ") == "a.b@maine.gov"
+    assert cf.lower_email("") is None
+    assert cf.none_if_sentinel("N/A") is None
+    assert cf.none_if_sentinel(" (405) 343-2186 ") == "(405) 343-2186"

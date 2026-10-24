@@ -24,7 +24,15 @@ import logging
 import re
 from datetime import datetime
 
-from provider_scrape.common_fields import INSPECTION_LEVEL, is_present, run_adapters
+from provider_scrape.common_fields import (
+    INSPECTION_LEVEL,
+    is_present,
+    last_first_name,
+    lower_email,
+    none_if_sentinel,
+    person_name,
+    run_adapters,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1082,6 +1090,23 @@ FIELD_COLLAPSE_MAP = {
         )
     ],
     "curriculum": ["ga_curriculum", "nj_curriculum"],
+    # Story 01: assigned licensing specialist. VA (va_inspector packs name +
+    # phone) is an adapter in common_fields.py. ma_licensor is the provider-level
+    # field only; the inspection-level one is story 16.
+    "licensing_specialist": [
+        ("ak_licensing_specialist", person_name),
+        ("ma_licensor", person_name),
+        ("me_licensing_specialist", person_name),
+        ("ok_licensing_specialist", person_name),
+        ("sc_licensing_specialist_name", last_first_name),  # "Last, First" -> "First Last"
+        ("tn_regulatory_individual", person_name),
+        ("wv_licensing_specialist", person_name),  # ALL-CAPS -> Title Case
+    ],
+    "licensing_specialist_phone": [
+        ("ok_licensing_specialist_phone", none_if_sentinel),
+        ("sc_licensing_specialist_phone", none_if_sentinel),
+    ],
+    "licensing_specialist_email": [("me_licensing_specialist_email", lower_email)],
 }
 # NOTE (bug_06): `scholarships_accepted` is deliberately NOT in this map --
 # every state that fills it sets the common field directly in the spider

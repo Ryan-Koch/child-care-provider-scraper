@@ -319,6 +319,10 @@ class ProviderItem(scrapy.Item):
     transportation = scrapy.Field()
     head_start = scrapy.Field()  # normalized to a boolean
     curriculum = scrapy.Field()
+    # State staff member assigned to the license, plus contact info
+    licensing_specialist = scrapy.Field()
+    licensing_specialist_phone = scrapy.Field()
+    licensing_specialist_email = scrapy.Field()
 
     # Best-effort address components parsed from `address` by the normalization
     # pipeline (additive; `address` is preserved). Left None when ambiguous.
