@@ -50,7 +50,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `provider_name` | Whitespace cleanup; Title Case (ALL-CAPS names) | The facility's name. ALL-CAPS values are converted to Title Case; whitespace is cleaned. |
 | `provider_type` | Whitespace cleanup; Preserved (drives facility_category) | The raw state license category, preserved exactly. It drives the derived facility_category facet. |
 | `provider_website` | Whitespace cleanup | Provider website URL (whitespace-cleaned only). |
-| `scholarships_accepted` | Whitespace cleanup | Whether the provider accepts child-care subsidies/scholarships: bool-or-None. States that emit "Yes"/"No" or NM's "Accepted"/"Not Accepted" are coerced via the shared strict token rule (bug_06); an unparseable token becomes None rather than a guessed True. |
+| `scholarships_accepted` | Whitespace cleanup; Field collapse from state-specific source (transforms: has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP)), scholarships_flag) | Whether the provider accepts child-care subsidies/scholarships: bool-or-None. States that emit "Yes"/"No" or NM's "Accepted"/"Not Accepted" are coerced via the shared strict token rule (bug_06); an unparseable token becomes None rather than a guessed True. |
 | `school` | Whitespace cleanup | Whether the provider serves school-age children: bool-or-None. See infant. |
 | `school_district` | Whitespace cleanup; Field collapse from state-specific source | Associated school district, collapsed from a single populated state-specific source field. |
 | `status` | Whitespace cleanup; Controlled vocabulary (status) | License status mapped to the 5-bucket canonical vocabulary (active/provisional/pending/enforcement/closed, else unknown). Replaced in place. |
@@ -106,6 +106,7 @@ Each common field is populated from a single populated source field (additive â€
 | `meals` | `ga_meals`, `hi_meals`, `nj_meal_options_labels`, `nm_meals`, `pa_meal_options`, `ut_meals` |
 | `phone_extension` | `nj_phone_extension` (phone_extension_digits), `ny_phone_extension` (phone_extension_digits) |
 | `phone_suppressed` | `fl_display_phone_on_web` (invert), `ma_contact_redacted` (to_bool) |
+| `scholarships_accepted` | `fl_is_offering_school_readiness` (scholarships_flag), `nh_financial_assistance` (has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP))), `va_current_subsidy_provider` (scholarships_flag), `wa_subsidy` (scholarships_flag) |
 | `school_district` | `co_school_district`, `ct_school_districts`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
 | `total_vacancies` | `ia_total_openings` (to_int), `id_number_of_openings` (to_int), `nd_total_vacancies` (to_int), `tn_vacancy` (to_int), `ut_vacancies` (to_int), `vt_current_vacancy` (to_int), `wa_available_slots` (to_int), `wi_vacancies` (wi_total_vacancies) |
 | `transportation` | `ct_transportation`, `ga_transportation`, `nj_transportation_labels` |
@@ -351,7 +352,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `fl_is_head_start` -> collapses into `head_start` (via coerce_bool)
 - `fl_is_inclusion_badge` -> pass-through
 - `fl_is_infant_toddler_badge` -> pass-through
-- `fl_is_offering_school_readiness` -> pass-through
+- `fl_is_offering_school_readiness` -> collapses into `scholarships_accepted` (via scholarships_flag)
 - `fl_is_public_school` -> pass-through
 - `fl_is_religious_exempt` -> pass-through
 - `fl_is_trauma_badge` -> pass-through
@@ -735,7 +736,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nh_early_head_start` -> collapses into `early_head_start` (via coerce_bool)
 - `nh_endorsements` -> pass-through
 - `nh_environment` -> collapses into `wheelchair_accessible` (via has_list_token(WHEELCHAIR ACCESSIBLE))
-- `nh_financial_assistance` -> pass-through
+- `nh_financial_assistance` -> collapses into `scholarships_accepted` (via has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP)))
 - `nh_gsq_step` -> pass-through
 - `nh_head_start` -> collapses into `head_start` (via coerce_bool)
 - `nh_infant_openings` -> collapses into `vacancies_infant` (via to_int)
@@ -958,7 +959,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `va_ID` -> pass-through
 - `va_complaint_related` -> pass-through
-- `va_current_subsidy_provider` -> pass-through
+- `va_current_subsidy_provider` -> collapses into `scholarships_accepted` (via scholarships_flag)
 - `va_curriculum_points` -> pass-through
 - `va_inspector` -> feeds adapter, fills `licensing_specialist`, `licensing_specialist_phone`
 - `va_interactions` -> pass-through
@@ -1015,7 +1016,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wa_provider_status` -> pass-through
 - `wa_school_district` -> collapses into `school_district`
 - `wa_slot_age_groups` -> pass-through
-- `wa_subsidy` -> pass-through
+- `wa_subsidy` -> collapses into `scholarships_accepted` (via scholarships_flag)
 
 ### Wisconsin (WI)
 

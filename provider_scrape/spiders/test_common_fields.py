@@ -1538,3 +1538,71 @@ def test_weekly_schedule_idempotent_through_pipeline():
 
 def test_weekly_schedule_absent_when_no_source():
     assert "weekly_schedule" not in norm.normalize_item({}, "connecticut")
+
+
+# --------------------------------------------------------------------------- #
+# Scholarships accepted
+# --------------------------------------------------------------------------- #
+NH_TOKEN_VALUE = "PREVENTIVE AND PROTECTIVE CARE, STATE CC ASSISTANCE (SCHOLARSHIP)"
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "raw", "expected"),
+    [
+        ("florida", "fl_is_offering_school_readiness", True, True),
+        ("florida", "fl_is_offering_school_readiness", False, False),
+        ("virginia", "va_current_subsidy_provider", "Yes", True),
+        ("virginia", "va_current_subsidy_provider", "No", False),
+        ("washington", "wa_subsidy", "Yes", True),
+        ("new_hampshire", "nh_financial_assistance", NH_TOKEN_VALUE, True),
+        ("new_hampshire", "nh_financial_assistance",
+         "state cc assistance (scholarship)", True),
+    ],
+)
+def test_scholarships_accepted_collapse(state, field, raw, expected):
+    item = norm.normalize_item({field: raw}, state)
+    assert item["scholarships_accepted"] is expected
+    assert item[field] == raw  # additive: source kept
+
+
+@pytest.mark.parametrize("raw", [None, ""])
+def test_scholarships_accepted_wa_empty_is_unset(raw):
+    item = norm.normalize_item({"wa_subsidy": raw}, "washington")
+    assert "scholarships_accepted" not in item
+
+
+@pytest.mark.parametrize(
+    "raw", ["PREVENTIVE AND PROTECTIVE CARE", "NOT STATE CC ASSISTANCE", "", None]
+)
+def test_scholarships_accepted_nh_without_token_is_unset(raw):
+    item = norm.normalize_item({"nh_financial_assistance": raw}, "new_hampshire")
+    assert "scholarships_accepted" not in item
+
+
+@pytest.mark.parametrize("spider_value", [False, True, "No", "Yes"])
+def test_scholarships_accepted_nh_fallback_never_overwrites_spider(spider_value):
+    item = norm.normalize_item(
+        {
+            "scholarships_accepted": spider_value,
+            "nh_financial_assistance": NH_TOKEN_VALUE,
+        },
+        "new_hampshire",
+    )
+    assert item["scholarships_accepted"] is (spider_value in (True, "Yes"))
+    assert item["nh_financial_assistance"] == NH_TOKEN_VALUE
+
+
+def test_scholarships_accepted_ok_contract_number_not_mapped():
+    item = norm.normalize_item(
+        {"scholarships_accepted": False, "ok_subsidy_contract_number": "59555"},
+        "oklahoma",
+    )
+    assert item["scholarships_accepted"] is False
+    assert item["ok_subsidy_contract_number"] == "59555"
+    # contract number alone does not imply acceptance
+    bare = norm.normalize_item({"ok_subsidy_contract_number": "59555"}, "oklahoma")
+    assert "scholarships_accepted" not in bare
+
+
+def test_scholarships_accepted_absent_when_no_source():
+    assert "scholarships_accepted" not in norm.normalize_item({}, "florida")

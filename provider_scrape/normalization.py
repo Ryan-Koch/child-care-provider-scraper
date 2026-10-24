@@ -1016,6 +1016,12 @@ def _coerce_bool(value):
     return bool(value)
 
 
+def _scholarships_flag(value):
+    """Forward reference to :func:`coerce_scholarships_accepted_flag`, which is
+    defined below this map (late binding keeps the map near the top)."""
+    return coerce_scholarships_accepted_flag(value)
+
+
 # common field -> source state-specific fields. Populating the common field
 # never removes the source field (D2). Each entry is either a plain source
 # field name (copied as-is) or a ``(source, transform)`` tuple, where
@@ -1052,6 +1058,15 @@ FIELD_COLLAPSE_MAP = {
         ("ga_operating_days", day_names),
         ("ia_days_of_operation", day_names),
         ("vt_days_of_operation", day_names),
+    ],
+    # Subsidy acceptance. WA's "Yes"/None only ever says yes (empty -> unset,
+    # never False). NH's checklist is a fallback only: the NH spider sets the
+    # field from its detail-page label, which wins; token absent -> unset.
+    "scholarships_accepted": [
+        ("fl_is_offering_school_readiness", _scholarships_flag),
+        ("va_current_subsidy_provider", _scholarships_flag),
+        ("wa_subsidy", _scholarships_flag),
+        ("nh_financial_assistance", has_list_token("STATE CC ASSISTANCE (SCHOLARSHIP)")),
     ],
     "license_type": [
         "va_license_type",
@@ -1226,14 +1241,15 @@ FIELD_COLLAPSE_MAP = {
         ("wi_vacancies", wi_vacancies_updated_date),
     ],
 }
-# NOTE (bug_06): `scholarships_accepted` is deliberately NOT in this map --
-# every state that fills it sets the common field directly in the spider
-# (no xx_* source field to collapse from). Its bool-or-None coercion lives at
-# the end of normalize_item (step 9), after this collapse step runs, via
-# coerce_scholarships_accepted_flag. If a future change (e.g. extending scholarships) adds a
-# collapse source for it here, do NOT use _coerce_bool as the per-source
-# transform -- use coerce_scholarships_accepted_flag instead, since plain
-# _coerce_bool would misread "Not Accepted"-shaped text as True.
+# NOTE Most states set `scholarships_accepted` directly in the spider.
+# The few xx_* sources mapped above are only fallbacks -- the collapse never
+# overwrites a spider-set value (including False). The final bool-or-None
+# coercion still lives at the end of normalize_item (step 9), after this
+# collapse step runs, via coerce_scholarships_accepted_flag. Per-source
+# transforms for this field must use coerce_scholarships_accepted_flag (via
+# _scholarships_flag), NOT _coerce_bool, since plain _coerce_bool would misread
+# "Not Accepted"-shaped text as True. OK's ok_subsidy_contract_number is deliberately not mapped: the
+# OK spider sets the field from the state's explicit isSubsidyAccepted flag.
 
 # Same shape as FIELD_COLLAPSE_MAP, for inspection rows (normalize_inspection).
 # Empty until a round-2 inspection story (e.g. 16_inspector) adds entries.

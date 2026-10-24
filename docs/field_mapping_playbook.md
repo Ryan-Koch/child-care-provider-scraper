@@ -63,7 +63,7 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `weekly_schedule` | Per-day open/close rows | List of `{day, open, close}`: full day names, 24h `HH:MM`, Mon->Sun, several rows per day allowed (CT/IN/NH/OK/WY/MA/FL via per-state adapters sharing `parse_time`/`split_time_range`; FL parsed from its dict `hours`, which stays as-is; MA picks one schedule - Full Year, else School Year, else Summer, else first - and tags rows with `schedule_type`) |
 | `ages_served` | Ages accepted | String (lists joined with `, `) |
 | `county` | County | String |
-| `scholarships_accepted` | Subsidy/scholarship acceptance | As emitted (string/bool) |
+| `scholarships_accepted` | Subsidy/scholarship acceptance | bool-or-None via `coerce_scholarships_accepted_flag`; FL/VA/WA collapsed from their subsidy flags (WA empty -> unset), NH from the `STATE CC ASSISTANCE (SCHOLARSHIP)` token as a fallback only; OK set by its spider |
 | `license_begin_date` | License start | `YYYY-MM-DD` |
 | `license_expiration` | License end | `YYYY-MM-DD` |
 | `license_type` | Type/category of license | String (collapsed from `xx_license_type`) |
