@@ -24,6 +24,8 @@ import logging
 import re
 from datetime import datetime
 
+from provider_scrape.common_fields import INSPECTION_LEVEL, is_present, run_adapters
+
 logger = logging.getLogger(__name__)
 
 
@@ -970,8 +972,41 @@ def facility_category_from_type(provider_type):
 # Task 07 — field collapse (state-specific -> common, additive D2)
 # --------------------------------------------------------------------------- #
 
+_AFFIRMATIVE = {"yes", "y", "true", "t", "1"}
+_NEGATIVE = {"no", "n", "false", "f", "0", "none", "n/a", "na", "not applicable"}
+
+
+# Shared with provider_scrape.common_fields (adapters use the same rule).
+_is_present = is_present
+
+
+def _coerce_bool(value):
+    """Best-effort map of a mixed boolean/text value to ``True``/``False``."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        token = value.strip().lower()
+        if token in _NEGATIVE:
+            return False
+        if token in _AFFIRMATIVE:
+            return True
+        # Any other descriptive, non-empty text (e.g. a program name) is
+        # treated as affirmative presence of the program.
+        return True
+    return bool(value)
+
+
 # common field -> source state-specific fields. Populating the common field
-# never removes the source field (D2). Approved set from plan §6; the
+# never removes the source field (D2). Each entry is either a plain source
+# field name (copied as-is) or a ``(source, transform)`` tuple, where
+# ``transform`` is a ``value -> value`` callable (see common_fields.py; ``None``
+# means copy as-is) -- e.g. ``("fl_display_address_on_web", invert)``. The
+# transform runs on the one populated source; a ``None`` result leaves the
+# common field unset. Multi-source / one-source-to-several-fields cases do not
+# belong here: register a per-state adapter in common_fields.py instead.
+# Approved set from plan §6; the
 # license_begin_date date-merge is intentionally excluded, and quality ratings
 # are never collapsed (they stay state-specific). Keep owner/licensee mailing
 # addresses (nc_owner_mailing_address, mi_licensee_address) and VPK-specific
@@ -1033,14 +1068,18 @@ FIELD_COLLAPSE_MAP = {
     ],
     # bug_07: nj_transportation renamed to resolved nj_transportation_labels.
     "transportation": ["ga_transportation", "nj_transportation_labels", "ct_transportation"],
+    # Every head_start source is coerced to a boolean.
     "head_start": [
-        "co_head_start",
-        "az_headstart",
-        "wa_head_start",
-        "ri_head_start",
-        "fl_is_head_start",
-        "ct_head_start",
-        "nh_head_start",
+        (source, _coerce_bool)
+        for source in (
+            "co_head_start",
+            "az_headstart",
+            "wa_head_start",
+            "ri_head_start",
+            "fl_is_head_start",
+            "ct_head_start",
+            "nh_head_start",
+        )
     ],
     "curriculum": ["ga_curriculum", "nj_curriculum"],
 }
@@ -1049,59 +1088,50 @@ FIELD_COLLAPSE_MAP = {
 # (no xx_* source field to collapse from). Its bool-or-None coercion lives at
 # the end of normalize_item (step 9), after this collapse step runs, via
 # coerce_scholarships_accepted_flag. If a future story (e.g. story 13) adds a
-# collapse source for it here, keep _BOOLEAN_COLLAPSE_FIELDS/_coerce_bool out
-# of that path -- reuse coerce_scholarships_accepted_flag instead, since
-# plain _coerce_bool would misread "Not Accepted"-shaped text as True.
+# collapse source for it here, do NOT use _coerce_bool as the per-source
+# transform -- use coerce_scholarships_accepted_flag instead, since plain
+# _coerce_bool would misread "Not Accepted"-shaped text as True.
 
-# Common fields whose collapsed value is coerced to a boolean.
-_BOOLEAN_COLLAPSE_FIELDS = {"head_start"}
-
-_AFFIRMATIVE = {"yes", "y", "true", "t", "1"}
-_NEGATIVE = {"no", "n", "false", "f", "0", "none", "n/a", "na", "not applicable"}
+# Same shape as FIELD_COLLAPSE_MAP, for inspection rows (normalize_inspection).
+# Empty until a round-2 inspection story (e.g. 16_inspector) adds entries.
+INSPECTION_FIELD_COLLAPSE_MAP = {}
 
 
-def _is_present(value):
-    """True if a value carries signal. ``False``/``0`` count as present (a state
-    explicitly saying "no"); ``None``/``""``/``[]`` do not."""
-    return value is not None and value != "" and value != []
+def split_collapse_entry(entry):
+    """Normalize a collapse-map entry to ``(source_field, transform_or_None)``."""
+    if isinstance(entry, str):
+        return entry, None
+    source, transform = entry
+    return source, transform
 
 
-def _coerce_bool(value):
-    """Best-effort map of a mixed boolean/text value to ``True``/``False``."""
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, (int, float)):
-        return bool(value)
-    if isinstance(value, str):
-        token = value.strip().lower()
-        if token in _NEGATIVE:
-            return False
-        if token in _AFFIRMATIVE:
-            return True
-        # Any other descriptive, non-empty text (e.g. a program name) is
-        # treated as affirmative presence of the program.
-        return True
-    return bool(value)
-
-
-def collapse_state_fields(item: dict) -> dict:
+def collapse_state_fields(item: dict, collapse_map: dict | None = None) -> dict:
     """Populate common fields from their single populated source field.
+
+    ``collapse_map`` defaults to ``FIELD_COLLAPSE_MAP``; inspections pass
+    ``INSPECTION_FIELD_COLLAPSE_MAP``.
 
     Rules (plan §6, D2):
       - Never overwrite an already-populated common field.
       - Copy only when **exactly one** source field is populated (never guess).
       - Keep the source field in place (additive).
-      - ``head_start`` is coerced to a boolean.
+      - If the map entry names a transform, it is applied to the source value;
+        a transform result with no signal (``None``) leaves the field unset.
     """
-    for common, sources in FIELD_COLLAPSE_MAP.items():
+    if collapse_map is None:
+        collapse_map = FIELD_COLLAPSE_MAP
+    for common, entries in collapse_map.items():
         if _is_present(item.get(common)):
             continue
-        present = [item[src] for src in sources if _is_present(item.get(src))]
+        present = [(src, tf) for src, tf in map(split_collapse_entry, entries) if _is_present(item.get(src))]
         if len(present) != 1:
             continue
-        value = present[0]
-        if common in _BOOLEAN_COLLAPSE_FIELDS:
-            value = _coerce_bool(value)
+        source, transform = present[0]
+        value = item[source]
+        if transform is not None:
+            value = transform(value)
+            if not _is_present(value):
+                continue
         item[common] = value
     return item
 
@@ -1550,7 +1580,9 @@ def normalize_item(item: dict, state: str) -> dict:
 
     # 2. field collapse (state-specific -> common) before format/vocab steps,
     #    so a collapsed value is then format-normalized by the steps below.
+    #    Per-state adapters (common_fields.py) run right after the map.
     collapse_state_fields(item)
+    run_adapters(item, state)
 
     # 3. date normalization -> ISO 8601.
     for field in DATE_FIELDS:
@@ -1624,7 +1656,11 @@ def normalize_item(item: dict, state: str) -> dict:
 
 
 def normalize_inspection(inspection: dict, state: str) -> dict:
-    """Normalize one inspection entry (whitespace + dates only).
+    """Normalize one inspection entry (whitespace, field collapse, dates).
+
+    Field collapse (``INSPECTION_FIELD_COLLAPSE_MAP`` + inspection-level
+    adapters) is additive and runs before date normalization, mirroring
+    ``normalize_item``.
 
     The ``status`` controlled vocabulary deliberately does **not** apply to
     inspections. Mutates and returns the same ``dict``.
@@ -1632,6 +1668,8 @@ def normalize_inspection(inspection: dict, state: str) -> dict:
     for key, value in list(inspection.items()):
         if isinstance(value, (str, list)):
             inspection[key] = clean_whitespace(value)
+    collapse_state_fields(inspection, INSPECTION_FIELD_COLLAPSE_MAP)
+    run_adapters(inspection, state, INSPECTION_LEVEL)
     for field in INSPECTION_DATE_FIELDS:
         if inspection.get(field) is not None:
             inspection[field] = normalize_date(inspection[field])

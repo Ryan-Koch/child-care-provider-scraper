@@ -67,19 +67,44 @@ These canonical fields are derived from a source field; the source is preserved 
 
 ## Field-collapse map
 
-Each common field is populated from a single populated source field (additive — the source field is kept). Rendered from `FIELD_COLLAPSE_MAP`.
+Each common field is populated from a single populated source field (additive — the source field is kept; an already-populated common field is never overwritten). A source shown with a parenthesised transform is passed through that transform first (see [Transform library](#transform-library)). Rendered from `FIELD_COLLAPSE_MAP`.
 
 | Common field | Source state-specific fields |
 |---|---|
 | `accepting_new_children` | `co_accepting_new_children`, `ct_accepting_referrals`, `ga_accepting_new_children` |
 | `accreditation` | `al_accreditations`, `ct_accreditations`, `ga_accreditation`, `hi_accreditations`, `md_accreditation`, `nj_accreditation_labels` |
 | `curriculum` | `ga_curriculum`, `nj_curriculum` |
-| `head_start` | `az_headstart`, `co_head_start`, `ct_head_start`, `fl_is_head_start`, `nh_head_start`, `ri_head_start`, `wa_head_start` |
+| `head_start` | `az_headstart` (coerce_bool), `co_head_start` (coerce_bool), `ct_head_start` (coerce_bool), `fl_is_head_start` (coerce_bool), `nh_head_start` (coerce_bool), `ri_head_start` (coerce_bool), `wa_head_start` (coerce_bool) |
 | `license_type` | `ak_license_type`, `az_license_type`, `co_license_type`, `ct_license_type`, `hi_license_type`, `mt_license_type`, `nc_license_type`, `nj_license_type_label`, `ut_license_type`, `va_license_type`, `wa_license_type`, `wv_license_type` |
 | `mailing_address` | `al_mailing_address`, `ga_mailing_address`, `hi_mailing_address` |
 | `meals` | `ga_meals`, `hi_meals`, `nj_meal_options_labels`, `nm_meals`, `pa_meal_options`, `ut_meals` |
 | `school_district` | `co_school_district`, `ct_school_districts`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
 | `transportation` | `ct_transportation`, `ga_transportation`, `nj_transportation_labels` |
+
+## Inspection field-collapse map
+
+Same rules, applied to every inspection row. Rendered from `INSPECTION_FIELD_COLLAPSE_MAP`.
+
+_No entries yet._
+
+## Transform library
+
+Reusable `value -> value` transforms from `provider_scrape/common_fields.py` for use per source in the collapse maps. A transform returns `None` for "no usable value", which leaves the common field unset.
+
+| Transform | Behaviour |
+|---|---|
+| `invert` | Flip a boolean source into the positive sense of the common field. Accepts bools and Yes/No-style text (`"No"` -> `True`). Sentinels and unrecognised text -> `None` (never guessed; unrecognised text is logged). |
+| `to_int` | Coerce to `int`. `"12"`, `"1,200"`, `"$5.00"` and `12.0` work; sentinels (`None Reported.`, `N/A`) -> `None`; a non-integral number (`"3.5"`) -> `None` and is logged rather than truncated. |
+| `to_float` | Coerce to `float`. Same input handling as `to_int`; `"$0.00"` is a real `0.0`, not a sentinel. |
+| `vocab(table)` | Build a transform mapping raw values through `table` (like STATUS_MAP). Lookup is case-insensitive and whitespace-tolerant. A miss is **logged** so the table can be extended, and yields `None` (the common field stays unset rather than carrying an unmapped raw value). Sentinels -> `None` silently. |
+| `has_token(pattern)` | Build a transform: `True` if `pattern` (regex, case-insensitive) matches the value (a string, or any element of a list); otherwise `None`. Absence of a token in a checklist is "not reported", not `False` (epic README) -- stories that need `False` should combine this in an adapter. |
+| `to_iso_date` | Normalize a date string to ISO 8601 via `normalization.normalize_date`. Sentinels -> `None`. An unparseable value is returned unchanged (and logged by `normalize_date`) -- we never silently drop date data. |
+
+## Per-state adapters
+
+Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to-one map entry cannot: one source feeding several common fields, or several sources feeding one. They run after the field-collapse map, in registration order, and follow the same rules (additive, never overwrite a populated common field).
+
+_No adapters registered yet._
 
 ## Controlled vocabulary: `status`
 
@@ -151,7 +176,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `az_facility_id` -> pass-through
 - `az_first_slot_end` -> pass-through
 - `az_first_slot_start` -> pass-through
-- `az_headstart` -> collapses into `head_start`
+- `az_headstart` -> collapses into `head_start` (via coerce_bool)
 - `az_license_type` -> collapses into `license_type`
 - `az_operatinghourid` -> pass-through
 - `az_quality_rating` -> pass-through
@@ -185,7 +210,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `co_ccrr` -> pass-through
 - `co_ecc` -> pass-through
 - `co_governing_body` -> pass-through
-- `co_head_start` -> collapses into `head_start`
+- `co_head_start` -> collapses into `head_start` (via coerce_bool)
 - `co_infant_openings` -> pass-through
 - `co_license_issue_date` -> pass-through
 - `co_license_type` -> collapses into `license_type`
@@ -214,7 +239,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ct_documents` -> pass-through
 - `ct_education_levels` -> pass-through
 - `ct_elevate_membership_level` -> pass-through
-- `ct_head_start` -> collapses into `head_start`
+- `ct_head_start` -> collapses into `head_start` (via coerce_bool)
 - `ct_inspection_id` -> pass-through
 - `ct_inspection_status` -> pass-through
 - `ct_license_type` -> collapses into `license_type`
@@ -275,7 +300,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `fl_is_dll_badge` -> pass-through
 - `fl_is_faith_based` -> pass-through
 - `fl_is_gold_seal` -> pass-through
-- `fl_is_head_start` -> collapses into `head_start`
+- `fl_is_head_start` -> collapses into `head_start` (via coerce_bool)
 - `fl_is_inclusion_badge` -> pass-through
 - `fl_is_infant_toddler_badge` -> pass-through
 - `fl_is_offering_school_readiness` -> pass-through
@@ -664,7 +689,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nh_environment` -> pass-through
 - `nh_financial_assistance` -> pass-through
 - `nh_gsq_step` -> pass-through
-- `nh_head_start` -> collapses into `head_start`
+- `nh_head_start` -> collapses into `head_start` (via coerce_bool)
 - `nh_infant_openings` -> pass-through
 - `nh_level_of_compliance` -> pass-through
 - `nh_licensed` -> pass-through
@@ -822,7 +847,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ri_ccap_expiration_date` -> pass-through
 - `ri_ccap_status` -> pass-through
 - `ri_compliance` -> pass-through
-- `ri_head_start` -> collapses into `head_start`
+- `ri_head_start` -> collapses into `head_start` (via coerce_bool)
 - `ri_is_lea` -> pass-through
 - `ri_license_decision` -> pass-through
 - `ri_licensor` -> pass-through
@@ -933,7 +958,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wa_early_head_start` -> pass-through
 - `wa_eceap` -> pass-through
 - `wa_food_program` -> pass-through
-- `wa_head_start` -> collapses into `head_start`
+- `wa_head_start` -> collapses into `head_start` (via coerce_bool)
 - `wa_languages_of_instruction` -> pass-through
 - `wa_license_history` -> pass-through
 - `wa_license_name` -> pass-through

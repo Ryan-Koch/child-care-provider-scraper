@@ -127,7 +127,11 @@ concepts, route it to the listed common field.
 
 To add a new source field to an existing common field, append it to that
 field's list in `FIELD_COLLAPSE_MAP` (`normalization.py`). Collapse is
-**additive** — the `xx_` source field is retained.
+**additive** — the `xx_` source field is retained. A source that needs
+conversion is listed as `(source, transform)` (e.g. `invert`, `to_int`; see
+`provider_scrape/common_fields.py`). Cases a map entry can't express (one
+source feeding several fields, or several sources feeding one) get a per-state
+adapter registered in `common_fields.py`.
 
 ---
 
