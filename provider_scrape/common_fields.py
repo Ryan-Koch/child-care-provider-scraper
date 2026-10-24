@@ -1510,3 +1510,134 @@ for _state, _source in _STATE_PREK_BOOL_SOURCES.items():
     _register_state_prek_bool(_state, _source)
 for _state, (_source, _token, _separators) in _STATE_PREK_TOKEN_SOURCES.items():
     _register_state_prek_token(_state, _source, _token, _separators)
+
+
+# --------------------------------------------------------------------------- #
+# Night, evening and weekend care
+# --------------------------------------------------------------------------- #
+_NONTRADITIONAL_FLAGS = ("night_care", "evening_care", "weekend_care")
+_AL_TIME_RE = re.compile(r"\d{1,2}:\d{2}\s*[ap]m", re.IGNORECASE)
+
+
+def capacity_to_bool(value):
+    """Capacity count (int, ``"8"``, junk ``"0 0"``) -> ``> 0`` bool; blank -> ``None``.
+
+    ``0`` and whitespace-separated all-zero junk (``"0 0"``) are ``False``. Any other
+    unparseable value is logged and left unset.
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, str):
+        if not value.strip() or _is_sentinel(value):
+            return None
+        parts = value.split()
+        if len(parts) > 1:
+            numbers = [to_int(part) for part in parts]
+            if all(number == 0 for number in numbers):
+                return False
+            logger.warning("capacity_to_bool: unparseable capacity %r -> None", value)
+            return None
+    number = to_int(value)
+    if number is None or number < 0:
+        return None
+    return number > 0
+
+
+def _al_night_care(value):
+    """AL `07:00 PM - 11:00 PM` -> True (any real range); `N/A - N/A` -> False; blank -> ``None``."""
+    if value is None or not str(value).strip():
+        return None
+    text = str(value)
+    if _AL_TIME_RE.search(text):
+        return True
+    if all(_is_sentinel(part.strip()) for part in text.split("-")):
+        return False
+    logger.warning("al_nighttime_hours: unrecognised value %r -> None", value)
+    return None
+
+
+def _nontraditional_result(record, flags):
+    """Specific ``flags`` plus the roll-up: True if any is True; never False from specifics."""
+    result = {name: value for name, value in flags.items() if value is not None}
+    combined = {name: record.get(name) for name in _NONTRADITIONAL_FLAGS} | result
+    if any(value is True for value in combined.values()):
+        result["nontraditional_hours"] = True
+    return result
+
+
+def _register_nontraditional(state, sources, extract, doc):
+    """Register an adapter filling the specific flags ``extract(record)`` returns plus the roll-up."""
+
+    @register_adapter(state, sources=sources, fills=[*_NONTRADITIONAL_FLAGS, "nontraditional_hours"])
+    def adapter(record):
+        return _nontraditional_result(record, extract(record))
+
+    adapter.__doc__ = doc
+    return adapter
+
+
+_register_nontraditional(
+    "louisiana",
+    ["la_night_care"],
+    lambda r: {"night_care": to_bool(r.get("la_night_care"))},
+    "`la_night_care` (bool) -> `night_care`; roll-up True when night care is offered.",
+)
+_register_nontraditional(
+    "wyoming",
+    ["wy_evening_care", "wy_weekend_care"],
+    lambda r: {
+        "evening_care": to_bool(r.get("wy_evening_care")),
+        "weekend_care": to_bool(r.get("wy_weekend_care")),
+    },
+    "`wy_evening_care`/`wy_weekend_care` (bool) -> `evening_care`/`weekend_care`; roll-up True if either.",
+)
+_register_nontraditional(
+    "alabama",
+    ["al_nighttime_hours"],
+    lambda r: {"night_care": _al_night_care(r.get("al_nighttime_hours"))},
+    "`al_nighttime_hours` any time range -> `night_care` True; `N/A - N/A` -> False; blank -> unset.",
+)
+_register_nontraditional(
+    "illinois",
+    ["il_night_capacity"],
+    lambda r: {"night_care": capacity_to_bool(r.get("il_night_capacity"))},
+    "`il_night_capacity` (string int) -> `night_care` = capacity > 0.",
+)
+_register_nontraditional(
+    "wisconsin",
+    ["wi_night_capacity"],
+    lambda r: {"night_care": capacity_to_bool(r.get("wi_night_capacity"))},
+    "`wi_night_capacity` -> `night_care` = capacity > 0 (junk `0 0` -> False).",
+)
+_register_nontraditional(
+    "north_carolina",
+    ["nc_capacity_second_shift", "nc_capacity_third_shift"],
+    lambda r: {
+        "evening_care": capacity_to_bool(r.get("nc_capacity_second_shift")),
+        "night_care": capacity_to_bool(r.get("nc_capacity_third_shift")),
+    },
+    "`nc_capacity_second_shift`/`nc_capacity_third_shift` (int) -> `evening_care`/`night_care` = capacity > 0.",
+)
+
+
+def _ok_hours_flags(record):
+    labels = ok_care_type_set(record.get("ok_care_types"))
+    return {
+        "evening_care": True if "evening hours" in labels else None,
+        "weekend_care": True if "weekend hours" in labels else None,
+        "night_care": True if "overnight hours" in labels else None,
+    }
+
+
+_register_nontraditional(
+    "oklahoma",
+    ["ok_care_types"],
+    _ok_hours_flags,
+    "OK `ok_care_types` Evening/Weekend/Overnight Hours -> evening/weekend/night care True; absent -> unset.",
+)
+
+
+@register_adapter("washington_dc", sources=["dc_nontraditional_hours"], fills=["nontraditional_hours"])
+def washington_dc_nontraditional_hours(record):
+    """DC `dc_nontraditional_hours` (bool) -> the `nontraditional_hours` roll-up only; False is a real no."""
+    return {"nontraditional_hours": to_bool(record.get("dc_nontraditional_hours"))}

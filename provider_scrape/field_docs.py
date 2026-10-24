@@ -142,6 +142,19 @@ FIELD_DOCS = {
     "state_prek_program": "The state's pre-K program brand (string), set only when `state_prek` is True: VPK, RI "
     "Pre-K, ECEAP, Pre-K Enhancement and Expansion, Preschool Partnership, On My Way Pre-K, Georgia's Pre-K, First "
     "Steps 4K, Vermont Universal Pre-K, Nevada Ready! Pre-K. One constant per state (`STATE_PREK_PROGRAMS`).",
+    "nontraditional_hours": "Roll-up (bool): True if the record has night, evening or weekend care True, or DC's "
+    "`dc_nontraditional_hours` is True. False ONLY from DC's explicit False; otherwise unset, even when every reported "
+    "specific flag is False. Computed in each state's adapter after its specific flags.",
+    "night_care": "Overnight / third-shift care (bool). LA `la_night_care`; AL any `al_nighttime_hours` range -> True "
+    "(regardless of end time), `N/A - N/A` -> False; IL/WI night capacity and NC third-shift capacity -> capacity > 0 "
+    "(`0` and junk `0 0` -> False); OK `Overnight Hours` -> True (absent -> unset). The `xx_` sources are kept. "
+    "Caveat: for the capacity-based states (IL, WI, NC) True means the license permits night/shift care, not "
+    "confirmed operating hours (IL night capacity equals day capacity for ~80% of its positives).",
+    "evening_care": "Evening / second-shift care (bool). WY `wy_evening_care`; NC second-shift capacity > 0 "
+    "(0 -> False); OK `Evening Hours` -> True (absent -> unset). The `xx_` sources are kept. For NC, True means "
+    "licensed second-shift capacity, not confirmed operating hours.",
+    "weekend_care": "Weekend care (bool). WY `wy_weekend_care`; OK `Weekend Hours` -> True (absent -> unset). The "
+    "`xx_` sources are kept.",
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
     "deficiencies": "Deficiency/violation count for the provider, coerced to an "
     "integer (bug_10). Digit strings, comma-grouped counts, and integral "

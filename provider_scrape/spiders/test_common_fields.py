@@ -2886,3 +2886,113 @@ def test_state_prek_adapters_never_overwrite():
 def test_state_prek_other_state_is_not_read():
     item = norm.normalize_item({"fl_is_vpk": True}, "georgia")
     assert "state_prek" not in item
+
+
+# --------------------------------------------------------------------------- #
+# Night, evening and weekend care
+# --------------------------------------------------------------------------- #
+def _hours(state, **raw):
+    return norm.normalize_item(dict(raw), state)
+
+
+def _flags(item):
+    return tuple(item.get(f) for f in ("night_care", "evening_care", "weekend_care", "nontraditional_hours"))
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [("8", True), ("0", False), (8, True), (0, False), ("0 0", False), ("0  0  0", False), (None, None), ("", None)],
+)
+def test_capacity_to_bool(value, expected):
+    assert cf.capacity_to_bool(value) is expected
+
+
+def test_capacity_to_bool_unparseable_is_unset(caplog):
+    with caplog.at_level(logging.WARNING):
+        assert cf.capacity_to_bool("8 0") is None
+        assert cf.capacity_to_bool("many") is None
+        assert cf.capacity_to_bool("-3") is None
+
+
+def test_nontraditional_louisiana():
+    assert _flags(_hours("louisiana", la_night_care=True)) == (True, None, None, True)
+    item = _hours("louisiana", la_night_care=False)
+    assert _flags(item) == (False, None, None, None)  # roll-up stays unset
+    assert item["la_night_care"] is False
+
+
+def test_nontraditional_wyoming():
+    item = _hours("wyoming", wy_evening_care=True, wy_weekend_care=False)
+    assert _flags(item) == (None, True, False, True)
+    assert _flags(_hours("wyoming", wy_evening_care=False, wy_weekend_care=False)) == (None, False, False, None)
+    assert _flags(_hours("wyoming", wy_evening_care=False, wy_weekend_care=True)) == (None, False, True, True)
+
+
+@pytest.mark.parametrize(
+    ("raw", "night", "rollup"),
+    [
+        ("07:00 PM - 11:00 PM", True, True),
+        ("10:00 PM - 06:00 AM", True, True),
+        ("N/A - N/A", False, None),
+        ("", None, None),
+        (None, None, None),
+    ],
+)
+def test_nontraditional_alabama(raw, night, rollup):
+    item = _hours("alabama", al_nighttime_hours=raw, al_nighttime_ages="0-5")
+    assert _flags(item) == (night, None, None, rollup)
+    assert item.get("al_nighttime_hours") in (raw, None)
+    assert item["al_nighttime_ages"] == "0-5"
+    if raw:
+        assert item["al_nighttime_hours"] == raw
+
+
+@pytest.mark.parametrize("state", ["illinois", "wisconsin"])
+@pytest.mark.parametrize(
+    ("raw", "night", "rollup"),
+    [("8", True, True), ("0", False, None), ("0 0", False, None), (None, None, None)],
+)
+def test_nontraditional_night_capacity_states(state, raw, night, rollup):
+    field = "il_night_capacity" if state == "illinois" else "wi_night_capacity"
+    item = _hours(state, **{field: raw})
+    assert _flags(item) == (night, None, None, rollup)
+    assert item[field] == raw
+
+
+def test_nontraditional_wisconsin_junk_is_unset():
+    assert _flags(_hours("wisconsin", wi_night_capacity="abc")) == (None, None, None, None)
+
+
+def test_nontraditional_north_carolina():
+    item = _hours("north_carolina", nc_capacity_second_shift=5, nc_capacity_third_shift=0)
+    assert _flags(item) == (False, True, None, True)
+    item = _hours("north_carolina", nc_capacity_second_shift=0, nc_capacity_third_shift=3)
+    assert _flags(item) == (True, False, None, True)
+    item = _hours("north_carolina", nc_capacity_second_shift=0, nc_capacity_third_shift=0)
+    assert _flags(item) == (False, False, None, None)
+    assert item["nc_capacity_third_shift"] == 0
+
+
+def test_nontraditional_oklahoma():
+    labels = ["Year Round", "Daytime Hours", "Evening Hours", "Weekend Hours", "Overnight Hours"]
+    item = _hours("oklahoma", ok_care_types=labels)
+    assert _flags(item) == (True, True, True, True)
+    assert item["ok_care_types"] == labels
+    assert _flags(_hours("oklahoma", ok_care_types=["Evening Hours"])) == (None, True, None, True)
+    assert _flags(_hours("oklahoma", ok_care_types=["Year Round", "Daytime Hours"])) == (None, None, None, None)
+    assert _flags(_hours("oklahoma", ok_care_types=[])) == (None, None, None, None)
+
+
+def test_nontraditional_dc_rollup_only():
+    item = _hours("washington_dc", dc_nontraditional_hours=True)
+    assert _flags(item) == (None, None, None, True)
+    item = _hours("washington_dc", dc_nontraditional_hours=False)
+    assert _flags(item) == (None, None, None, False)
+    assert item["dc_nontraditional_hours"] is False
+    assert _flags(_hours("washington_dc", dc_nontraditional_hours=None)) == (None, None, None, None)
+
+
+def test_nontraditional_does_not_overwrite_populated_and_ignores_other_states():
+    item = _hours("louisiana", la_night_care=True, night_care=False)
+    assert item["night_care"] is False
+    assert _flags(_hours("georgia", la_night_care=True)) == (None, None, None, None)

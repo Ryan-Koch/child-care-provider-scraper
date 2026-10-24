@@ -322,6 +322,10 @@ class ProviderItem(scrapy.Item):
     food_program = scrapy.Field()  # bool: True = participates in USDA CACFP
     state_prek = scrapy.Field()  # bool: True = participates in a publicly funded state pre-K
     state_prek_program = scrapy.Field()  # program brand, set only when state_prek is True
+    nontraditional_hours = scrapy.Field()  # bool roll-up: True if night/evening/weekend care offered
+    night_care = scrapy.Field()  # bool: overnight / third-shift care
+    evening_care = scrapy.Field()  # bool: evening / second-shift care
+    weekend_care = scrapy.Field()  # bool: Saturday/Sunday care
     weekly_schedule = scrapy.Field()  # list of {day, open, close} rows, 24h HH:MM
     ages_served = scrapy.Field()
     infant = scrapy.Field()

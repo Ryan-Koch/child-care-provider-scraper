@@ -69,6 +69,10 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `food_program` | Participates in USDA CACFP | Bool (HI/ID/WA via `to_bool`, WA blank -> unset; DE/VT/WY via the shared `food program\|CACFP` phrase match in the map; UT/PA/DC via state-scoped adapters matching the same phrase in the common `meals`, which is unchanged; phrase absent -> unset, never False) |
 | `state_prek` | Publicly funded state pre-K participation | Bool (FL/RI/WA/DC/KY via `to_bool` in per-state adapters, False real, blank -> unset; IN/GA/SC/VT/NV exact whole-entry token match, absent -> unset, never False; GA `Georgia's Pre-K Transition` excluded) |
 | `state_prek_program` | Pre-K program brand | String from `STATE_PREK_PROGRAMS` in `common_fields.py` (e.g. `VPK`, `ECEAP`), set only when `state_prek` is True |
+| `nontraditional_hours` | Offers night, evening or weekend care (roll-up) | Bool; True if any specific flag is True or DC `dc_nontraditional_hours` True; False only from DC's explicit False, else unset |
+| `night_care` | Overnight / third-shift care | Bool (LA bool; AL any time range True, `N/A - N/A` False; IL/WI/NC capacity > 0 via shared `capacity_to_bool`, `0`/`0 0` False; OK `Overnight Hours` True, absent unset). For IL/WI/NC, True = licensed night/shift capacity, not confirmed hours |
+| `evening_care` | Evening / second-shift care | Bool (WY bool; NC second-shift capacity > 0; OK `Evening Hours` True, absent unset) |
+| `weekend_care` | Weekend care | Bool (WY bool; OK `Weekend Hours` True, absent unset) |
 | `ages_served` | Ages accepted | String (lists joined with `, `) |
 | `county` | County | String |
 | `scholarships_accepted` | Subsidy/scholarship acceptance | bool-or-None via `coerce_scholarships_accepted_flag`; FL/VA/WA collapsed from their subsidy flags (WA empty -> unset), NH from the `STATE CC ASSISTANCE (SCHOLARSHIP)` token as a fallback only; OK set by its spider |
