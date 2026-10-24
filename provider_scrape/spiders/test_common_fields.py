@@ -1741,3 +1741,75 @@ def test_source_provider_id_vermont_excluded():
 def test_source_provider_id_blank_source_unset():
     item = norm.normalize_item({"il_provider_id": "  "}, "illinois")
     assert not item.get("source_provider_id")
+
+
+# --- inspector (inspection-level) -----------------------------------------
+
+INSPECTOR_SOURCES = [
+    ("alaska", "ak_licensing_specialist", "Juliana Burya", "Juliana Burya"),
+    ("massachusetts", "ma_licensor", "Madelyn Marichal", "Madelyn Marichal"),
+    ("massachusetts", "ma_investigator", "Pat Example", "Pat Example"),
+    ("missouri", "mo_specialist", "PENNY SNODGRASS", "Penny Snodgrass"),
+    ("montana", "mt_inspector_name", "Jodi Linne", "Jodi Linne"),
+    ("new_hampshire", "nh_licensor", "Olya Mahoney", "Olya Mahoney"),
+    ("rhode_island", "ri_licensor", "Jessica Ullrich", "Jessica Ullrich"),
+]
+
+
+@pytest.mark.parametrize(("state", "source", "raw", "expected"), INSPECTOR_SOURCES)
+def test_inspector_per_state(state, source, raw, expected):
+    insp = norm.normalize_inspection({source: raw}, state)
+    assert insp["inspector"] == expected
+    assert insp[source] == raw  # source kept (collapse is additive)
+
+
+def test_inspector_mo_all_caps_and_last_first_flip():
+    caps = norm.normalize_inspection({"mo_specialist": "CHARMEL WILLIAMS"}, "missouri")
+    assert caps["inspector"] == "Charmel Williams"
+    flipped = norm.normalize_inspection(
+        {"mo_specialist": "HUGHES, CHRISTINE D"}, "missouri"
+    )
+    assert flipped["inspector"] == "Christine D Hughes"
+    assert flipped["mo_specialist"] == "HUGHES, CHRISTINE D"
+
+
+def test_inspector_ma_licensor_row():
+    insp = norm.normalize_inspection({"ma_licensor": "Madelyn Marichal"}, "massachusetts")
+    assert insp["inspector"] == "Madelyn Marichal"
+    assert "ma_investigator" not in insp
+
+
+def test_inspector_ma_investigator_row():
+    insp = norm.normalize_inspection({"ma_investigator": "JOE SMITH"}, "massachusetts")
+    assert insp["inspector"] == "Joe Smith"
+
+
+def test_inspector_ma_both_filled_stays_unset():
+    # Existing collapse rule: with two populated sources the common field is
+    # left unset rather than picking one. The two MA sources are never both
+    # filled in real data (visits vs. investigations), so this is just the guard.
+    insp = norm.normalize_inspection(
+        {"ma_licensor": "Madelyn Marichal", "ma_investigator": "Joe Smith"},
+        "massachusetts",
+    )
+    assert not insp.get("inspector")
+    assert insp["ma_licensor"] == "Madelyn Marichal"
+    assert insp["ma_investigator"] == "Joe Smith"
+
+
+@pytest.mark.parametrize(
+    ("state", "source"),
+    [(s, src) for s, src, _raw, _exp in INSPECTOR_SOURCES],
+)
+@pytest.mark.parametrize("blank", ["", "   ", "N/A", None])
+def test_inspector_blank_or_sentinel_unset(state, source, blank):
+    insp = norm.normalize_inspection({source: blank}, state)
+    assert not insp.get("inspector")
+
+
+def test_inspector_does_not_touch_provider_level_licensing_specialist():
+    item = norm.normalize_item({"ma_licensor": "Madelyn Marichal"}, "massachusetts")
+    assert item["licensing_specialist"] == "Madelyn Marichal"
+    assert "inspector" not in item
+    insp = norm.normalize_inspection({"ma_licensor": "Madelyn Marichal"}, "massachusetts")
+    assert "licensing_specialist" not in insp

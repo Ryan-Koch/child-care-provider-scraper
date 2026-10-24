@@ -225,10 +225,14 @@ def build_markdown():
     add("Same rules, applied to every inspection row. Rendered from `INSPECTION_FIELD_COLLAPSE_MAP`.")
     add("")
     if norm.INSPECTION_FIELD_COLLAPSE_MAP:
-        add("| Common inspection field | Source state-specific fields |")
-        add("|---|---|")
-        for row in render_map_rows(norm.INSPECTION_FIELD_COLLAPSE_MAP):
-            add(row)
+        add("| Common inspection field | Source state-specific fields | Explanation |")
+        add("|---|---|---|")
+        for field, row in zip(
+            sorted(norm.INSPECTION_FIELD_COLLAPSE_MAP),
+            render_map_rows(norm.INSPECTION_FIELD_COLLAPSE_MAP),
+        ):
+            doc = FIELD_DOCS.get(field, "**TODO:** add a curated explanation to `provider_scrape/field_docs.py`.")
+            add(f"{row} {md_escape(doc)} |")
     else:
         add("_No entries yet._")
     add("")

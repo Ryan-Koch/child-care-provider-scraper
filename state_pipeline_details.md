@@ -124,7 +124,9 @@ Each common field is populated from a single populated source field (additive â€
 
 Same rules, applied to every inspection row. Rendered from `INSPECTION_FIELD_COLLAPSE_MAP`.
 
-_No entries yet._
+| Common inspection field | Source state-specific fields | Explanation |
+|---|---|---|
+| `inspector` | `ak_licensing_specialist` (person_name), `ma_investigator` (person_name), `ma_licensor` (person_name), `mo_specialist` (last_first_name), `mt_inspector_name` (person_name), `nh_licensor` (person_name), `ri_licensor` (person_name) | Inspection field: the staff member who ran the visit, as `First Last` (ALL-CAPS Title-cased; MO's `Last, First M` flipped; blank/`N/A` -> unset). Collapsed from AK, MA (licensor on routine visits, investigator on investigation rows), MO, MT, NH, RI. If a row carried two populated sources it would stay unset. |
 
 ## Transform library
 

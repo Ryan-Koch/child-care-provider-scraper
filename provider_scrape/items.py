@@ -10,6 +10,7 @@ class InspectionItem(scrapy.Item):
     corrective_status = scrapy.Field()
     status_updated = scrapy.Field()
     report_url = scrapy.Field()
+    inspector = scrapy.Field()  # staff member who ran the visit, `First Last`
     va_shsi = scrapy.Field()
     va_complaint_related = scrapy.Field()
     va_violations = scrapy.Field()

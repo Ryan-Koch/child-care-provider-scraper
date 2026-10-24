@@ -1290,8 +1290,24 @@ FIELD_COLLAPSE_MAP = {
 # OK spider sets the field from the state's explicit isSubsidyAccepted flag.
 
 # Same shape as FIELD_COLLAPSE_MAP, for inspection rows (normalize_inspection).
-# Empty until a round-2 inspection story (e.g. 16_inspector) adds entries.
-INSPECTION_FIELD_COLLAPSE_MAP = {}
+# Each common inspection field lists its state-specific sources; as with the
+# provider map, exactly one source may be populated on a row.
+INSPECTION_FIELD_COLLAPSE_MAP = {
+    # Staff member who ran the visit, as `First Last`. MA has two sources:
+    # ma_licensor on routine visits and ma_investigator on investigation rows;
+    # they are never both filled, but if a row did carry both the collapse
+    # leaves `inspector` unset rather than guessing. MO's specialist is either
+    # ALL CAPS (`CHARMEL WILLIAMS`) or `LAST, FIRST M`, so it is flipped.
+    "inspector": [
+        ("ak_licensing_specialist", person_name),
+        ("ma_licensor", person_name),
+        ("ma_investigator", person_name),
+        ("mo_specialist", last_first_name),
+        ("mt_inspector_name", person_name),
+        ("nh_licensor", person_name),
+        ("ri_licensor", person_name),
+    ],
+}
 
 
 def split_collapse_entry(entry):
