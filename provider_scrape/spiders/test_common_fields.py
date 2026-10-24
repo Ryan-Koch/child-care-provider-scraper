@@ -1,4 +1,4 @@
-"""Tests for the round-2 collapse infrastructure (story 00).
+"""Tests for the round-2 collapse infrastructure.
 
 Covers the transform library, the transform-aware ``FIELD_COLLAPSE_MAP`` /
 ``INSPECTION_FIELD_COLLAPSE_MAP`` collapse, the per-state adapter registry, and a
@@ -363,7 +363,7 @@ def test_adapter_description_uses_first_docstring_line(adapter_registry):
 
 
 # --------------------------------------------------------------------------- #
-# Story 01 -- assigned licensing specialist
+# Assigned licensing specialist
 # --------------------------------------------------------------------------- #
 _SPECIALIST_FIELDS = ("licensing_specialist", "licensing_specialist_phone", "licensing_specialist_email")
 
@@ -474,7 +474,7 @@ def test_specialist_transforms():
 
 
 # --------------------------------------------------------------------------- #
-# Story 02 -- vacancies by age band
+# Vacancies by age band
 # --------------------------------------------------------------------------- #
 _VACANCY_FIELDS = ("vacancies_infant", "vacancies_toddler", "vacancies_preschool", "vacancies_school_age")
 

@@ -438,7 +438,7 @@ class ProviderItem(scrapy.Item):
     ny_capacity_description = scrapy.Field()
     # bug_05: raw per-age capacity counts, preserved before the normalization
     # pipeline coerces the common infant/toddler/preschool/school fields to
-    # bool (count > 0). Pending story 35 (capacity_by_age).
+    # bool (count > 0). Pending a common capacity_by_age field.
     ny_capacity_infant = scrapy.Field()
     ny_capacity_toddler = scrapy.Field()
     ny_capacity_preschool = scrapy.Field()
@@ -493,16 +493,16 @@ class ProviderItem(scrapy.Item):
     # Date" -- the site's own naming is reversed from what cross-state
     # consumers expect). mn_last_renewed_date intentionally still carries
     # the same "Current Effective Date" value as license_begin_date --
-    # story 38 will collapse that duplication into a common
-    # last_renewed_date field. Both are normalized to ISO here by the
+    # a common last_renewed_date field will collapse that duplication.
+    # Both are normalized to ISO here by the
     # spider (normalize_date), since neither is in normalization.DATE_FIELDS
     # (that list is common-fields-only).
     mn_last_renewed_date = scrapy.Field()
     # Large clusters at 2014-07-01 (2,519 records) and 2014-01-01 (963) are
     # real: 245D Home and Community Based Services licenses whose *license
     # category* began on those dates, not a data-migration artifact -- do
-    # not null them out. Pending story 37 (collapse into a common
-    # original_license_date field).
+    # not null them out. Pending collapse into a common
+    # original_license_date field.
     mn_original_license_date = scrapy.Field()
     mn_licensed_to_provide = scrapy.Field()
     mn_restrictions = scrapy.Field()
@@ -632,14 +632,13 @@ class ProviderItem(scrapy.Item):
     # currentLicenseStartDate -- confirmed directly against the independent
     # licenseExpirationDate field (~1 year gap for >97% of records).
     # ri_most_recently_renewed intentionally still carries the same value --
-    # story 38 will collapse that duplication into a common
-    # last_renewed_date field. Normalized to ISO here by the spider
+    # a common last_renewed_date field will collapse that duplication.
+    # Normalized to ISO here by the spider
     # (normalize_date), since it's not in normalization.DATE_FIELDS (that
     # list is common-fields-only).
     ri_most_recently_renewed = scrapy.Field()
     # The original/first-ever license date (originalLicenseStartDate),
-    # pending story 37 (collapse into a common original_license_date
-    # field). A sharp 1997 spike (16.8% of hf_sample) is a suspected
+    # pending collapse into a common original_license_date field. A sharp 1997 spike (16.8% of hf_sample) is a suspected
     # registry system-migration/backfill artifact -- kept as-is, not
     # nulled, per the bug_11 (VT) precedent: a migration artifact can't be
     # told apart from a genuine 1997 date on a per-record basis, and
@@ -857,7 +856,7 @@ class ProviderItem(scrapy.Item):
     # field-mapping playbook. The `infant`/`toddler`/`preschool`/`school` common
     # fields carry the per-age *capacities* (bug_05: coerced to bool-or-None,
     # `count > 0`, by the normalization pipeline -- the raw count is preserved
-    # here as `vt_{age}_capacity`, pending story 35/capacity_by_age); the
+    # here as `vt_{age}_capacity`, pending a common capacity_by_age field); the
     # per-age *vacancies* (the registry's frequently-updated, VT-unique
     # content) live in the vt_*_vacancies fields.
     #
@@ -891,7 +890,7 @@ class ProviderItem(scrapy.Item):
     vt_pets = scrapy.Field()
     vt_vacancy_as_of = scrapy.Field()  # "Current as of" date for vacancies
     vt_current_vacancy = scrapy.Field()  # total current vacancy count
-    # bug_05: raw per-age capacity counts (see comment above). Pending story 35.
+    # bug_05: raw per-age capacity counts (see comment above). Pending capacity_by_age.
     vt_infant_capacity = scrapy.Field()
     vt_toddler_capacity = scrapy.Field()
     vt_preschool_capacity = scrapy.Field()
@@ -1114,13 +1113,13 @@ class ProviderItem(scrapy.Item):
     # Last_Issue_Date__c / lastIssueDate -- MA's ~3-year renewal cycle
     # reissues this date on every renewal (confirmed against the provider's
     # own "Renewal"-typed visit dates). ma_last_issue_date intentionally
-    # still carries the same value -- story 38 will collapse that
-    # duplication into a common last_renewed_date field. Normalized to ISO
+    # still carries the same value -- a common last_renewed_date field
+    # will collapse that duplication. Normalized to ISO
     # here by the spider (normalize_date), since it's not in
     # normalization.DATE_FIELDS (that list is common-fields-only).
     ma_last_issue_date = scrapy.Field()
     # The original/first-ever issuance (First_Issue_Date__c / firstIssueDate),
-    # pending story 37 (collapse into a common original_license_date field).
+    # pending collapse into a common original_license_date field.
     ma_original_license_date = scrapy.Field()
     ma_temporary_status = scrapy.Field()  # Temporary_Status__c, e.g. "Reopened"
     ma_capacity_by_age = scrapy.Field()  # dict of the non-zero per-age-group counts

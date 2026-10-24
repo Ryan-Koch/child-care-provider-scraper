@@ -384,7 +384,7 @@ def virginia_inspector(record):
 
 
 # --------------------------------------------------------------------------- #
-# Story 02 -- vacancies by age band (IA, ND, DC)
+# Vacancies by age band (IA, ND, DC)
 # --------------------------------------------------------------------------- #
 # Each state labels its age bands differently (and defines them differently:
 # ND infant = 0-17 months, IA = 0-12 + 13-23 months, DC = 0-12 months). The

@@ -1094,9 +1094,9 @@ FIELD_COLLAPSE_MAP = {
         )
     ],
     "curriculum": ["ga_curriculum", "nj_curriculum"],
-    # Story 01: assigned licensing specialist. VA (va_inspector packs name +
+    # Assigned licensing specialist. VA (va_inspector packs name +
     # phone) is an adapter in common_fields.py. ma_licensor is the provider-level
-    # field only; the inspection-level one is story 16.
+    # field only; the inspection-level one is the inspector field.
     "licensing_specialist": [
         ("ak_licensing_specialist", person_name),
         ("ma_licensor", person_name),
@@ -1111,7 +1111,7 @@ FIELD_COLLAPSE_MAP = {
         ("sc_licensing_specialist_phone", none_if_sentinel),
     ],
     "licensing_specialist_email": [("me_licensing_specialist_email", lower_email)],
-    # Story 02: open slots per age band (the state's own band definitions).
+    # Open slots per age band (the state's own band definitions).
     # IA, ND and DC are adapters in common_fields.py (one list -> four fields).
     "vacancies_infant": [
         ("co_infant_openings", to_int),
@@ -1164,7 +1164,7 @@ FIELD_COLLAPSE_MAP = {
 # every state that fills it sets the common field directly in the spider
 # (no xx_* source field to collapse from). Its bool-or-None coercion lives at
 # the end of normalize_item (step 9), after this collapse step runs, via
-# coerce_scholarships_accepted_flag. If a future story (e.g. story 13) adds a
+# coerce_scholarships_accepted_flag. If a future change (e.g. extending scholarships) adds a
 # collapse source for it here, do NOT use _coerce_bool as the per-source
 # transform -- use coerce_scholarships_accepted_flag instead, since plain
 # _coerce_bool would misread "Not Accepted"-shaped text as True.
