@@ -1900,3 +1900,91 @@ def test_inspection_id_does_not_touch_source_provider_id():
     assert "inspection_id" not in item
     insp = norm.normalize_inspection({"ct_inspection_id": 12345}, "connecticut")
     assert "source_provider_id" not in insp
+
+
+# --- announced (inspection-level) -----------------------------------------
+
+ANNOUNCED_TEXT_CASES = [
+    ("Unannounced Monitoring Visit", False),
+    ("UnannouncedMonitoringVisit", False),
+    ("Uannounced Monitoring Visit", False),
+    ("Unannounce Monitoring Visit", False),
+    ("UnannouncedMonoitoringVisit", False),
+    ("Child Care Center I/T/PS Unannounced", False),
+    ("DCEX - UNANNOUNCED PARTIAL", False),
+    ("UNANNOUNCED INSPECTION - FULL", False),
+    ("Announced", True),
+    ("ANNOUNCED INSPECTION - FULL", True),
+    ("DCEX - ANNOUNCED", True),
+    ("YCEX - ANNOUNCED PARTIAL", True),
+    ("announced", True),
+    ("Follow-Up Inspection", None),
+    ("Investigation - Complaints", None),
+    ("Child Care Center - Probationary Visit", None),
+    ("Admin Action Follow-Up A/N", None),
+    ("N/A", None),
+    ("", None),
+    (None, None),
+]
+
+
+@pytest.mark.parametrize(("text", "expected"), ANNOUNCED_TEXT_CASES)
+def test_announced_flag_classifier(text, expected):
+    assert cf.announced_flag(text) is expected
+
+
+ANNOUNCED_SOURCES = [
+    ("alaska", "ak_visit_type"),
+    ("massachusetts", "ma_announcement_type"),
+    ("new_hampshire", "nh_announcement_type"),
+    ("missouri", "mo_notice"),
+]
+
+
+@pytest.mark.parametrize(("state", "source"), ANNOUNCED_SOURCES)
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [("Announced", True), ("Unannounced", False), ("ANNOUNCED", True), ("UNANNOUNCED", False)],
+)
+def test_announced_dedicated_sources(state, source, raw, expected):
+    insp = norm.normalize_inspection({source: raw}, state)
+    assert insp["announced"] is expected
+    assert insp[source] == raw  # source kept (collapse is additive)
+
+
+def test_announced_mo_not_applicable_unset():
+    insp = norm.normalize_inspection({"mo_notice": "N/A"}, "missouri")
+    assert not cf.is_present(insp.get("announced"))
+    assert insp["mo_notice"] == "N/A"
+
+
+@pytest.mark.parametrize("state", ["north_carolina", "connecticut", "rhode_island"])
+@pytest.mark.parametrize(
+    ("text", "expected"), [c for c in ANNOUNCED_TEXT_CASES if c[0]]
+)
+def test_announced_from_type_adapters(state, text, expected):
+    insp = norm.normalize_inspection({"type": text}, state)
+    if expected is None:
+        assert "announced" not in insp
+    else:
+        assert insp["announced"] is expected
+    assert insp["type"] == text  # type unchanged
+
+
+@pytest.mark.parametrize("state", ["north_carolina", "connecticut", "rhode_island"])
+@pytest.mark.parametrize("text", ["Follow-Up Inspection", "Investigation - Complaints"])
+def test_announced_type_without_either_word_unset(state, text):
+    insp = norm.normalize_inspection({"type": text}, state)
+    assert "announced" not in insp
+
+
+@pytest.mark.parametrize("state", ["florida", "alaska", "missouri", "virginia"])
+def test_announced_not_read_from_type_in_other_states(state):
+    insp = norm.normalize_inspection({"type": "Unannounced"}, state)
+    assert "announced" not in insp
+    assert insp["type"] == "Unannounced"
+
+
+def test_announced_ri_typo_type_is_unannounced():
+    insp = norm.normalize_inspection({"type": "Unannounced Monitoring Visit"}, "rhode_island")
+    assert insp["announced"] is False

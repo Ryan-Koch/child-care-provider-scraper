@@ -126,6 +126,7 @@ Same rules, applied to every inspection row. Rendered from `INSPECTION_FIELD_COL
 
 | Common inspection field | Source state-specific fields | Explanation |
 |---|---|---|
+| `announced` | `ak_visit_type` (announced_flag), `ma_announcement_type` (announced_flag), `mo_notice` (announced_flag), `nh_announcement_type` (announced_flag) | Inspection field: whether the visit was announced (`True`), unannounced (`False`) or unknown (unset). Collapsed from AK, MA, NH and MO's dedicated fields; NC, CT and RI read it from the inspection `type` text. Matching is case-insensitive and typo tolerant (RI has `Uannounced`, `Unannounce`), unannounced checked first. Text naming neither word (follow-ups, complaints, `N/A`) stays unset; `type` itself is unchanged. |
 | `inspection_id` | `az_enforcement_name` (to_id_string), `ct_inspection_id` (to_id_string), `fl_inspection_id` (to_id_string), `hi_visit_id` (to_id_string), `ks_nosf_id` (to_id_string), `ky_inspection_id` (to_id_string), `ma_investigation_id` (to_id_string), `ma_visit_id` (to_id_string), `mo_inspection_id` (to_id_string), `nh_visit_id` (to_id_string), `nv_inspection_number` (to_id_string) | Inspection field: the state's own key for the visit/report, as an opaque string (ints stringified with no `.0`, strings only trimmed). State-specific: not comparable across states, and unique per provider record rather than guaranteed globally unique. Collapsed from CT, FL, HI, KY, MA (visit id on routine visits, investigation id on investigation rows), MO, NH, NV, KS (`ks_nosf_id` only; the survey number repeats) and AZ. CT occasionally has two provider records (different `ct_provider_id`, same license) carrying the same inspections, so one CT inspection_id can appear under both. |
 | `inspector` | `ak_licensing_specialist` (person_name), `ma_investigator` (person_name), `ma_licensor` (person_name), `mo_specialist` (last_first_name), `mt_inspector_name` (person_name), `nh_licensor` (person_name), `ri_licensor` (person_name) | Inspection field: the staff member who ran the visit, as `First Last` (ALL-CAPS Title-cased; MO's `Last, First M` flipped; blank/`N/A` -> unset). Collapsed from AK, MA (licensor on routine visits, investigator on investigation rows), MO, MT, NH, RI. If a row carried two populated sources it would stay unset. |
 
@@ -148,6 +149,9 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 
 | State | Level | Reads | Fills | Description |
 |---|---|---|---|---|
+| `connecticut` | inspection | `type` | `announced` | Read announced (True) / unannounced (False) from the `type` text; neither word -> unset. |
+| `north_carolina` | inspection | `type` | `announced` | Read announced (True) / unannounced (False) from the `type` text; neither word -> unset. |
+| `rhode_island` | inspection | `type` | `announced` | Read announced (True) / unannounced (False) from the `type` text; neither word -> unset. |
 | `connecticut` | provider | `ct_schedule` | `weekly_schedule`, `days_of_operation` | CT `ct_schedule` rows (already 24h `open`/`close`) -> `weekly_schedule`; days derived. |
 | `florida` | provider | `hours` | `weekly_schedule`, `days_of_operation` | FL dict-shaped `hours` ({"monday": "6:45AM to 6:00PM; ...", "sunday": "Closed"}) -> `weekly_schedule`; `hours` kept. |
 | `indiana` | provider | `in_schedule` | `weekly_schedule`, `days_of_operation` | IN `in_schedule` rows (12h `open`/`close`) -> 24h `weekly_schedule`; days derived. |

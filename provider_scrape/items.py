@@ -12,6 +12,7 @@ class InspectionItem(scrapy.Item):
     report_url = scrapy.Field()
     inspector = scrapy.Field()  # staff member who ran the visit, `First Last`
     inspection_id = scrapy.Field()  # state's own key for the visit, opaque string
+    announced = scrapy.Field()  # True announced / False unannounced / None unknown
     va_shsi = scrapy.Field()
     va_complaint_related = scrapy.Field()
     va_violations = scrapy.Field()

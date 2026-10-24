@@ -129,6 +129,10 @@ FIELD_DOCS = {
     "investigation id on investigation rows), MO, NH, NV, KS (`ks_nosf_id` only; the survey number repeats) and AZ. "
     "CT occasionally has two provider records (different `ct_provider_id`, same license) carrying the same "
     "inspections, so one CT inspection_id can appear under both.",
+    "announced": "Inspection field: whether the visit was announced (`True`), unannounced (`False`) or unknown (unset). "
+    "Collapsed from AK, MA, NH and MO's dedicated fields; NC, CT and RI read it from the inspection `type` text. "
+    "Matching is case-insensitive and typo tolerant (RI has `Uannounced`, `Unannounce`), unannounced checked first. "
+    "Text naming neither word (follow-ups, complaints, `N/A`) stays unset; `type` itself is unchanged.",
     "licensing_specialist_phone": "Phone number of the assigned licensing specialist, as emitted by the state "
     "(OK, SC, and VA's split-out number); empty when not published.",
     "licensing_specialist_email": "Lower-cased email of the assigned licensing specialist (published by ME).",

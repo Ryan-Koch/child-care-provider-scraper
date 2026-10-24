@@ -26,6 +26,7 @@ from datetime import datetime
 
 from provider_scrape.common_fields import (
     INSPECTION_LEVEL,
+    announced_flag,
     day_names,
     has_list_token,
     invert,
@@ -1325,6 +1326,16 @@ INSPECTION_FIELD_COLLAPSE_MAP = {
         ("nv_inspection_number", to_id_string),
         ("ks_nosf_id", to_id_string),
         ("az_enforcement_name", to_id_string),
+    ],
+    # Announced (True) / unannounced (False) visit. Dedicated source fields only;
+    # NC, CT and RI encode it in the common `type` and are inspection-level
+    # adapters in common_fields.py. announced_flag, not a bool coercion: the
+    # text "Unannounced" must read False, and "N/A" / no signal stays unset.
+    "announced": [
+        ("ak_visit_type", announced_flag),
+        ("ma_announcement_type", announced_flag),
+        ("nh_announcement_type", announced_flag),
+        ("mo_notice", announced_flag),
     ],
 }
 

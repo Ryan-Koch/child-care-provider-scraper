@@ -199,6 +199,29 @@ def vocab(table, name=None):
     return transform
 
 
+# "Unannounced" must be tested first: it contains "announced". The optional
+# letters tolerate the typos seen in Rhode Island data ("Uannounced",
+# "Unannounce", ...), where a dropped "n" would otherwise read as announced.
+_UNANNOUNCED_RE = re.compile(r"un?n?announc", re.IGNORECASE)
+_ANNOUNCED_RE = re.compile(r"announc", re.IGNORECASE)
+
+
+def announced_flag(value):
+    """Classify free text as announced (``True``) / unannounced (``False``) / unknown (``None``).
+
+    Case-insensitive substring match, unannounced first (typo tolerant). Text
+    naming neither (e.g. "Follow-Up Inspection") and sentinels such as ``N/A``
+    -> ``None``. Deliberately not a Yes/No bool coercion.
+    """
+    if not isinstance(value, str) or _is_sentinel(value):
+        return None
+    if _UNANNOUNCED_RE.search(value):
+        return False
+    if _ANNOUNCED_RE.search(value):
+        return True
+    return None
+
+
 def has_token(pattern):
     """Build a transform: ``True`` if ``pattern`` (regex, case-insensitive)
     matches the value (a string, or any element of a list); otherwise ``None``.
@@ -519,6 +542,26 @@ def virginia_inspector(record):
         "licensing_specialist": person_name(match.group("name")),
         "licensing_specialist_phone": none_if_sentinel(match.group("phone")),
     }
+
+
+# --------------------------------------------------------------------------- #
+# Announced vs. unannounced visits encoded in the common inspection `type`
+# --------------------------------------------------------------------------- #
+# NC, CT and RI have no dedicated field; the word is part of `type` (e.g.
+# "UNANNOUNCED INSPECTION - FULL"). `type` is every state's field, so these
+# are state-scoped adapters: another state's `type` never feeds `announced`.
+def _register_announced_from_type(state):
+    @register_adapter(state, level=INSPECTION_LEVEL, sources=["type"], fills=["announced"])
+    def announced_from_type(record):
+        """Read announced (True) / unannounced (False) from the `type` text; neither word -> unset."""
+        return {"announced": announced_flag(record.get("type"))}
+
+    announced_from_type.__name__ = f"{state}_announced_from_type"
+    return announced_from_type
+
+
+for _state in ("north_carolina", "connecticut", "rhode_island"):
+    _register_announced_from_type(_state)
 
 
 # --------------------------------------------------------------------------- #
