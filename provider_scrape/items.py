@@ -14,6 +14,7 @@ class InspectionItem(scrapy.Item):
     inspection_id = scrapy.Field()  # state's own key for the visit, opaque string
     announced = scrapy.Field()  # True announced / False unannounced / None unknown
     violation_found = scrapy.Field()  # True any noncompliance / False none / None unknown
+    violation_count = scrapy.Field()  # int, violations / deficiencies / findings on the visit; 0 kept
     va_shsi = scrapy.Field()
     va_complaint_related = scrapy.Field()
     va_violations = scrapy.Field()

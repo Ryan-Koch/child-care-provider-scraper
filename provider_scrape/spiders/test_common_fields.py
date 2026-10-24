@@ -2093,3 +2093,75 @@ def test_violation_found_maryland_finding(finding, expected):
 def test_violation_found_not_derived_from_other_fields():
     insp = norm.normalize_inspection({"type": "Non-Compliance", "md_regulation": "13A.1"}, "maryland")
     assert "violation_found" not in insp
+
+
+# --------------------------------------------------------------------------- #
+# violation_count and the violation_found derivation
+# --------------------------------------------------------------------------- #
+COUNT_SOURCES = [
+    ("connecticut", "ct_violations_count"),
+    ("delaware", "de_violation_count"),
+    ("nevada", "nv_deficiency_count"),
+    ("kansas", "ks_findings_count"),
+    ("hawaii", "hi_requirements_not_met"),
+    ("south_carolina", "sc_alert_count"),
+]
+
+
+@pytest.mark.parametrize(("state", "source"), COUNT_SOURCES)
+@pytest.mark.parametrize(("raw", "expected"), [(3, 3), (0, 0), ("7", 7), (1, 1)])
+def test_violation_count_collapse(state, source, raw, expected):
+    insp = norm.normalize_inspection({source: raw}, state)
+    assert insp["violation_count"] == expected
+    assert type(insp["violation_count"]) is int
+    assert insp[source] == raw  # source kept
+
+
+@pytest.mark.parametrize(("state", "source"), COUNT_SOURCES)
+def test_violation_count_none_stays_unset(state, source):
+    insp = norm.normalize_inspection({source: None}, state)
+    assert "violation_count" not in insp
+    assert "violation_found" not in insp
+
+
+def test_violation_count_sc_missing_badge_not_zero():
+    insp = norm.normalize_inspection({"type": "Routine"}, "south_carolina")
+    assert "violation_count" not in insp
+    assert "violation_found" not in insp
+
+
+def test_violation_count_mo_open_violations_not_mapped():
+    insp = norm.normalize_inspection({"mo_open_violations": 4, "mo_in_compliance": "No"}, "missouri")
+    assert "violation_count" not in insp
+    assert insp["mo_open_violations"] == 4
+    assert insp["violation_found"] is True  # from mo_in_compliance, not the count
+    sources = [norm.split_collapse_entry(e)[0] for e in norm.INSPECTION_FIELD_COLLAPSE_MAP["violation_count"]]
+    assert "mo_open_violations" not in sources
+
+
+@pytest.mark.parametrize(("state", "source"), COUNT_SOURCES)
+@pytest.mark.parametrize(("raw", "expected"), [(5, True), (1, True), (0, False)])
+def test_violation_found_derived_from_count(state, source, raw, expected):
+    insp = norm.normalize_inspection({source: raw}, state)
+    assert insp["violation_found"] is expected
+
+
+def test_violation_found_delaware_always_true():
+    # DE only publishes noncompliance visits, so the count is >= 1.
+    insp = norm.normalize_inspection({"de_violation_count": 1}, "delaware")
+    assert insp["violation_found"] is True
+
+
+def test_violation_found_explicit_flag_not_overwritten_by_count():
+    insp = norm.normalize_inspection({"fl_has_violation": "No", "ct_violations_count": 4}, "florida")
+    assert insp["violation_found"] is False
+    assert insp["violation_count"] == 4
+    # Same protection when the flag was already populated on a derivation state.
+    insp = norm.normalize_inspection({"violation_found": False, "ct_violations_count": 4}, "connecticut")
+    assert insp["violation_found"] is False
+
+
+def test_violation_found_not_derived_for_unlisted_state():
+    insp = norm.normalize_inspection({"ct_violations_count": 4}, "ohio")
+    assert insp["violation_count"] == 4  # the map is not state-scoped
+    assert "violation_found" not in insp

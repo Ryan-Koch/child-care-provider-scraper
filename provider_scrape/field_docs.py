@@ -147,7 +147,18 @@ FIELD_DOCS = {
     "`in compliance`); AK and WI read the status text (`Non-Compliance`, `See Violations below` -> True; "
     "`In Compliance`, `No Violations found ***` -> False). MD has one row per finding: `No Noncompliances Found` "
     "-> False, any other narrative -> True (a cited regulation is a violation even when worded `no evidence of ...`). "
-    "Not derived from a violation count; states without an explicit flag stay unset here.",
+    "CT, DE, NV, KS, HI and SC have no explicit flag, so it is derived from `violation_count` "
+    "(`> 0` -> True, `0` -> False, no count -> unset); an explicit flag is never overwritten. "
+    "DE's count is always >= 1 by construction (its dataset holds only noncompliance visits), so DE is always "
+    "True and must not be used for clean-inspection rates.",
+    "violation_count": "Inspection field: number of violations / deficiencies / findings recorded on the visit "
+    "(int; `0` is a real value). Collapsed from CT `ct_violations_count`, DE `de_violation_count`, "
+    "NV `nv_deficiency_count`, KS `ks_findings_count`, HI `hi_requirements_not_met` and SC `sc_alert_count`. "
+    "SC parses it from an `N Alert` badge; a missing badge is unverified and stays unset (not 0). "
+    "DE's count is always >= 1 by construction (its dataset contains only noncompliance visits; a clean visit "
+    "produces no row), so DE can never show a clean visit and must not be used for clean-inspection rates. "
+    "MO is excluded (user decision): `mo_open_violations` counts only violations still open, not the total "
+    "found, and MO already has `violation_found` via `mo_in_compliance`.",
     "licensing_specialist_phone": "Phone number of the assigned licensing specialist, as emitted by the state "
     "(OK, SC, and VA's split-out number); empty when not published.",
     "licensing_specialist_email": "Lower-cased email of the assigned licensing specialist (published by ME).",

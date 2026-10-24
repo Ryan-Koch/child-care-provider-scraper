@@ -1352,6 +1352,21 @@ INSPECTION_FIELD_COLLAPSE_MAP = {
         ("wy_violation_found", to_bool),
         ("md_finding", md_finding_flag),
     ],
+    # Number of violations / deficiencies / findings on the visit; 0 is a real
+    # value. SC's count comes from an "N Alert" badge and stays unset when the
+    # badge is absent (unverified, not zero). MO's `mo_open_violations` is
+    # deliberately NOT mapped: it counts only violations still open, not the
+    # total found, and MO already has `violation_found` via `mo_in_compliance`
+    # (user decision). `violation_found` is derived from this count for
+    # CT/DE/NV/KS/HI/SC by inspection-level adapters in common_fields.py.
+    "violation_count": [
+        ("ct_violations_count", to_int),
+        ("de_violation_count", to_int),
+        ("nv_deficiency_count", to_int),
+        ("ks_findings_count", to_int),
+        ("hi_requirements_not_met", to_int),
+        ("sc_alert_count", to_int),
+    ],
 }
 
 

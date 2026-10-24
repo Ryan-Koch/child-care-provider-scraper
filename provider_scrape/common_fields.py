@@ -613,6 +613,40 @@ def _register_violation_from_status(state, table):
 _register_violation_from_status("alaska", AK_VIOLATION_STATUS)
 _register_violation_from_status("wisconsin", WI_VIOLATION_STATUS)
 
+# --------------------------------------------------------------------------- #
+# Violation found, derived from the common `violation_count`
+# --------------------------------------------------------------------------- #
+# These states have no explicit flag, only a count. Adapters run after the map
+# collapse, so `violation_count` is already populated. A missing count leaves
+# `violation_found` unset; an explicit flag is never overwritten (run_adapters).
+# DE's count is >= 1 by construction (clean visits have no row), so DE is
+# always True and cannot show a clean visit.
+VIOLATION_FROM_COUNT_STATES = (
+    "connecticut",
+    "delaware",
+    "nevada",
+    "kansas",
+    "hawaii",
+    "south_carolina",
+)
+
+
+def _register_violation_from_count(state):
+    @register_adapter(state, level=INSPECTION_LEVEL, sources=["violation_count"], fills=["violation_found"])
+    def violation_from_count(record):
+        """Derive violation_found = violation_count > 0; no count -> unset."""
+        count = record.get("violation_count")
+        if isinstance(count, bool) or not isinstance(count, int):
+            return {}
+        return {"violation_found": count > 0}
+
+    violation_from_count.__name__ = f"{state}_violation_from_count"
+    return violation_from_count
+
+
+for _state in VIOLATION_FROM_COUNT_STATES:
+    _register_violation_from_count(_state)
+
 
 # --------------------------------------------------------------------------- #
 # Vacancies by age band (IA, ND, DC)
