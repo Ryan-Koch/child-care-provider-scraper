@@ -59,6 +59,7 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `phone_extension` | Extension for `phone` | Digits-only **string** (NJ/NY via `phone_extension_digits`: trim, strip `_` mask padding, non-digits -> None) |
 | `capacity` | Licensed capacity | Integer (when a clean number) |
 | `hours` | Operating hours | String |
+| `days_of_operation` | Weekdays open | List of full day names, Mon->Sun (GA/IA/VT via `day_names`: 2-/3-letter/full names, de-duped, unknown tokens logged and dropped) |
 | `ages_served` | Ages accepted | String (lists joined with `, `) |
 | `county` | County | String |
 | `scholarships_accepted` | Subsidy/scholarship acceptance | As emitted (string/bool) |

@@ -26,6 +26,7 @@ from datetime import datetime
 
 from provider_scrape.common_fields import (
     INSPECTION_LEVEL,
+    day_names,
     has_list_token,
     invert,
     is_present,
@@ -1044,6 +1045,13 @@ FIELD_COLLAPSE_MAP = {
     "license_holder_address": [
         ("mi_licensee_address", license_holder_address),
         ("nc_owner_mailing_address", license_holder_address),
+    ],
+    # Weekdays open, as full day names in Monday -> Sunday order. GA uses
+    # 2-letter codes, IA 3-letter abbreviations, VT full names.
+    "days_of_operation": [
+        ("ga_operating_days", day_names),
+        ("ia_days_of_operation", day_names),
+        ("vt_days_of_operation", day_names),
     ],
     "license_type": [
         "va_license_type",

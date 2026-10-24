@@ -21,6 +21,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `capacity` | Whitespace cleanup; Integer coercion | Licensed capacity coerced to an integer when it is a clean number; ranges/free text are left unchanged and logged. |
 | `county` | Whitespace cleanup | County (whitespace-cleaned only). |
 | `curriculum` | Whitespace cleanup; Field collapse from state-specific source | Curriculum, collapsed from a single populated state source (VPK-specific curriculum is excluded). |
+| `days_of_operation` | Whitespace cleanup; Field collapse from state-specific source (transforms: day_names) | Weekdays the provider is open: list of full day names in Monday -> Sunday order (e.g. `["Monday", "Tuesday"]`). GA (`MO,TU`), IA (`Mon, Tue`) and VT (`Monday, Tuesday`) via day_names: case/whitespace tolerant, de-duplicated, unrecognised tokens logged and dropped, none left -> unset. |
 | `deficiencies` | Whitespace cleanup; Integer coercion (bug_10) | Deficiency/violation count for the provider, coerced to an integer (bug_10). Digit strings, comma-grouped counts, and integral floats (e.g. 2.0) all become int; blank/None stays None; negative or non-numeric values (and stray booleans) become None rather than a guessed number. |
 | `doing_business_as` | Whitespace cleanup; Field collapse from state-specific source (transforms: none_if_sentinel) | Trade name (doing business as) alongside the licensed name, free text. FL, OK; sentinels such as `N/A` -> unset. FL's value always equals provider_name (its API already returns the DBA as the name). WA license name and MA umbrella org are not DBAs and are not mapped. |
 | `early_head_start` | Whitespace cleanup; Field collapse from state-specific source (-> boolean) | Early Head Start participation (federal infant/toddler program), coerced to a boolean. MS, NH, WA. Distinct from `head_start`: EHS sources never feed it. |
@@ -91,6 +92,7 @@ Each common field is populated from a single populated source field (additive â€
 | `accreditation` | `al_accreditations`, `ct_accreditations`, `ga_accreditation`, `hi_accreditations`, `md_accreditation`, `nj_accreditation_labels` |
 | `address_suppressed` | `ct_address_suppressed` (to_bool), `fl_display_address_on_web` (invert), `ks_address_suppressed` (to_bool), `ma_contact_redacted` (to_bool) |
 | `curriculum` | `ga_curriculum`, `nj_curriculum` |
+| `days_of_operation` | `ga_operating_days` (day_names), `ia_days_of_operation` (day_names), `vt_days_of_operation` (day_names) |
 | `doing_business_as` | `fl_dba` (none_if_sentinel), `ok_doing_business_as` (none_if_sentinel) |
 | `early_head_start` | `ms_early_head_start` (coerce_bool), `nh_early_head_start` (coerce_bool), `wa_early_head_start` (coerce_bool) |
 | `head_start` | `az_headstart` (coerce_bool), `co_head_start` (coerce_bool), `ct_head_start` (coerce_bool), `fl_is_head_start` (coerce_bool), `nh_head_start` (coerce_bool), `ri_head_start` (coerce_bool), `wa_head_start` (coerce_bool) |
@@ -377,7 +379,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ga_liability_insurance` -> pass-through
 - `ga_mailing_address` -> collapses into `mailing_address`
 - `ga_meals` -> collapses into `meals`
-- `ga_operating_days` -> pass-through
+- `ga_operating_days` -> collapses into `days_of_operation` (via day_names)
 - `ga_operating_months` -> pass-through
 - `ga_other_care_type` -> pass-through
 - `ga_profit_status` -> pass-through
@@ -420,7 +422,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ia_care_types` -> pass-through
 - `ia_complaint_count` -> pass-through
 - `ia_compliance_report_count` -> pass-through
-- `ia_days_of_operation` -> pass-through
+- `ia_days_of_operation` -> collapses into `days_of_operation` (via day_names)
 - `ia_iq4k_level` -> pass-through
 - `ia_openings_as_of` -> collapses into `vacancies_updated_date` (via to_iso_date)
 - `ia_openings_by_age` -> feeds adapter, fills `vacancies_infant`, `vacancies_preschool`, `vacancies_school_age`, `vacancies_toddler`
@@ -965,7 +967,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `vt_area_description` -> pass-through
 - `vt_building_type` -> pass-through
 - `vt_current_vacancy` -> collapses into `total_vacancies` (via to_int)
-- `vt_days_of_operation` -> pass-through
+- `vt_days_of_operation` -> collapses into `days_of_operation` (via day_names)
 - `vt_guidance` -> pass-through
 - `vt_infant_capacity` -> pass-through
 - `vt_infant_vacancies` -> collapses into `vacancies_infant` (via to_int)

@@ -298,6 +298,7 @@ class ProviderItem(scrapy.Item):
     administrator = scrapy.Field()
     capacity = scrapy.Field()
     hours = scrapy.Field()
+    days_of_operation = scrapy.Field()  # list of full day names, Monday -> Sunday
     ages_served = scrapy.Field()
     infant = scrapy.Field()
     toddler = scrapy.Field()

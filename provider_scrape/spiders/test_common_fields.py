@@ -1140,3 +1140,76 @@ def test_mo_mailing_address_not_mapped():
 
 def test_license_holder_address_absent_when_no_source():
     assert "license_holder_address" not in norm.normalize_item({}, "michigan")
+
+
+# --------------------------------------------------------------------------- #
+# Days of operation
+# --------------------------------------------------------------------------- #
+WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "raw", "expected"),
+    [
+        ("georgia", "ga_operating_days", "MO,TU,WE,TH,FR", WEEK[:5]),
+        ("georgia", "ga_operating_days", "MO,TU,WE,TH,FR,SA,SU", WEEK),
+        ("iowa", "ia_days_of_operation", "Mon, Tue, Wed, Thu, Fri", WEEK[:5]),
+        ("iowa", "ia_days_of_operation", "Sat, Sun", ["Saturday", "Sunday"]),
+        ("vermont", "vt_days_of_operation",
+         "Monday, Tuesday, Wednesday, Thursday, Friday", WEEK[:5]),
+        ("vermont", "vt_days_of_operation", "Saturday", ["Saturday"]),
+    ],
+)
+def test_days_of_operation_collapse(state, field, raw, expected):
+    item = norm.normalize_item({field: raw}, state)
+    assert item["days_of_operation"] == expected
+    assert item[field] == raw  # additive: source kept
+
+
+def test_day_names_out_of_order_and_duplicates():
+    assert cf.day_names("SU, FR, MO, FR, mo") == ["Monday", "Friday", "Sunday"]
+    assert cf.day_names("Wed, Mon, Wed") == ["Monday", "Wednesday"]
+
+
+@pytest.mark.parametrize(
+    "raw",
+    ["mo,tu", "Mo, Tu", "  MO ,  TU  ", "MONDAY,tuesday", "mon,TUE", "Monday ,\tTue"],
+)
+def test_day_names_case_and_whitespace(raw):
+    assert cf.day_names(raw) == ["Monday", "Tuesday"]
+
+
+def test_day_names_accepts_list():
+    assert cf.day_names(["Tue", "MO", "Mon, Sun"]) == ["Monday", "Tuesday", "Sunday"]
+
+
+def test_day_names_unrecognised_token_logged_and_dropped(caplog):
+    with caplog.at_level(logging.WARNING, logger="provider_scrape.common_fields"):
+        assert cf.day_names("MO, XX, Funday, FR") == ["Monday", "Friday"]
+    assert "XX" in caplog.text
+    assert "Funday" in caplog.text
+
+
+@pytest.mark.parametrize("raw", ["", "   ", ",", "XX, YY", "N/A", None, [], ["bogus"]])
+def test_day_names_nothing_usable_is_none(raw):
+    assert cf.day_names(raw) is None
+
+
+def test_days_of_operation_all_unrecognised_leaves_field_unset():
+    item = norm.normalize_item({"ga_operating_days": "XX,YY"}, "georgia")
+    assert "days_of_operation" not in item
+    assert item["ga_operating_days"] == "XX,YY"
+
+
+def test_days_of_operation_absent_when_no_source():
+    assert "days_of_operation" not in norm.normalize_item({}, "georgia")
+
+
+def test_days_of_operation_list_survives_pipeline():
+    item = norm.normalize_item({"ia_days_of_operation": "Sat,Mon"}, "iowa")
+    assert item["days_of_operation"] == ["Monday", "Saturday"]
+    # idempotent when the pipeline runs on its own output
+    assert norm.normalize_item(dict(item), "iowa")["days_of_operation"] == [
+        "Monday",
+        "Saturday",
+    ]

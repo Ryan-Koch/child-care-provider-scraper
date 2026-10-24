@@ -91,6 +91,8 @@ FIELD_DOCS = {
     "provider_website": "Provider website URL (whitespace-cleaned only).",
     "county": "County (whitespace-cleaned only).",
     "hours": "Operating hours, as emitted by the state (whitespace-cleaned only).",
+    "days_of_operation": "Weekdays the provider is open: list of full day names in Monday -> Sunday order (e.g. `[\"Monday\", \"Tuesday\"]`). "
+    "GA (`MO,TU`), IA (`Mon, Tue`) and VT (`Monday, Tuesday`) via day_names: case/whitespace tolerant, de-duplicated, unrecognised tokens logged and dropped, none left -> unset.",
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
     "deficiencies": "Deficiency/violation count for the provider, coerced to an "
     "integer (bug_10). Digit strings, comma-grouped counts, and integral "

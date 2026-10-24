@@ -281,6 +281,53 @@ def person_name(value):
     return title_case_name(cleaned) if isinstance(cleaned, str) else cleaned
 
 
+# One alias table for every state's spelling of a weekday: 2-letter codes
+# (GA), 3-letter abbreviations (IA) and full names (VT). Keys are lower-case.
+_FULL_DAYS = (
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+)
+_DAY_ALIASES = {
+    alias: day
+    for day in _FULL_DAYS
+    for alias in (day.lower(), day[:3].lower(), day[:2].lower())
+}
+_DAY_ORDER = {day: index for index, day in enumerate(_FULL_DAYS)}
+
+
+def day_names(value):
+    """Comma-separated weekdays -> full day names in Monday-first order.
+
+    Accepts a string (``MO,TU,WE`` / ``Mon, Tue`` / ``Monday, Tuesday``) or a
+    list of such tokens, case-insensitive and whitespace-tolerant. Duplicates
+    collapse, the result is sorted Monday -> Sunday, unrecognised tokens are
+    logged and dropped, and an empty result is ``None``.
+    """
+    value = none_if_sentinel(value) if isinstance(value, str) else value
+    if value is None:
+        return None
+    raw_tokens = value if isinstance(value, (list, tuple)) else [value]
+    found = set()
+    for raw in raw_tokens:
+        for token in str(raw).split(","):
+            token = token.strip()
+            if not token:
+                continue
+            day = _DAY_ALIASES.get(token.lower())
+            if day is None:
+                logger.warning("day_names: unrecognised day %r dropped", token)
+                continue
+            found.add(day)
+    if not found:
+        return None
+    return sorted(found, key=_DAY_ORDER.__getitem__)
+
+
 def license_holder_address(value):
     """Single-line license-holder address, cleaned but with its case kept.
 
