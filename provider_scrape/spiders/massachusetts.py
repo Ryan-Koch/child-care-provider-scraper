@@ -32,6 +32,7 @@ writeup (live-verified cookieless 2026-09-04).
 """
 
 import json
+from collections import Counter
 from urllib.parse import urlencode
 
 import scrapy
@@ -75,6 +76,13 @@ DETAIL_CONTEXT = {
     "globals": {},
     "uad": True,
 }
+
+# Per-domain compliance statuses that are a pass. A visit's `ma_domains` keeps
+# only the other rows (findings: "Non-Compliant", "Not Complete", or anything
+# unexpected); passes are tallied in `ma_domain_compliance_counts` instead.
+# Keeping every row repeated the full regulation text ~1.5M times and made
+# massachusetts.json >1 GB (decision 2026-10-24, superseding plan D-1).
+PASSING_DOMAIN_COMPLIANCE = frozenset({"Compliant", "Complete"})
 
 BASE_HEADERS = {
     "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
@@ -802,8 +810,9 @@ class MassachusettsSpider(scrapy.Spider):
 
     @staticmethod
     def _parse_visit(visit):
-        """One monitoring visit -> one InspectionItem, keeping EVERY
-        visitDomainList row (D-1), not just the non-compliant subset."""
+        """One monitoring visit -> one InspectionItem. Only the visit's
+        finding rows (non-passing) are kept in `ma_domains`; every row is
+        counted by status in `ma_domain_compliance_counts`."""
         entry = InspectionItem()
         if visit.get("dateOfVisit"):
             entry["date"] = visit["dateOfVisit"]
@@ -824,7 +833,12 @@ class MassachusettsSpider(scrapy.Spider):
             entry["ma_licensor"] = visit["licensorAssigned"]
 
         domains = []
+        compliance_counts = Counter()
         for domain in visit.get("visitDomainList") or []:
+            compliance = domain.get("levelOfCompliance")
+            compliance_counts[compliance or "Unknown"] += 1
+            if compliance in PASSING_DOMAIN_COMPLIANCE:
+                continue
             regulations = [
                 {"name": reg.get("Name"), "article_text": reg.get("ArticleText")}
                 for reg in domain.get("regulations") or []
@@ -834,7 +848,7 @@ class MassachusettsSpider(scrapy.Spider):
                     "domain": domain.get("domainName"),
                     "indicator": domain.get("indicator"),
                     "description": domain.get("description"),
-                    "level_of_compliance": domain.get("levelOfCompliance"),
+                    "level_of_compliance": compliance,
                     "is_key_indicator": domain.get("isKeyIndicator"),
                     "regulation_name": domain.get("regulationName"),
                     "regulations": regulations,
@@ -842,6 +856,8 @@ class MassachusettsSpider(scrapy.Spider):
             )
         if domains:
             entry["ma_domains"] = domains
+        if compliance_counts:
+            entry["ma_domain_compliance_counts"] = dict(compliance_counts)
         return entry
 
     @staticmethod

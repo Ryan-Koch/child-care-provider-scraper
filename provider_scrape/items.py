@@ -178,8 +178,9 @@ class InspectionItem(scrapy.Item):
     # Aura Apex API -- EEC_ProviderDetailsController.getProviderDetails). Two
     # discriminated kinds share the `inspections` list, told apart by `type`:
     #   * a monitoring visit -- `type` is the visit type (e.g. "Renewal -
-    #     Monitoring Visit"); D-1 keeps EVERY per-domain compliance row from
-    #     `visitDomainList`, not just the non-compliant subset.
+    #     Monitoring Visit"); only the per-domain *finding* rows from
+    #     `visitDomainList` are kept (passes are counted, not listed -- keeping
+    #     every row made the state file >1 GB; 2026-10-24, superseding D-1).
     #   * an investigation/complaint -- `type` is the literal "Investigation"
     #     discriminator; the outcome lives in `original_status` and D-2 keeps
     #     the (source-redacted) violation narratives in `ma_violations`.
@@ -189,10 +190,13 @@ class InspectionItem(scrapy.Item):
     # source; actually the visit reason, e.g. "Renewal - Monitoring"
     ma_level_of_compliance = scrapy.Field()  # e.g. "41/42"
     ma_licensor = scrapy.Field()  # licensor assigned to this visit
-    # Every visitDomainList row (D-1): [{domain, indicator, description,
-    # level_of_compliance, is_key_indicator, regulation_name,
-    # regulations: [{name, article_text}]}]
+    # Non-passing visitDomainList rows (not "Compliant"/"Complete"):
+    # [{domain, indicator, description, level_of_compliance,
+    # is_key_indicator, regulation_name, regulations: [{name, article_text}]}]
     ma_domains = scrapy.Field()
+    # Every visitDomainList row counted by status, e.g.
+    # {"Compliant": 40, "Non-Compliant": 2}; blank status -> "Unknown".
+    ma_domain_compliance_counts = scrapy.Field()
     ma_investigation_id = scrapy.Field()  # investigation `id`
     ma_investigator = scrapy.Field()  # investigator assigned
     ma_noncompliance_identified = scrapy.Field()  # bool
