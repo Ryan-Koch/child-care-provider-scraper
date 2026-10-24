@@ -348,7 +348,14 @@ def test_parse_detail_large_group_golden(spider):
     investigations = [i for i in inspections if i["type"] == "Investigation"]
     assert len(visits) == 8
     assert len(investigations) == 10
-    assert all(v.get("ma_domains") for v in visits)  # D-1: full per-domain rows
+    # Only finding rows are listed; every row is counted (fixture: 348 rows,
+    # 25 Non-Compliant across the 8 visits).
+    assert all(v.get("ma_domain_compliance_counts") for v in visits)
+    assert sum(sum(v["ma_domain_compliance_counts"].values()) for v in visits) == 348
+    findings = [d for v in visits for d in v.get("ma_domains", [])]
+    assert len(findings) == 25
+    assert all(d["level_of_compliance"] == "Non-Compliant" for d in findings)
+    assert all(d["regulations"] and d["regulations"][0]["article_text"] for d in findings)
 
     violations = [v for inv in investigations for v in inv.get("ma_violations", [])]
     assert violations  # D-2: redacted narratives kept
@@ -356,6 +363,64 @@ def test_parse_detail_large_group_golden(spider):
 
     keys = [_date_sort_key(i.get("date")) for i in inspections]
     assert keys == sorted(keys, reverse=True)  # newest-first
+
+
+def _domain_row(compliance, indicator="Required Postings"):
+    return {
+        "domainName": "Administration",
+        "indicator": indicator,
+        "description": "Call 911 reminder ...",
+        "levelOfCompliance": compliance,
+        "isKeyIndicator": False,
+        "regulationName": "7.04(14)(a)",
+        "regulations": [{"Name": "7.04(14)(a)", "ArticleText": "Call 911 reminder ..."}],
+    }
+
+
+def test_parse_visit_lists_only_findings_and_counts_every_row():
+    visit = {
+        "id": "a04x",
+        "dateOfVisit": "2025-03-01",
+        "visitDomainList": [
+            _domain_row("Compliant"),
+            _domain_row("Compliant"),
+            _domain_row("Complete"),
+            _domain_row("Non-Compliant", indicator="Staff ratios"),
+            _domain_row("Not Complete", indicator="Training"),
+            _domain_row(None, indicator="Mystery"),  # unexpected status is kept, not dropped
+        ],
+    }
+    entry = MassachusettsSpider._parse_visit(visit)
+
+    assert entry["ma_domain_compliance_counts"] == {
+        "Compliant": 2,
+        "Complete": 1,
+        "Non-Compliant": 1,
+        "Not Complete": 1,
+        "Unknown": 1,
+    }
+    assert [d["indicator"] for d in entry["ma_domains"]] == ["Staff ratios", "Training", "Mystery"]
+    assert entry["ma_domains"][0] == {
+        "domain": "Administration",
+        "indicator": "Staff ratios",
+        "description": "Call 911 reminder ...",
+        "level_of_compliance": "Non-Compliant",
+        "is_key_indicator": False,
+        "regulation_name": "7.04(14)(a)",
+        "regulations": [{"name": "7.04(14)(a)", "article_text": "Call 911 reminder ..."}],
+    }
+
+
+def test_parse_visit_all_passing_has_counts_but_no_domains():
+    entry = MassachusettsSpider._parse_visit({"id": "a04y", "visitDomainList": [_domain_row("Compliant")] * 3})
+    assert entry["ma_domain_compliance_counts"] == {"Compliant": 3}
+    assert "ma_domains" not in entry
+
+
+def test_parse_visit_without_domain_rows_has_neither_field():
+    entry = MassachusettsSpider._parse_visit({"id": "a04z", "visitDomainList": []})
+    assert "ma_domains" not in entry
+    assert "ma_domain_compliance_counts" not in entry
 
 
 def test_golden_item_has_no_undefined_fields(spider):
