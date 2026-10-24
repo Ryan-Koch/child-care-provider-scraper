@@ -1,8 +1,11 @@
+import asyncio
 import base64
 import json
 
 import pytest
-from scrapy.http import Response
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
+from scrapy.http import Request, Response
+from twisted.python.failure import Failure
 
 from provider_scrape.items import ProviderItem
 from provider_scrape.spiders.texas import TxhhsSpider
@@ -112,3 +115,32 @@ def test_parse_csv_no_filebytes(spider):
     response = Response(url="http://example.com", body=b'{"other_key": "value"}')
     items = list(spider.parse_csv(response))
     assert len(items) == 0
+
+
+def test_parse_csv_failure_flags_retryable(spider, caplog):
+    response = Response(url="http://example.com", body=b"<html>Service Unavailable</html>")
+    with caplog.at_level("ERROR"):
+        list(spider.parse_csv(response))
+    assert "Retryable Error" in caplog.text
+
+
+def test_errback_flags_retryable(spider, caplog):
+    # A request that exhausted RetryMiddleware must trip run_spiders.sh's re-run.
+    request = Request("https://childcare.hhs.texas.gov/public/childcaresearch")
+    failure = Failure(PlaywrightTimeoutError("Timeout 30000ms exceeded"))
+    failure.request = request
+    with caplog.at_level("ERROR"):
+        spider.errback_retryable(failure)
+    assert "Retryable Error" in caplog.text
+
+
+def test_requests_route_failures_to_errback(spider):
+    async def first_start_request():
+        return await anext(aiter(spider.start()))
+
+    assert asyncio.run(first_start_request()).errback == spider.errback_retryable
+
+    response = Response(url="http://example.com")
+    spider.intercepted_auth_header = "Bearer x"
+    (download,) = list(spider.make_download_request(response))
+    assert download.errback == spider.errback_retryable

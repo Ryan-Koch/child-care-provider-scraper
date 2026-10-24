@@ -296,6 +296,9 @@ class MarylandSpider(scrapy.Spider):
         # is NOT opted in and keeps the patient 180s + full retry budget.
         "RATELIMIT_BACKOFF_TIMEOUT_COOLDOWN": 60,
         "RATELIMIT_BACKOFF_TIMEOUT_MAX_RETRIES": 8,
+        # A multi-day run: post start / every-1000-items / finish messages to the
+        # discord.env webhook (no-op without one). See DiscordProgressExtension.
+        "DISCORD_PROGRESS_ENABLED": True,
     }
 
     @classmethod

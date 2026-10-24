@@ -581,6 +581,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ma_ccrr_website` -> pass-through
 - `ma_contact_redacted` -> collapses into `phone_suppressed` (via to_bool)
 - `ma_cost_table` -> pass-through
+- `ma_domain_compliance_counts` -> pass-through
 - `ma_domains` -> pass-through
 - `ma_dph_summer_camp` -> pass-through
 - `ma_encrypted_id` -> pass-through

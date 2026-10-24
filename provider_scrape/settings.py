@@ -51,6 +51,10 @@ ROBOTSTXT_OBEY = False
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
+    # Replaces the built-in RetryMiddleware (same 550 slot) with one that also
+    # retries transient Playwright errors, which RETRY_EXCEPTIONS doesn't cover.
+    "scrapy.downloadermiddlewares.retry.RetryMiddleware": None,
+    "provider_scrape.middlewares.PlaywrightRetryMiddleware": 550,
     "provider_scrape.middlewares.VaScrapeDownloaderMiddleware": 543,
     # Cooldown-and-retry for per-IP rate-limit 403s. Disabled unless a spider
     # sets RATELIMIT_BACKOFF_ENABLED (e.g. maryland). Placed just after the
@@ -71,9 +75,12 @@ PROXY_POOL_STATS_INTERVAL = 300.0
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
-# EXTENSIONS = {
-#    "scrapy.extensions.telnet.TelnetConsole": None,
-# }
+EXTENSIONS = {
+    # Discord start / every-N-items / finish messages. Disabled unless a spider
+    # sets DISCORD_PROGRESS_ENABLED (e.g. maryland) and discord.env has a URL.
+    "provider_scrape.discord_notify.DiscordProgressExtension": 500,
+}
+DISCORD_PROGRESS_ITEMS = 1000
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
