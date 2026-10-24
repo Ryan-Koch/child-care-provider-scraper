@@ -319,6 +319,7 @@ class ProviderItem(scrapy.Item):
     year_round = scrapy.Field()  # bool: True = operates all 12 months
     serves_special_needs = scrapy.Field()  # bool: True = accommodates special needs
     special_needs_types = scrapy.Field()  # list of canonical categories (fixed list)
+    food_program = scrapy.Field()  # bool: True = participates in USDA CACFP
     weekly_schedule = scrapy.Field()  # list of {day, open, close} rows, 24h HH:MM
     ages_served = scrapy.Field()
     infant = scrapy.Field()

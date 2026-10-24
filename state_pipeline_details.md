@@ -26,6 +26,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `doing_business_as` | Whitespace cleanup; Field collapse from state-specific source (transforms: none_if_sentinel) | Trade name (doing business as) alongside the licensed name, free text. FL, OK; sentinels such as `N/A` -> unset. FL's value always equals provider_name (its API already returns the DBA as the name). WA license name and MA umbrella org are not DBAs and are not mapped. |
 | `early_head_start` | Whitespace cleanup; Field collapse from state-specific source (-> boolean) | Early Head Start participation (federal infant/toddler program), coerced to a boolean. MS, NH, WA. Distinct from `head_start`: EHS sources never feed it. |
 | `email` | Whitespace cleanup | Contact email (whitespace-cleaned only). |
+| `food_program` | Whitespace cleanup; Field collapse from state-specific source (transforms: has_token(food program\|CACFP), to_bool) | Whether the provider participates in the USDA food program, CACFP (bool). HI/ID/WA copy their flag (`Yes`/`No` or bool; WA is `Yes` or blank, blank -> unset). DE (`de_financial_arrangements`), VT (`vt_program_participation`), WY (`wy_services`) and UT/PA/DC (the common `meals` text) are matched with one case-insensitive phrase, `food program\|CACFP`: present -> True, absent -> unset (never False). `meals` is unchanged; the `xx_` sources are kept. |
 | `head_start` | Whitespace cleanup; Field collapse from state-specific source (-> boolean) | Head Start participation, collapsed from a single state source and coerced to a boolean. |
 | `hours` | Whitespace cleanup | Operating hours, as emitted by the state (whitespace-cleaned only). |
 | `infant` | Whitespace cleanup | Whether the provider serves infants: bool-or-None. States that emit a per-age count ("8"), a count string ("Y"/"N"), or "Yes"/absent are coerced via count/token > 0 (bug_05); an unparseable token becomes None rather than a guessed True. |
@@ -101,6 +102,7 @@ Each common field is populated from a single populated source field (additive â€
 | `days_of_operation` | `ga_operating_days` (day_names), `ia_days_of_operation` (day_names), `vt_days_of_operation` (day_names) |
 | `doing_business_as` | `fl_dba` (none_if_sentinel), `ok_doing_business_as` (none_if_sentinel) |
 | `early_head_start` | `ms_early_head_start` (coerce_bool), `nh_early_head_start` (coerce_bool), `wa_early_head_start` (coerce_bool) |
+| `food_program` | `de_financial_arrangements` (has_token(food program\|CACFP)), `hi_usda_food_program` (to_bool), `id_usda_food_program` (to_bool), `vt_program_participation` (has_token(food program\|CACFP)), `wa_food_program` (to_bool), `wy_services` (has_token(food program\|CACFP)) |
 | `head_start` | `az_headstart` (coerce_bool), `co_head_start` (coerce_bool), `ct_head_start` (coerce_bool), `fl_is_head_start` (coerce_bool), `nh_head_start` (coerce_bool), `ri_head_start` (coerce_bool), `wa_head_start` (coerce_bool) |
 | `license_begin_date` | `nc_license_effective_date` (to_iso_date) |
 | `license_holder_address` | `mi_licensee_address` (license_holder_address), `nc_owner_mailing_address` (license_holder_address) |
@@ -188,9 +190,12 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `north_dakota` | provider | `nd_special_populations` | `serves_special_needs`, `special_needs_types` | ND `nd_special_populations` (list) -> `special_needs_types`; serves True when non-empty. |
 | `oklahoma` | provider | `ok_schedule` | `weekly_schedule`, `days_of_operation` | OK `ok_schedule` `hours` ("6:30AM - 6:00PM", None when closed) -> `weekly_schedule`; days derived. |
 | `oklahoma` | provider | `ok_care_types` | `year_round` | OK `ok_care_types`: `Year Round` -> True; else a seasonal-only label -> False; else unset. |
+| `pennsylvania` | provider | `meals` | `food_program` | The common `meals` text mentioning the food program -> `food_program` True; else unset. |
 | `south_dakota` | provider | `sd_months_of_operation` | `year_round` | SD `sd_months_of_operation` category list (`12 Months` / seasonal) -> `year_round`. |
+| `utah` | provider | `meals` | `food_program` | The common `meals` text mentioning the food program -> `food_program` True; else unset. |
 | `virginia` | provider | `va_inspector` | `licensing_specialist`, `licensing_specialist_phone` | Split `va_inspector` ("Name: (555) 555-5555") into specialist name + phone; `N/A` -> None. |
 | `washington_dc` | provider | `dc_enrollment` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map DC `dc_enrollment` `openings` (text; `Not Applicable` -> None) onto the four vacancy bands. |
+| `washington_dc` | provider | `meals` | `food_program` | The common `meals` text mentioning the food program -> `food_program` True; else unset. |
 | `wisconsin` | provider | `wi_months_open` | `operating_months`, `year_round` | WI `wi_months_open` (`Sep - Jun`, wraps the year) -> `operating_months`; year_round = all 12. |
 | `wyoming` | provider | `wy_schedule` | `weekly_schedule`, `days_of_operation` | WY `wy_schedule` rows (`start`/`end`, 24h) -> `weekly_schedule`; days derived. |
 
@@ -361,7 +366,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 ### Delaware (DE)
 
 - `de_enforcement_action` -> pass-through
-- `de_financial_arrangements` -> pass-through
+- `de_financial_arrangements` -> collapses into `food_program` (via has_token(food program|CACFP))
 - `de_injuries_report` -> pass-through
 - `de_intent_to_revoke` -> pass-through
 - `de_investigation_conclusion` -> pass-through
@@ -461,7 +466,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `hi_service_id` -> collapses into `source_provider_id` (via to_id_string)
 - `hi_service_type_code` -> pass-through
 - `hi_status_history` -> pass-through
-- `hi_usda_food_program` -> pass-through
+- `hi_usda_food_program` -> collapses into `food_program` (via to_bool)
 - `hi_visit_id` -> pass-through
 
 ### Iowa (IA)
@@ -506,7 +511,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `id_program_philosophy` -> pass-through
 - `id_quality_achievements` -> pass-through
 - `id_quality_achiever_status` -> pass-through
-- `id_usda_food_program` -> pass-through
+- `id_usda_food_program` -> collapses into `food_program` (via to_bool)
 - `id_waitlist` -> pass-through
 
 ### Illinois (IL)
@@ -1026,7 +1031,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `vt_preschool_capacity` -> pass-through
 - `vt_preschool_vacancies` -> collapses into `vacancies_preschool` (via to_int)
 - `vt_program_description` -> pass-through
-- `vt_program_participation` -> pass-through
+- `vt_program_participation` -> collapses into `food_program` (via has_token(food program|CACFP))
 - `vt_provider_id` -> pass-through
 - `vt_religious_activity` -> pass-through
 - `vt_school_age_capacity` -> pass-through
@@ -1047,7 +1052,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wa_early_achievers_status` -> pass-through
 - `wa_early_head_start` -> collapses into `early_head_start` (via coerce_bool)
 - `wa_eceap` -> pass-through
-- `wa_food_program` -> pass-through
+- `wa_food_program` -> collapses into `food_program` (via to_bool)
 - `wa_head_start` -> collapses into `head_start` (via coerce_bool)
 - `wa_languages_of_instruction` -> pass-through
 - `wa_license_history` -> pass-through
@@ -1104,7 +1109,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wy_record_type` -> pass-through
 - `wy_registration_fee` -> pass-through
 - `wy_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
-- `wy_services` -> pass-through
+- `wy_services` -> collapses into `food_program` (via has_token(food program|CACFP))
 - `wy_violation_found` -> pass-through
 - `wy_violations` -> pass-through
 - `wy_weekend_care` -> pass-through

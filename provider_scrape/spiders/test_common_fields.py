@@ -2702,3 +2702,91 @@ def test_special_needs_adapters_never_overwrite():
     )
     assert item["serves_special_needs"] is False
     assert item["special_needs_types"] == ["Autism"]
+
+
+# --------------------------------------------------------------------------- #
+# USDA food program
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    ("state", "field", "raw"),
+    [
+        ("hawaii", "hi_usda_food_program", True),
+        ("idaho", "id_usda_food_program", "Yes"),
+        ("washington", "wa_food_program", "Yes"),
+        ("delaware", "de_financial_arrangements", "Child Care Food Program;Nonprofit;Purchase of Care"),
+        ("vermont", "vt_program_participation", "Food Program, Pre-K Program"),
+        ("wyoming", "wy_services", ["Child and Adult Food Program", "Transportation"]),
+        ("utah", "ut_meals", "On USDA Food Program,Breakfast,Lunch"),
+        ("pennsylvania", "pa_meal_options", "Child and Adult Care Food Program (CACFP) Meals"),
+    ],
+)
+def test_food_program_true_and_source_kept(state, field, raw):
+    item = norm.normalize_item({field: raw}, state)
+    assert item["food_program"] is True
+    assert item[field] == raw
+
+
+def test_food_program_washington_dc_meals():
+    item = norm.normalize_item({"meals": "Child and Adult Care Food Program"}, "washington_dc")
+    assert item["food_program"] is True
+    assert item["meals"] == "Child and Adult Care Food Program"
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "raw"),
+    [
+        ("delaware", "de_financial_arrangements", "Nonprofit;Purchase of Care"),
+        ("vermont", "vt_program_participation", "Pre-K Program"),
+        ("wyoming", "wy_services", ["Transportation"]),
+        ("wyoming", "wy_services", []),
+        ("utah", "ut_meals", "Breakfast,Lunch"),
+        ("pennsylvania", "pa_meal_options", "Breakfast"),
+        ("washington_dc", "meals", "Lunch"),
+    ],
+)
+def test_food_program_phrase_absent_is_unset(state, field, raw):
+    item = norm.normalize_item({field: raw}, state)
+    assert "food_program" not in item
+
+
+@pytest.mark.parametrize(("raw", "expected"), [(True, True), (False, False)])
+def test_food_program_hawaii_bool(raw, expected):
+    assert norm.normalize_item({"hi_usda_food_program": raw}, "hawaii")["food_program"] is expected
+
+
+@pytest.mark.parametrize(("raw", "expected"), [("Yes", True), ("No", False)])
+def test_food_program_idaho_yes_no(raw, expected):
+    assert norm.normalize_item({"id_usda_food_program": raw}, "idaho")["food_program"] is expected
+
+
+@pytest.mark.parametrize("raw", [None, ""])
+def test_food_program_washington_blank_is_unset(raw):
+    item = norm.normalize_item({"wa_food_program": raw}, "washington")
+    assert "food_program" not in item
+
+
+def test_food_program_meals_in_other_state_is_not_read():
+    item = norm.normalize_item({"meals": "Child and Adult Care Food Program"}, "georgia")
+    assert "food_program" not in item
+    assert item["meals"] == "Child and Adult Care Food Program"
+
+
+def test_food_program_meals_unchanged_for_scoped_states():
+    item = norm.normalize_item({"ut_meals": "On USDA Food Program,Breakfast"}, "utah")
+    assert item["meals"] == "On USDA Food Program,Breakfast"
+
+
+@pytest.mark.parametrize("text", ["CHILD CARE FOOD PROGRAM", "food program", "cacfp", "Participates in CACFP"])
+def test_food_program_phrase_is_case_insensitive(text):
+    assert cf.food_program_token(text) is True
+    assert norm.normalize_item({"de_financial_arrangements": text}, "delaware")["food_program"] is True
+
+
+def test_food_program_phrase_absent_token_is_none():
+    assert cf.food_program_token("Breakfast") is None
+    assert cf.food_program_token(None) is None
+
+
+def test_food_program_adapters_never_overwrite():
+    item = norm.normalize_item({"ut_meals": "On USDA Food Program", "food_program": False}, "utah")
+    assert item["food_program"] is False

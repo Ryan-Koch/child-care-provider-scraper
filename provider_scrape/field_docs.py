@@ -130,6 +130,11 @@ FIELD_DOCS = {
     "From CO (`;`-separated), CT/ND (list), MA (`;`-separated) and NH (`, `-separated, UPPERCASE) by an explicit "
     "case-insensitive label lookup; `Experience`, `Willing to Support`, `None` and `N/A` are never types and an "
     "unmapped label is logged and dropped. Empty -> unset. The state labels stay in the `xx_` source fields.",
+    "food_program": "Whether the provider participates in the USDA food program, CACFP (bool). HI/ID/WA copy "
+    "their flag (`Yes`/`No` or bool; WA is `Yes` or blank, blank -> unset). DE (`de_financial_arrangements`), VT "
+    "(`vt_program_participation`), WY (`wy_services`) and UT/PA/DC (the common `meals` text) are matched with one "
+    "case-insensitive phrase, `food program|CACFP`: present -> True, absent -> unset (never False). `meals` is "
+    "unchanged; the `xx_` sources are kept.",
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
     "deficiencies": "Deficiency/violation count for the provider, coerced to an "
     "integer (bug_10). Digit strings, comma-grouped counts, and integral "

@@ -1405,3 +1405,25 @@ def north_dakota_special_needs(record):
     """ND `nd_special_populations` (list) -> `special_needs_types`; serves True when non-empty."""
     labels = _special_needs_labels(record.get("nd_special_populations"), ";")
     return _special_needs_fields(labels, any_label_serves=True)
+
+
+# --------------------------------------------------------------------------- #
+# USDA food program (CACFP)
+# --------------------------------------------------------------------------- #
+# One shared, case-insensitive phrase for every list/text source: DE
+# `Child Care Food Program`, VT `Food Program`, WY `Child and Adult Food Program`,
+# UT `On USDA Food Program`, PA/DC `Child and Adult Care Food Program` / `CACFP`.
+FOOD_PROGRAM_PATTERN = r"food program|CACFP"
+food_program_token = has_token(FOOD_PROGRAM_PATTERN)
+
+
+def _food_program_from_meals(record):
+    """The common `meals` text mentioning the food program -> `food_program` True; else unset."""
+    return {"food_program": True} if food_program_token(record.get("meals")) else {}
+
+
+# `meals` is common to every state, so this is scoped to the states whose `meals`
+# is known to carry the phrase rather than put in the state-agnostic map. `meals`
+# itself is left untouched.
+for _state in ("utah", "pennsylvania", "washington_dc"):
+    register_adapter(_state, sources=["meals"], fills=["food_program"])(_food_program_from_meals)

@@ -28,6 +28,7 @@ from provider_scrape.common_fields import (
     INSPECTION_LEVEL,
     announced_flag,
     day_names,
+    food_program_token,
     has_list_token,
     invert,
     is_present,
@@ -1122,6 +1123,17 @@ FIELD_COLLAPSE_MAP = {
         ("ia_serves_special_needs", to_bool),
         ("ne_serves_special_needs", to_bool),
         ("nc_special_features", has_list_token("Will enroll children with special needs")),
+    ],
+    # Bool sources use to_bool (blank/None stays unset); DE/VT/WY are text/list sources matched with the
+    # shared food-program phrase (absence -> unset, never False). UT/PA/DC read the common `meals`
+    # field and are adapters in common_fields.py.
+    "food_program": [
+        ("hi_usda_food_program", to_bool),
+        ("id_usda_food_program", to_bool),
+        ("wa_food_program", to_bool),
+        ("de_financial_arrangements", food_program_token),
+        ("vt_program_participation", food_program_token),
+        ("wy_services", food_program_token),
     ],
     "license_type": [
         "va_license_type",

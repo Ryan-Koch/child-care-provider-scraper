@@ -66,6 +66,7 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `year_round` | Operates all 12 months | Bool (GA/MS/WI: all 12 months listed; SD/ND/VT/OK by explicit label lookup, seasonal-only -> False, unknown/blank -> unset) |
 | `serves_special_needs` | Accommodates special needs | Bool (IA/NE via `to_bool`; NC from the `Will enroll children with special needs` token, absence -> unset; CO/CT/MA/NH/ND via per-state adapters; CO `None` -> False, `Willing to Support`/`Experience` -> True with no type) |
 | `special_needs_types` | Kinds of special needs | List from a fixed 11-category list (`SPECIAL_NEEDS_LABELS` in `common_fields.py`: explicit case-insensitive label lookup, canonical order, de-duped, unmapped labels logged and dropped; CO/CT/MA/NH/ND) |
+| `food_program` | Participates in USDA CACFP | Bool (HI/ID/WA via `to_bool`, WA blank -> unset; DE/VT/WY via the shared `food program\|CACFP` phrase match in the map; UT/PA/DC via state-scoped adapters matching the same phrase in the common `meals`, which is unchanged; phrase absent -> unset, never False) |
 | `ages_served` | Ages accepted | String (lists joined with `, `) |
 | `county` | County | String |
 | `scholarships_accepted` | Subsidy/scholarship acceptance | bool-or-None via `coerce_scholarships_accepted_flag`; FL/VA/WA collapsed from their subsidy flags (WA empty -> unset), NH from the `STATE CC ASSISTANCE (SCHOLARSHIP)` token as a fallback only; OK set by its spider |
