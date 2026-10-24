@@ -2165,3 +2165,40 @@ def test_violation_found_not_derived_for_unlisted_state():
     insp = norm.normalize_inspection({"ct_violations_count": 4}, "ohio")
     assert insp["violation_count"] == 4  # the map is not state-scoped
     assert "violation_found" not in insp
+
+
+# --------------------------------------------------------------------------- #
+# regulation_cited
+# --------------------------------------------------------------------------- #
+REGULATION_SOURCES = [
+    ("arizona", "az_regulation", ["AAC R9-5-208.C.", "A.R.S. § 36-897.02.C."]),
+    ("maryland", "md_regulation", ["13A.15.03.04A(3)"]),
+    ("indiana", "in_rule_code", ["470 IAC 3-4.5-4(1)", "IC 12-17.2-6-14(1)"]),
+    ("wisconsin", "wi_rule_number", ["251.05(2)(a)2."]),
+]
+REGULATION_CASES = [(st, src, val) for st, src, vals in REGULATION_SOURCES for val in vals]
+
+
+@pytest.mark.parametrize(("state", "source", "raw"), REGULATION_CASES)
+def test_regulation_cited_kept_exactly(state, source, raw):
+    insp = norm.normalize_inspection({source: raw}, state)
+    assert insp["regulation_cited"] == raw
+    assert insp[source] == raw  # source kept
+
+
+@pytest.mark.parametrize("raw", ["R6-5-5203.4, R6-5-5203.4.B, R6-5-5203.4.C", "DES CONTRACT", "INCIDENT"])
+def test_regulation_cited_arizona_multi_and_label_as_emitted(raw):
+    insp = norm.normalize_inspection({"az_regulation": raw}, "arizona")
+    assert insp["regulation_cited"] == raw
+
+
+@pytest.mark.parametrize(("state", "source", "_vals"), REGULATION_SOURCES)
+@pytest.mark.parametrize("raw", [None, "", "   ", "N/A"])
+def test_regulation_cited_blank_and_sentinel_unset(state, source, _vals, raw):
+    insp = norm.normalize_inspection({source: raw}, state)
+    assert "regulation_cited" not in insp
+
+
+def test_regulation_cited_trimmed():
+    insp = norm.normalize_inspection({"md_regulation": "  13A.15.03.04A(3) "}, "maryland")
+    assert insp["regulation_cited"] == "13A.15.03.04A(3)"

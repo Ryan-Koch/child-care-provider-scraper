@@ -159,6 +159,13 @@ FIELD_DOCS = {
     "produces no row), so DE can never show a clean visit and must not be used for clean-inspection rates. "
     "MO is excluded (user decision): `mo_open_violations` counts only violations still open, not the total "
     "found, and MO already has `violation_found` via `mo_in_compliance`.",
+    "regulation_cited": "Inspection field: the rule / code section cited on the row, as the state emits it "
+    "(trimmed; `N/A`-style placeholders -> unset). Collapsed from AZ `az_regulation`, MD `md_regulation`, "
+    "IN `in_rule_code` and WI `wi_rule_number`. Only for one-citation-per-row states; other states nest "
+    "citations inside violation lists and leave it unset. AZ rows can hold several comma-separated citations "
+    "(`R6-5-5203.4, R6-5-5203.4.B`) or a non-rule label (`DES CONTRACT`, `INCIDENT`), kept as emitted with no "
+    "splitting or filtering. Citation formats are state-specific (`AAC R9-5-208.C.`, `13A.15.03.04A(3)`, "
+    "`470 IAC 3-4.5-4(1)`, `251.05(2)(a)2.`), so values cannot be compared across states.",
     "licensing_specialist_phone": "Phone number of the assigned licensing specialist, as emitted by the state "
     "(OK, SC, and VA's split-out number); empty when not published.",
     "licensing_specialist_email": "Lower-cased email of the assigned licensing specialist (published by ME).",

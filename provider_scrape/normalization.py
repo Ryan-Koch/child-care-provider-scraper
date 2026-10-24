@@ -1367,6 +1367,16 @@ INSPECTION_FIELD_COLLAPSE_MAP = {
         ("hi_requirements_not_met", to_int),
         ("sc_alert_count", to_int),
     ],
+    # Rule/code section cited, for states where each inspection row is one
+    # citation. Kept exactly as the state emits it (AZ may hold several
+    # comma-separated citations or a non-rule label such as "DES CONTRACT");
+    # only trimmed, with placeholders like "N/A" dropped.
+    "regulation_cited": [
+        ("az_regulation", none_if_sentinel),
+        ("md_regulation", none_if_sentinel),
+        ("in_rule_code", none_if_sentinel),
+        ("wi_rule_number", none_if_sentinel),
+    ],
 }
 
 

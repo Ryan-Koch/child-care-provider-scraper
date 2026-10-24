@@ -15,6 +15,7 @@ class InspectionItem(scrapy.Item):
     announced = scrapy.Field()  # True announced / False unannounced / None unknown
     violation_found = scrapy.Field()  # True any noncompliance / False none / None unknown
     violation_count = scrapy.Field()  # int, violations / deficiencies / findings on the visit; 0 kept
+    regulation_cited = scrapy.Field()  # rule/code section cited on a one-citation-per-row inspection, as emitted
     va_shsi = scrapy.Field()
     va_complaint_related = scrapy.Field()
     va_violations = scrapy.Field()
