@@ -45,6 +45,7 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `provider_name` | Facility name | String; ALL-CAPS names → Title Case |
 | `doing_business_as` | Trade name (DBA) | Free-text string (FL/OK via `none_if_sentinel`: trim, `N/A`-style sentinels -> unset). FL's equals `provider_name` |
 | `license_number` | License/registration id | String (as emitted) |
+| `source_provider_id` | State system's own record key | Opaque string via `to_id_string` (leading zeros kept); one source per state (AK `ak_facility_gen_id`); VT excluded; not unique/comparable across states |
 | `license_holder` | Licensee / holder name | String; ALL-CAPS → Title Case |
 | `license_holder_address` | Licensee / owner's own address | Single-line string (MI, NC): `clean_address`, case kept; MI's literal `null` pieces dropped |
 | `administrator` | On-site administrator/director | String; ALL-CAPS → Title Case |

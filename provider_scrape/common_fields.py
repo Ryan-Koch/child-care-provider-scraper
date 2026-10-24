@@ -266,6 +266,24 @@ def none_if_sentinel(value):
     return None if _is_sentinel(value) else value.strip()
 
 
+def to_id_string(value):
+    """Stringify a state record key without reformatting it.
+
+    ``int`` -> ``str``; a string is only stripped (leading zeros kept:
+    ``"003251"``); an integral float (``11216.0``) -> ``"11216"``. Bools,
+    sentinels, blanks and anything else -> ``None``.
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        return str(int(value)) if value.is_integer() else None
+    if isinstance(value, str):
+        return None if _is_sentinel(value) else value.strip()
+    return None
+
+
 def lower_email(value):
     """Lower-case and trim an email address; sentinels -> ``None``."""
     cleaned = none_if_sentinel(value)

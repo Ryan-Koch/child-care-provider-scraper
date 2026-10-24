@@ -1649,3 +1649,95 @@ def test_license_begin_date_non_nc_item_unaffected():
     assert "license_begin_date" not in item
     item = norm.normalize_item({"license_begin_date": "03/01/2025"}, "minnesota")
     assert item["license_begin_date"] == "2025-03-01"
+
+
+# --------------------------------------------------------------------------- #
+# Source provider ID
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        (61, "61"),
+        ("003251", "003251"),
+        ("  003251  ", "003251"),
+        (11216.0, "11216"),
+        (3.5, None),
+        (True, None),
+        (False, None),
+        ("", None),
+        ("   ", None),
+        ("N/A", None),
+        ("None", None),
+        (None, None),
+        ([], None),
+    ],
+)
+def test_to_id_string(raw, expected):
+    assert cf.to_id_string(raw) == expected
+
+
+SOURCE_PROVIDER_ID_SOURCES = [
+    ("alaska", "ak_facility_gen_id", 1234),
+    ("arizona", "az_facility_id", "a0Ht0000001abcDEF"),
+    ("connecticut", "ct_provider_id", 61),
+    ("hawaii", "hi_service_id", 77),
+    ("illinois", "il_provider_id", "003251"),
+    ("indiana", "in_provider_id", "682844"),
+    ("kentucky", "ky_provider_id", 9001),
+    ("louisiana", "la_unique_id", "001003"),
+    ("massachusetts", "ma_program_number", "P-261705"),
+    ("mississippi", "ms_facility_id", "20014077"),
+    ("nebraska", "ne_resource_id", 4521),
+    ("new_hampshire", "nh_account_id", "001abc"),
+    ("new_jersey", "nj_unique_program_id", "711671"),
+    ("nevada", "nv_operation_id", "626"),
+    ("new_york", "ny_facility_id", "41021"),
+    ("north_dakota", "nd_program_id", "ObjId9"),
+    ("south_carolina", "sc_provider_id", "2465"),
+    ("tennessee", "tn_provider_id", "116896"),
+    ("texas", "tx_operation_id", "1404306"),
+    ("virginia", "va_ID", "35291"),
+    ("washington", "wa_provider_id", "961182"),
+    ("wisconsin", "wi_facility_number", "2006942"),
+    ("wyoming", "wy_facility_id", "goa2ejdubka4h4o"),
+]
+
+
+@pytest.mark.parametrize(("state", "source", "raw"), SOURCE_PROVIDER_ID_SOURCES)
+def test_source_provider_id_per_state(state, source, raw):
+    item = norm.normalize_item({source: raw}, state)
+    assert item["source_provider_id"] == str(raw)
+    assert item[source] == raw  # source kept
+
+
+def test_source_provider_id_alaska_uses_gen_id_not_facility_number():
+    item = norm.normalize_item(
+        {"ak_facility_gen_id": 555, "ak_facility_number": 1000652}, "alaska"
+    )
+    assert item["source_provider_id"] == "555"
+    assert item["ak_facility_number"] == 1000652
+    only_number = norm.normalize_item({"ak_facility_number": 1000652}, "alaska")
+    assert "source_provider_id" not in only_number
+
+
+def test_source_provider_id_nevada_no_license_base_fallback():
+    item = norm.normalize_item({"nv_license_base": "NV123"}, "nevada")
+    assert "source_provider_id" not in item
+
+
+def test_source_provider_id_wisconsin_ignores_location_number():
+    item = norm.normalize_item({"wi_location_number": "0001"}, "wisconsin")
+    assert "source_provider_id" not in item
+
+
+def test_source_provider_id_vermont_excluded():
+    item = norm.normalize_item(
+        {"vt_provider_id": "123", "license_number": "123"}, "vermont"
+    )
+    assert "source_provider_id" not in item
+    assert item["vt_provider_id"] == "123"
+
+
+def test_source_provider_id_blank_source_unset():
+    item = norm.normalize_item({"il_provider_id": "  "}, "illinois")
+    assert not item.get("source_provider_id")

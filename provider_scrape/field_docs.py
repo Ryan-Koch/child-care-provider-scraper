@@ -16,6 +16,8 @@ FIELD_DOCS = {
     "provider_name": "The facility's name. ALL-CAPS values are converted to Title Case; whitespace is cleaned.",
     "doing_business_as": "Trade name (doing business as) alongside the licensed name, free text. FL, OK; sentinels such as `N/A` -> unset. "
     "FL's value always equals provider_name (its API already returns the DBA as the name). WA license name and MA umbrella org are not DBAs and are not mapped.",
+    "source_provider_id": "The state system's own record key for the provider, as an opaque string (leading zeros kept, ints stringified). "
+    "State-specific: not comparable across states and not guaranteed unique. One source per state (AK facility_gen_id; VT excluded, NV/WI have no fallback).",
     "license_holder": "Name of the license holder/licensee. ALL-CAPS values are Title-cased.",
     "license_holder_address": "The license holder's own single-line address, separate from the facility address. MI, NC; "
     "whitespace/comma cleanup via clean_address, case kept as-is, MI's literal `null` pieces dropped (all-null -> unset).",

@@ -38,6 +38,7 @@ from provider_scrape.common_fields import (
     phone_extension_digits,
     run_adapters,
     to_bool,
+    to_id_string,
     to_int,
     to_iso_date,
     wi_total_vacancies,
@@ -1073,6 +1074,37 @@ FIELD_COLLAPSE_MAP = {
     # date is the term start. Other states' license_begin_date are untouched.
     "license_begin_date": [
         ("nc_license_effective_date", to_iso_date),
+    ],
+    # The state system's own record key, one source per state. Opaque and
+    # state-specific. AK uses facility_gen_id (the key in its profile and
+    # inspection URLs), not ak_facility_number; NV has no fallback to
+    # nv_license_base and WI does not use wi_location_number. VT is excluded
+    # on purpose: vt_provider_id equals license_number in every row and has
+    # duplicates, so it adds nothing.
+    "source_provider_id": [
+        ("ak_facility_gen_id", to_id_string),
+        ("az_facility_id", to_id_string),
+        ("ct_provider_id", to_id_string),
+        ("hi_service_id", to_id_string),
+        ("il_provider_id", to_id_string),
+        ("in_provider_id", to_id_string),
+        ("ky_provider_id", to_id_string),
+        ("la_unique_id", to_id_string),
+        ("ma_program_number", to_id_string),
+        ("ms_facility_id", to_id_string),
+        ("ne_resource_id", to_id_string),
+        ("nh_account_id", to_id_string),
+        ("nj_unique_program_id", to_id_string),
+        ("nv_operation_id", to_id_string),
+        ("ny_facility_id", to_id_string),
+        ("nd_program_id", to_id_string),
+        ("sc_provider_id", to_id_string),
+        ("tn_provider_id", to_id_string),
+        ("tx_operation_id", to_id_string),
+        ("va_ID", to_id_string),
+        ("wa_provider_id", to_id_string),
+        ("wi_facility_number", to_id_string),
+        ("wy_facility_id", to_id_string),
     ],
     "license_type": [
         "va_license_type",

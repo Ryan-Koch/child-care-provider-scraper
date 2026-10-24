@@ -280,6 +280,7 @@ class ProviderItem(scrapy.Item):
     provider_name = scrapy.Field()
     doing_business_as = scrapy.Field()  # trade name, free text
     license_number = scrapy.Field()
+    source_provider_id = scrapy.Field()  # state system's own record key (opaque string)
     license_holder = scrapy.Field()
     license_holder_address = scrapy.Field()  # holder's own address, not the facility's
     provider_type = scrapy.Field()
