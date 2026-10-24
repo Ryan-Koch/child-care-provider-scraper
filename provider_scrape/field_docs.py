@@ -17,6 +17,8 @@ FIELD_DOCS = {
     "doing_business_as": "Trade name (doing business as) alongside the licensed name, free text. FL, OK; sentinels such as `N/A` -> unset. "
     "FL's value always equals provider_name (its API already returns the DBA as the name). WA license name and MA umbrella org are not DBAs and are not mapped.",
     "license_holder": "Name of the license holder/licensee. ALL-CAPS values are Title-cased.",
+    "license_holder_address": "The license holder's own single-line address, separate from the facility address. MI, NC; "
+    "whitespace/comma cleanup via clean_address, case kept as-is, MI's literal `null` pieces dropped (all-null -> unset).",
     "administrator": "On-site administrator or director name. ALL-CAPS values are Title-cased.",
     "license_number": "State-issued license/registration identifier, kept as emitted (only whitespace-cleaned).",
     # Categorical

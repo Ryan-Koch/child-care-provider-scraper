@@ -33,6 +33,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `license_begin_date` | Whitespace cleanup; ISO 8601 date | Start date of the provider's CURRENT license term, normalized to ISO 8601 -- not necessarily the facility's first-ever license date (bug_11). Some states publish no current-term date at all, in which case this is left empty rather than falling back to an original/migration date; see that state's xx_original_license_date field, where published. |
 | `license_expiration` | Whitespace cleanup; ISO 8601 date | License expiration date, normalized to ISO 8601. |
 | `license_holder` | Whitespace cleanup; Title Case (ALL-CAPS names) | Name of the license holder/licensee. ALL-CAPS values are Title-cased. |
+| `license_holder_address` | Whitespace cleanup; Field collapse from state-specific source (transforms: license_holder_address) | The license holder's own single-line address, separate from the facility address. MI, NC; whitespace/comma cleanup via clean_address, case kept as-is, MI's literal `null` pieces dropped (all-null -> unset). |
 | `license_number` | Whitespace cleanup | State-issued license/registration identifier, kept as emitted (only whitespace-cleaned). |
 | `license_type` | Whitespace cleanup; Field collapse from state-specific source | Type/category of license, collapsed from a single populated state-specific *_license_type field. |
 | `licensing_specialist` | Whitespace cleanup; Field collapse from state-specific source (transforms: last_first_name, person_name) | State staff member assigned to oversee the provider's license, as `First Last` (ALL-CAPS Title-cased; SC's `Last, First` flipped; `N/A` -> empty). Collapsed from AK, MA, ME, OK, SC, TN, WV; VA's packed `Name: phone` string is split by an adapter. |
@@ -93,6 +94,7 @@ Each common field is populated from a single populated source field (additive â€
 | `doing_business_as` | `fl_dba` (none_if_sentinel), `ok_doing_business_as` (none_if_sentinel) |
 | `early_head_start` | `ms_early_head_start` (coerce_bool), `nh_early_head_start` (coerce_bool), `wa_early_head_start` (coerce_bool) |
 | `head_start` | `az_headstart` (coerce_bool), `co_head_start` (coerce_bool), `ct_head_start` (coerce_bool), `fl_is_head_start` (coerce_bool), `nh_head_start` (coerce_bool), `ri_head_start` (coerce_bool), `wa_head_start` (coerce_bool) |
+| `license_holder_address` | `mi_licensee_address` (license_holder_address), `nc_owner_mailing_address` (license_holder_address) |
 | `license_type` | `ak_license_type`, `az_license_type`, `co_license_type`, `ct_license_type`, `hi_license_type`, `mt_license_type`, `nc_license_type`, `nj_license_type_label`, `ut_license_type`, `va_license_type`, `wa_license_type`, `wv_license_type` |
 | `licensing_specialist` | `ak_licensing_specialist` (person_name), `ma_licensor` (person_name), `me_licensing_specialist` (person_name), `ok_licensing_specialist` (person_name), `sc_licensing_specialist_name` (last_first_name), `tn_regulatory_individual` (person_name), `wv_licensing_specialist` (person_name) |
 | `licensing_specialist_email` | `me_licensing_specialist_email` (lower_email) |
@@ -605,7 +607,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `mi_full_day` -> pass-through
 - `mi_license_status` -> pass-through
-- `mi_licensee_address` -> pass-through
+- `mi_licensee_address` -> collapses into `license_holder_address` (via license_holder_address)
 - `mi_services_provided` -> pass-through
 
 ### Minnesota (MN)
@@ -668,7 +670,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nc_license_type` -> collapses into `license_type`
 - `nc_owner_email` -> pass-through
 - `nc_owner_fax` -> pass-through
-- `nc_owner_mailing_address` -> pass-through
+- `nc_owner_mailing_address` -> collapses into `license_holder_address` (via license_holder_address)
 - `nc_owner_name` -> pass-through
 - `nc_owner_phone` -> pass-through
 - `nc_program_standards_points` -> pass-through

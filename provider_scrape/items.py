@@ -281,6 +281,7 @@ class ProviderItem(scrapy.Item):
     doing_business_as = scrapy.Field()  # trade name, free text
     license_number = scrapy.Field()
     license_holder = scrapy.Field()
+    license_holder_address = scrapy.Field()  # holder's own address, not the facility's
     provider_type = scrapy.Field()
     # Canonical cross-state facet derived from provider_type (normalization
     # pipeline). Additive: provider_type keeps its exact state value.

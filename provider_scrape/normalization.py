@@ -30,6 +30,7 @@ from provider_scrape.common_fields import (
     invert,
     is_present,
     last_first_name,
+    license_holder_address,
     lower_email,
     none_if_sentinel,
     person_name,
@@ -1024,9 +1025,10 @@ def _coerce_bool(value):
 # belong here: register a per-state adapter in common_fields.py instead.
 # Approved set from plan §6; the
 # license_begin_date date-merge is intentionally excluded, and quality ratings
-# are never collapsed (they stay state-specific). Keep owner/licensee mailing
-# addresses (nc_owner_mailing_address, mi_licensee_address) and VPK-specific
-# curriculum (fl_vpk_curriculum) OUT of these lists.
+# are never collapsed (they stay state-specific). Keep VPK-specific curriculum
+# (fl_vpk_curriculum) OUT of these lists. Owner/licensee mailing addresses
+# (nc_owner_mailing_address, mi_licensee_address) stay out of
+# `mailing_address`; they feed `license_holder_address` instead.
 FIELD_COLLAPSE_MAP = {
     # Trade name ("doing business as"). FL note: the FL API already returns the
     # DBA as `providerName`, so fl_dba always equals provider_name; mapping it
@@ -1035,6 +1037,13 @@ FIELD_COLLAPSE_MAP = {
     "doing_business_as": [
         ("fl_dba", none_if_sentinel),
         ("ok_doing_business_as", none_if_sentinel),
+    ],
+    # License holder's own address (distinct from the facility's mailing
+    # address). The transform cleans it, so it does not depend on the
+    # `address` cleanup step. MO's mo_mailing_address is deferred, not mapped.
+    "license_holder_address": [
+        ("mi_licensee_address", license_holder_address),
+        ("nc_owner_mailing_address", license_holder_address),
     ],
     "license_type": [
         "va_license_type",

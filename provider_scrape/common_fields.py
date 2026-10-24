@@ -281,6 +281,26 @@ def person_name(value):
     return title_case_name(cleaned) if isinstance(cleaned, str) else cleaned
 
 
+def license_holder_address(value):
+    """Single-line license-holder address, cleaned but with its case kept.
+
+    MI builds the string from components, so absent parts appear as a literal
+    ``null`` piece (``21885 Dunham Road, null, MI, 48036``). Comma-separated
+    pieces that are exactly ``null`` (any case) are dropped and the rest kept;
+    ``null`` inside a word (``100 Nullarbor Way``) is never touched. The result
+    goes through ``clean_address`` (whitespace, comma spacing, trailing
+    ``, USA``); an address with nothing left becomes ``None``. Case is left
+    as-is (NC's ALL-CAPS addresses stay ALL-CAPS).
+    """
+    from provider_scrape.normalization import clean_address
+
+    cleaned = none_if_sentinel(value)
+    if not isinstance(cleaned, str):
+        return None
+    pieces = [p for p in cleaned.split(",") if p.strip().lower() != "null"]
+    return clean_address(",".join(pieces))
+
+
 def last_first_name(value):
     """Flip a ``Last, First`` name to ``First Last`` (then ``person_name``).
 

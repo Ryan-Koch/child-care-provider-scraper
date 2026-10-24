@@ -659,7 +659,7 @@ def test_collapse_does_not_touch_quality_ratings():
 
 
 def test_collapse_mailing_address_excludes_owner_and_licensee():
-    flat = str(normalization.FIELD_COLLAPSE_MAP)
+    flat = str(normalization.FIELD_COLLAPSE_MAP["mailing_address"])
     assert "nc_owner_mailing_address" not in flat
     assert "mi_licensee_address" not in flat
 

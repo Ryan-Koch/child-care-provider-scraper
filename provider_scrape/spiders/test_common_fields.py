@@ -1080,3 +1080,63 @@ def test_doing_business_as_not_fed_by_license_name_or_umbrella(state, field):
 
 def test_doing_business_as_absent_when_no_source():
     assert "doing_business_as" not in norm.normalize_item({}, "florida")
+
+
+# --------------------------------------------------------------------------- #
+# License holder address
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    ("state", "field", "raw", "expected"),
+    [
+        ("michigan", "mi_licensee_address", "5005 Meadows Road, Lake Oswego, OR, 97035",
+         "5005 Meadows Road, Lake Oswego, OR, 97035"),
+        ("michigan", "mi_licensee_address", "null, null, null,", None),
+        ("michigan", "mi_licensee_address", "NULL,null", None),
+        ("michigan", "mi_licensee_address", "", None),
+        # null piece in the middle / at the start: dropped, the rest kept
+        ("michigan", "mi_licensee_address", "21885 Dunham Road, null, MI, 48036",
+         "21885 Dunham Road, MI, 48036"),
+        ("michigan", "mi_licensee_address", "null, Camden, MI, 49232", "Camden, MI, 49232"),
+        ("michigan", "mi_licensee_address", "1 Main St, Camden, MI, NULL", "1 Main St, Camden, MI"),
+        # "null" inside a word is never stripped
+        ("michigan", "mi_licensee_address", "100 Nullarbor Way, null, MI, 48036",
+         "100 Nullarbor Way, MI, 48036"),
+        ("michigan", "mi_licensee_address", "100 Nullarbor Way", "100 Nullarbor Way"),
+        # NC: case kept (ALL CAPS stays ALL CAPS), whitespace/comma cleanup
+        ("north_carolina", "nc_owner_mailing_address",
+         "1901 HERBERT SPAUGH LANE CHARLOTTE, NC 28208",
+         "1901 HERBERT SPAUGH LANE CHARLOTTE, NC 28208"),
+        ("north_carolina", "nc_owner_mailing_address", "PO BOX 905 BURLINGTON, NC",
+         "PO BOX 905 BURLINGTON, NC"),
+        ("north_carolina", "nc_owner_mailing_address", "  PO BOX  905   BURLINGTON ,NC  27215 , USA ",
+         "PO BOX 905 BURLINGTON, NC 27215"),
+        ("north_carolina", "nc_owner_mailing_address", "   ", None),
+    ],
+)
+def test_license_holder_address_collapse(state, field, raw, expected):
+    item = norm.normalize_item({field: raw}, state)
+    if expected is None:
+        assert "license_holder_address" not in item
+    else:
+        assert item["license_holder_address"] == expected
+    assert field in item  # additive: source kept
+
+
+@pytest.mark.parametrize(
+    ("state", "field"),
+    [("michigan", "mi_licensee_address"), ("north_carolina", "nc_owner_mailing_address")],
+)
+def test_license_holder_address_does_not_feed_mailing_address(state, field):
+    item = norm.normalize_item({field: "5005 Meadows Road, Lake Oswego, OR, 97035"}, state)
+    assert "mailing_address" not in item
+
+
+def test_mo_mailing_address_not_mapped():
+    item = norm.normalize_item({"mo_mailing_address": "1 Corp Way, Overland Park, KS"}, "missouri")
+    assert "license_holder_address" not in item
+    assert "mailing_address" not in item
+    assert item["mo_mailing_address"] == "1 Corp Way, Overland Park, KS"
+
+
+def test_license_holder_address_absent_when_no_source():
+    assert "license_holder_address" not in norm.normalize_item({}, "michigan")
