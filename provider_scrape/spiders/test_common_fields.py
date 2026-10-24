@@ -2996,3 +2996,339 @@ def test_nontraditional_does_not_overwrite_populated_and_ignores_other_states():
     item = _hours("louisiana", la_night_care=True, night_care=False)
     assert item["night_care"] is False
     assert _flags(_hours("georgia", la_night_care=True)) == (None, None, None, None)
+
+
+# --------------------------------------------------------------------------- #
+# care_schedules
+# --------------------------------------------------------------------------- #
+CARE_SCHEDULE_CASES = [
+    (raw, tokens)
+    for raw, tokens in {
+        "Before School": ["before_school"],
+        "Before school care": ["before_school"],
+        "Before School Care provided.": ["before_school"],
+        "Before and After School": ["before_school", "after_school"],
+        "Before/After School": ["before_school", "after_school"],
+        "After School": ["after_school"],
+        "School Age After School": ["after_school"],
+        "After school care": ["after_school"],
+        "After School Care provided.": ["after_school"],
+        "Drop In": ["drop_in"],
+        "Drop-in": ["drop_in"],
+        "Drop In Care": ["drop_in"],
+        "Drop-in Care": ["drop_in"],
+        "Drop-In Care": ["drop_in"],
+        "Drop In Care provided.": ["drop_in"],
+        "Drop-in/Hourly": ["drop_in"],
+        "Hourly Care (Only)": ["drop_in"],
+        "Drop in": ["drop_in"],
+        "Parent’s night out": ["drop_in"],
+        "Parent's night out": ["drop_in"],
+        "Parent’s morning out": ["drop_in"],
+        "Parent's morning out": ["drop_in"],
+        "Drop-in care": ["drop_in"],
+        "Full Day": ["full_day"],
+        "Full day care": ["full_day"],
+        "Full day": ["full_day"],
+        "Full Day Care": ["full_day"],
+        "Half Day": ["half_day"],
+        "Half Day Morning": ["half_day"],
+        "Half Day Afternoon": ["half_day"],
+        "Half Day Morning & Afternoon": ["half_day"],
+        "Half-day care (defined as 4 hours or less of care per day)": ["half_day"],
+        "Part Day": ["half_day"],
+        "Part day": ["half_day"],
+        "Half Day Care": ["half_day"],
+        "Full-time": ["full_time"],
+        "Full-Time": ["full_time"],
+        "Full Time": ["full_time"],
+        "Full week": ["full_time"],
+        "Part-time": ["part_time"],
+        "Part-Time": ["part_time"],
+        "Part Time": ["part_time"],
+        "Partial week (less than 5 days a week care)": ["part_time"],
+        "Part week": ["part_time"],
+        "Summer Day Camp": ["summer"],
+        "Summer Camp": ["summer"],
+        "Before Camp Care": ["summer"],
+        "After Camp Care": ["summer"],
+        "School age care - summer vacation": ["summer"],
+        "Summer Vacation": ["summer"],
+        "Summer Only": ["summer"],
+        "Days when school is not in session": ["school_holidays"],
+        "School age care - school vacations": ["school_holidays"],
+        "School age care - holidays/professional development days/snow day care": ["school_holidays"],
+        "Open school breaks": ["school_holidays"],
+        "Open school holidays": ["school_holidays"],
+        "Open school vacation week": ["school_holidays"],
+        "Open Holidays": ["school_holidays"],
+        "Holidays": ["school_holidays"],
+        "School Vacation Only": ["school_holidays"],
+        "Temporary/Emergency": ["emergency"],
+        "Temp/Emergency": ["emergency"],
+        "Temporary Care": ["emergency"],
+        "Emergency Care": ["emergency"],
+        "Flexible Schedule": ["flexible"],
+        "Flexible Opening Hours": ["flexible"],
+        "Flexible Closing Hours": ["flexible"],
+        "Rotating": ["flexible"],
+        "Rotating Care provided.": ["flexible"],
+        "Rotating Shifts": ["flexible"],
+        "Intermittent Care": ["flexible"],
+        "Sick Care": ["sick_care"],
+        "Sick Care provided.": ["sick_care"],
+        "Sick care": ["sick_care"],
+    }.items()
+]
+
+
+def _schedules(state, **fields):
+    return norm.normalize_item(dict(fields), state).get("care_schedules")
+
+
+def test_care_schedule_table_covers_all_tokens_and_cases():
+    assert {t for tokens in cf.CARE_SCHEDULE_LABELS.values() for t in tokens} == set(cf.CARE_SCHEDULE_TOKENS)
+    assert cf.CARE_SCHEDULE_TOKENS == (
+        "before_school",
+        "after_school",
+        "drop_in",
+        "full_day",
+        "half_day",
+        "full_time",
+        "part_time",
+        "summer",
+        "school_holidays",
+        "emergency",
+        "flexible",
+        "sick_care",
+    )
+    for label in cf.CARE_SCHEDULE_LABELS:
+        assert cf.care_schedule_tokens([label]) == list(cf.CARE_SCHEDULE_LABELS[label])
+    assert not set(cf.CARE_SCHEDULE_LABELS) & cf.CARE_SCHEDULE_IGNORED
+
+
+@pytest.mark.parametrize(("raw", "tokens"), CARE_SCHEDULE_CASES)
+def test_care_schedule_label_maps_to_tokens(raw, tokens, caplog):
+    with caplog.at_level(logging.WARNING):
+        assert cf.care_schedule_tokens([raw]) == tokens
+        assert cf.care_schedule_tokens([f"  {raw.upper()} "]) == tokens
+    assert "unmapped" not in caplog.text
+
+
+CARE_SCHEDULE_IGNORED_VALUES = [
+    "Night Care",
+    "Night care (care after 7pm on a consistent basis)",
+    "Weekend Care",
+    "Overnight",
+    "Overnight Care",
+    "Evening",
+    "24-Hour",
+    "24 Hour",
+    "Second Shift",
+    "Third Shift/Overnight",
+    "Weekends",
+    "Weekend (Sat and/or Sun)",
+    "Some weekends",
+    "Some overnights",
+    "Night Time",
+    "Non-Standard Care",
+    "Daytime",
+    "Year Round",
+    "School Year Only",
+    "Daytime Hours",
+    "Evening Hours",
+    "Weekend Hours",
+    "Overnight Hours",
+    "Food Served",
+    "Food Service",
+    "Infant Care",
+    "Transportation",
+    "Transportation to/from public schools",
+    "Special Needs",
+    "Head Start",
+    "Early Head Start",
+    "Pre-School",
+    "School Age",
+    "School Age Exempt",
+    "Infant/Toddler",
+    "GSRP",
+    "Kindergarten",
+    "Swimming",
+    "Snacks included",
+    "Meals included",
+    "Accepts DCYF/005 payment",
+    "Accepts CCAP as a form of payment",
+    "Ability to work with children who have an IEP/Early Intervention Services",
+    "Offers Kids Connect and/or additional support to children with behavioral needs",
+    "Respite for children or parents with special needs",
+    "Other (please specify)",
+    "Other -Ex. teen care parenting",
+    "No Additional Services Offered",
+    "None of the additional care schedules apply",
+]
+
+
+@pytest.mark.parametrize("raw", CARE_SCHEDULE_IGNORED_VALUES)
+def test_care_schedule_ignored_value_gives_nothing_and_is_not_logged(raw, caplog):
+    with caplog.at_level(logging.WARNING):
+        assert cf.care_schedule_tokens([raw]) == []
+        assert _schedules("florida", fl_services=[raw]) is None
+    assert caplog.text == ""
+
+
+def test_care_schedule_ignored_set_includes_every_oklahoma_label():
+    from provider_scrape.spiders.oklahoma import CARE_TYPE_LABELS
+
+    for label in CARE_TYPE_LABELS.values():
+        key = cf._care_schedule_key(label)
+        assert key in cf._CARE_SCHEDULE_LOOKUP or key in cf._CARE_SCHEDULE_IGNORED_KEYS
+
+
+def test_care_schedule_unknown_value_is_logged_and_dropped(caplog):
+    with caplog.at_level(logging.WARNING):
+        assert cf.care_schedule_tokens(["Mystery Care", "Drop In"]) == ["drop_in"]
+    assert "unmapped value 'Mystery Care'" in caplog.text
+
+
+def test_care_schedule_canonical_order_and_dedup():
+    labels = ["Sick Care", "Part-time", "Before and After School", "After School", "Drop In", "drop in", "Full Day"]
+    assert cf.care_schedule_tokens(labels) == [
+        "before_school",
+        "after_school",
+        "drop_in",
+        "full_day",
+        "part_time",
+        "sick_care",
+    ]
+    assert cf.care_schedule_tokens(["Evening", "N/A", None, ""]) == []
+
+
+@pytest.mark.parametrize(
+    ("state", "field"),
+    [
+        ("florida", "fl_services"),
+        ("mississippi", "ms_services"),
+        ("south_dakota", "sd_services_offered"),
+        ("rhode_island", "ri_services_offered"),
+        ("wisconsin", "wi_special_care_types"),
+        ("north_dakota", "nd_supplemental_care"),
+        ("massachusetts", "ma_schedule_options"),
+        ("wyoming", "wy_services"),
+        ("new_jersey", "nj_special_schedules_labels"),
+    ],
+)
+def test_care_schedules_list_states(state, field):
+    raw = ["Drop In", "Evening", "Mystery Care", "Before School Care provided.", "Drop-in Care"]
+    item = norm.normalize_item({field: list(raw)}, state)
+    assert item["care_schedules"] == ["before_school", "drop_in"]
+    assert item[field] == raw
+    assert _schedules(state, **{field: None}) is None
+    assert _schedules(state, **{field: []}) is None
+    assert _schedules(state, **{field: ["Infant Care"]}) is None
+
+
+def test_care_schedules_florida_and_mississippi_examples():
+    assert _schedules("florida", fl_services=["After School", "Before School", "Drop In", "Infant Care"]) == [
+        "before_school",
+        "after_school",
+        "drop_in",
+    ]
+    assert _schedules("mississippi", ms_services=["School Age After School", "Full Day"]) == [
+        "after_school",
+        "full_day",
+    ]
+
+
+def test_care_schedules_rhode_island_example():
+    raw = ["Half-day care (defined as 4 hours or less of care per day)", "Before school care", "Snacks included"]
+    assert _schedules("rhode_island", ri_services_offered=raw) == ["before_school", "half_day"]
+
+
+def test_care_schedules_new_jersey_labels_only_not_codes():
+    assert _schedules("new_jersey", nj_special_schedules=[4, 6]) is None
+    item = norm.normalize_item(
+        {"nj_special_schedules": [1, 4, 6, 12], "nj_special_schedules_labels": ["Evening", "Holidays", "Drop-in care"]},
+        "new_jersey",
+    )
+    assert item["care_schedules"] == ["drop_in", "school_holidays"]
+    assert item["nj_special_schedules"] == [1, 4, 6, 12]
+
+
+def test_care_schedules_iowa_comma_string():
+    raw = "24-Hour, After School, Before School, Drop-in, Evening, Full-time, Open Holidays, Overnight, Rotating"
+    item = norm.normalize_item({"ia_care_types": raw}, "iowa")
+    assert item["care_schedules"] == [
+        "before_school",
+        "after_school",
+        "drop_in",
+        "full_time",
+        "school_holidays",
+        "flexible",
+    ]
+    assert item["ia_care_types"] == raw
+
+
+def test_care_schedules_vermont_before_and_after():
+    item = norm.normalize_item({"vt_type_of_care": "Before and After School, Daytime, Full-Time"}, "vermont")
+    assert item["care_schedules"] == ["before_school", "after_school", "full_time"]
+
+
+def test_care_schedules_michigan_semicolon_string():
+    raw = "Night Time;Pre-School;School Age;Infant/Toddler;Food Service;Before/After School"
+    item = norm.normalize_item({"mi_services_provided": raw}, "michigan")
+    assert item["care_schedules"] == ["before_school", "after_school"]
+    assert item["mi_services_provided"] == raw
+
+
+def test_care_schedules_new_hampshire_uppercase():
+    raw = "PART WEEK;PART DAY;FULL DAY;FULL WEEK;OPEN SCHOOL VACATION WEEK;FLEXIBLE SCHEDULE"
+    assert _schedules("new_hampshire", nh_schedule_options=raw) == [
+        "full_day",
+        "half_day",
+        "full_time",
+        "part_time",
+        "school_holidays",
+        "flexible",
+    ]
+
+
+def test_care_schedules_oklahoma_subset():
+    labels = ["Year Round", "Daytime Hours", "Evening Hours", "Drop In", "Sick Care", "Summer Only"]
+    item = norm.normalize_item({"ok_care_types": labels}, "oklahoma")
+    assert item["care_schedules"] == ["drop_in", "summer", "sick_care"]
+    assert item["ok_care_types"] == labels
+    assert _schedules("oklahoma", ok_care_types=["School Vacation Only"]) == ["school_holidays"]
+    assert _schedules("oklahoma", ok_care_types=["Year Round", "Daytime Hours"]) is None
+
+
+def test_care_schedules_georgia_merges_three_sources_with_curly_apostrophe():
+    item = norm.normalize_item(
+        {
+            "ga_special_hours": "Drop in; Open school breaks; Parent’s night out",
+            "ga_accepts_children_type": "Full Time; Part Time",
+            "ga_summer_camp": "Summer Camp",
+        },
+        "georgia",
+    )
+    assert item["care_schedules"] == ["drop_in", "full_time", "part_time", "summer", "school_holidays"]
+    assert item["ga_special_hours"] == "Drop in; Open school breaks; Parent’s night out"
+    assert _schedules("georgia", ga_summer_camp="Summer Camp") == ["summer"]
+    assert _schedules("georgia", ga_special_hours="Parent's morning out") == ["drop_in"]
+    assert _schedules("georgia", ga_special_hours=None, ga_summer_camp=None) is None
+
+
+def test_care_schedules_louisiana_bools():
+    item = norm.normalize_item({"la_before_care": True, "la_after_care": True}, "louisiana")
+    assert item["care_schedules"] == ["before_school", "after_school"]
+    assert item["la_before_care"] is True
+    assert _schedules("louisiana", la_before_care=False, la_after_care=True) == ["after_school"]
+    assert _schedules("louisiana", la_before_care=True, la_after_care=False) == ["before_school"]
+    item = norm.normalize_item({"la_before_care": False, "la_after_care": False}, "louisiana")
+    assert "care_schedules" not in item
+    assert item["la_before_care"] is False
+    assert _schedules("louisiana", la_before_care=None, la_after_care=None) is None
+
+
+def test_care_schedules_does_not_overwrite_and_ignores_other_states():
+    assert _schedules("florida", fl_services=["Drop In"], care_schedules=["summer"]) == ["summer"]
+    assert _schedules("texas", fl_services=["Drop In"]) is None

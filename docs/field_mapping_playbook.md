@@ -73,6 +73,7 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `night_care` | Overnight / third-shift care | Bool (LA bool; AL any time range True, `N/A - N/A` False; IL/WI/NC capacity > 0 via shared `capacity_to_bool`, `0`/`0 0` False; OK `Overnight Hours` True, absent unset). For IL/WI/NC, True = licensed night/shift capacity, not confirmed hours |
 | `evening_care` | Evening / second-shift care | Bool (WY bool; NC second-shift capacity > 0; OK `Evening Hours` True, absent unset) |
 | `weekend_care` | Weekend care | Bool (WY bool; OK `Weekend Hours` True, absent unset) |
+| `care_schedules` | Care arrangements offered | List from a fixed 12-token list (`CARE_SCHEDULE_LABELS` in `common_fields.py`: explicit case-insensitive label table, one label may give several tokens, canonical order, de-duped; ignored labels silent, unknown logged and dropped; FL/MS/SD/RI/WI/ND/MA/WY/OK/NJ/IA/VT/MI/NH/GA/LA via per-state adapters, GA merges three sources, LA from two bools) |
 | `ages_served` | Ages accepted | String (lists joined with `, `) |
 | `county` | County | String |
 | `scholarships_accepted` | Subsidy/scholarship acceptance | bool-or-None via `coerce_scholarships_accepted_flag`; FL/VA/WA collapsed from their subsidy flags (WA empty -> unset), NH from the `STATE CC ASSISTANCE (SCHOLARSHIP)` token as a fallback only; OK set by its spider |

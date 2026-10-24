@@ -319,6 +319,7 @@ class ProviderItem(scrapy.Item):
     year_round = scrapy.Field()  # bool: True = operates all 12 months
     serves_special_needs = scrapy.Field()  # bool: True = accommodates special needs
     special_needs_types = scrapy.Field()  # list of canonical categories (fixed list)
+    care_schedules = scrapy.Field()  # list of canonical schedule tokens (fixed list)
     food_program = scrapy.Field()  # bool: True = participates in USDA CACFP
     state_prek = scrapy.Field()  # bool: True = participates in a publicly funded state pre-K
     state_prek_program = scrapy.Field()  # program brand, set only when state_prek is True

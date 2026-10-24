@@ -1641,3 +1641,270 @@ _register_nontraditional(
 def washington_dc_nontraditional_hours(record):
     """DC `dc_nontraditional_hours` (bool) -> the `nontraditional_hours` roll-up only; False is a real no."""
     return {"nontraditional_hours": to_bool(record.get("dc_nontraditional_hours"))}
+
+
+# --------------------------------------------------------------------------- #
+# Care schedules (FL, MS, SD, RI, WI, ND, IA, VT, OK, MI, GA, LA, MA, NH, NJ, WY)
+# --------------------------------------------------------------------------- #
+# Fixed token list, in the order ``care_schedules`` is emitted.
+CARE_SCHEDULE_TOKENS = (
+    "before_school",
+    "after_school",
+    "drop_in",
+    "full_day",
+    "half_day",
+    "full_time",
+    "part_time",
+    "summer",
+    "school_holidays",
+    "emergency",
+    "flexible",
+    "sick_care",
+)
+
+# Raw state label -> canonical token(s). One raw value may mean several tokens.
+# Lookups are case-insensitive, whitespace-trimmed and apostrophe-tolerant (a
+# curly ’ equals '), which also covers NH's UPPERCASE labels. Anything in
+# neither this table nor ``CARE_SCHEDULE_IGNORED`` is logged and dropped.
+CARE_SCHEDULE_LABELS = {
+    # before_school / after_school
+    "Before School": ("before_school",),
+    "Before school care": ("before_school",),
+    "Before School Care provided.": ("before_school",),
+    "Before and After School": ("before_school", "after_school"),  # VT
+    "Before/After School": ("before_school", "after_school"),  # MI
+    "After School": ("after_school",),
+    "School Age After School": ("after_school",),  # MS
+    "After school care": ("after_school",),  # RI
+    "After School Care provided.": ("after_school",),  # WI
+    # drop_in
+    "Drop In": ("drop_in",),  # FL, GA, OK
+    "Drop-in": ("drop_in",),
+    "Drop In Care": ("drop_in",),
+    "Drop-in Care": ("drop_in",),
+    "Drop-In Care": ("drop_in",),  # WY
+    "Drop In Care provided.": ("drop_in",),  # WI
+    "Drop-in/Hourly": ("drop_in",),  # ND
+    "Hourly Care (Only)": ("drop_in",),
+    "Drop in": ("drop_in",),  # GA
+    "Parent’s night out": ("drop_in",),  # GA
+    "Parent’s morning out": ("drop_in",),  # GA
+    "Drop-in care": ("drop_in",),  # NJ
+    # full_day / half_day
+    "Full Day": ("full_day",),
+    "Full day care": ("full_day",),  # RI
+    "Full day": ("full_day",),  # MA
+    "Full Day Care": ("full_day",),  # WY
+    "Half Day": ("half_day",),
+    "Half Day Morning": ("half_day",),
+    "Half Day Afternoon": ("half_day",),
+    "Half Day Morning & Afternoon": ("half_day",),
+    "Half-day care (defined as 4 hours or less of care per day)": ("half_day",),  # RI
+    "Part Day": ("half_day",),
+    "Part day": ("half_day",),
+    "Half Day Care": ("half_day",),  # WY
+    # full_time / part_time
+    "Full-time": ("full_time",),
+    "Full-Time": ("full_time",),
+    "Full Time": ("full_time",),  # GA
+    "Full week": ("full_time",),  # MA
+    "Part-time": ("part_time",),
+    "Part-Time": ("part_time",),
+    "Part Time": ("part_time",),  # GA
+    "Partial week (less than 5 days a week care)": ("part_time",),
+    "Part week": ("part_time",),  # MA
+    # summer
+    "Summer Day Camp": ("summer",),
+    "Summer Camp": ("summer",),  # GA
+    "Before Camp Care": ("summer",),
+    "After Camp Care": ("summer",),
+    "School age care - summer vacation": ("summer",),
+    "Summer Vacation": ("summer",),
+    "Summer Only": ("summer",),  # OK
+    # school_holidays
+    "Days when school is not in session": ("school_holidays",),  # IA
+    "School age care - school vacations": ("school_holidays",),
+    "School age care - holidays/professional development days/snow day care": ("school_holidays",),
+    "Open school breaks": ("school_holidays",),  # GA
+    "Open school holidays": ("school_holidays",),
+    "Open school vacation week": ("school_holidays",),  # MA
+    "Open Holidays": ("school_holidays",),  # IA
+    "Holidays": ("school_holidays",),  # NJ
+    "School Vacation Only": ("school_holidays",),  # OK
+    # emergency
+    "Temporary/Emergency": ("emergency",),
+    "Temp/Emergency": ("emergency",),  # IA
+    "Temporary Care": ("emergency",),  # NJ
+    "Emergency Care": ("emergency",),  # NJ
+    # flexible
+    "Flexible Schedule": ("flexible",),
+    "Flexible Opening Hours": ("flexible",),
+    "Flexible Closing Hours": ("flexible",),
+    "Rotating": ("flexible",),  # IA
+    "Rotating Care provided.": ("flexible",),  # WI
+    "Rotating Shifts": ("flexible",),  # NJ
+    "Intermittent Care": ("flexible",),  # NJ
+    # sick_care
+    "Sick Care": ("sick_care",),  # OK
+    "Sick Care provided.": ("sick_care",),  # WI
+    "Sick care": ("sick_care",),  # NJ
+}
+
+# Known labels that are deliberately not schedule tokens, so they are dropped
+# silently (not logged): hours/year-round labels owned by the nontraditional
+# hours and ``year_round`` fields, other services, and "none" sentinels.
+CARE_SCHEDULE_IGNORED = {
+    # routed to nontraditional hours / year_round
+    "Night Care",
+    "Night care (care after 7pm on a consistent basis)",  # WI
+    "Weekend Care",
+    "Overnight",
+    "Overnight Care",
+    "Evening",
+    "24-Hour",
+    "24 Hour",
+    "Second Shift",
+    "Third Shift/Overnight",
+    "Weekends",
+    "Weekend (Sat and/or Sun)",
+    "Some weekends",
+    "Some overnights",
+    "Night Time",
+    "Non-Standard Care",
+    "Daytime",
+    "Year Round",
+    "School Year Only",
+    "Daytime Hours",
+    "Evening Hours",
+    "Weekend Hours",
+    "Overnight Hours",
+    # not schedules: programs, services, payment, age groups
+    "Food Served",
+    "Food Service",
+    "Infant Care",
+    "Transportation",
+    "Transportation to/from public schools",
+    "Special Needs",
+    "Head Start",
+    "Early Head Start",
+    "Pre-School",
+    "School Age",
+    "School Age Exempt",
+    "Infant/Toddler",
+    "GSRP",
+    "Kindergarten",
+    "Swimming",
+    "Snacks included",
+    "Meals included",
+    "Accepts DCYF/005 payment",
+    "Accepts CCAP as a form of payment",
+    "Ability to work with children who have an IEP/Early Intervention Services",
+    "Offers Kids Connect and/or additional support to children with behavioral needs",
+    "Respite for children or parents with special needs",
+    "Other (please specify)",
+    "Other -Ex. teen care parenting",
+    # WY service names that are not schedules
+    "Provides Transportation",
+    "Meals and Snacks Provided",
+    "Child and Adult Food Program",
+    # sentinels
+    "No Additional Services Offered",
+    "None of the additional care schedules apply",
+}
+
+
+def _care_schedule_key(label):
+    """Lookup key: trimmed, lower-cased, curly apostrophe folded to a straight one."""
+    return str(label).strip().lower().replace("’", "'")
+
+
+_CARE_SCHEDULE_LOOKUP = {_care_schedule_key(k): v for k, v in CARE_SCHEDULE_LABELS.items()}
+_CARE_SCHEDULE_IGNORED_KEYS = {_care_schedule_key(k) for k in CARE_SCHEDULE_IGNORED}
+
+
+def care_schedule_tokens(labels):
+    """Raw labels -> de-duplicated canonical tokens in ``CARE_SCHEDULE_TOKENS`` order.
+
+    Ignored labels and sentinels are dropped silently; an unknown label is
+    logged (so the table can be extended) and dropped.
+    """
+    found = set()
+    for label in labels:
+        if label is None or not str(label).strip() or _is_sentinel(label):
+            continue
+        key = _care_schedule_key(label)
+        if key in _CARE_SCHEDULE_IGNORED_KEYS:
+            continue
+        tokens = _CARE_SCHEDULE_LOOKUP.get(key)
+        if tokens is None:
+            logger.warning("care_schedules: unmapped value %r -> dropped", label)
+            continue
+        found.update(tokens)
+    return sorted(found, key=CARE_SCHEDULE_TOKENS.index)
+
+
+def _register_care_schedules(state, sources, extract, doc):
+    """Register an adapter filling ``care_schedules`` from the labels ``extract(record)`` returns."""
+
+    @register_adapter(state, sources=sources, fills=["care_schedules"])
+    def adapter(record):
+        return {"care_schedules": care_schedule_tokens(extract(record))}
+
+    adapter.__doc__ = doc
+    adapter.__name__ = f"{state}_care_schedules"
+    return adapter
+
+
+def _schedule_source(field, separator=";"):
+    """Extractor for one list-or-``separator``-joined source field."""
+    return lambda record: _special_needs_labels(record.get(field), separator)
+
+
+for _state, _field, _separator, _shape in (
+    ("florida", "fl_services", ";", "list"),
+    ("mississippi", "ms_services", ";", "list"),
+    ("south_dakota", "sd_services_offered", ";", "list"),
+    ("rhode_island", "ri_services_offered", ";", "list"),
+    ("wisconsin", "wi_special_care_types", ";", "list"),
+    ("north_dakota", "nd_supplemental_care", ";", "list"),
+    ("massachusetts", "ma_schedule_options", ";", "list"),
+    ("wyoming", "wy_services", ";", "list"),
+    ("new_jersey", "nj_special_schedules_labels", ";", "list"),
+    ("iowa", "ia_care_types", ",", "`, `-separated string"),
+    ("vermont", "vt_type_of_care", ",", "`, `-separated string"),
+    ("michigan", "mi_services_provided", ";", "`;`-separated string"),
+    ("new_hampshire", "nh_schedule_options", ";", "`;`-separated UPPERCASE string"),
+):
+    _register_care_schedules(
+        _state,
+        [_field],
+        _schedule_source(_field, _separator),
+        f"{_state.replace('_', ' ').title()} `{_field}` ({_shape}) -> `care_schedules` via the explicit label table.",
+    )
+
+_register_care_schedules(
+    "oklahoma",
+    ["ok_care_types"],
+    lambda record: sorted(ok_care_type_set(record.get("ok_care_types"))),
+    "OK `ok_care_types` (list) -> `care_schedules` (Drop In, Sick Care, Summer Only, School Vacation Only).",
+)
+_register_care_schedules(
+    "georgia",
+    ["ga_special_hours", "ga_accepts_children_type", "ga_summer_camp"],
+    lambda record: [
+        label
+        for field in ("ga_special_hours", "ga_accepts_children_type", "ga_summer_camp")
+        for label in _special_needs_labels(record.get(field), ";")
+    ],
+    "GA `ga_special_hours`, `ga_accepts_children_type`, `ga_summer_camp` (`; `-separated) merged -> `care_schedules`.",
+)
+_register_care_schedules(
+    "louisiana",
+    ["la_before_care", "la_after_care"],
+    lambda record: [
+        label
+        for field, label in (("la_before_care", "Before School"), ("la_after_care", "After School"))
+        if to_bool(record.get(field)) is True
+    ],
+    "LA `la_before_care`/`la_after_care` (bool) -> `before_school`/`after_school`; False adds nothing.",
+)

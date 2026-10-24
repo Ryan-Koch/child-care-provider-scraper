@@ -155,6 +155,14 @@ FIELD_DOCS = {
     "licensed second-shift capacity, not confirmed operating hours.",
     "weekend_care": "Weekend care (bool). WY `wy_weekend_care`; OK `Weekend Hours` -> True (absent -> unset). The "
     "`xx_` sources are kept.",
+    "care_schedules": "Care arrangements offered: list of canonical tokens from a fixed 12-token list, "
+    "de-duplicated, in this order: before_school, after_school, drop_in, full_day, half_day, full_time, part_time, "
+    "summer, school_holidays, emergency, flexible, sick_care. From FL/MS/SD/RI/WI/ND/MA/WY/OK/NJ (lists), "
+    "IA/VT (`, `-separated), MI/NH (`;`-separated, NH UPPERCASE), GA (three `; `-separated sources merged) and LA "
+    "(`la_before_care`/`la_after_care` True) by an explicit case-insensitive label table (`CARE_SCHEDULE_LABELS`); "
+    "one label can give several tokens (`Before and After School`). Evening/overnight/weekend/year-round labels "
+    "and non-schedule services are ignored silently (they feed other fields); an unknown label is logged and "
+    "dropped. Empty -> unset. The state labels stay in the `xx_` source fields.",
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
     "deficiencies": "Deficiency/violation count for the provider, coerced to an "
     "integer (bug_10). Digit strings, comma-grouped counts, and integral "
