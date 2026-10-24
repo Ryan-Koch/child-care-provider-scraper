@@ -21,6 +21,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `county` | Whitespace cleanup | County (whitespace-cleaned only). |
 | `curriculum` | Whitespace cleanup; Field collapse from state-specific source | Curriculum, collapsed from a single populated state source (VPK-specific curriculum is excluded). |
 | `deficiencies` | Whitespace cleanup; Integer coercion (bug_10) | Deficiency/violation count for the provider, coerced to an integer (bug_10). Digit strings, comma-grouped counts, and integral floats (e.g. 2.0) all become int; blank/None stays None; negative or non-numeric values (and stray booleans) become None rather than a guessed number. |
+| `early_head_start` | Whitespace cleanup; Field collapse from state-specific source (-> boolean) | Early Head Start participation (federal infant/toddler program), coerced to a boolean. MS, NH, WA. Distinct from `head_start`: EHS sources never feed it. |
 | `email` | Whitespace cleanup | Contact email (whitespace-cleaned only). |
 | `head_start` | Whitespace cleanup; Field collapse from state-specific source (-> boolean) | Head Start participation, collapsed from a single state source and coerced to a boolean. |
 | `hours` | Whitespace cleanup | Operating hours, as emitted by the state (whitespace-cleaned only). |
@@ -83,6 +84,7 @@ Each common field is populated from a single populated source field (additive â€
 | `accepting_new_children` | `co_accepting_new_children`, `ct_accepting_referrals`, `ga_accepting_new_children` |
 | `accreditation` | `al_accreditations`, `ct_accreditations`, `ga_accreditation`, `hi_accreditations`, `md_accreditation`, `nj_accreditation_labels` |
 | `curriculum` | `ga_curriculum`, `nj_curriculum` |
+| `early_head_start` | `ms_early_head_start` (coerce_bool), `nh_early_head_start` (coerce_bool), `wa_early_head_start` (coerce_bool) |
 | `head_start` | `az_headstart` (coerce_bool), `co_head_start` (coerce_bool), `ct_head_start` (coerce_bool), `fl_is_head_start` (coerce_bool), `nh_head_start` (coerce_bool), `ri_head_start` (coerce_bool), `wa_head_start` (coerce_bool) |
 | `license_type` | `ak_license_type`, `az_license_type`, `co_license_type`, `ct_license_type`, `hi_license_type`, `mt_license_type`, `nc_license_type`, `nj_license_type_label`, `ut_license_type`, `va_license_type`, `wa_license_type`, `wv_license_type` |
 | `licensing_specialist` | `ak_licensing_specialist` (person_name), `ma_licensor` (person_name), `me_licensing_specialist` (person_name), `ok_licensing_specialist` (person_name), `sc_licensing_specialist_name` (last_first_name), `tn_regulatory_individual` (person_name), `wv_licensing_specialist` (person_name) |
@@ -630,7 +632,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 ### Mississippi (MS)
 
 - `ms_description` -> pass-through
-- `ms_early_head_start` -> pass-through
+- `ms_early_head_start` -> collapses into `early_head_start` (via coerce_bool)
 - `ms_end_date` -> pass-through
 - `ms_exam_type` -> pass-through
 - `ms_facility_id` -> pass-through
@@ -707,7 +709,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nh_corrective_action_accepted` -> pass-through
 - `nh_covid_closure` -> pass-through
 - `nh_domains` -> pass-through
-- `nh_early_head_start` -> pass-through
+- `nh_early_head_start` -> collapses into `early_head_start` (via coerce_bool)
 - `nh_endorsements` -> pass-through
 - `nh_environment` -> pass-through
 - `nh_financial_assistance` -> pass-through
@@ -978,7 +980,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wa_available_slots` -> collapses into `total_vacancies` (via to_int)
 - `wa_contacts` -> pass-through
 - `wa_early_achievers_status` -> pass-through
-- `wa_early_head_start` -> pass-through
+- `wa_early_head_start` -> collapses into `early_head_start` (via coerce_bool)
 - `wa_eceap` -> pass-through
 - `wa_food_program` -> pass-through
 - `wa_head_start` -> collapses into `head_start` (via coerce_bool)

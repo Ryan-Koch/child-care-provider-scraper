@@ -1093,6 +1093,16 @@ FIELD_COLLAPSE_MAP = {
             "nh_head_start",
         )
     ],
+    # Early Head Start is a distinct program from head_start: its sources are
+    # never added to the head_start list above.
+    "early_head_start": [
+        (source, _coerce_bool)
+        for source in (
+            "ms_early_head_start",
+            "nh_early_head_start",
+            "wa_early_head_start",
+        )
+    ],
     "curriculum": ["ga_curriculum", "nj_curriculum"],
     # Assigned licensing specialist. VA (va_inspector packs name +
     # phone) is an adapter in common_fields.py. ma_licensor is the provider-level

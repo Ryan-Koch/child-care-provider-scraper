@@ -318,6 +318,7 @@ class ProviderItem(scrapy.Item):
     accepting_new_children = scrapy.Field()
     transportation = scrapy.Field()
     head_start = scrapy.Field()  # normalized to a boolean
+    early_head_start = scrapy.Field()  # normalized to a boolean; distinct from head_start
     curriculum = scrapy.Field()
     # State staff member assigned to the license, plus contact info
     licensing_specialist = scrapy.Field()

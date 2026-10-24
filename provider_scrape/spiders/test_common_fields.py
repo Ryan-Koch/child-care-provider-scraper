@@ -750,3 +750,63 @@ def test_vacancies_updated_date_wisconsin_unrecognised_prose_is_logged(caplog):
 def test_vacancies_updated_date_does_not_overwrite_existing():
     updated, _ = _updated("iowa", ia_openings_as_of="09/15/2026", vacancies_updated_date="2026-01-01")
     assert updated == "2026-01-01"
+
+
+# --------------------------------------------------------------------------- #
+# Early Head Start
+# --------------------------------------------------------------------------- #
+def _ehs(state, **source):
+    return norm.normalize_item(dict(source), state)
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "raw", "expected"),
+    [
+        ("mississippi", "ms_early_head_start", True, True),
+        ("mississippi", "ms_early_head_start", False, False),
+        ("new_hampshire", "nh_early_head_start", "Yes", True),
+        ("new_hampshire", "nh_early_head_start", "No", False),
+        ("washington", "wa_early_head_start", "Yes", True),
+        ("washington", "wa_early_head_start", "No", False),
+    ],
+)
+def test_early_head_start_map_states(state, field, raw, expected):
+    item = _ehs(state, **{field: raw})
+    assert item["early_head_start"] is expected
+    assert item[field] == raw  # additive: source kept
+
+
+@pytest.mark.parametrize(
+    "field", ["ms_early_head_start", "nh_early_head_start", "wa_early_head_start"]
+)
+def test_early_head_start_blank_or_missing_is_unset(field):
+    assert "early_head_start" not in _ehs("mississippi", **{field: ""})
+    assert "early_head_start" not in _ehs("mississippi", **{field: None})
+    assert "early_head_start" not in _ehs("mississippi")
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "raw"),
+    [
+        ("mississippi", "ms_early_head_start", True),
+        ("new_hampshire", "nh_early_head_start", "Yes"),
+        ("washington", "wa_early_head_start", "Yes"),
+    ],
+)
+def test_early_head_start_does_not_feed_head_start(state, field, raw):
+    item = _ehs(state, **{field: raw})
+    assert item["early_head_start"] is True
+    assert "head_start" not in item
+
+
+def test_early_head_start_sources_not_in_head_start_list():
+    head_start_sources = {norm.split_collapse_entry(e)[0] for e in norm.FIELD_COLLAPSE_MAP["head_start"]}
+    ehs_sources = {norm.split_collapse_entry(e)[0] for e in norm.FIELD_COLLAPSE_MAP["early_head_start"]}
+    assert ehs_sources == {"ms_early_head_start", "nh_early_head_start", "wa_early_head_start"}
+    assert not head_start_sources & ehs_sources
+
+
+def test_early_head_start_and_head_start_are_independent():
+    item = _ehs("washington", wa_head_start="No", wa_early_head_start="Yes")
+    assert item["head_start"] is False
+    assert item["early_head_start"] is True

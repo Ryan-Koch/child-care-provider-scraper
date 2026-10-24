@@ -69,6 +69,7 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `accepting_new_children` | Open enrollment flag | As emitted (collapsed) |
 | `transportation` | Transportation offered | String (collapsed) |
 | `head_start` | Head Start program | **Boolean** (collapsed + coerced) |
+| `early_head_start` | Early Head Start program (separate from `head_start`) | **Boolean** (collapsed MS/NH/WA, coerced via `_coerce_bool`) |
 | `curriculum` | Curriculum | String (collapsed) |
 | `licensing_specialist` | Assigned state licensing specialist | `First Last` string (collapsed; SC `Last, First` flipped; VA split by adapter; `N/A` -> None) |
 | `licensing_specialist_phone` / `licensing_specialist_email` | Specialist contact | Phone as emitted / lower-cased email |
