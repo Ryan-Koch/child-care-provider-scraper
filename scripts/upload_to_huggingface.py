@@ -37,7 +37,8 @@ Usage:
     .venv/bin/python scripts/upload_to_huggingface.py --extra-file SOURCES.md out/
 
 Invoked automatically at the end of a run by ``run_spiders.sh -u``.
-Before uploading, validates the input directory's JSON files.
+Before uploading, validates the input directory's JSON files (empty, older than
+5 days, or not valid JSON -- e.g. truncated by a killed crawl).
 If any fail, no data is uploaded and a report is sent to the incoming webhook
 configured as ``webhook_url`` in the repo-root ``discord.env``.
 After a successful commit, the final upload summary is sent to the same webhook.
@@ -72,6 +73,12 @@ WEBHOOK_KEY = "webhook_url"
 MAX_AGE = timedelta(days=5)
 DISCORD_CONTENT_LIMIT = 2000
 DISCORD_USER_AGENT = "Mozilla/5.0 (compatible; ChildCareProviderScraper/1.0)"
+# JSON validation streams state files (some exceed 1 GB) instead of loading them.
+JSON_CHUNK_CHARS = 1 << 20
+# A record that still won't parse with this much lookahead is malformed rather
+# than split across reads; bounds memory when a huge file is corrupt mid-way.
+JSON_MAX_RECORD_CHARS = 64 << 20
+_JSON_WHITESPACE = re.compile(r"[ \t\n\r]*")
 
 # The dataset card lives at the repo root (HF only reads config metadata there).
 README_FILENAME = "README.md"
@@ -169,6 +176,113 @@ def is_empty_json(path):
         return content == b"[]"
 
 
+class InvalidJSON(ValueError):
+    pass
+
+
+def _reject_constant(name):
+    # NaN/Infinity are a Python extension, not JSON; HF's loader rejects them.
+    raise InvalidJSON(f"non-standard constant {name}")
+
+
+class _JsonStream:
+    """Buffered reader that decodes one JSON value at a time from a text file."""
+
+    def __init__(self, handle):
+        self.handle = handle
+        self.buf = ""
+        self.pos = 0
+        self.offset = 0  # characters already dropped from buf, for error positions
+        self.eof = False
+        self.decoder = json.JSONDecoder(parse_constant=_reject_constant)
+
+    def _read(self, size=JSON_CHUNK_CHARS):
+        if self.eof:
+            return False
+        chunk = self.handle.read(size)
+        if not chunk:
+            self.eof = True
+            return False
+        self.offset += self.pos
+        self.buf = self.buf[self.pos :] + chunk
+        self.pos = 0
+        return True
+
+    def where(self, pos=None):
+        return self.offset + (self.pos if pos is None else pos)
+
+    def peek(self):
+        """Return the next non-whitespace character, or "" at end of file."""
+        while True:
+            self.pos = _JSON_WHITESPACE.match(self.buf, self.pos).end()
+            if self.pos < len(self.buf) or not self._read():
+                return self.buf[self.pos : self.pos + 1]
+
+    def take(self):
+        self.pos += 1
+
+    def decode(self):
+        """Consume one value, reading (doubling) more input while it runs past the buffer."""
+        self.peek()  # raw_decode doesn't skip leading whitespace
+        while True:
+            pending = len(self.buf) - self.pos
+            try:
+                _, end = self.decoder.raw_decode(self.buf, self.pos)
+            except json.JSONDecodeError as exc:
+                if pending < JSON_MAX_RECORD_CHARS and self._read(max(JSON_CHUNK_CHARS, pending)):
+                    continue
+                if exc.pos >= len(self.buf):
+                    raise InvalidJSON("file ends mid-record (truncated?)") from None
+                raise InvalidJSON(f"{exc.msg} (character {self.where(exc.pos):,})") from None
+            except InvalidJSON as exc:
+                raise InvalidJSON(f"{exc} (near character {self.where():,})") from None
+            # A number ending exactly at the buffer edge may continue in the next read.
+            if end == len(self.buf) and self._read():
+                continue
+            self.pos = end
+            return
+
+
+def json_problem(path):
+    """Describe why ``path`` isn't valid JSON, or return None if it parses.
+
+    A top-level array (every scrape output) is decoded one record at a time so
+    multi-GB files never load whole; the most common failure, a crawl killed
+    before the exporter wrote the closing ``]``, is reported as truncation.
+    """
+    records = 0
+    try:
+        with open(path, encoding="utf-8") as handle:
+            stream = _JsonStream(handle)
+            if stream.peek() == "[":
+                stream.take()
+                if stream.peek() == "]":
+                    stream.take()
+                else:
+                    while True:
+                        stream.decode()
+                        records += 1
+                        nxt = stream.peek()
+                        if nxt == ",":
+                            stream.take()
+                        elif nxt == "]":
+                            stream.take()
+                            break
+                        elif not nxt:
+                            raise InvalidJSON("file ends before the closing ']' (truncated?)")
+                        else:
+                            raise InvalidJSON(f"expected ',' or ']' (character {stream.where():,})")
+            else:
+                stream.decode()
+            if stream.peek():
+                raise InvalidJSON(f"extra data (character {stream.where():,})")
+    except InvalidJSON as exc:
+        return f"invalid JSON after {records:,} record(s): {exc}"
+    except UnicodeDecodeError as exc:
+        return f"invalid JSON: not UTF-8 ({exc.reason})"
+    return None
+
+
 def validate_inputs(inputs, now=None):
     """Return {state: [issues]} for all failures in the selected directories."""
     now = now or datetime.now(UTC)
@@ -178,6 +292,8 @@ def validate_inputs(inputs, now=None):
         issues = []
         if is_empty_json(path):
             issues.append(f"{path}: empty JSON (0 bytes or [])")
+        elif (problem := json_problem(path)) is not None:
+            issues.append(f"{path}: {problem}")
         modified = datetime.fromtimestamp(os.path.getmtime(path), UTC)
         if now - modified > MAX_AGE:
             issues.append(f"{path}: JSON is older than 5 days (modified {modified:%Y-%m-%d %H:%M UTC})")
