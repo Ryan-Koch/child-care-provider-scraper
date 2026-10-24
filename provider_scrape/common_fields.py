@@ -355,11 +355,7 @@ _FULL_DAYS = (
     "Saturday",
     "Sunday",
 )
-_DAY_ALIASES = {
-    alias: day
-    for day in _FULL_DAYS
-    for alias in (day.lower(), day[:3].lower(), day[:2].lower())
-}
+_DAY_ALIASES = {alias: day for day in _FULL_DAYS for alias in (day.lower(), day[:3].lower(), day[:2].lower())}
 _DAY_ORDER = {day: index for index, day in enumerate(_FULL_DAYS)}
 
 
@@ -976,7 +972,7 @@ def massachusetts_schedule(record):
     fills=["weekly_schedule", "days_of_operation"],
 )
 def florida_schedule(record):
-    """FL dict-shaped `hours` ({"monday": "6:45AM to 6:00PM; ...", "sunday": "Closed"}) -> `weekly_schedule`; `hours` kept."""
+    """FL dict-shaped `hours` ({"monday": "6:45AM to 6:00PM", ...}) -> `weekly_schedule`; `hours` kept."""
     hours = record.get("hours")
     if not isinstance(hours, dict):
         return {}

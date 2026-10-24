@@ -776,9 +776,7 @@ def test_early_head_start_map_states(state, field, raw, expected):
     assert item[field] == raw  # additive: source kept
 
 
-@pytest.mark.parametrize(
-    "field", ["ms_early_head_start", "nh_early_head_start", "wa_early_head_start"]
-)
+@pytest.mark.parametrize("field", ["ms_early_head_start", "nh_early_head_start", "wa_early_head_start"])
 def test_early_head_start_blank_or_missing_is_unset(field):
     assert "early_head_start" not in _ehs("mississippi", **{field: ""})
     assert "early_head_start" not in _ehs("mississippi", **{field: None})
@@ -1088,28 +1086,36 @@ def test_doing_business_as_absent_when_no_source():
 @pytest.mark.parametrize(
     ("state", "field", "raw", "expected"),
     [
-        ("michigan", "mi_licensee_address", "5005 Meadows Road, Lake Oswego, OR, 97035",
-         "5005 Meadows Road, Lake Oswego, OR, 97035"),
+        (
+            "michigan",
+            "mi_licensee_address",
+            "5005 Meadows Road, Lake Oswego, OR, 97035",
+            "5005 Meadows Road, Lake Oswego, OR, 97035",
+        ),
         ("michigan", "mi_licensee_address", "null, null, null,", None),
         ("michigan", "mi_licensee_address", "NULL,null", None),
         ("michigan", "mi_licensee_address", "", None),
         # null piece in the middle / at the start: dropped, the rest kept
-        ("michigan", "mi_licensee_address", "21885 Dunham Road, null, MI, 48036",
-         "21885 Dunham Road, MI, 48036"),
+        ("michigan", "mi_licensee_address", "21885 Dunham Road, null, MI, 48036", "21885 Dunham Road, MI, 48036"),
         ("michigan", "mi_licensee_address", "null, Camden, MI, 49232", "Camden, MI, 49232"),
         ("michigan", "mi_licensee_address", "1 Main St, Camden, MI, NULL", "1 Main St, Camden, MI"),
         # "null" inside a word is never stripped
-        ("michigan", "mi_licensee_address", "100 Nullarbor Way, null, MI, 48036",
-         "100 Nullarbor Way, MI, 48036"),
+        ("michigan", "mi_licensee_address", "100 Nullarbor Way, null, MI, 48036", "100 Nullarbor Way, MI, 48036"),
         ("michigan", "mi_licensee_address", "100 Nullarbor Way", "100 Nullarbor Way"),
         # NC: case kept (ALL CAPS stays ALL CAPS), whitespace/comma cleanup
-        ("north_carolina", "nc_owner_mailing_address",
-         "1901 HERBERT SPAUGH LANE CHARLOTTE, NC 28208",
-         "1901 HERBERT SPAUGH LANE CHARLOTTE, NC 28208"),
-        ("north_carolina", "nc_owner_mailing_address", "PO BOX 905 BURLINGTON, NC",
-         "PO BOX 905 BURLINGTON, NC"),
-        ("north_carolina", "nc_owner_mailing_address", "  PO BOX  905   BURLINGTON ,NC  27215 , USA ",
-         "PO BOX 905 BURLINGTON, NC 27215"),
+        (
+            "north_carolina",
+            "nc_owner_mailing_address",
+            "1901 HERBERT SPAUGH LANE CHARLOTTE, NC 28208",
+            "1901 HERBERT SPAUGH LANE CHARLOTTE, NC 28208",
+        ),
+        ("north_carolina", "nc_owner_mailing_address", "PO BOX 905 BURLINGTON, NC", "PO BOX 905 BURLINGTON, NC"),
+        (
+            "north_carolina",
+            "nc_owner_mailing_address",
+            "  PO BOX  905   BURLINGTON ,NC  27215 , USA ",
+            "PO BOX 905 BURLINGTON, NC 27215",
+        ),
         ("north_carolina", "nc_owner_mailing_address", "   ", None),
     ],
 )
@@ -1155,8 +1161,7 @@ WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sun
         ("georgia", "ga_operating_days", "MO,TU,WE,TH,FR,SA,SU", WEEK),
         ("iowa", "ia_days_of_operation", "Mon, Tue, Wed, Thu, Fri", WEEK[:5]),
         ("iowa", "ia_days_of_operation", "Sat, Sun", ["Saturday", "Sunday"]),
-        ("vermont", "vt_days_of_operation",
-         "Monday, Tuesday, Wednesday, Thursday, Friday", WEEK[:5]),
+        ("vermont", "vt_days_of_operation", "Monday, Tuesday, Wednesday, Thursday, Friday", WEEK[:5]),
         ("vermont", "vt_days_of_operation", "Saturday", ["Saturday"]),
     ],
 )
@@ -1253,7 +1258,23 @@ def test_parse_time_formats(raw, expected):
 
 
 @pytest.mark.parametrize(
-    "raw", [None, "", "Closed", "25:00", "13:00 PM", "0:30 PM", "6:75 AM", "07:00:75 AM", "24:30", "24 AM", "7", "noon", 7, "6:00 XM"]
+    "raw",
+    [
+        None,
+        "",
+        "Closed",
+        "25:00",
+        "13:00 PM",
+        "0:30 PM",
+        "6:75 AM",
+        "07:00:75 AM",
+        "24:30",
+        "24 AM",
+        "7",
+        "noon",
+        7,
+        "6:00 XM",
+    ],
 )
 def test_parse_time_unparseable_is_none(raw):
     assert cf.parse_time(raw) is None
@@ -1378,9 +1399,7 @@ def test_ma_falls_back_to_first_school_year():
             _ma_sched("School Year Schedule", "Thursday"),
         ]
     )
-    assert item["weekly_schedule"] == [
-        _row("Tuesday", "08:15", "16:15", schedule_type="School Year Schedule")
-    ]
+    assert item["weekly_schedule"] == [_row("Tuesday", "08:15", "16:15", schedule_type="School Year Schedule")]
 
 
 def test_ma_falls_back_to_first_summer():
@@ -1391,9 +1410,7 @@ def test_ma_falls_back_to_first_summer():
             _ma_sched("Summer Schedule", "Friday"),
         ]
     )
-    assert item["weekly_schedule"] == [
-        _row("Monday", "08:15", "16:15", schedule_type="Summer Schedule")
-    ]
+    assert item["weekly_schedule"] == [_row("Monday", "08:15", "16:15", schedule_type="Summer Schedule")]
 
 
 def test_ma_falls_back_to_first_in_source_order_even_when_type_blank():
@@ -1555,8 +1572,7 @@ NH_TOKEN_VALUE = "PREVENTIVE AND PROTECTIVE CARE, STATE CC ASSISTANCE (SCHOLARSH
         ("virginia", "va_current_subsidy_provider", "No", False),
         ("washington", "wa_subsidy", "Yes", True),
         ("new_hampshire", "nh_financial_assistance", NH_TOKEN_VALUE, True),
-        ("new_hampshire", "nh_financial_assistance",
-         "state cc assistance (scholarship)", True),
+        ("new_hampshire", "nh_financial_assistance", "state cc assistance (scholarship)", True),
     ],
 )
 def test_scholarships_accepted_collapse(state, field, raw, expected):
@@ -1571,9 +1587,7 @@ def test_scholarships_accepted_wa_empty_is_unset(raw):
     assert "scholarships_accepted" not in item
 
 
-@pytest.mark.parametrize(
-    "raw", ["PREVENTIVE AND PROTECTIVE CARE", "NOT STATE CC ASSISTANCE", "", None]
-)
+@pytest.mark.parametrize("raw", ["PREVENTIVE AND PROTECTIVE CARE", "NOT STATE CC ASSISTANCE", "", None])
 def test_scholarships_accepted_nh_without_token_is_unset(raw):
     item = norm.normalize_item({"nh_financial_assistance": raw}, "new_hampshire")
     assert "scholarships_accepted" not in item
@@ -1612,17 +1626,13 @@ def test_scholarships_accepted_absent_when_no_source():
 # License begin date (NC extension)
 # --------------------------------------------------------------------------- #
 def test_license_begin_date_nc_effective_date_to_iso():
-    item = norm.normalize_item(
-        {"nc_license_effective_date": "8/24/2026"}, "north_carolina"
-    )
+    item = norm.normalize_item({"nc_license_effective_date": "8/24/2026"}, "north_carolina")
     assert item["license_begin_date"] == "2026-08-24"
     assert item["nc_license_effective_date"] == "8/24/2026"  # source kept
 
 
 def test_license_begin_date_nc_future_date_passes_through():
-    item = norm.normalize_item(
-        {"nc_license_effective_date": "1/2/2029"}, "north_carolina"
-    )
+    item = norm.normalize_item({"nc_license_effective_date": "1/2/2029"}, "north_carolina")
     assert item["license_begin_date"] == "2029-01-02"
 
 
@@ -1711,9 +1721,7 @@ def test_source_provider_id_per_state(state, source, raw):
 
 
 def test_source_provider_id_alaska_uses_gen_id_not_facility_number():
-    item = norm.normalize_item(
-        {"ak_facility_gen_id": 555, "ak_facility_number": 1000652}, "alaska"
-    )
+    item = norm.normalize_item({"ak_facility_gen_id": 555, "ak_facility_number": 1000652}, "alaska")
     assert item["source_provider_id"] == "555"
     assert item["ak_facility_number"] == 1000652
     only_number = norm.normalize_item({"ak_facility_number": 1000652}, "alaska")
@@ -1731,9 +1739,7 @@ def test_source_provider_id_wisconsin_ignores_location_number():
 
 
 def test_source_provider_id_vermont_excluded():
-    item = norm.normalize_item(
-        {"vt_provider_id": "123", "license_number": "123"}, "vermont"
-    )
+    item = norm.normalize_item({"vt_provider_id": "123", "license_number": "123"}, "vermont")
     assert "source_provider_id" not in item
     assert item["vt_provider_id"] == "123"
 
@@ -1766,9 +1772,7 @@ def test_inspector_per_state(state, source, raw, expected):
 def test_inspector_mo_all_caps_and_last_first_flip():
     caps = norm.normalize_inspection({"mo_specialist": "CHARMEL WILLIAMS"}, "missouri")
     assert caps["inspector"] == "Charmel Williams"
-    flipped = norm.normalize_inspection(
-        {"mo_specialist": "HUGHES, CHRISTINE D"}, "missouri"
-    )
+    flipped = norm.normalize_inspection({"mo_specialist": "HUGHES, CHRISTINE D"}, "missouri")
     assert flipped["inspector"] == "Christine D Hughes"
     assert flipped["mo_specialist"] == "HUGHES, CHRISTINE D"
 
@@ -1819,13 +1823,11 @@ def test_inspector_does_not_touch_provider_level_licensing_specialist():
 
 INSPECTION_ID_SOURCES = [
     ("connecticut", "ct_inspection_id", 12345, "12345"),
-    ("florida", "fl_inspection_id", "0b1f2c3d-aaaa-bbbb-cccc-1234567890ab",
-     "0b1f2c3d-aaaa-bbbb-cccc-1234567890ab"),
+    ("florida", "fl_inspection_id", "0b1f2c3d-aaaa-bbbb-cccc-1234567890ab", "0b1f2c3d-aaaa-bbbb-cccc-1234567890ab"),
     ("hawaii", "hi_visit_id", 987, "987"),
     ("kentucky", "ky_inspection_id", 55001, "55001"),
     ("massachusetts", "ma_visit_id", "a0X5e000001AbCdEAK", "a0X5e000001AbCdEAK"),
-    ("massachusetts", "ma_investigation_id", "a0Y5e000002ZyXwEAK",
-     "a0Y5e000002ZyXwEAK"),
+    ("massachusetts", "ma_investigation_id", "a0Y5e000002ZyXwEAK", "a0Y5e000002ZyXwEAK"),
     ("missouri", "mo_inspection_id", "2507905226", "2507905226"),
     ("new_hampshire", "nh_visit_id", "a1B5e000003QrStEAK", "a1B5e000003QrStEAK"),
     ("nevada", "nv_inspection_number", "79452", "79452"),
@@ -1834,9 +1836,7 @@ INSPECTION_ID_SOURCES = [
 ]
 
 
-@pytest.mark.parametrize(
-    ("state", "source", "raw", "expected"), INSPECTION_ID_SOURCES
-)
+@pytest.mark.parametrize(("state", "source", "raw", "expected"), INSPECTION_ID_SOURCES)
 def test_inspection_id_per_state(state, source, raw, expected):
     insp = norm.normalize_inspection({source: raw}, state)
     assert insp["inspection_id"] == expected
@@ -1863,9 +1863,7 @@ def test_inspection_id_ma_visit_row():
 
 
 def test_inspection_id_ma_investigation_row():
-    insp = norm.normalize_inspection(
-        {"ma_investigation_id": "a0Y2"}, "massachusetts"
-    )
+    insp = norm.normalize_inspection({"ma_investigation_id": "a0Y2"}, "massachusetts")
     assert insp["inspection_id"] == "a0Y2"
     assert "ma_visit_id" not in insp
 
@@ -1877,9 +1875,7 @@ def test_inspection_id_kansas_survey_number_alone_unset():
 
 
 def test_inspection_id_kansas_uses_nosf_id_not_survey_number():
-    insp = norm.normalize_inspection(
-        {"ks_nosf_id": "161446", "ks_survey_number": "25-001610"}, "kansas"
-    )
+    insp = norm.normalize_inspection({"ks_nosf_id": "161446", "ks_survey_number": "25-001610"}, "kansas")
     assert insp["inspection_id"] == "161446"
     assert insp["ks_survey_number"] == "25-001610"
 
@@ -1959,9 +1955,7 @@ def test_announced_mo_not_applicable_unset():
 
 
 @pytest.mark.parametrize("state", ["north_carolina", "connecticut", "rhode_island"])
-@pytest.mark.parametrize(
-    ("text", "expected"), [c for c in ANNOUNCED_TEXT_CASES if c[0]]
-)
+@pytest.mark.parametrize(("text", "expected"), [c for c in ANNOUNCED_TEXT_CASES if c[0]])
 def test_announced_from_type_adapters(state, text, expected):
     insp = norm.normalize_inspection({"type": text}, state)
     if expected is None:

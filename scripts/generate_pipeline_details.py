@@ -230,6 +230,7 @@ def build_markdown():
         for field, row in zip(
             sorted(norm.INSPECTION_FIELD_COLLAPSE_MAP),
             render_map_rows(norm.INSPECTION_FIELD_COLLAPSE_MAP),
+            strict=True,
         ):
             doc = FIELD_DOCS.get(field, "**TODO:** add a curated explanation to `provider_scrape/field_docs.py`.")
             add(f"{row} {md_escape(doc)} |")

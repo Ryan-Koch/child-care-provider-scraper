@@ -1351,8 +1351,9 @@ def test_extract_inspections_pager_row_of_bare_numbers_skipped(spider):
 
 
 def test_extract_inspections_no_pager_no_warning(spider, caplog):
-    response = HtmlResponse(url="https://www.checkccmd.org/FacilityDetail.aspx?fi=134978",
-                            body=DETAIL_HTML, encoding="utf-8")
+    response = HtmlResponse(
+        url="https://www.checkccmd.org/FacilityDetail.aspx?fi=134978", body=DETAIL_HTML, encoding="utf-8"
+    )
     with caplog.at_level("WARNING"):
         assert len(spider._extract_inspections(response)) == 3
     assert not any("bug_14" in r.getMessage() for r in caplog.records)
@@ -1360,6 +1361,8 @@ def test_extract_inspections_no_pager_no_warning(spider, caplog):
 
 def test_get_first_report_url_skips_javascript_links(spider):
     body = PAGED_INSPECTION_GRID_HTML.replace("{pager_class}", "dataPager")
-    body = body.replace('<a href="PublicReports/PrintTask.aspx?t=1&amp;d=9">', "<a href=\"javascript:__doPostBack('x','Page$2')\">")
+    body = body.replace(
+        '<a href="PublicReports/PrintTask.aspx?t=1&amp;d=9">', "<a href=\"javascript:__doPostBack('x','Page$2')\">"
+    )
     response = HtmlResponse(url="https://www.checkccmd.org/FacilityDetail.aspx?fi=9", body=body, encoding="utf-8")
     assert spider._get_first_report_url(response) == "https://www.checkccmd.org/PublicReports/PrintTask.aspx?t=2&d=9"
