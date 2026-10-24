@@ -97,6 +97,7 @@ Each common field is populated from a single populated source field (additive â€
 | `doing_business_as` | `fl_dba` (none_if_sentinel), `ok_doing_business_as` (none_if_sentinel) |
 | `early_head_start` | `ms_early_head_start` (coerce_bool), `nh_early_head_start` (coerce_bool), `wa_early_head_start` (coerce_bool) |
 | `head_start` | `az_headstart` (coerce_bool), `co_head_start` (coerce_bool), `ct_head_start` (coerce_bool), `fl_is_head_start` (coerce_bool), `nh_head_start` (coerce_bool), `ri_head_start` (coerce_bool), `wa_head_start` (coerce_bool) |
+| `license_begin_date` | `nc_license_effective_date` (to_iso_date) |
 | `license_holder_address` | `mi_licensee_address` (license_holder_address), `nc_owner_mailing_address` (license_holder_address) |
 | `license_type` | `ak_license_type`, `az_license_type`, `co_license_type`, `ct_license_type`, `hi_license_type`, `mt_license_type`, `nc_license_type`, `nj_license_type_label`, `ut_license_type`, `va_license_type`, `wa_license_type`, `wv_license_type` |
 | `licensing_specialist` | `ak_licensing_specialist` (person_name), `ma_licensor` (person_name), `me_licensing_specialist` (person_name), `ok_licensing_specialist` (person_name), `sc_licensing_specialist_name` (last_first_name), `tn_regulatory_individual` (person_name), `wv_licensing_specialist` (person_name) |
@@ -675,7 +676,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nc_capacity_second_shift` -> pass-through
 - `nc_capacity_third_shift` -> pass-through
 - `nc_educational_standards_points` -> pass-through
-- `nc_license_effective_date` -> pass-through
+- `nc_license_effective_date` -> collapses into `license_begin_date` (via to_iso_date)
 - `nc_license_history` -> pass-through
 - `nc_license_restrictions` -> pass-through
 - `nc_license_type` -> collapses into `license_type`

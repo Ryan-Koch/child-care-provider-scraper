@@ -64,7 +64,7 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `ages_served` | Ages accepted | String (lists joined with `, `) |
 | `county` | County | String |
 | `scholarships_accepted` | Subsidy/scholarship acceptance | bool-or-None via `coerce_scholarships_accepted_flag`; FL/VA/WA collapsed from their subsidy flags (WA empty -> unset), NH from the `STATE CC ASSISTANCE (SCHOLARSHIP)` token as a fallback only; OK set by its spider |
-| `license_begin_date` | License start | `YYYY-MM-DD` |
+| `license_begin_date` | License start | `YYYY-MM-DD`; NC collapsed from `nc_license_effective_date` (current license's effective date; a spider-set value wins) |
 | `license_expiration` | License end | `YYYY-MM-DD` |
 | `license_type` | Type/category of license | String (collapsed from `xx_license_type`) |
 | `school_district` | Associated school district | String (collapsed) |

@@ -1606,3 +1606,46 @@ def test_scholarships_accepted_ok_contract_number_not_mapped():
 
 def test_scholarships_accepted_absent_when_no_source():
     assert "scholarships_accepted" not in norm.normalize_item({}, "florida")
+
+
+# --------------------------------------------------------------------------- #
+# License begin date (NC extension)
+# --------------------------------------------------------------------------- #
+def test_license_begin_date_nc_effective_date_to_iso():
+    item = norm.normalize_item(
+        {"nc_license_effective_date": "8/24/2026"}, "north_carolina"
+    )
+    assert item["license_begin_date"] == "2026-08-24"
+    assert item["nc_license_effective_date"] == "8/24/2026"  # source kept
+
+
+def test_license_begin_date_nc_future_date_passes_through():
+    item = norm.normalize_item(
+        {"nc_license_effective_date": "1/2/2029"}, "north_carolina"
+    )
+    assert item["license_begin_date"] == "2029-01-02"
+
+
+def test_license_begin_date_spider_value_not_overwritten():
+    item = norm.normalize_item(
+        {
+            "license_begin_date": "2020-01-01",
+            "nc_license_effective_date": "8/24/2026",
+        },
+        "north_carolina",
+    )
+    assert item["license_begin_date"] == "2020-01-01"
+    assert item["nc_license_effective_date"] == "8/24/2026"
+
+
+@pytest.mark.parametrize("raw", [None, "", "   "])
+def test_license_begin_date_nc_blank_is_unset(raw):
+    item = norm.normalize_item({"nc_license_effective_date": raw}, "north_carolina")
+    assert not item.get("license_begin_date")
+
+
+def test_license_begin_date_non_nc_item_unaffected():
+    item = norm.normalize_item({"fl_inspection_id": "1"}, "florida")
+    assert "license_begin_date" not in item
+    item = norm.normalize_item({"license_begin_date": "03/01/2025"}, "minnesota")
+    assert item["license_begin_date"] == "2025-03-01"

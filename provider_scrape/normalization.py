@@ -1030,10 +1030,10 @@ def _scholarships_flag(value):
 # transform runs on the one populated source; a ``None`` result leaves the
 # common field unset. Multi-source / one-source-to-several-fields cases do not
 # belong here: register a per-state adapter in common_fields.py instead.
-# Approved set from plan §6; the
-# license_begin_date date-merge is intentionally excluded, and quality ratings
-# are never collapsed (they stay state-specific). Keep VPK-specific curriculum
-# (fl_vpk_curriculum) OUT of these lists. Owner/licensee mailing addresses
+# Approved set from plan §6; the round-1 cross-state license_begin_date
+# merge stays excluded (only NC's current-license effective date feeds it,
+# below), and quality ratings are never collapsed (they stay state-specific).
+# Keep VPK-specific curriculum (fl_vpk_curriculum) OUT of these lists. Owner/licensee mailing addresses
 # (nc_owner_mailing_address, mi_licensee_address) stay out of
 # `mailing_address`; they feed `license_holder_address` instead.
 FIELD_COLLAPSE_MAP = {
@@ -1067,6 +1067,12 @@ FIELD_COLLAPSE_MAP = {
         ("va_current_subsidy_provider", _scholarships_flag),
         ("wa_subsidy", _scholarships_flag),
         ("nh_financial_assistance", has_list_token("STATE CC ASSISTANCE (SCHOLARSHIP)")),
+    ],
+    # Start of the CURRENT license term. NC's spider takes licenses[0] as the
+    # current license (older ones go to nc_license_history), so its effective
+    # date is the term start. Other states' license_begin_date are untouched.
+    "license_begin_date": [
+        ("nc_license_effective_date", to_iso_date),
     ],
     "license_type": [
         "va_license_type",
