@@ -15,6 +15,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `accepting_new_children` | Whitespace cleanup; Field collapse from state-specific source | Whether the provider is accepting new children, collapsed from a single state source. |
 | `accreditation` | Whitespace cleanup; Field collapse from state-specific source | Accreditation(s), collapsed from a single populated state source. |
 | `address` | Whitespace cleanup; Address cleanup; Component parse -> city/state/zip | Full street address; whitespace-cleaned, trailing country (", United States"/", USA") stripped, comma spacing normalized. |
+| `address_suppressed` | Whitespace cleanup; Field collapse from state-specific source (transforms: invert, to_bool) | True = the state deliberately withheld the street address (typically family homes), so a blank address is not a data gap. CT, KS, MA bools; FL inverted from displayAddressOnWeb; NY `Y` -> True, blank -> False. |
 | `administrator` | Whitespace cleanup; Title Case (ALL-CAPS names) | On-site administrator or director name. ALL-CAPS values are Title-cased. |
 | `ages_served` | Whitespace cleanup; List -> string | Ages accepted, normalized to a single string (lists are joined with ", "). |
 | `capacity` | Whitespace cleanup; Integer coercion | Licensed capacity coerced to an integer when it is a clean number; ranges/free text are left unchanged and logged. |
@@ -40,6 +41,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `mailing_address` | Whitespace cleanup; Field collapse from state-specific source; Address cleanup | Facility mailing address, collapsed from a single populated state source (owner/licensee addresses are excluded). |
 | `meals` | Whitespace cleanup; Field collapse from state-specific source | Meals / food program, collapsed from a single populated state source. |
 | `phone` | Whitespace cleanup | Contact phone number (whitespace-cleaned only). |
+| `phone_suppressed` | Whitespace cleanup; Field collapse from state-specific source (transforms: invert, to_bool) | True = the state deliberately withheld the phone number. FL inverted from displayPhoneOnWeb; NY `Y` -> True, blank -> False; MA's single contact-redacted flag feeds this too. |
 | `preschool` | Whitespace cleanup | Whether the provider serves preschoolers: bool-or-None. See infant. |
 | `provider_name` | Whitespace cleanup; Title Case (ALL-CAPS names) | The facility's name. ALL-CAPS values are converted to Title Case; whitespace is cleaned. |
 | `provider_type` | Whitespace cleanup; Preserved (drives facility_category) | The raw state license category, preserved exactly. It drives the derived facility_category facet. |
@@ -84,6 +86,7 @@ Each common field is populated from a single populated source field (additive â€
 |---|---|
 | `accepting_new_children` | `co_accepting_new_children`, `ct_accepting_referrals`, `ga_accepting_new_children` |
 | `accreditation` | `al_accreditations`, `ct_accreditations`, `ga_accreditation`, `hi_accreditations`, `md_accreditation`, `nj_accreditation_labels` |
+| `address_suppressed` | `ct_address_suppressed` (to_bool), `fl_display_address_on_web` (invert), `ks_address_suppressed` (to_bool), `ma_contact_redacted` (to_bool) |
 | `curriculum` | `ga_curriculum`, `nj_curriculum` |
 | `early_head_start` | `ms_early_head_start` (coerce_bool), `nh_early_head_start` (coerce_bool), `wa_early_head_start` (coerce_bool) |
 | `head_start` | `az_headstart` (coerce_bool), `co_head_start` (coerce_bool), `ct_head_start` (coerce_bool), `fl_is_head_start` (coerce_bool), `nh_head_start` (coerce_bool), `ri_head_start` (coerce_bool), `wa_head_start` (coerce_bool) |
@@ -93,6 +96,7 @@ Each common field is populated from a single populated source field (additive â€
 | `licensing_specialist_phone` | `ok_licensing_specialist_phone` (none_if_sentinel), `sc_licensing_specialist_phone` (none_if_sentinel) |
 | `mailing_address` | `al_mailing_address`, `ga_mailing_address`, `hi_mailing_address` |
 | `meals` | `ga_meals`, `hi_meals`, `nj_meal_options_labels`, `nm_meals`, `pa_meal_options`, `ut_meals` |
+| `phone_suppressed` | `fl_display_phone_on_web` (invert), `ma_contact_redacted` (to_bool) |
 | `school_district` | `co_school_district`, `ct_school_districts`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
 | `total_vacancies` | `ia_total_openings` (to_int), `id_number_of_openings` (to_int), `nd_total_vacancies` (to_int), `tn_vacancy` (to_int), `ut_vacancies` (to_int), `vt_current_vacancy` (to_int), `wa_available_slots` (to_int), `wi_vacancies` (wi_total_vacancies) |
 | `transportation` | `ct_transportation`, `ga_transportation`, `nj_transportation_labels` |
@@ -129,6 +133,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | State | Level | Reads | Fills | Description |
 |---|---|---|---|---|
 | `iowa` | provider | `ia_openings_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Sum IA `fullTime` + `partTime` openings per band across the 7 age labels. |
+| `new_york` | provider | `ny_address_omitted`, `ny_phone_number_omitted` | `address_suppressed`, `phone_suppressed` | NY `Address Omitted` / `Phone Number Omitted`: `Y` -> True, blank or absent -> False. |
 | `north_dakota` | provider | `nd_vacancies_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map ND `nd_vacancies_by_age` rows (by age label) onto the four vacancy bands. |
 | `virginia` | provider | `va_inspector` | `licensing_specialist`, `licensing_specialist_phone` | Split `va_inspector` ("Name: (555) 555-5555") into specialist name + phone; `N/A` -> None. |
 | `washington_dc` | provider | `dc_enrollment` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map DC `dc_enrollment` `openings` (text; `Not Applicable` -> None) onto the four vacancy bands. |
@@ -253,7 +258,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `ct_accepting_referrals` -> collapses into `accepting_new_children`
 - `ct_accreditations` -> collapses into `accreditation`
-- `ct_address_suppressed` -> pass-through
+- `ct_address_suppressed` -> collapses into `address_suppressed` (via to_bool)
 - `ct_administers_meds` -> pass-through
 - `ct_age_range_max_weeks` -> pass-through
 - `ct_age_range_min_weeks` -> pass-through
@@ -315,9 +320,9 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `fl_alternate_provider_number` -> pass-through
 - `fl_city` -> pass-through
 - `fl_dba` -> pass-through
-- `fl_display_address_on_web` -> pass-through
+- `fl_display_address_on_web` -> collapses into `address_suppressed` (via invert)
 - `fl_display_email_on_web` -> pass-through
-- `fl_display_phone_on_web` -> pass-through
+- `fl_display_phone_on_web` -> collapses into `phone_suppressed` (via invert)
 - `fl_dll_badge_date` -> pass-through
 - `fl_gold_seal` -> pass-through
 - `fl_has_violation` -> pass-through
@@ -478,7 +483,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### Kansas (KS)
 
-- `ks_address_suppressed` -> pass-through
+- `ks_address_suppressed` -> collapses into `address_suppressed` (via to_bool)
 - `ks_facility_response` -> pass-through
 - `ks_facility_token` -> pass-through
 - `ks_findings` -> pass-through
@@ -536,7 +541,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ma_ccrr_name` -> pass-through
 - `ma_ccrr_phone` -> pass-through
 - `ma_ccrr_website` -> pass-through
-- `ma_contact_redacted` -> pass-through
+- `ma_contact_redacted` -> collapses into `phone_suppressed` (via to_bool)
 - `ma_cost_table` -> pass-through
 - `ma_domains` -> pass-through
 - `ma_dph_summer_camp` -> pass-through
@@ -819,7 +824,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### New York (NY)
 
-- `ny_address_omitted` -> pass-through
+- `ny_address_omitted` -> feeds adapter, fills `address_suppressed`, `phone_suppressed`
 - `ny_capacity_description` -> pass-through
 - `ny_capacity_infant` -> pass-through
 - `ny_capacity_preschool` -> pass-through
@@ -828,7 +833,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ny_facility_id` -> pass-through
 - `ny_facility_opened_date` -> pass-through
 - `ny_phone_extension` -> pass-through
-- `ny_phone_number_omitted` -> pass-through
+- `ny_phone_number_omitted` -> feeds adapter, fills `address_suppressed`, `phone_suppressed`
 - `ny_region_code` -> pass-through
 - `ny_school_district_name` -> collapses into `school_district`
 

@@ -74,6 +74,10 @@ FIELD_DOCS = {
     "MS, NH, WA. Distinct from `head_start`: EHS sources never feed it.",
     "wheelchair_accessible": "Whether the facility is wheelchair accessible (True/False/None). CT bool, TN Yes/No; "
     "NH from the WHEELCHAIR ACCESSIBLE token in its environment checklist (token present -> True, absent -> None, never False).",
+    "address_suppressed": "True = the state deliberately withheld the street address (typically family homes), so a blank "
+    "address is not a data gap. CT, KS, MA bools; FL inverted from displayAddressOnWeb; NY `Y` -> True, blank -> False.",
+    "phone_suppressed": "True = the state deliberately withheld the phone number. FL inverted from displayPhoneOnWeb; "
+    "NY `Y` -> True, blank -> False; MA's single contact-redacted flag feeds this too.",
     "curriculum": "Curriculum, collapsed from a single populated state source (VPK-specific curriculum is excluded).",
     # Pass-through common fields (whitespace cleanup only)
     "phone": "Contact phone number (whitespace-cleaned only).",

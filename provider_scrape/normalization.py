@@ -27,12 +27,14 @@ from datetime import datetime
 from provider_scrape.common_fields import (
     INSPECTION_LEVEL,
     has_list_token,
+    invert,
     is_present,
     last_first_name,
     lower_email,
     none_if_sentinel,
     person_name,
     run_adapters,
+    to_bool,
     to_int,
     to_iso_date,
     wi_total_vacancies,
@@ -1111,6 +1113,19 @@ FIELD_COLLAPSE_MAP = {
         ("ct_wheelchair_accessible", _coerce_bool),
         ("tn_wheelchair_accessible", _coerce_bool),
         ("nh_environment", has_list_token("WHEELCHAIR ACCESSIBLE")),
+    ],
+    # True = the state deliberately withheld it. FL publishes the opposite
+    # ("display on web"), so it is inverted. MA's single "contact redacted" flag
+    # feeds both fields. NY (blank -> False) is an adapter in common_fields.py.
+    "address_suppressed": [
+        ("ct_address_suppressed", to_bool),
+        ("ks_address_suppressed", to_bool),
+        ("fl_display_address_on_web", invert),
+        ("ma_contact_redacted", to_bool),
+    ],
+    "phone_suppressed": [
+        ("fl_display_phone_on_web", invert),
+        ("ma_contact_redacted", to_bool),
     ],
     "curriculum": ["ga_curriculum", "nj_curriculum"],
     # Assigned licensing specialist. VA (va_inspector packs name +

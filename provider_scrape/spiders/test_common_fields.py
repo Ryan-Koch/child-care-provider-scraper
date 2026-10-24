@@ -881,3 +881,92 @@ def test_has_list_token_is_reusable_for_other_tokens():
     assert no_cat("NO CATS, WHEELCHAIR ACCESSIBLE") is None
     assert no_cat(None) is None
     assert no_cat(["X", " NO CAT "]) is True
+
+
+# --------------------------------------------------------------------------- #
+# Address / phone suppressed
+# --------------------------------------------------------------------------- #
+def _suppressed(state, **source):
+    return norm.normalize_item(dict(source), state)
+
+
+@pytest.mark.parametrize(
+    ("state", "field"),
+    [
+        ("connecticut", "ct_address_suppressed"),
+        ("kansas", "ks_address_suppressed"),
+    ],
+)
+@pytest.mark.parametrize("raw", [True, False])
+def test_address_suppressed_ct_ks_copy_real_bools(state, field, raw):
+    item = _suppressed(state, **{field: raw})
+    assert item["address_suppressed"] is raw  # False survives, not dropped as empty
+    assert item[field] is raw  # additive: source kept
+    assert "phone_suppressed" not in item
+
+
+@pytest.mark.parametrize(
+    ("display", "suppressed"),
+    [(False, True), (True, False)],
+)
+def test_florida_display_flags_are_inverted(display, suppressed):
+    item = _suppressed("florida", fl_display_address_on_web=display, fl_display_phone_on_web=display)
+    assert item["address_suppressed"] is suppressed
+    assert item["phone_suppressed"] is suppressed
+    assert item["fl_display_address_on_web"] is display  # additive: sources kept
+    assert item["fl_display_phone_on_web"] is display
+
+
+def test_florida_address_and_phone_flags_are_independent():
+    item = _suppressed("florida", fl_display_address_on_web=True, fl_display_phone_on_web=False)
+    assert item["address_suppressed"] is False
+    assert item["phone_suppressed"] is True
+
+
+@pytest.mark.parametrize("raw", [True, False])
+def test_massachusetts_contact_redacted_feeds_both_fields(raw):
+    item = _suppressed("massachusetts", ma_contact_redacted=raw)
+    assert item["address_suppressed"] is raw
+    assert item["phone_suppressed"] is raw
+    assert item["ma_contact_redacted"] is raw  # additive: source kept
+
+
+def test_new_york_y_blank_and_missing_map_to_true_false_false():
+    item = _suppressed("new_york", ny_address_omitted="Y", ny_phone_number_omitted="")
+    assert item["address_suppressed"] is True
+    assert item["phone_suppressed"] is False
+    assert item["ny_address_omitted"] == "Y"  # additive: sources kept
+    assert not item["ny_phone_number_omitted"]  # blank stays blank
+
+    item = _suppressed("new_york", ny_address_omitted=None, ny_phone_number_omitted="Y")
+    assert item["address_suppressed"] is False
+    assert item["phone_suppressed"] is True
+
+    item = _suppressed("new_york")  # columns missing entirely
+    assert item["address_suppressed"] is False
+    assert item["phone_suppressed"] is False
+
+
+def test_new_york_unexpected_value_is_unset_and_logged(caplog):
+    with caplog.at_level(logging.WARNING, logger="provider_scrape.common_fields"):
+        item = _suppressed("new_york", ny_address_omitted="maybe", ny_phone_number_omitted="Y")
+    assert "address_suppressed" not in item
+    assert item["phone_suppressed"] is True
+    assert "ny_address_omitted" in caplog.text
+    assert "maybe" in caplog.text
+
+
+def test_non_new_york_record_without_ny_fields_gets_no_false():
+    for state in ("connecticut", "kansas", "florida", "massachusetts", "ohio"):
+        item = _suppressed(state)
+        assert "address_suppressed" not in item
+        assert "phone_suppressed" not in item
+
+
+def test_to_bool_is_strict_and_keeps_false():
+    assert cf.to_bool(True) is True
+    assert cf.to_bool(False) is False
+    assert cf.to_bool("Yes") is True
+    assert cf.to_bool("") is None
+    assert cf.to_bool(None) is None
+    assert cf.to_bool("maybe") is None  # unlike _coerce_bool, never read as True

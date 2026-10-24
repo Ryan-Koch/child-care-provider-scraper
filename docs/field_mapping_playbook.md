@@ -71,6 +71,7 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `head_start` | Head Start program | **Boolean** (collapsed + coerced) |
 | `early_head_start` | Early Head Start program (separate from `head_start`) | **Boolean** (collapsed MS/NH/WA, coerced via `_coerce_bool`) |
 | `wheelchair_accessible` | Wheelchair-accessible facility | **Boolean** (collapsed CT/TN via `_coerce_bool`; NH from `nh_environment` token, absent -> None not False) |
+| `address_suppressed` / `phone_suppressed` | State deliberately withheld the address / phone (True = withheld) | **Boolean** (CT/KS/MA copy; FL `display_*_on_web` inverted; NY adapter: `Y` -> True, blank -> False; MA flag feeds both) |
 | `curriculum` | Curriculum | String (collapsed) |
 | `licensing_specialist` | Assigned state licensing specialist | `First Last` string (collapsed; SC `Last, First` flipped; VA split by adapter; `N/A` -> None) |
 | `licensing_specialist_phone` / `licensing_specialist_email` | Specialist contact | Phone as emitted / lower-cased email |

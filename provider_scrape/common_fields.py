@@ -103,6 +103,20 @@ def invert(value):
     return not flag
 
 
+def to_bool(value):
+    """Strict bool copy: real bools and Yes/No-style text; blanks/sentinels -> ``None``.
+
+    Unlike the collapse module's lenient coercer, unrecognised text is logged and
+    left unset rather than read as ``True``. ``False`` is a real value.
+    """
+    if _is_sentinel(value) or value is None:
+        return None
+    flag = _to_flag(value)
+    if flag is None:
+        logger.warning("to_bool: unrecognised boolean %r -> None", value)
+    return flag
+
+
 def _parse_number(value):
     """Shared parse for to_int/to_float: returns a ``float`` or ``None``.
 
@@ -487,3 +501,34 @@ def north_dakota_vacancies(record):
 def washington_dc_vacancies(record):
     """Map DC `dc_enrollment` `openings` (text; `Not Applicable` -> None) onto the four vacancy bands."""
     return _vacancies_by_band(record.get("dc_enrollment"), "age_group", DC_AGE_BANDS, ("openings",), "washington_dc")
+
+
+# --------------------------------------------------------------------------- #
+# Address / phone suppressed (NY)
+# --------------------------------------------------------------------------- #
+# NY open data carries "Address Omitted" / "Phone Number Omitted" columns on
+# every row: "Y" when the state withheld the item, blank otherwise. Because the
+# map collapse drops blank sources before a transform runs, blank -> False has to
+# be an adapter (it only runs for NY records).
+def _ny_omitted_flag(record, source):
+    """``"Y"`` -> True, blank/absent -> False, anything else logged and None."""
+    raw = record.get(source)
+    if raw is None or (isinstance(raw, str) and not raw.strip()):
+        return False
+    if isinstance(raw, str) and raw.strip().upper() == "Y":
+        return True
+    logger.warning("new_york: unexpected %s value %r (left unset)", source, raw)
+    return None
+
+
+@register_adapter(
+    "new_york",
+    sources=["ny_address_omitted", "ny_phone_number_omitted"],
+    fills=["address_suppressed", "phone_suppressed"],
+)
+def new_york_suppressed(record):
+    """NY `Address Omitted` / `Phone Number Omitted`: `Y` -> True, blank or absent -> False."""
+    return {
+        "address_suppressed": _ny_omitted_flag(record, "ny_address_omitted"),
+        "phone_suppressed": _ny_omitted_flag(record, "ny_phone_number_omitted"),
+    }
