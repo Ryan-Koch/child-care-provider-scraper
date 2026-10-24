@@ -117,6 +117,26 @@ def to_bool(value):
     return flag
 
 
+def phone_extension_digits(value):
+    """Phone extension as a digit string; anything else -> ``None``.
+
+    Trims whitespace and strips the underscore padding left by an input mask
+    (``11202_____`` -> ``11202``). The remainder must be all digits and is kept
+    as text so leading zeros survive. Digits are never fished out of mixed text
+    (``Salas``, ``NJ``, ``class`` -> ``None``, logged); blanks, sentinels and a
+    mask with nothing typed in it (``__________``) give ``None`` silently.
+    """
+    if value is None or _is_sentinel(value):
+        return None
+    cleaned = str(value).strip().strip("_").strip()
+    if not cleaned:
+        return None
+    if not (cleaned.isascii() and cleaned.isdigit()):
+        logger.warning("phone_extension_digits: non-numeric extension %r -> None", value)
+        return None
+    return cleaned
+
+
 def _parse_number(value):
     """Shared parse for to_int/to_float: returns a ``float`` or ``None``.
 

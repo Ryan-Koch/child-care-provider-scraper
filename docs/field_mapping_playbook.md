@@ -54,6 +54,7 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `city` / `state` / `zip` | Parsed address parts | `city` string, `state` USPS 2-letter, `zip` 5-digit — **only when unambiguous** |
 | `latitude` / `longitude` | Coordinates | String (full precision preserved) |
 | `phone` / `email` / `provider_website` | Contact | String |
+| `phone_extension` | Extension for `phone` | Digits-only **string** (NJ/NY via `phone_extension_digits`: trim, strip `_` mask padding, non-digits -> None) |
 | `capacity` | Licensed capacity | Integer (when a clean number) |
 | `hours` | Operating hours | String |
 | `ages_served` | Ages accepted | String (lists joined with `, `) |

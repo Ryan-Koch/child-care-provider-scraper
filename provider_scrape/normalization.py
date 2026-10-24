@@ -33,6 +33,7 @@ from provider_scrape.common_fields import (
     lower_email,
     none_if_sentinel,
     person_name,
+    phone_extension_digits,
     run_adapters,
     to_bool,
     to_int,
@@ -1126,6 +1127,12 @@ FIELD_COLLAPSE_MAP = {
     "phone_suppressed": [
         ("fl_display_phone_on_web", invert),
         ("ma_contact_redacted", to_bool),
+    ],
+    # Extension that goes with `phone`. NY's input mask leaves underscore padding
+    # (`11202_____`); both states carry stray words, which become None.
+    "phone_extension": [
+        ("nj_phone_extension", phone_extension_digits),
+        ("ny_phone_extension", phone_extension_digits),
     ],
     "curriculum": ["ga_curriculum", "nj_curriculum"],
     # Assigned licensing specialist. VA (va_inspector packs name +

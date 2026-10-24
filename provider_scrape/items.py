@@ -290,6 +290,7 @@ class ProviderItem(scrapy.Item):
     latitude = scrapy.Field()
     longitude = scrapy.Field()
     phone = scrapy.Field()
+    phone_extension = scrapy.Field()  # digits only, string
     email = scrapy.Field()
     provider_website = scrapy.Field()
     administrator = scrapy.Field()

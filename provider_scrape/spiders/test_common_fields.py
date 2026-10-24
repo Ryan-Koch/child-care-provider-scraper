@@ -970,3 +970,75 @@ def test_to_bool_is_strict_and_keeps_false():
     assert cf.to_bool("") is None
     assert cf.to_bool(None) is None
     assert cf.to_bool("maybe") is None  # unlike _coerce_bool, never read as True
+
+
+# --------------------------------------------------------------------------- #
+# Phone extension
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("321", "321"),
+        ("2399", "2399"),
+        ("1", "1"),
+        ("120", "120"),
+        (" 120 ", "120"),
+        ("0042", "0042"),  # leading zeros kept
+        ("11202_____", "11202"),
+        ("3193______", "3193"),
+        ("__________", None),
+        ("_____", None),
+        ("", None),
+        ("   ", None),
+        (None, None),
+        ("N/A", None),
+    ],
+)
+def test_phone_extension_digits(raw, expected):
+    assert cf.phone_extension_digits(raw) == expected
+
+
+@pytest.mark.parametrize("raw", ["NJ", "PA", "Salas", "class", "12ab", "1_2", "x123"])
+def test_phone_extension_digits_rejects_mixed_text_and_logs(raw, caplog):
+    with caplog.at_level(logging.WARNING, logger="provider_scrape.common_fields"):
+        assert cf.phone_extension_digits(raw) is None  # never "", never digits pulled out
+    assert repr(raw) in caplog.text
+
+
+@pytest.mark.parametrize("raw", ["", "   ", "__________", None, "N/A"])
+def test_phone_extension_digits_blanks_and_masks_are_silent(raw, caplog):
+    with caplog.at_level(logging.WARNING, logger="provider_scrape.common_fields"):
+        assert cf.phone_extension_digits(raw) is None
+    assert caplog.text == ""
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "raw", "expected"),
+    [
+        ("new_jersey", "nj_phone_extension", "321", "321"),
+        ("new_jersey", "nj_phone_extension", "2399", "2399"),
+        ("new_jersey", "nj_phone_extension", "007", "007"),
+        ("new_jersey", "nj_phone_extension", "NJ", None),
+        ("new_jersey", "nj_phone_extension", "PA", None),
+        ("new_jersey", "nj_phone_extension", "Salas", None),
+        ("new_york", "ny_phone_extension", "120", "120"),
+        ("new_york", "ny_phone_extension", "1", "1"),
+        ("new_york", "ny_phone_extension", " 120 ", "120"),
+        ("new_york", "ny_phone_extension", "11202_____", "11202"),
+        ("new_york", "ny_phone_extension", "3193______", "3193"),
+        ("new_york", "ny_phone_extension", "__________", None),
+        ("new_york", "ny_phone_extension", "class", None),
+    ],
+)
+def test_phone_extension_collapse(state, field, raw, expected):
+    item = norm.normalize_item({field: raw}, state)
+    if expected is None:
+        assert "phone_extension" not in item
+    else:
+        assert item["phone_extension"] == expected
+        assert isinstance(item["phone_extension"], str)
+    assert item[field] == raw.strip()  # additive: source kept (whitespace-cleaned only)
+
+
+def test_phone_extension_absent_when_no_source():
+    assert "phone_extension" not in norm.normalize_item({}, "new_york")

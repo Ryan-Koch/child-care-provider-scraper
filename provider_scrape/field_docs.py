@@ -81,6 +81,8 @@ FIELD_DOCS = {
     "curriculum": "Curriculum, collapsed from a single populated state source (VPK-specific curriculum is excluded).",
     # Pass-through common fields (whitespace cleanup only)
     "phone": "Contact phone number (whitespace-cleaned only).",
+    "phone_extension": "Extension that goes with `phone`, digits only, kept as a string (leading zeros survive). NJ, NY; "
+    "NY input-mask underscores are stripped, and non-numeric junk (`NJ`, `class`) -> None.",
     "email": "Contact email (whitespace-cleaned only).",
     "provider_website": "Provider website URL (whitespace-cleaned only).",
     "county": "County (whitespace-cleaned only).",

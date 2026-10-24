@@ -41,6 +41,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `mailing_address` | Whitespace cleanup; Field collapse from state-specific source; Address cleanup | Facility mailing address, collapsed from a single populated state source (owner/licensee addresses are excluded). |
 | `meals` | Whitespace cleanup; Field collapse from state-specific source | Meals / food program, collapsed from a single populated state source. |
 | `phone` | Whitespace cleanup | Contact phone number (whitespace-cleaned only). |
+| `phone_extension` | Whitespace cleanup; Field collapse from state-specific source (transforms: phone_extension_digits) | Extension that goes with `phone`, digits only, kept as a string (leading zeros survive). NJ, NY; NY input-mask underscores are stripped, and non-numeric junk (`NJ`, `class`) -> None. |
 | `phone_suppressed` | Whitespace cleanup; Field collapse from state-specific source (transforms: invert, to_bool) | True = the state deliberately withheld the phone number. FL inverted from displayPhoneOnWeb; NY `Y` -> True, blank -> False; MA's single contact-redacted flag feeds this too. |
 | `preschool` | Whitespace cleanup | Whether the provider serves preschoolers: bool-or-None. See infant. |
 | `provider_name` | Whitespace cleanup; Title Case (ALL-CAPS names) | The facility's name. ALL-CAPS values are converted to Title Case; whitespace is cleaned. |
@@ -96,6 +97,7 @@ Each common field is populated from a single populated source field (additive â€
 | `licensing_specialist_phone` | `ok_licensing_specialist_phone` (none_if_sentinel), `sc_licensing_specialist_phone` (none_if_sentinel) |
 | `mailing_address` | `al_mailing_address`, `ga_mailing_address`, `hi_mailing_address` |
 | `meals` | `ga_meals`, `hi_meals`, `nj_meal_options_labels`, `nm_meals`, `pa_meal_options`, `ut_meals` |
+| `phone_extension` | `nj_phone_extension` (phone_extension_digits), `ny_phone_extension` (phone_extension_digits) |
 | `phone_suppressed` | `fl_display_phone_on_web` (invert), `ma_contact_redacted` (to_bool) |
 | `school_district` | `co_school_district`, `ct_school_districts`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
 | `total_vacancies` | `ia_total_openings` (to_int), `id_number_of_openings` (to_int), `nd_total_vacancies` (to_int), `tn_vacancy` (to_int), `ut_vacancies` (to_int), `vt_current_vacancy` (to_int), `wa_available_slots` (to_int), `wi_vacancies` (wi_total_vacancies) |
@@ -762,7 +764,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nj_meal_options_labels` -> collapses into `meals`
 - `nj_participation_programs` -> pass-through
 - `nj_participation_programs_labels` -> pass-through
-- `nj_phone_extension` -> pass-through
+- `nj_phone_extension` -> collapses into `phone_extension` (via phone_extension_digits)
 - `nj_program_facility_type` -> pass-through
 - `nj_program_facility_type_label` -> pass-through
 - `nj_quality_rating` -> pass-through
@@ -832,7 +834,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ny_capacity_toddler` -> pass-through
 - `ny_facility_id` -> pass-through
 - `ny_facility_opened_date` -> pass-through
-- `ny_phone_extension` -> pass-through
+- `ny_phone_extension` -> collapses into `phone_extension` (via phone_extension_digits)
 - `ny_phone_number_omitted` -> feeds adapter, fills `address_suppressed`, `phone_suppressed`
 - `ny_region_code` -> pass-through
 - `ny_school_district_name` -> collapses into `school_district`
