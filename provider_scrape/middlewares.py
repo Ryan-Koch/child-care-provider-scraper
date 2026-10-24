@@ -6,8 +6,11 @@
 import logging
 from urllib.parse import urlparse
 
+from playwright.async_api import Error as PlaywrightError
+
 # useful for handling different item types with a single interface
 from scrapy import signals
+from scrapy.downloadermiddlewares.retry import RetryMiddleware
 
 
 class VaScrapeSpiderMiddleware:
@@ -100,6 +103,33 @@ class VaScrapeDownloaderMiddleware:
 
     def spider_opened(self, spider):
         spider.logger.info("Spider opened: %s", spider.name)
+
+
+class PlaywrightRetryMiddleware(RetryMiddleware):
+    """RetryMiddleware that also retries transient Playwright failures.
+
+    Scrapy's ``RETRY_EXCEPTIONS`` only lists Twisted/OS network errors, but a
+    ``meta["playwright"]`` request fails with a Playwright ``Error`` (navigation
+    timeout, ``net::ERR_*``, a ``PageMethod`` wait timing out). Those were never
+    retried, so a one-off blip on a spider's single entry request (e.g. Texas)
+    ended the crawl with no items. This treats any Playwright ``Error`` as
+    retryable, subject to the usual ``RETRY_TIMES`` / ``dont_retry`` /
+    ``max_retry_times`` controls.
+
+    ``playwright_include_page`` requests are excluded: scrapy-playwright leaves
+    their page open on failure for the errback to close, and a middleware retry
+    skips the errback, so retrying here would leak the page. Those requests
+    retry leak-safely via ``PlaywrightErrbackMixin`` instead.
+    """
+
+    def process_exception(self, request, exception, spider):
+        if (
+            isinstance(exception, PlaywrightError)
+            and not request.meta.get("playwright_include_page")
+            and not request.meta.get("dont_retry", False)
+        ):
+            return self._retry(request, exception, spider)
+        return super().process_exception(request, exception, spider)
 
 
 class ProxyPoolMiddleware:

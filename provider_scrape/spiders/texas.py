@@ -45,6 +45,7 @@ class TxhhsSpider(scrapy.Spider):
         yield scrapy.Request(
             url="https://childcare.hhs.texas.gov/public/childcaresearch",
             callback=self.make_download_request,
+            errback=self.errback_retryable,
             meta={
                 "playwright": True,
                 "playwright_handle_downloads": True,
@@ -57,6 +58,13 @@ class TxhhsSpider(scrapy.Spider):
                 ],
             },
         )
+
+    def errback_retryable(self, failure):
+        """A request failed even after RetryMiddleware's retries. Texas has a
+        single entry point, so there's nothing left to crawl -- log the marker
+        run_spiders.sh greps for so it re-runs the whole spider."""
+        self.logger.error("Retryable Error")
+        self.logger.error(f"Request failed: {failure.request.url}: {failure.value!r}")
 
     def make_download_request(self, response):
         """
@@ -120,6 +128,7 @@ class TxhhsSpider(scrapy.Spider):
                 headers=download_headers,
                 body=json.dumps(download_body),
                 callback=self.parse_csv,
+                errback=self.errback_retryable,
             )
         else:
             self.logger.error("Retryable Error")
@@ -168,6 +177,7 @@ class TxhhsSpider(scrapy.Spider):
                 yield provider
 
         except Exception as e:
+            self.logger.error("Retryable Error")
             self.logger.error(f"Error parsing CSV: {e}")
 
         self.logger.info("Parsing complete")

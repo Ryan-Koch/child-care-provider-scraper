@@ -51,6 +51,10 @@ ROBOTSTXT_OBEY = False
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
+    # Replaces the built-in RetryMiddleware (same 550 slot) with one that also
+    # retries transient Playwright errors, which RETRY_EXCEPTIONS doesn't cover.
+    "scrapy.downloadermiddlewares.retry.RetryMiddleware": None,
+    "provider_scrape.middlewares.PlaywrightRetryMiddleware": 550,
     "provider_scrape.middlewares.VaScrapeDownloaderMiddleware": 543,
     # Cooldown-and-retry for per-IP rate-limit 403s. Disabled unless a spider
     # sets RATELIMIT_BACKOFF_ENABLED (e.g. maryland). Placed just after the

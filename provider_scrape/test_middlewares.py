@@ -1,12 +1,20 @@
 import logging
 from types import SimpleNamespace
 
-from scrapy import Request
+from playwright.async_api import Error as PlaywrightError
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
+from scrapy import Request, Spider
 from scrapy.http import Response
 from scrapy.settings import Settings
+from scrapy.statscollectors import StatsCollector
+from scrapy.utils.test import get_crawler
 from twisted.internet.error import TimeoutError as TxTimeoutError
 
-from provider_scrape.middlewares import ProxyPoolMiddleware, RateLimitBackoffMiddleware
+from provider_scrape.middlewares import (
+    PlaywrightRetryMiddleware,
+    ProxyPoolMiddleware,
+    RateLimitBackoffMiddleware,
+)
 from provider_scrape.proxy_pool import build_pool
 
 
@@ -259,3 +267,48 @@ def test_pause_slot_never_dips_below_base_delay():
         pending = getattr(slot, "_ratelimit_restore", None)
         if pending is not None and pending.active():
             pending.cancel()
+
+
+def _retry_mw(**overrides):
+    s = Settings()
+    s.setdict(overrides)
+    return PlaywrightRetryMiddleware(s)
+
+
+def _retry_spider():
+    # get_retry_request() records stats via spider.crawler.
+    crawler = get_crawler(Spider)
+    crawler.stats = StatsCollector(crawler)
+    return Spider.from_crawler(crawler, name="texas")
+
+
+def test_playwright_retry_retries_playwright_error():
+    req = Request("https://childcare.hhs.texas.gov/public/childcaresearch", meta={"playwright": True})
+    out = _retry_mw().process_exception(req, PlaywrightTimeoutError("Timeout 30000ms exceeded"), _retry_spider())
+    assert isinstance(out, Request)
+    assert out.meta["retry_times"] == 1
+    assert out.dont_filter is True
+
+
+def test_playwright_retry_gives_up_after_retry_times():
+    req = Request("https://example.com", meta={"playwright": True, "retry_times": 2})
+    out = _retry_mw(RETRY_TIMES=2).process_exception(req, PlaywrightError("net::ERR_CONNECTION_RESET"), _retry_spider())
+    assert out is None
+
+
+def test_playwright_retry_skips_include_page_requests():
+    # Left to PlaywrightErrbackMixin, which closes the page before retrying.
+    req = Request("https://example.com", meta={"playwright": True, "playwright_include_page": True})
+    out = _retry_mw().process_exception(req, PlaywrightTimeoutError("t/o"), _retry_spider())
+    assert out is None
+
+
+def test_playwright_retry_honors_dont_retry():
+    req = Request("https://example.com", meta={"playwright": True, "dont_retry": True})
+    assert _retry_mw().process_exception(req, PlaywrightTimeoutError("t/o"), _retry_spider()) is None
+
+
+def test_playwright_retry_keeps_default_network_exceptions():
+    req = Request("https://example.com")
+    out = _retry_mw().process_exception(req, TxTimeoutError(), _retry_spider())
+    assert isinstance(out, Request)
