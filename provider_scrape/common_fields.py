@@ -312,6 +312,60 @@ def none_if_sentinel(value):
     return None if _is_sentinel(value) else value.strip()
 
 
+# Lower-cased "not accredited" answers, on top of SENTINELS. Scoped to the
+# accreditation field only: "no" is a real answer elsewhere (a yes/no source).
+ACCREDITATION_NEGATIVES = {
+    "no",
+    "not accredited",
+    "not nationally accredited",
+}
+
+
+def _is_negative_accreditation(value):
+    """True for a placeholder or "not accredited" string (trimmed, any case)."""
+    if not isinstance(value, str):
+        return False
+    return _is_sentinel(value) or value.strip().lower() in ACCREDITATION_NEGATIVES
+
+
+def accreditation_value(value):
+    """Drop "not accredited" answers from an accreditation source, keeping its shape.
+
+    A string stays a string (trimmed) and becomes ``None`` when negative. A list
+    stays a list with negative entries removed (``None`` when none are left);
+    dict entries (HI) are judged by their ``name``. Real values pass through
+    unchanged.
+    """
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return None if _is_negative_accreditation(value) else value.strip()
+    if isinstance(value, (list, tuple)):
+        kept = [
+            entry
+            for entry in value
+            if not _is_negative_accreditation(entry.get("name") if isinstance(entry, dict) else entry)
+        ]
+        return kept or None
+    return value
+
+
+def accreditation_list(value):
+    """Split a ", "-joined accreditation string into a de-duplicated list.
+
+    Order is kept, entries are trimmed and negatives dropped; all-negative or
+    empty input gives ``None``. Non-strings go through :func:`accreditation_value`.
+    """
+    if not isinstance(value, str):
+        return accreditation_value(value)
+    names = []
+    for part in value.split(","):
+        name = part.strip()
+        if not _is_negative_accreditation(name) and name not in names:
+            names.append(name)
+    return names or None
+
+
 # Provider-written descriptions that say nothing. Matched whole-string,
 # case-insensitively, after trimming; short real answers ("Montessori") are kept.
 DESCRIPTION_FILLER = {

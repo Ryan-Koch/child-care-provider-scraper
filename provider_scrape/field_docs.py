@@ -94,7 +94,12 @@ FIELD_DOCS = {
     "mailing_address": "Facility mailing address, collapsed from a single "
     "populated state source (owner/licensee addresses are "
     "excluded).",
-    "accreditation": "Accreditation(s), collapsed from a single populated state source.",
+    "accreditation": "Accreditation(s), collapsed from a single populated state source. Negative answers "
+    "('NA', 'No', 'None', 'Not Accredited', 'NOT Nationally Accredited') are dropped, "
+    "including Maryland's literal 'NA'. Idaho's ', '-joined string becomes a de-duplicated list "
+    "and New Hampshire's text is added. Kentucky is excluded: its ky_accreditation_available is a "
+    "bare bool with no accreditor names. Shapes still differ by source (GA '|'-joined string, "
+    "MD/NH string, CT/ID list of names, HI list of dicts).",
     "meals": "Meals / food program, collapsed from a single populated state source.",
     "accepting_new_children": "Whether the provider is accepting new children, collapsed from a single state source.",
     "transportation": "Transportation offered, collapsed from a single populated state source.",

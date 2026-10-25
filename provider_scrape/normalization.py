@@ -26,6 +26,8 @@ from datetime import datetime
 
 from provider_scrape.common_fields import (
     INSPECTION_LEVEL,
+    accreditation_list,
+    accreditation_value,
     announced_flag,
     day_names,
     description_text,
@@ -1269,14 +1271,20 @@ FIELD_COLLAPSE_MAP = {
         "ga_mailing_address",
         "hi_mailing_address",
     ],
+    # Negative answers ("NA", "No", "NOT Nationally Accredited") are dropped, each
+    # source keeping its own shape (GA "|" string, CT/HI lists, MD string). ID's
+    # ", "-joined string becomes a de-duplicated list. KY is left out: its
+    # ky_accreditation_available is a bare bool with no accreditor names.
     "accreditation": [
-        "al_accreditations",
-        "ga_accreditation",
-        "hi_accreditations",
+        ("al_accreditations", accreditation_value),
+        ("ga_accreditation", accreditation_value),
+        ("hi_accreditations", accreditation_value),
         # bug_07: renamed from raw nj_accreditation to resolved labels.
-        "nj_accreditation_labels",
-        "md_accreditation",
-        "ct_accreditations",
+        ("nj_accreditation_labels", accreditation_value),
+        ("md_accreditation", accreditation_value),
+        ("ct_accreditations", accreditation_value),
+        ("id_national_accreditation", accreditation_list),
+        ("nh_accreditation", accreditation_value),
     ],
     "meals": [
         "ut_meals",

@@ -13,7 +13,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | Field | Transformation | Explanation |
 |---|---|---|
 | `accepting_new_children` | Whitespace cleanup; Field collapse from state-specific source | Whether the provider is accepting new children, collapsed from a single state source. |
-| `accreditation` | Whitespace cleanup; Field collapse from state-specific source | Accreditation(s), collapsed from a single populated state source. |
+| `accreditation` | Whitespace cleanup; Field collapse from state-specific source (transforms: accreditation_list, accreditation_value) | Accreditation(s), collapsed from a single populated state source. Negative answers ('NA', 'No', 'None', 'Not Accredited', 'NOT Nationally Accredited') are dropped, including Maryland's literal 'NA'. Idaho's ', '-joined string becomes a de-duplicated list and New Hampshire's text is added. Kentucky is excluded: its ky_accreditation_available is a bare bool with no accreditor names. Shapes still differ by source (GA '\|'-joined string, MD/NH string, CT/ID list of names, HI list of dicts). |
 | `address` | Whitespace cleanup; Address cleanup; Component parse -> city/state/zip | Full street address; whitespace-cleaned, trailing country (", United States"/", USA") stripped, comma spacing normalized. |
 | `address_suppressed` | Whitespace cleanup; Field collapse from state-specific source (transforms: invert, to_bool) | True = the state deliberately withheld the street address (typically family homes), so a blank address is not a data gap. CT, KS, MA bools; FL inverted from displayAddressOnWeb; NY `Y` -> True, blank -> False. |
 | `administrator` | Whitespace cleanup; Title Case (ALL-CAPS names) | On-site administrator or director name. ALL-CAPS values are Title-cased. |
@@ -126,7 +126,7 @@ Each common field is populated from a single populated source field (additive â€
 | Common field | Source state-specific fields |
 |---|---|
 | `accepting_new_children` | `co_accepting_new_children`, `ct_accepting_referrals`, `ga_accepting_new_children` |
-| `accreditation` | `al_accreditations`, `ct_accreditations`, `ga_accreditation`, `hi_accreditations`, `md_accreditation`, `nj_accreditation_labels` |
+| `accreditation` | `al_accreditations` (accreditation_value), `ct_accreditations` (accreditation_value), `ga_accreditation` (accreditation_value), `hi_accreditations` (accreditation_value), `id_national_accreditation` (accreditation_list), `md_accreditation` (accreditation_value), `nh_accreditation` (accreditation_value), `nj_accreditation_labels` (accreditation_value) |
 | `address_suppressed` | `ct_address_suppressed` (to_bool), `fl_display_address_on_web` (invert), `ks_address_suppressed` (to_bool), `ma_contact_redacted` (to_bool) |
 | `building_type` | `ia_business_type` (vocab(ia_business_type)), `vt_building_type` (vocab(vt_building_type)) |
 | `complaint_count` | `ca_complaint_info` (no_complaints_zero), `ia_complaint_count` (to_int) |
@@ -363,7 +363,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### Alabama (AL)
 
-- `al_accreditations` -> collapses into `accreditation`
+- `al_accreditations` -> collapses into `accreditation` (via accreditation_value)
 - `al_adverse_actions` -> pass-through
 - `al_deficiency_reports` -> pass-through
 - `al_mailing_address` -> collapses into `mailing_address`
@@ -440,7 +440,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 ### Connecticut (CT)
 
 - `ct_accepting_referrals` -> collapses into `accepting_new_children`
-- `ct_accreditations` -> collapses into `accreditation`
+- `ct_accreditations` -> collapses into `accreditation` (via accreditation_value)
 - `ct_address_suppressed` -> collapses into `address_suppressed` (via to_bool)
 - `ct_administers_meds` -> pass-through
 - `ct_age_range_max_weeks` -> feeds adapter, fills `age_max_months`, `age_min_months`
@@ -543,7 +543,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `ga_accepting_new_children` -> collapses into `accepting_new_children`
 - `ga_accepts_children_type` -> feeds adapter, fills `care_schedules`
-- `ga_accreditation` -> collapses into `accreditation`
+- `ga_accreditation` -> collapses into `accreditation` (via accreditation_value)
 - `ga_activities` -> pass-through
 - `ga_activity_fee` -> pass-through
 - `ga_compliance_status` -> pass-through
@@ -571,7 +571,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### Hawaii (HI)
 
-- `hi_accreditations` -> collapses into `accreditation`
+- `hi_accreditations` -> collapses into `accreditation` (via accreditation_value)
 - `hi_area_code` -> pass-through
 - `hi_demonstration_project` -> pass-through
 - `hi_diapered_children_accepted` -> pass-through
@@ -620,7 +620,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `id_incident_title` -> pass-through
 - `id_investigation_resolved` -> pass-through
 - `id_license_status` -> pass-through
-- `id_national_accreditation` -> pass-through
+- `id_national_accreditation` -> collapses into `accreditation` (via accreditation_list)
 - `id_number_of_openings` -> collapses into `total_vacancies` (via to_int)
 - `id_openings_available` -> pass-through
 - `id_opportunities_comment` -> pass-through
@@ -757,7 +757,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### Maryland (MD)
 
-- `md_accreditation` -> collapses into `accreditation`
+- `md_accreditation` -> collapses into `accreditation` (via accreditation_value)
 - `md_approved_education` -> pass-through
 - `md_excels_level` -> pass-through
 - `md_fatalities` -> collapses into `fatality_count` (via to_int)
@@ -896,7 +896,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 ### New Hampshire (NH)
 
 - `nh_account_id` -> collapses into `source_provider_id` (via to_id_string)
-- `nh_accreditation` -> pass-through
+- `nh_accreditation` -> collapses into `accreditation` (via accreditation_value)
 - `nh_announcement_type` -> pass-through
 - `nh_corrective_action_accepted` -> pass-through
 - `nh_covid_closure` -> pass-through
@@ -929,7 +929,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 ### New Jersey (NJ)
 
 - `nj_accreditation` -> pass-through
-- `nj_accreditation_labels` -> collapses into `accreditation`
+- `nj_accreditation_labels` -> collapses into `accreditation` (via accreditation_value)
 - `nj_child_assessment` -> pass-through
 - `nj_curriculum` -> collapses into `curriculum`
 - `nj_discounts` -> pass-through

@@ -172,7 +172,7 @@ concepts, route it to the listed common field.
 | School district | `school_district` | |
 | Licensee / owner address | `license_holder_address` | Not `mailing_address`. |
 | Facility mailing address | `mailing_address` | **Not** owner/licensee address — those go to `license_holder_address`. |
-| Accreditation | `accreditation` | Normalize plural/singular naming. |
+| Accreditation | `accreditation` | Negative answers ("NA", "No", "Not Accredited") are dropped; a bare bool with no accreditor names (KY) stays state-specific. |
 | Meals / food program | `meals` | |
 | Accepting new children | `accepting_new_children` | |
 | Transportation | `transportation` | |

@@ -166,7 +166,9 @@ def test_inspection_collapse_map_defaults_to_noop():
 # --------------------------------------------------------------------------- #
 # Round-1 regression: byte-identical collapse behaviour
 # --------------------------------------------------------------------------- #
-# Frozen copy of the pre-story-00 implementation and map (sources only).
+# Frozen copy of the original collapse implementation and map (sources only). Fields
+# whose collapse later gained transforms or sources (accreditation) are tested
+# on their own below.
 _LEGACY_MAP = {
     "license_type": [
         "va_license_type", "mt_license_type", "ut_license_type", "co_license_type", "az_license_type",
@@ -178,10 +180,6 @@ _LEGACY_MAP = {
         "wa_school_district", "ct_school_districts",
     ],
     "mailing_address": ["al_mailing_address", "ga_mailing_address", "hi_mailing_address"],
-    "accreditation": [
-        "al_accreditations", "ga_accreditation", "hi_accreditations", "nj_accreditation_labels",
-        "md_accreditation", "ct_accreditations",
-    ],
     "meals": ["ut_meals", "ga_meals", "hi_meals", "nm_meals", "nj_meal_options_labels", "pa_meal_options"],
     "accepting_new_children": ["co_accepting_new_children", "ga_accepting_new_children", "ct_accepting_referrals"],
     "transportation": ["ga_transportation", "nj_transportation_labels", "ct_transportation"],
@@ -4859,3 +4857,75 @@ def test_profit_status_georgia_not_populated():
     assert item.get("profit_status") is None
     item = norm.normalize_item({"ga_profit_status": "Nonprofit"}, "georgia")
     assert item.get("profit_status") is None
+
+
+# --------------------------------------------------------------------------- #
+# accreditation: negatives dropped, ID/NH added, KY left out
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("negative", ["NA", "na", "N/A", "None", "No", "NOT Nationally Accredited", "Not Accredited"])
+def test_accreditation_maryland_negative_dropped(negative):
+    item = norm.normalize_item({"md_accreditation": negative}, "maryland")
+    assert item.get("accreditation") is None
+    assert item["md_accreditation"] == negative
+
+
+def test_accreditation_maryland_real_value_kept():
+    item = norm.normalize_item({"md_accreditation": "NAEYC"}, "maryland")
+    assert item["accreditation"] == "NAEYC"
+    assert item["md_accreditation"] == "NAEYC"
+
+
+@pytest.mark.parametrize(
+    "raw, expected",
+    [
+        ("NOT Nationally Accredited, NOT Nationally Accredited", None),
+        ("NOT Nationally Accredited", None),
+        ("NAEYC, Other, NAEYC, Other", ["NAEYC", "Other"]),
+        ("Other, NOT Nationally Accredited", ["Other"]),
+        ("NOT Nationally Accredited, Other", ["Other"]),
+        ("Other", ["Other"]),
+        ("NAEYC,NECPA", ["NAEYC", "NECPA"]),
+    ],
+)
+def test_accreditation_idaho_split_dedupe_and_drop_negatives(raw, expected):
+    item = norm.normalize_item({"id_national_accreditation": raw}, "idaho")
+    assert item.get("accreditation") == expected
+    assert item["id_national_accreditation"] == raw
+
+
+def test_accreditation_new_hampshire():
+    assert norm.normalize_item({"nh_accreditation": "No"}, "new hampshire").get("accreditation") is None
+    item = norm.normalize_item({"nh_accreditation": "NAEYC"}, "new hampshire")
+    assert item["accreditation"] == "NAEYC"
+    assert item["nh_accreditation"] == "NAEYC"
+
+
+def test_accreditation_kentucky_bare_bool_not_mapped():
+    for value in (True, False):
+        item = norm.normalize_item({"ky_accreditation_available": value}, "kentucky")
+        assert item.get("accreditation") is None
+        assert item["ky_accreditation_available"] is value
+
+
+def test_accreditation_connecticut_list_drops_negative_entries():
+    item = norm.normalize_item({"ct_accreditations": ["NAEYC", "Not Accredited"]}, "connecticut")
+    assert item["accreditation"] == ["NAEYC"]
+    assert item["ct_accreditations"] == ["NAEYC", "Not Accredited"]
+    item = norm.normalize_item({"ct_accreditations": ["None"]}, "connecticut")
+    assert item.get("accreditation") is None
+
+
+def test_accreditation_existing_shapes_unchanged():
+    item = norm.normalize_item({"ga_accreditation": "SACS|GAC"}, "georgia")
+    assert item["accreditation"] == "SACS|GAC"
+    item = norm.normalize_item({"ct_accreditations": ["Head Start", "NAEYC"]}, "connecticut")
+    assert item["accreditation"] == ["Head Start", "NAEYC"]
+    hawaii = [{"name": "NECPA", "effective_date": "2025-11-30", "expiration_date": "2028-11-30"}]
+    item = norm.normalize_item({"hi_accreditations": list(hawaii)}, "hawaii")
+    assert item["accreditation"] == hawaii
+    assert item["hi_accreditations"] == hawaii
+
+
+def test_accreditation_value_trims_before_matching():
+    assert cf.accreditation_value("  n/a ") is None
+    assert cf.accreditation_value(" NAEYC ") == "NAEYC"
