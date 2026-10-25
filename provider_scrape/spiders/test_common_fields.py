@@ -4188,3 +4188,110 @@ def test_capacity_by_age_new_york_not_parsed_and_sources_and_capacity_kept():
     assert item["capacity"] == 9
     assert item["ct_capacity_three_and_under"] == "6"
     assert item["ct_capacity_school_aged"] == "3"
+
+
+def _license_conditions(state, **record):
+    return norm.normalize_item(dict(record), state).get("license_conditions")
+
+
+def test_license_conditions_minnesota_none_sentinel_is_unset():
+    assert _license_conditions("minnesota", mn_restrictions="None") is None
+    assert _license_conditions("minnesota", mn_restrictions=None) is None
+    assert _license_conditions("minnesota") is None
+
+
+def test_license_conditions_minnesota_semicolon_split_and_dedupe():
+    text = "This location only operates on school release days.; This location only operates on school release days."
+    assert _license_conditions("minnesota", mn_restrictions=text) == [
+        "This location only operates on school release days."
+    ]
+    assert _license_conditions("minnesota", mn_restrictions="First limit; ;second limit;FIRST LIMIT") == [
+        "First limit",
+        "second limit",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (
+            "No infants in care No transporting of children under age nine.",
+            ["No infants in care", "No transporting of children under age nine."],
+        ),
+        (
+            "No transporting of children under age nine. Group E Occupancy Restrictions: "
+            "Program is limited to serving no more than 5 children age 2 1/2 years of age or less.",
+            [
+                "No transporting of children under age nine.",
+                "Group E Occupancy Restrictions: Program is limited to serving no more than 5 children "
+                "age 2 1/2 years of age or less.",
+            ],
+        ),
+        (
+            "No transporting of children under age nine. EXTENSION—CANNOT OPERATE LICENSE UNDER INDEFINITE SUSPENSION",
+            [
+                "No transporting of children under age nine.",
+                "EXTENSION—CANNOT OPERATE LICENSE UNDER INDEFINITE SUSPENSION",
+            ],
+        ),
+        (
+            "No infants in care No transporting of children under age nine. Group E Occupancy Restrictions: "
+            "Limited to 5 children.",
+            [
+                "No infants in care",
+                "No transporting of children under age nine.",
+                "Group E Occupancy Restrictions: Limited to 5 children.",
+            ],
+        ),
+        ("Hours limited. EXTENSION - see notes", ["Hours limited.", "EXTENSION - see notes"]),
+        ("Hours limited. EXTENSION – see notes", ["Hours limited.", "EXTENSION – see notes"]),
+        ("Day care only TEMPORARY PROVISIONAL LICENSE", ["Day care only", "TEMPORARY PROVISIONAL LICENSE"]),
+        ("Day care only; temporary provisional license", ["Day care only", "temporary provisional license"]),
+        ("Cap of 6. no infants in care", ["Cap of 6.", "no infants in care"]),
+    ],
+)
+def test_license_conditions_minnesota_phrase_splits(text, expected):
+    assert _license_conditions("minnesota", mn_restrictions=text) == expected
+
+
+def test_license_conditions_minnesota_free_text_not_split():
+    text = "There is no one allowed to enter. The license extension was approved, no infants over 12 months."
+    assert _license_conditions("minnesota", mn_restrictions=text) == [text]
+    # A phrase at the very start is not a split point either.
+    assert _license_conditions("minnesota", mn_restrictions="EXTENSION—PENDING") == ["EXTENSION—PENDING"]
+
+
+def test_license_conditions_north_carolina_prefix_stripped_and_bare_other_dropped():
+    assert _license_conditions(
+        "north_carolina",
+        nc_license_restrictions=["Other - Meets reduced ratios", "other -", "Other -", "Other - Meets reduced ratios"],
+    ) == ["Meets reduced ratios"]
+    assert _license_conditions("north_carolina", nc_license_restrictions=["Other -"]) is None
+    assert _license_conditions("north_carolina", nc_license_restrictions=[]) is None
+    assert _license_conditions("north_carolina") is None
+
+
+def test_license_conditions_missouri_split_keeps_case():
+    assert _license_conditions("missouri", mo_limitations="16 CHILDREN UNDER 24 MONTHS; NO SCHOOL AGE CHILDREN;") == [
+        "16 CHILDREN UNDER 24 MONTHS",
+        "NO SCHOOL AGE CHILDREN",
+    ]
+    assert _license_conditions("missouri", mo_limitations="  ") is None
+
+
+def test_license_conditions_delaware_split():
+    assert _license_conditions("delaware", de_special_conditions="Variance") == ["Variance"]
+    assert _license_conditions("delaware", de_special_conditions="Foster Care;Agreement of Understanding") == [
+        "Foster Care",
+        "Agreement of Understanding",
+    ]
+    assert _license_conditions("delaware", de_special_conditions=None) is None
+
+
+def test_license_conditions_sources_kept():
+    item = norm.normalize_item({"mn_restrictions": "None", "mo_limitations": "A;B"}, "minnesota")
+    assert item["mn_restrictions"] == "None"
+    item = norm.normalize_item({"mo_limitations": "A;B"}, "missouri")
+    assert item["mo_limitations"] == "A;B"
+    item = norm.normalize_item({"nc_license_restrictions": ["Other - X"]}, "north_carolina")
+    assert item["nc_license_restrictions"] == ["Other - X"]

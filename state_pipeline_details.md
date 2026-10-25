@@ -41,6 +41,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `languages` | Whitespace cleanup | Languages, as emitted (string or list; whitespace-cleaned). |
 | `latitude` | Whitespace cleanup; Coordinate -> string | Latitude kept as a trimmed string to avoid float precision drift. |
 | `license_begin_date` | Whitespace cleanup; ISO 8601 date | Start date of the provider's CURRENT license term, normalized to ISO 8601 -- not necessarily the facility's first-ever license date (bug_11). Some states publish no current-term date at all, in which case this is left empty rather than falling back to an original/migration date; see that state's xx_original_license_date field, where published. |
+| `license_conditions` | Whitespace cleanup | Restrictions or conditions attached to the license: list of strings in source order, the state's own text kept verbatim (trimmed, de-duplicated case-insensitively, first spelling wins). Sentinels and blanks are dropped, so MN's literal `None` -> unset, and no conditions -> unset, never an empty list. MN splits `mn_restrictions` on `;` and also before a short fixed list of standard phrases the source runs together (`No infants in care`, `No transporting of children under age nine`, `Group E Occupancy Restrictions:`, `EXTENSION` followed by a dash, `TEMPORARY PROVISIONAL LICENSE`; case-insensitive, never at the start of the text); other text is not split. NC strips the leading `Other -` from each `nc_license_restrictions` entry (a bare `Other -` is dropped). MO splits `mo_limitations` on `;` and keeps its ALL CAPS. DE splits `de_special_conditions` on `;`. The `xx_` sources are unchanged. |
 | `license_expiration` | Whitespace cleanup; ISO 8601 date | License expiration date, normalized to ISO 8601. |
 | `license_holder` | Whitespace cleanup; Title Case (ALL-CAPS names) | Name of the license holder/licensee. ALL-CAPS values are Title-cased. |
 | `license_holder_address` | Whitespace cleanup; Field collapse from state-specific source (transforms: license_holder_address) | The license holder's own single-line address, separate from the facility address. MI, NC; whitespace/comma cleanup via clean_address, case kept as-is, MI's literal `null` pieces dropped (all-null -> unset). |
@@ -198,6 +199,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `connecticut` | provider | `ct_rates` | `rates` | CT `ct_rates`: one row per `{unit}_{period}` amount column; age_group is `Infant (0-17 Months)` style. |
 | `connecticut` | provider | `ct_age_range_min_weeks`, `ct_age_range_max_weeks` | `age_min_months`, `age_max_months` | CT `ct_age_range_{min,max}_weeks` -> months, floor(weeks * 12 / 52). |
 | `connecticut` | provider | `ct_capacity_three_and_under`, `ct_capacity_school_aged`, `ct_capacity_full_time` | `capacity_by_age` | CT three fixed capacity buckets (three and under, school aged, full time) -> rows; blanks skipped. |
+| `delaware` | provider | `de_special_conditions` | `license_conditions` | DE `de_special_conditions` string -> `;` split. |
 | `florida` | provider | `hours` | `weekly_schedule`, `days_of_operation` | FL dict-shaped `hours` ({"monday": "6:45AM to 6:00PM", ...}) -> `weekly_schedule`; `hours` kept. |
 | `florida` | provider | `fl_is_vpk` | `state_prek`, `state_prek_program` | `fl_is_vpk` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
 | `florida` | provider | `fl_services` | `care_schedules` | Florida `fl_services` (list) -> `care_schedules` via the explicit label table. |
@@ -228,8 +230,10 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `massachusetts` | provider | `ma_cost_table` | `rates` | MA `ma_cost_table`: ONE schedule (Full Year > School Year > Summer > first) -> rows tagged `schedule_type`. |
 | `massachusetts` | provider | `ma_capacity_by_age` | `capacity_by_age` | MA `ma_capacity_by_age` camelCase keys -> rows with a fixed label table, in table order. |
 | `michigan` | provider | `mi_services_provided` | `care_schedules` | Michigan `mi_services_provided` (`;`-separated string) -> `care_schedules` via the explicit label table. |
+| `minnesota` | provider | `mn_restrictions` | `license_conditions` | MN `mn_restrictions` string -> `;` split, then cut at the standard run-together phrases; `None` dropped. |
 | `mississippi` | provider | `ms_months_of_operation` | `operating_months`, `year_round` | MS `ms_months_of_operation` (list of month names) -> `operating_months`; year_round = all 12. |
 | `mississippi` | provider | `ms_services` | `care_schedules` | Mississippi `ms_services` (list) -> `care_schedules` via the explicit label table. |
+| `missouri` | provider | `mo_limitations` | `license_conditions` | MO `mo_limitations` ALL-CAPS string -> `;` split, case kept as published. |
 | `nevada` | provider | `nv_site_characteristic` | `state_prek`, `state_prek_program` | `nv_site_characteristic` entry `Nevada Ready Pre-K` -> `state_prek` True; absent -> unset (never False). |
 | `new_hampshire` | provider | `nh_schedule` | `weekly_schedule`, `days_of_operation` | NH `nh_schedule` sessions (`start`/`end`, 12h) -> one `weekly_schedule` row each; days derived. |
 | `new_hampshire` | provider | `nh_special_needs` | `serves_special_needs`, `special_needs_types` | NH `nh_special_needs` (`, `-separated UPPERCASE) -> types; `EXPERIENCE` -> serves True, never a type. |
@@ -244,6 +248,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `new_jersey` | provider | `nj_tuition_infant_hourly`, `nj_tuition_infant_daily`, `nj_tuition_infant_weekly`, `nj_tuition_infant_monthly`, `nj_tuition_toddler_hourly`, `nj_tuition_toddler_daily`, `nj_tuition_toddler_weekly`, `nj_tuition_toddler_monthly`, `nj_tuition_preschool_hourly`, `nj_tuition_preschool_daily`, `nj_tuition_preschool_weekly`, `nj_tuition_preschool_monthly`, `nj_tuition_school_age_hourly`, `nj_tuition_school_age_daily`, `nj_tuition_school_age_weekly`, `nj_tuition_school_age_monthly` | `rates` | NJ `nj_tuition_{age}_{period}` (16 columns) -> one row per amount > 0; `0.0` means blank. |
 | `new_york` | provider | `ny_address_omitted`, `ny_phone_number_omitted` | `address_suppressed`, `phone_suppressed` | NY `Address Omitted` / `Phone Number Omitted`: `Y` -> True, blank or absent -> False. |
 | `north_carolina` | provider | `nc_capacity_second_shift`, `nc_capacity_third_shift` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | `nc_capacity_second_shift`/`nc_capacity_third_shift` (int) -> `evening_care`/`night_care` = capacity > 0. |
+| `north_carolina` | provider | `nc_license_restrictions` | `license_conditions` | NC `nc_license_restrictions` list -> entries without the leading `Other -`; a bare `Other -` is dropped. |
 | `north_dakota` | provider | `nd_vacancies_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map ND `nd_vacancies_by_age` rows (by age label) onto the four vacancy bands. |
 | `north_dakota` | provider | `nd_special_populations` | `serves_special_needs`, `special_needs_types` | ND `nd_special_populations` (list) -> `special_needs_types`; serves True when non-empty. |
 | `north_dakota` | provider | `nd_supplemental_care` | `care_schedules` | North Dakota `nd_supplemental_care` (list) -> `care_schedules` via the explicit label table. |
@@ -458,7 +463,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `de_investigation_conclusion` -> pass-through
 - `de_portal_listed` -> pass-through
 - `de_profit_status` -> pass-through
-- `de_special_conditions` -> pass-through
+- `de_special_conditions` -> feeds adapter, fills `license_conditions`
 - `de_violation_count` -> pass-through
 - `de_violations` -> pass-through
 
@@ -761,7 +766,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `mn_license_info_misc` -> pass-through
 - `mn_licensed_to_provide` -> pass-through
 - `mn_original_license_date` -> pass-through
-- `mn_restrictions` -> pass-through
+- `mn_restrictions` -> feeds adapter, fills `license_conditions`
 - `mn_setting` -> pass-through
 - `mn_type_of_license` -> pass-through
 
@@ -778,7 +783,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `mo_inspection_id` -> pass-through
 - `mo_investigation_id` -> pass-through
 - `mo_license_anniversary_date` -> pass-through
-- `mo_limitations` -> pass-through
+- `mo_limitations` -> feeds adapter, fills `license_conditions`
 - `mo_mailing_address` -> pass-through
 - `mo_notice` -> pass-through
 - `mo_open_violations` -> pass-through
@@ -809,7 +814,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nc_educational_standards_points` -> pass-through
 - `nc_license_effective_date` -> collapses into `license_begin_date` (via to_iso_date)
 - `nc_license_history` -> pass-through
-- `nc_license_restrictions` -> pass-through
+- `nc_license_restrictions` -> feeds adapter, fills `license_conditions`
 - `nc_license_type` -> collapses into `license_type`
 - `nc_owner_email` -> pass-through
 - `nc_owner_fax` -> pass-through

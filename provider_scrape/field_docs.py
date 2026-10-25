@@ -180,6 +180,15 @@ FIELD_DOCS = {
     "`Full Time (any age)`. The CT full-time bucket is not an age group: it is the family-home rule, typically 6 "
     "full-time + 3 school-aged = 9 licensed, so do not add it to an age total. NY is excluded (prose in "
     "`ny_capacity_description`). The `xx_` sources and `capacity` are unchanged.",
+    "license_conditions": "Restrictions or conditions attached to the license: list of strings in source order, the "
+    "state's own text kept verbatim (trimmed, de-duplicated case-insensitively, first spelling wins). Sentinels and "
+    "blanks are dropped, so MN's literal `None` -> unset, and no conditions -> unset, never an empty list. MN splits "
+    "`mn_restrictions` on `;` and also before a short fixed list of standard phrases the source runs together "
+    "(`No infants in care`, `No transporting of children under age nine`, `Group E Occupancy Restrictions:`, "
+    "`EXTENSION` followed by a dash, `TEMPORARY PROVISIONAL LICENSE`; case-insensitive, never at the start of the "
+    "text); other text is not split. NC strips the leading `Other -` from each `nc_license_restrictions` entry (a "
+    "bare `Other -` is dropped). MO splits `mo_limitations` on `;` and keeps its ALL CAPS. DE splits "
+    "`de_special_conditions` on `;`. The `xx_` sources are unchanged.",
     "rates": "Published tuition: list of rows `{age_group, unit, period, amount}` in source order. `age_group` is the "
     "state's own label (state-specific; no cross-state band mapping). `unit` full_time/part_time/None; `period` "
     "hour/day/week/month/None (an unknown period is kept as None, never guessed); `amount` is a float with `$`/`,` "

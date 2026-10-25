@@ -21,6 +21,7 @@ This module deliberately has no import-time dependency on ``normalization``
 (which imports it); ``to_iso_date`` imports ``normalize_date`` lazily.
 """
 
+import itertools
 import logging
 import re
 from collections.abc import Callable
@@ -2812,3 +2813,86 @@ _register_capacity_by_age(
     _indiana_capacity_by_age,
     "IN `in_licensed_ages` start/end age -> `Start – End` label (just start when no end); quantity -> capacity.",
 )
+
+
+# --------------------------------------------------------------------------- #
+# license_conditions
+# --------------------------------------------------------------------------- #
+def clean_conditions(entries):
+    """Trimmed, de-duplicated condition strings in source order, or ``None`` when empty.
+
+    Blanks and sentinels (MN's literal ``None``) are dropped; duplicates are
+    matched case-insensitively and the first spelling wins.
+    """
+    seen = set()
+    cleaned = []
+    for entry in entries:
+        if entry is None:
+            continue
+        text = str(entry).strip()
+        if not text or _is_sentinel(text) or text.lower() in seen:
+            continue
+        seen.add(text.lower())
+        cleaned.append(text)
+    return cleaned or None
+
+
+def _split_semicolons(value):
+    """``;``-separated string -> parts (anything else -> no parts)."""
+    return value.split(";") if isinstance(value, str) else []
+
+
+# MN runs these standard phrases together with no delimiter; each starts a new condition.
+# Matched case-insensitively at a word boundary, never at the start of the text.
+MN_CONDITION_PHRASES = (
+    r"No infants in care",
+    r"No transporting of children under age nine",
+    r"Group E Occupancy Restrictions:",
+    r"EXTENSION(?=\s*[—–-])",  # only the "EXTENSION—..." form, not the word in free text
+    r"TEMPORARY PROVISIONAL LICENSE",
+)
+_MN_PHRASE_START = re.compile(r"\b(?:" + "|".join(MN_CONDITION_PHRASES) + ")", re.IGNORECASE)
+
+
+def _split_mn_phrases(text):
+    """Cut ``text`` before each standard MN phrase that is not at its start."""
+    cuts = [m.start() for m in _MN_PHRASE_START.finditer(text) if m.start() > 0]
+    bounds = [0, *cuts, len(text)]
+    return [text[start:end] for start, end in itertools.pairwise(bounds)]
+
+
+@register_adapter("minnesota", sources=["mn_restrictions"], fills=["license_conditions"])
+def minnesota_license_conditions(record):
+    """MN `mn_restrictions` string -> `;` split, then cut at the standard run-together phrases; `None` dropped."""
+    parts = [piece for part in _split_semicolons(record.get("mn_restrictions")) for piece in _split_mn_phrases(part)]
+    return {"license_conditions": clean_conditions(parts)}
+
+
+_NC_OTHER_PREFIX = re.compile(r"^\s*other\s*-\s*", re.IGNORECASE)
+
+
+@register_adapter("north_carolina", sources=["nc_license_restrictions"], fills=["license_conditions"])
+def north_carolina_license_conditions(record):
+    """NC `nc_license_restrictions` list -> entries without the leading `Other -`; a bare `Other -` is dropped."""
+    entries = record.get("nc_license_restrictions")
+    if isinstance(entries, str):
+        entries = [entries]
+    if not isinstance(entries, (list, tuple)):
+        return {"license_conditions": None}
+    return {
+        "license_conditions": clean_conditions(
+            _NC_OTHER_PREFIX.sub("", entry) for entry in entries if isinstance(entry, str)
+        )
+    }
+
+
+@register_adapter("missouri", sources=["mo_limitations"], fills=["license_conditions"])
+def missouri_license_conditions(record):
+    """MO `mo_limitations` ALL-CAPS string -> `;` split, case kept as published."""
+    return {"license_conditions": clean_conditions(_split_semicolons(record.get("mo_limitations")))}
+
+
+@register_adapter("delaware", sources=["de_special_conditions"], fills=["license_conditions"])
+def delaware_license_conditions(record):
+    """DE `de_special_conditions` string -> `;` split."""
+    return {"license_conditions": clean_conditions(_split_semicolons(record.get("de_special_conditions")))}
