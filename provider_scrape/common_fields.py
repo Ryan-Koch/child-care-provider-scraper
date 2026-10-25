@@ -2896,3 +2896,70 @@ def missouri_license_conditions(record):
 def delaware_license_conditions(record):
     """DE `de_special_conditions` string -> `;` split."""
     return {"license_conditions": clean_conditions(_split_semicolons(record.get("de_special_conditions")))}
+
+
+_ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _renewed_date(record, current_field, original_field, state):
+    """Current license-term start, but only if it is later than the original license date.
+
+    The current-term start equals ``license_begin_date``. It is a renewal only when the
+    original (first-ever) date is known and strictly earlier; equal means the provider is
+    still in its first term, and a missing original means a renewal cannot be confirmed.
+    A current date before the original is inconsistent source data: warn and skip.
+    """
+    current = to_iso_date(record.get(current_field))
+    original = to_iso_date(record.get(original_field))
+    if not is_present(current) or not is_present(original):
+        return None
+    # ISO strings compare chronologically; an unparseable value (returned unchanged) won't be a renewal.
+    if not (_ISO_DATE_RE.match(current) and _ISO_DATE_RE.match(original)):
+        return None
+    if current < original:
+        logger.warning(
+            "%s: %s %s is before %s %s; last_renewed_date not set",
+            state,
+            current_field,
+            current,
+            original_field,
+            original,
+        )
+        return None
+    return current if current > original else None
+
+
+@register_adapter(
+    "minnesota",
+    sources=["mn_last_renewed_date", "mn_original_license_date"],
+    fills=["last_renewed_date"],
+)
+def minnesota_last_renewed_date(record):
+    """MN `mn_last_renewed_date`, only when later than `mn_original_license_date`."""
+    return {"last_renewed_date": _renewed_date(record, "mn_last_renewed_date", "mn_original_license_date", "minnesota")}
+
+
+@register_adapter(
+    "rhode_island",
+    sources=["ri_most_recently_renewed", "ri_original_license_date"],
+    fills=["last_renewed_date"],
+)
+def rhode_island_last_renewed_date(record):
+    """RI `ri_most_recently_renewed`, only when later than `ri_original_license_date`."""
+    return {
+        "last_renewed_date": _renewed_date(
+            record, "ri_most_recently_renewed", "ri_original_license_date", "rhode_island"
+        )
+    }
+
+
+@register_adapter(
+    "massachusetts",
+    sources=["ma_last_issue_date", "ma_original_license_date"],
+    fills=["last_renewed_date"],
+)
+def massachusetts_last_renewed_date(record):
+    """MA `ma_last_issue_date`, only when later than `ma_original_license_date`."""
+    return {
+        "last_renewed_date": _renewed_date(record, "ma_last_issue_date", "ma_original_license_date", "massachusetts")
+    }

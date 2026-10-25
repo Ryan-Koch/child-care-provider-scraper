@@ -89,6 +89,7 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `county` | County | String |
 | `scholarships_accepted` | Subsidy/scholarship acceptance | bool-or-None via `coerce_scholarships_accepted_flag`; FL/VA/WA collapsed from their subsidy flags (WA empty -> unset), NH from the `STATE CC ASSISTANCE (SCHOLARSHIP)` token as a fallback only; OK set by its spider |
 | `license_begin_date` | License start | `YYYY-MM-DD`; NC collapsed from `nc_license_effective_date` (current license's effective date; a spider-set value wins) |
+| `last_renewed_date` | Current-term start, only if renewed | `YYYY-MM-DD`; adapter for MN `mn_last_renewed_date`, RI `ri_most_recently_renewed`, MA `ma_last_issue_date`: set only when later than the state's `xx_original_license_date` (equal = first term -> None; missing original or earlier-than-original -> None). Equals `license_begin_date` when set. MO `mo_license_anniversary_date` excluded (no year) |
 | `original_license_date` | First-ever license date | `YYYY-MM-DD` via `to_iso_date` (CA `ca_license_first_date`, NY `ny_facility_opened_date`, MN/VT/MA/RI `xx_original_license_date`); distinct from `license_begin_date` (current term). CT `ct_date_established` (founding date) and CO `co_license_issue_date` (current-license issue) excluded |
 | `license_expiration` | License end | `YYYY-MM-DD` |
 | `license_type` | Type/category of license | String (collapsed from `xx_license_type`) |

@@ -50,6 +50,11 @@ FIELD_DOCS = {
     "so is CO (`co_license_issue_date` is the issue date of the current license; ~31% fall in 2025-26, i.e. "
     "reissues). The MN 2014 HCBS category-start cluster, the VT 2005 cluster and the RI 1997 spike are real "
     "source data and are kept (bug_11, bug_13).",
+    "last_renewed_date": "Start date of the current license term (`YYYY-MM-DD`), set ONLY once the license has "
+    "been renewed: it equals `license_begin_date` whenever it is set. Empty means the provider is still in its "
+    "first term (current term equals the original license date) or that renewal cannot be confirmed (original "
+    "date or current-term date unpublished, or current term earlier than the original). MN, RI, MA. MO is "
+    "excluded (`mo_license_anniversary_date` is month/day with no year).",
     # Address
     "address": "Full street address; whitespace-cleaned, trailing country "
     '(", United States"/", USA") stripped, comma spacing '

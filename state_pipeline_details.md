@@ -39,6 +39,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `hours` | Whitespace cleanup | Operating hours, as emitted by the state (whitespace-cleaned only). |
 | `infant` | Whitespace cleanup | Whether the provider serves infants: bool-or-None. States that emit a per-age count ("8"), a count string ("Y"/"N"), or "Yes"/absent are coerced via count/token > 0 (bug_05); an unparseable token becomes None rather than a guessed True. |
 | `languages` | Whitespace cleanup | Languages, as emitted (string or list; whitespace-cleaned). |
+| `last_renewed_date` | Whitespace cleanup | Start date of the current license term (`YYYY-MM-DD`), set ONLY once the license has been renewed: it equals `license_begin_date` whenever it is set. Empty means the provider is still in its first term (current term equals the original license date) or that renewal cannot be confirmed (original date or current-term date unpublished, or current term earlier than the original). MN, RI, MA. MO is excluded (`mo_license_anniversary_date` is month/day with no year). |
 | `latitude` | Whitespace cleanup; Coordinate -> string | Latitude kept as a trimmed string to avoid float precision drift. |
 | `license_begin_date` | Whitespace cleanup; ISO 8601 date | Start date of the provider's CURRENT license term, normalized to ISO 8601 -- not necessarily the facility's first-ever license date (bug_11). Some states publish no current-term date at all, in which case this is left empty rather than falling back to an original/migration date; see that state's xx_original_license_date field, where published. |
 | `license_conditions` | Whitespace cleanup | Restrictions or conditions attached to the license: list of strings in source order, the state's own text kept verbatim (trimmed, de-duplicated case-insensitively, first spelling wins). Sentinels and blanks are dropped, so MN's literal `None` -> unset, and no conditions -> unset, never an empty list. MN splits `mn_restrictions` on `;` and also before a short fixed list of standard phrases the source runs together (`No infants in care`, `No transporting of children under age nine`, `Group E Occupancy Restrictions:`, `EXTENSION` followed by a dash, `TEMPORARY PROVISIONAL LICENSE`; case-insensitive, never at the start of the text); other text is not split. NC strips the leading `Other -` from each `nc_license_restrictions` entry (a bare `Other -` is dropped). MO splits `mo_limitations` on `;` and keeps its ALL CAPS. DE splits `de_special_conditions` on `;`. The `xx_` sources are unchanged. |
@@ -231,8 +232,10 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `massachusetts` | provider | `ma_environment` | `environment_features` | Massachusetts `ma_environment` (list) -> `environment_features` via the explicit label table; pet and wheelchair labels are skipped (they belong to other fields). |
 | `massachusetts` | provider | `ma_cost_table` | `rates` | MA `ma_cost_table`: ONE schedule (Full Year > School Year > Summer > first) -> rows tagged `schedule_type`. |
 | `massachusetts` | provider | `ma_capacity_by_age` | `capacity_by_age` | MA `ma_capacity_by_age` camelCase keys -> rows with a fixed label table, in table order. |
+| `massachusetts` | provider | `ma_last_issue_date`, `ma_original_license_date` | `last_renewed_date` | MA `ma_last_issue_date`, only when later than `ma_original_license_date`. |
 | `michigan` | provider | `mi_services_provided` | `care_schedules` | Michigan `mi_services_provided` (`;`-separated string) -> `care_schedules` via the explicit label table. |
 | `minnesota` | provider | `mn_restrictions` | `license_conditions` | MN `mn_restrictions` string -> `;` split, then cut at the standard run-together phrases; `None` dropped. |
+| `minnesota` | provider | `mn_last_renewed_date`, `mn_original_license_date` | `last_renewed_date` | MN `mn_last_renewed_date`, only when later than `mn_original_license_date`. |
 | `mississippi` | provider | `ms_months_of_operation` | `operating_months`, `year_round` | MS `ms_months_of_operation` (list of month names) -> `operating_months`; year_round = all 12. |
 | `mississippi` | provider | `ms_services` | `care_schedules` | Mississippi `ms_services` (list) -> `care_schedules` via the explicit label table. |
 | `missouri` | provider | `mo_limitations` | `license_conditions` | MO `mo_limitations` ALL-CAPS string -> `;` split, case kept as published. |
@@ -264,6 +267,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `rhode_island` | provider | `ri_state_prek` | `state_prek`, `state_prek_program` | `ri_state_prek` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
 | `rhode_island` | provider | `ri_services_offered` | `care_schedules` | Rhode Island `ri_services_offered` (list) -> `care_schedules` via the explicit label table. |
 | `rhode_island` | provider | `ri_age_group_capacity` | `capacity_by_age` | RI `ri_age_group_capacity` rows copied with their own age_group label and classroom count. |
+| `rhode_island` | provider | `ri_most_recently_renewed`, `ri_original_license_date` | `last_renewed_date` | RI `ri_most_recently_renewed`, only when later than `ri_original_license_date`. |
 | `south_carolina` | provider | `sc_program_participation` | `state_prek`, `state_prek_program` | `sc_program_participation` entry `First Steps 4K` -> `state_prek` True; absent -> unset (never False). |
 | `south_dakota` | provider | `sd_months_of_operation` | `year_round` | SD `sd_months_of_operation` category list (`12 Months` / seasonal) -> `year_round`. |
 | `south_dakota` | provider | `sd_services_offered` | `care_schedules` | South Dakota `sd_services_offered` (list) -> `care_schedules` via the explicit label table. |
@@ -708,7 +712,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ma_investigator` -> pass-through
 - `ma_is_gsa` -> pass-through
 - `ma_is_informal` -> pass-through
-- `ma_last_issue_date` -> pass-through
+- `ma_last_issue_date` -> feeds adapter, fills `last_renewed_date`
 - `ma_level_of_compliance` -> pass-through
 - `ma_licensor` -> collapses into `licensing_specialist` (via person_name)
 - `ma_noncompliance_identified` -> pass-through
@@ -763,7 +767,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 ### Minnesota (MN)
 
 - `mn_gender` -> pass-through
-- `mn_last_renewed_date` -> pass-through
+- `mn_last_renewed_date` -> feeds adapter, fills `last_renewed_date`
 - `mn_license_holder_onsite` -> pass-through
 - `mn_license_info_misc` -> pass-through
 - `mn_licensed_to_provide` -> pass-through
@@ -1039,7 +1043,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ri_is_lea` -> pass-through
 - `ri_license_decision` -> pass-through
 - `ri_licensor` -> pass-through
-- `ri_most_recently_renewed` -> pass-through
+- `ri_most_recently_renewed` -> feeds adapter, fills `last_renewed_date`
 - `ri_original_license_date` -> collapses into `original_license_date` (via to_iso_date)
 - `ri_provider_contact_name` -> pass-through
 - `ri_provider_email` -> pass-through

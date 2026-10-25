@@ -4338,3 +4338,72 @@ def test_original_license_date_excluded_states(state, field):
 def test_original_license_date_missing_is_none(state, field):
     for raw in (None, "", "N/A"):
         assert norm.normalize_item({field: raw}, state).get("original_license_date") is None
+
+
+# --------------------------------------------------------------------------- #
+# Last renewed date
+# --------------------------------------------------------------------------- #
+RENEWED_STATES = [
+    ("minnesota", "mn_last_renewed_date", "mn_original_license_date"),
+    ("rhode_island", "ri_most_recently_renewed", "ri_original_license_date"),
+    ("massachusetts", "ma_last_issue_date", "ma_original_license_date"),
+]
+
+
+@pytest.mark.parametrize(("state", "current", "original"), RENEWED_STATES)
+def test_last_renewed_date_renewed_is_current_term(state, current, original):
+    record = {current: "2025-11-01", original: "2010-03-15", "license_begin_date": "11/01/2025"}
+    item = norm.normalize_item(record, state)
+    assert item["last_renewed_date"] == "2025-11-01"
+    assert item["last_renewed_date"] == item["license_begin_date"]
+    assert item[current] == "2025-11-01"  # additive: sources kept
+    assert item[original] == "2010-03-15"
+    assert item["original_license_date"] == "2010-03-15"  # untouched
+
+
+@pytest.mark.parametrize(("state", "current", "original"), RENEWED_STATES)
+def test_last_renewed_date_raw_mdy_values_compared_as_dates(state, current, original):
+    # raw M/D/YYYY values are parsed before comparing
+    item = norm.normalize_item({current: "1/5/2026", original: "12/20/2025"}, state)
+    assert item["last_renewed_date"] == "2026-01-05"
+
+
+@pytest.mark.parametrize(("state", "current", "original"), RENEWED_STATES)
+def test_last_renewed_date_equal_is_none_first_term(state, current, original):
+    item = norm.normalize_item(
+        {current: "2024-05-01", original: "2024-05-01", "license_begin_date": "2024-05-01"}, state
+    )
+    assert item.get("last_renewed_date") is None
+    assert item["license_begin_date"] == "2024-05-01"
+    assert item["original_license_date"] == "2024-05-01"
+
+
+@pytest.mark.parametrize(("state", "current", "original"), RENEWED_STATES)
+def test_last_renewed_date_current_before_original_is_none_and_warns(state, current, original, caplog):
+    with caplog.at_level(logging.WARNING):
+        item = norm.normalize_item({current: "2010-01-01", original: "2020-01-01"}, state)
+    assert item.get("last_renewed_date") is None
+    assert f"{current} 2010-01-01 is before {original} 2020-01-01" in caplog.text
+    assert item["original_license_date"] == "2020-01-01"
+
+
+@pytest.mark.parametrize(("state", "current", "original"), RENEWED_STATES)
+def test_last_renewed_date_original_missing_is_none(state, current, original):
+    for raw in (None, "", "N/A"):
+        item = norm.normalize_item({current: "2025-11-01", original: raw}, state)
+        assert item.get("last_renewed_date") is None
+    assert norm.normalize_item({current: "2025-11-01"}, state).get("last_renewed_date") is None
+
+
+@pytest.mark.parametrize(("state", "current", "original"), RENEWED_STATES)
+def test_last_renewed_date_current_missing_is_none(state, current, original):
+    for raw in (None, "", "N/A"):
+        item = norm.normalize_item({current: raw, original: "2010-03-15"}, state)
+        assert item.get("last_renewed_date") is None
+    assert norm.normalize_item({original: "2010-03-15"}, state).get("last_renewed_date") is None
+
+
+def test_last_renewed_date_missouri_anniversary_not_mapped():
+    item = norm.normalize_item({"mo_license_anniversary_date": "05/01"}, "missouri")
+    assert item.get("last_renewed_date") is None
+    assert item["mo_license_anniversary_date"] == "05/01"

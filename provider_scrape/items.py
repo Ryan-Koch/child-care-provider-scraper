@@ -348,6 +348,7 @@ class ProviderItem(scrapy.Item):
     scholarships_accepted = scrapy.Field()
     license_begin_date = scrapy.Field()
     original_license_date = scrapy.Field()  # first-ever license date (ISO); see FIELD_DOCS
+    last_renewed_date = scrapy.Field()  # current-term start, only once renewed (ISO); see FIELD_DOCS
     license_expiration = scrapy.Field()
     deficiencies = scrapy.Field()
     languages = scrapy.Field()
@@ -541,8 +542,9 @@ class ProviderItem(scrapy.Item):
     # facility's first-ever license date (the CSV's "Initial Effective
     # Date" -- the site's own naming is reversed from what cross-state
     # consumers expect). mn_last_renewed_date intentionally still carries
-    # the same "Current Effective Date" value as license_begin_date --
-    # a common last_renewed_date field will collapse that duplication.
+    # the same "Current Effective Date" value as license_begin_date; it
+    # feeds the common last_renewed_date field only when it differs from
+    # (is later than) mn_original_license_date.
     # Both are normalized to ISO here by the
     # spider (normalize_date), since neither is in normalization.DATE_FIELDS
     # (that list is common-fields-only).
@@ -679,8 +681,9 @@ class ProviderItem(scrapy.Item):
     # bug_13: license_begin_date (current license term's start) is fed from
     # currentLicenseStartDate -- confirmed directly against the independent
     # licenseExpirationDate field (~1 year gap for >97% of records).
-    # ri_most_recently_renewed intentionally still carries the same value --
-    # a common last_renewed_date field will collapse that duplication.
+    # ri_most_recently_renewed intentionally still carries the same value;
+    # it feeds the common last_renewed_date field only when it differs from
+    # (is later than) ri_original_license_date.
     # Normalized to ISO here by the spider
     # (normalize_date), since it's not in normalization.DATE_FIELDS (that
     # list is common-fields-only).
@@ -1162,8 +1165,9 @@ class ProviderItem(scrapy.Item):
     # Last_Issue_Date__c / lastIssueDate -- MA's ~3-year renewal cycle
     # reissues this date on every renewal (confirmed against the provider's
     # own "Renewal"-typed visit dates). ma_last_issue_date intentionally
-    # still carries the same value -- a common last_renewed_date field
-    # will collapse that duplication. Normalized to ISO
+    # still carries the same value; it feeds the common last_renewed_date
+    # field only when it differs from (is later than)
+    # ma_original_license_date. Normalized to ISO
     # here by the spider (normalize_date), since it's not in
     # normalization.DATE_FIELDS (that list is common-fields-only).
     ma_last_issue_date = scrapy.Field()
