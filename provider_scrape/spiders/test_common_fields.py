@@ -4444,3 +4444,40 @@ def test_temporarily_closed_covid_era_fields_not_mapped(state, field, raw):
     item = norm.normalize_item({field: raw}, state)
     assert item.get("temporarily_closed") is None
     assert item[field] == raw
+
+
+# --------------------------------------------------------------------------- #
+# complaint_count
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    ("state", "field", "raw", "expected"),
+    [
+        ("iowa", "ia_complaint_count", "0", 0),
+        ("iowa", "ia_complaint_count", "3", 3),
+        ("indiana", "in_complaints", [{"issue": "a"}, {"issue": "b"}], 2),
+        ("california", "ca_complaint_info", "No Complaints", 0),
+        ("california", "ca_complaint_info", "NO COMPLAINTS", 0),
+    ],
+)
+def test_complaint_count_collapse(state, field, raw, expected):
+    item = norm.normalize_item({field: raw}, state)
+    assert item["complaint_count"] == expected
+    assert item[field] == raw
+
+
+def test_complaint_count_indiana_missing_is_zero():
+    item = norm.normalize_item({"in_is_temporarily_closed": None}, "indiana")
+    assert item["complaint_count"] == 0
+
+
+def test_complaint_count_california_date_is_unknown():
+    item = norm.normalize_item({"ca_complaint_info": "09/20/2022"}, "california")
+    assert item.get("complaint_count") is None
+    assert item["ca_complaint_info"] == "09/20/2022"
+
+
+def test_complaint_count_alabama_substantiated_not_mapped():
+    raw = ["Complaint 06-22-2026"]
+    item = norm.normalize_item({"al_substantiated_complaints": raw}, "alabama")
+    assert item.get("complaint_count") is None
+    assert item["al_substantiated_complaints"] == raw

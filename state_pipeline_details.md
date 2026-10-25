@@ -23,6 +23,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `capacity` | Whitespace cleanup; Integer coercion | Licensed capacity coerced to an integer when it is a clean number; ranges/free text are left unchanged and logged. |
 | `capacity_by_age` | Whitespace cleanup | Licensed capacity by age group: list of rows `{age_group, capacity}` in source order. `age_group` is each state's own label, humanized (not normalized to bands; no cross-state comparison); `capacity` is an int through `to_int`, zero kept. Rows with a blank or unparseable (logged) capacity are dropped; no rows -> unset. MA unpivots `ma_capacity_by_age` via a fixed key table (an unknown key is logged and given a humanized label); RI copies `ri_age_group_capacity` and adds `classrooms` when present; IN labels `Start – End` (just the start when there is no end); CT emits `Three and Under`, `School Aged` and `Full Time (any age)`. The CT full-time bucket is not an age group: it is the family-home rule, typically 6 full-time + 3 school-aged = 9 licensed, so do not add it to an age total. NY is excluded (prose in `ny_capacity_description`). The `xx_` sources and `capacity` are unchanged. |
 | `care_schedules` | Whitespace cleanup | Care arrangements offered: list of canonical tokens from a fixed 12-token list, de-duplicated, in this order: before_school, after_school, drop_in, full_day, half_day, full_time, part_time, summer, school_holidays, emergency, flexible, sick_care. From FL/MS/SD/RI/WI/ND/MA/WY/OK/NJ (lists), IA/VT (`, `-separated), MI/NH (`;`-separated, NH UPPERCASE), GA (three `; `-separated sources merged) and LA (`la_before_care`/`la_after_care` True) by an explicit case-insensitive label table (`CARE_SCHEDULE_LABELS`); one label can give several tokens (`Before and After School`). Evening/overnight/weekend/year-round labels and non-schedule services are ignored silently (they feed other fields); an unknown label is logged and dropped. Empty -> unset. The state labels stay in the `xx_` source fields. |
+| `complaint_count` | Whitespace cleanup; Field collapse from state-specific source (transforms: no_complaints_zero, to_int) | Number of complaints the state lists against the provider (int; `0` is a real value). Counts ALL complaints, not only substantiated ones. Collapsed from IA `ia_complaint_count`, CA `ca_complaint_info` (`No Complaints` -> 0; a date of the latest complaint -> unset, the count is unknown) and IN `in_complaints` (list length; IN comes from one detail API that omits the list when empty, so absence -> 0). AL is excluded (user decision): `al_substantiated_complaints` is substantiated-only and would mix semantics, so it stays state-specific. The `xx_` sources are kept. |
 | `county` | Whitespace cleanup | County (whitespace-cleaned only). |
 | `curriculum` | Whitespace cleanup; Field collapse from state-specific source | Curriculum, collapsed from a single populated state source (VPK-specific curriculum is excluded). |
 | `days_of_operation` | Whitespace cleanup; Field collapse from state-specific source (transforms: day_names) | Weekdays the provider is open: list of full day names in Monday -> Sunday order (e.g. `["Monday", "Tuesday"]`). GA (`MO,TU`), IA (`Mon, Tue`) and VT (`Monday, Tuesday`) via day_names: case/whitespace tolerant, de-duplicated, unrecognised tokens logged and dropped, none left -> unset. CT/IN/NH/OK/WY/MA/FL derive it from `weekly_schedule` (distinct days present); a direct source always wins. |
@@ -119,6 +120,7 @@ Each common field is populated from a single populated source field (additive �
 | `accepting_new_children` | `co_accepting_new_children`, `ct_accepting_referrals`, `ga_accepting_new_children` |
 | `accreditation` | `al_accreditations`, `ct_accreditations`, `ga_accreditation`, `hi_accreditations`, `md_accreditation`, `nj_accreditation_labels` |
 | `address_suppressed` | `ct_address_suppressed` (to_bool), `fl_display_address_on_web` (invert), `ks_address_suppressed` (to_bool), `ma_contact_redacted` (to_bool) |
+| `complaint_count` | `ca_complaint_info` (no_complaints_zero), `ia_complaint_count` (to_int) |
 | `curriculum` | `ga_curriculum`, `nj_curriculum` |
 | `days_of_operation` | `ga_operating_days` (day_names), `ia_days_of_operation` (day_names), `vt_days_of_operation` (day_names) |
 | `doing_business_as` | `fl_dba` (none_if_sentinel), `ok_doing_business_as` (none_if_sentinel) |
@@ -218,6 +220,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `idaho` | provider | `id_pet_policy` | `has_pets`, `pet_types`, `pets_excluded` | ID `id_pet_policy` (Pet Free / Dogs only / Cats only / Other) -> `has_pets`, `pet_types`; unknown values logged. |
 | `illinois` | provider | `il_night_capacity` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | `il_night_capacity` (string int) -> `night_care` = capacity > 0. |
 | `illinois` | provider | `il_day_age_range`, `il_night_age_range` | `age_min_months`, `age_max_months` | IL day/night `6W TO 12Y` ranges -> widest span (min of mins, max of maxes); bare `0` ignored. |
+| `indiana` | provider | `in_complaints` | `complaint_count` | Count `in_complaints` rows; the spider omits the key when there are none -> 0. |
 | `indiana` | provider | `in_schedule` | `weekly_schedule`, `days_of_operation` | IN `in_schedule` rows (12h `open`/`close`) -> 24h `weekly_schedule`; days derived. |
 | `indiana` | provider | `in_programs` | `state_prek`, `state_prek_program` | `in_programs` entry `On My Way Pre-K` -> `state_prek` True; absent -> unset (never False). |
 | `indiana` | provider | `in_licensed_ages` | `capacity_by_age` | IN `in_licensed_ages` start/end age -> `Start – End` label (just start when no end); quantity -> capacity. |
@@ -382,7 +385,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ca_all_visit_dates` -> pass-through
 - `ca_citation_numbers` -> pass-through
 - `ca_closed_date` -> pass-through
-- `ca_complaint_info` -> pass-through
+- `ca_complaint_info` -> collapses into `complaint_count` (via no_complaints_zero)
 - `ca_inspect_typea` -> pass-through
 - `ca_inspect_typeb` -> pass-through
 - `ca_inspection_visit_dates` -> pass-through
@@ -572,7 +575,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `ia_business_type` -> pass-through
 - `ia_care_types` -> feeds adapter, fills `care_schedules`
-- `ia_complaint_count` -> pass-through
+- `ia_complaint_count` -> collapses into `complaint_count` (via to_int)
 - `ia_compliance_report_count` -> pass-through
 - `ia_days_of_operation` -> collapses into `days_of_operation` (via day_names)
 - `ia_iq4k_level` -> pass-through
@@ -624,7 +627,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### Indiana (IN)
 
-- `in_complaints` -> pass-through
+- `in_complaints` -> feeds adapter, fills `complaint_count`
 - `in_correction_date` -> pass-through
 - `in_health_violation_count` -> pass-through
 - `in_is_ccdf` -> pass-through

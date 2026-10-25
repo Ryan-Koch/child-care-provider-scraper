@@ -777,6 +777,13 @@ def _vacancies_by_band(rows, label_key, band_table, value_keys, state):
     return {VACANCY_FIELDS[band]: total for band, total in totals.items()}
 
 
+@register_adapter("indiana", sources=["in_complaints"], fills=["complaint_count"])
+def indiana_complaint_count(record):
+    """Count `in_complaints` rows; the spider omits the key when there are none -> 0."""
+    complaints = record.get("in_complaints")
+    return {"complaint_count": len(complaints) if isinstance(complaints, list) else 0}
+
+
 @register_adapter("iowa", sources=["ia_openings_by_age"], fills=list(VACANCY_FIELDS.values()))
 def iowa_vacancies(record):
     """Sum IA `fullTime` + `partTime` openings per band across the 7 age labels."""

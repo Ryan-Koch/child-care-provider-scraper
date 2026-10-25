@@ -1029,6 +1029,14 @@ def _scholarships_flag(value):
     return coerce_scholarships_accepted_flag(value)
 
 
+def _no_complaints_zero(value):
+    """CA ``ca_complaint_info``: ``No Complaints`` -> 0. Anything else is the
+    date of the latest complaint, so the count is unknown (None)."""
+    if isinstance(value, str) and value.strip().lower() == "no complaints":
+        return 0
+    return None
+
+
 # common field -> source state-specific fields. Populating the common field
 # never removes the source field (D2). Each entry is either a plain source
 # field name (copied as-is) or a ``(source, transform)`` tuple, where
@@ -1082,6 +1090,15 @@ FIELD_COLLAPSE_MAP = {
     "temporarily_closed": [
         ("me_temporarily_closed", to_bool),
         ("in_is_temporarily_closed", to_bool),
+    ],
+    # Count of ALL complaints the state lists (not substantiated-only). CA
+    # gives either "No Complaints" (0) or the date of the latest complaint,
+    # whose count is unknown (None). AL's al_substantiated_complaints is
+    # excluded (substantiated only; user decision). IN is an adapter in
+    # common_fields.py (a missing list means none -> 0).
+    "complaint_count": [
+        ("ia_complaint_count", to_int),
+        ("ca_complaint_info", _no_complaints_zero),
     ],
     # Start of the CURRENT license term. NC's spider takes licenses[0] as the
     # current license (older ones go to nc_license_history), so its effective

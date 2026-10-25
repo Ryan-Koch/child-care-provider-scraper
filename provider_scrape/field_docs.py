@@ -267,6 +267,12 @@ FIELD_DOCS = {
     "`me_temporarily_closed` (Yes/No) and IN `in_is_temporarily_closed`; IN only ever reports True (key absent "
     "otherwise -> None, never False). NH `nh_covid_closure` and MA `ma_temporary_status` are COVID-era and not "
     "mapped. The `xx_` sources are kept; `status` is untouched.",
+    "complaint_count": "Number of complaints the state lists against the provider (int; `0` is a real value). "
+    "Counts ALL complaints, not only substantiated ones. Collapsed from IA `ia_complaint_count`, CA "
+    "`ca_complaint_info` (`No Complaints` -> 0; a date of the latest complaint -> unset, the count is unknown) "
+    "and IN `in_complaints` (list length; IN comes from one detail API that omits the list when empty, so "
+    "absence -> 0). AL is excluded (user decision): `al_substantiated_complaints` is substantiated-only and would "
+    "mix semantics, so it stays state-specific. The `xx_` sources are kept.",
     "licensing_specialist": "State staff member assigned to oversee the provider's license, as `First Last` "
     "(ALL-CAPS Title-cased; SC's `Last, First` flipped; `N/A` -> empty). Collapsed from AK, MA, ME, OK, SC, TN, "
     "WV; VA's packed `Name: phone` string is split by an adapter.",
