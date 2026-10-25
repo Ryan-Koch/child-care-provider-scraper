@@ -324,6 +324,9 @@ class ProviderItem(scrapy.Item):
     registration_fee = scrapy.Field()  # float: one-time enrollment fee in dollars, 0.0 = no fee
     discounts = scrapy.Field()  # list of canonical discount tokens (fixed list); None = none offered
     environment_features = scrapy.Field()  # list of canonical amenity tokens (fixed list); None = none found
+    has_pets = scrapy.Field()  # bool: True = animals present, False = explicitly none; None = unknown
+    pet_types = scrapy.Field()  # list of dogs/cats/other; None = types unknown
+    pets_excluded = scrapy.Field()  # list of dogs/cats the source says are absent; None = none stated
     food_program = scrapy.Field()  # bool: True = participates in USDA CACFP
     state_prek = scrapy.Field()  # bool: True = participates in a publicly funded state pre-K
     state_prek_program = scrapy.Field()  # program brand, set only when state_prek is True

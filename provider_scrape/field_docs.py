@@ -171,7 +171,8 @@ FIELD_DOCS = {
     "`{unit}_{period}` column; age_group `Infant (0-17 Months)`), GA (weekly full day), KY and PA (the period `day` "
     "is inferred from the amounts, not stated by the source), TN (`unit_of_care` Full/Part-time -> unit, "
     "Weekly/Daily/Monthly -> period, any other descriptor -> `care_type` with period week; `$0.00` skipped), MA "
-    "(`rate_type` parsed; ONE schedule type per provider chosen with the same pick as `weekly_schedule`: Full Year, "
+    "(`rate_type` parsed, `Other Full/Part Time` -> unit only, period None; ONE schedule type per provider chosen "
+    "with the same pick as `weekly_schedule`: Full Year, "
     "else School Year, else Summer, else first), NJ (16 `nj_tuition_*` columns, `0.0` skipped) and WY (program name "
     "as age_group). NH is skipped (`nh_rates` is free text and is left alone). Empty -> unset. The `xx_` sources "
     "are kept.",
@@ -196,6 +197,17 @@ FIELD_DOCS = {
     "(approved assistant, mixed age, school bus route, provide your own equipment). NJ codes 6-13 have no known "
     'label ("Unknown (code N)") and are skipped silently. An unknown label is logged and dropped. None found '
     "is None, never an empty list. The `xx_` sources are kept.",
+    "has_pets": "Whether animals are present at the provider: True = pets present, False = explicitly none, None = "
+    "not stated (absence is never False). From ID `id_pet_policy` (Pet Free = False; Dogs only / Cats only / Other = "
+    "True), VT `vt_pets` (any recognised entry = True), GA `ga_environment` and NJ `nj_environmental_features_labels` "
+    "(`No pets` = False), UT `ut_environment` (`No Pets` = False, `Pets` = True) and NH `nh_environment` (NO PETS = "
+    "False; PETS / INDOOR PETS / OUTDOOR PETS / DOG / CAT = True). NH NO DOG / NO CAT alone do not set it. Conflicting "
+    "entries in one record are logged and left None. The `xx_` sources are kept.",
+    "pet_types": "Animal types present: list of `dogs`, `cats`, `other` (in that order, de-duplicated). Set only when "
+    "the types are known (ID, VT, NH DOG / CAT entries); a bare `Pets` (UT, NH) leaves it None, never []. Unknown VT "
+    "entries and ID values are logged and dropped.",
+    "pets_excluded": "Animals the source explicitly says are absent: list of `dogs`, `cats`. From NH NO DOG / NO CAT "
+    "(also NO DOGS / NO CATS) only, which never set `has_pets` or `pet_types`. None when none stated, never [].",
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
     "deficiencies": "Deficiency/violation count for the provider, coerced to an "
     "integer (bug_10). Digit strings, comma-grouped counts, and integral "

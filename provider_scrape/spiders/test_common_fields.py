@@ -3815,3 +3815,141 @@ def test_environment_empty_sources_are_none_and_no_overwrite():
     assert _environment("massachusetts", ma_environment=[]) is None
     assert _environment("georgia", ga_environment="Pool", environment_features=["no_tv"]) == ["no_tv"]
     assert _environment("texas", ga_environment="Pool") is None
+
+
+# --------------------------------------------------------------------------- #
+# MA "Other" rate types
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    ("rate_type", "unit"),
+    [("Other Full Time", "full_time"), ("other part time ", "part_time")],
+)
+def test_rates_massachusetts_other_rate_type_sets_unit_only(rate_type, unit, caplog):
+    table = [{"schedule_type": "Full Year Schedule", "age_group": "Infant", "rate_type": rate_type, "amount": "$24.00"}]
+    with caplog.at_level(logging.WARNING):
+        rates = _rates("massachusetts", ma_cost_table=table)
+    assert [(r["unit"], r["period"]) for r in rates] == [(unit, None)]
+    assert "unrecognised rate_type" not in caplog.text
+
+
+def test_rates_massachusetts_unknown_rate_type_still_warns(caplog):
+    table = [
+        {"schedule_type": "Full Year Schedule", "age_group": "Infant", "rate_type": "Other Quarter", "amount": "5"}
+    ]
+    with caplog.at_level(logging.WARNING):
+        rates = _rates("massachusetts", ma_cost_table=table)
+    assert [(r["unit"], r["period"]) for r in rates] == [(None, None)]
+    assert "unrecognised rate_type" in caplog.text
+
+
+# --------------------------------------------------------------------------- #
+# has_pets / pet_types / pets_excluded
+# --------------------------------------------------------------------------- #
+def _pets(state, **fields):
+    item = norm.normalize_item(dict(fields), state)
+    return item.get("has_pets"), item.get("pet_types"), item.get("pets_excluded")
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("Pet Free", (False, None, None)),
+        (" pet free ", (False, None, None)),
+        ("Dogs only", (True, ["dogs"], None)),
+        ("CATS ONLY", (True, ["cats"], None)),
+        ("Other", (True, ["other"], None)),
+    ],
+)
+def test_pets_idaho(raw, expected):
+    assert _pets("idaho", id_pet_policy=raw) == expected
+
+
+def test_pets_idaho_unknown_logged_and_none(caplog):
+    with caplog.at_level(logging.WARNING):
+        assert _pets("idaho", id_pet_policy="Goldfish") == (None, None, None)
+    assert "unmapped id_pet_policy" in caplog.text
+    assert _pets("idaho", id_pet_policy="") == (None, None, None)
+
+
+def test_pets_idaho_source_kept():
+    item = norm.normalize_item({"id_pet_policy": "Dogs only"}, "idaho")
+    assert item["id_pet_policy"] == "Dogs only"
+
+
+def test_pets_vermont_types_ordered_and_deduped():
+    raw = "Other Furry Animal, cat, Dog, Other Non-Furry Animal"
+    assert _pets("vermont", vt_pets=raw) == (True, ["dogs", "cats", "other"], None)
+    assert norm.normalize_item({"vt_pets": raw}, "vermont")["vt_pets"] == raw
+
+
+def test_pets_vermont_unknown_dropped_and_logged(caplog):
+    with caplog.at_level(logging.WARNING):
+        assert _pets("vermont", vt_pets="Dog, Dragon") == (True, ["dogs"], None)
+        assert _pets("vermont", vt_pets="Dragon") == (None, None, None)
+    assert "unmapped vt_pets entry 'Dragon'" in caplog.text
+
+
+@pytest.mark.parametrize("value", [None, "", "   "])
+def test_pets_vermont_absence_is_none(value):
+    assert _pets("vermont", vt_pets=value) == (None, None, None)
+    assert _pets("vermont") == (None, None, None)
+
+
+def test_pets_georgia():
+    assert _pets("georgia", ga_environment="Pool; no pets; Smoke Free Environment") == (False, None, None)
+    assert _pets("georgia", ga_environment="Pool; Smoke Free Environment") == (None, None, None)
+    assert _pets("georgia", ga_environment="") == (None, None, None)
+
+
+def test_pets_utah():
+    assert _pets("utah", ut_environment="Smoke-free Environment,No Pets") == (False, None, None)
+    assert _pets("utah", ut_environment="Pets,Near Public Transportation") == (True, None, None)
+    assert _pets("utah", ut_environment="Near Public Transportation") == (None, None, None)
+
+
+def test_pets_new_jersey():
+    assert _pets("new_jersey", nj_environmental_features_labels=["Smoke-free Environment", "No pets"]) == (
+        False,
+        None,
+        None,
+    )
+    assert _pets("new_jersey", nj_environmental_features_labels=["Smoke-free Environment"]) == (None, None, None)
+    assert _pets("new_jersey", nj_environmental_features_labels=[]) == (None, None, None)
+
+
+def test_pets_new_hampshire_positive_and_negative():
+    env = "WHEELCHAIR ACCESSIBLE, NO CAT, NO TV USE, INDOOR PETS, NO DOG"
+    assert _pets("new_hampshire", nh_environment=env) == (True, None, ["dogs", "cats"])
+    item = norm.normalize_item({"nh_environment": env}, "new_hampshire")
+    assert item["nh_environment"] == env
+    assert item["environment_features"] == ["no_tv"]
+    assert _pets("new_hampshire", nh_environment="NO PETS, SMOKE FREE") == (False, None, None)
+    assert _pets("new_hampshire", nh_environment="OUTDOOR PETS") == (True, None, None)
+    assert _pets("new_hampshire", nh_environment="PETS") == (True, None, None)
+    assert _pets("new_hampshire", nh_environment="DOGS, cat") == (True, ["dogs", "cats"], None)
+    assert _pets("new_hampshire", nh_environment="NO DOGS, NO CATS") == (None, None, ["dogs", "cats"])
+
+
+def test_pets_new_hampshire_negatives_alone_do_not_set_has_pets():
+    assert _pets("new_hampshire", nh_environment="NO DOG, NO CAT") == (None, None, ["dogs", "cats"])
+    assert _pets("new_hampshire", nh_environment="NO CAT") == (None, None, ["cats"])
+    assert _pets("new_hampshire", nh_environment="NO PETS, NO DOG") == (False, None, ["dogs"])
+    assert _pets("new_hampshire", nh_environment="SMOKE FREE") == (None, None, None)
+
+
+def test_pets_new_hampshire_no_pets_conflict_logged(caplog):
+    with caplog.at_level(logging.WARNING):
+        assert _pets("new_hampshire", nh_environment="NO PETS, INDOOR PETS") == (None, None, None)
+        assert _pets("new_hampshire", nh_environment="NO PETS, DOG") == (None, None, None)
+    assert "'no pets' together with pets" in caplog.text
+
+
+def test_pets_new_hampshire_dog_conflict_logged(caplog):
+    with caplog.at_level(logging.WARNING):
+        assert _pets("new_hampshire", nh_environment="DOG, NO DOG") == (None, None, None)
+        assert _pets("new_hampshire", nh_environment="DOG, NO DOG, CAT") == (True, ["cats"], None)
+    assert "dogs both present and excluded" in caplog.text
+
+
+def test_pets_other_states_untouched():
+    assert _pets("texas", ga_environment="No pets") == (None, None, None)

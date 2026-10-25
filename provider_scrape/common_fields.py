@@ -2168,6 +2168,160 @@ for _state, _field, _separator, _shape in (
     _register_environment(_state, _field, _separator, _shape)
 
 
+# Pets (ID, VT, GA, UT, NJ, NH)
+# --------------------------------------------------------------------------- #
+PET_TYPES = ("dogs", "cats", "other")
+PETS_EXCLUDABLE = ("dogs", "cats")
+
+
+def _pets_fields(state, *, no_pets=False, pets=False, types=(), excluded=()):
+    """Three-field pets dict from parsed flags; ``None`` wherever the source is silent.
+
+    ``no_pets`` is an explicit "no pets", ``pets`` a bare "has pets" (type
+    unknown), ``types`` the animal types present and ``excluded`` the dogs/cats
+    the source says are absent. Contradictory flags are logged and the
+    conflicting fields are left ``None``. Excluded types alone never imply pets.
+    """
+    types, excluded = set(types), set(excluded)
+    has_pets_conflict = no_pets and (pets or types)
+    if has_pets_conflict:
+        logger.warning("pets(%s): 'no pets' together with pets/types -> has_pets, pet_types left None", state)
+        types = set()
+    for kind in sorted(types & excluded):
+        logger.warning("pets(%s): %s both present and excluded -> dropped from both", state, kind)
+        types.discard(kind)
+        excluded.discard(kind)
+        has_pets_conflict = True
+    if has_pets_conflict:
+        has_pets = True if (pets or types) and not no_pets else None
+    elif no_pets:
+        has_pets = False
+    else:
+        has_pets = True if (pets or types) else None
+    return {
+        "has_pets": has_pets,
+        "pet_types": [t for t in PET_TYPES if t in types] or None,
+        "pets_excluded": [t for t in PETS_EXCLUDABLE if t in excluded] or None,
+    }
+
+
+def _register_pets(state, sources, parse, doc):
+    """Register an adapter filling the three pets fields from ``parse(record)`` -> ``_pets_fields`` kwargs."""
+
+    @register_adapter(state, sources=sources, fills=["has_pets", "pet_types", "pets_excluded"])
+    def adapter(record):
+        return _pets_fields(state, **parse(record))
+
+    adapter.__doc__ = doc
+    adapter.__name__ = f"{state}_pets"
+    return adapter
+
+
+_ID_PET_POLICY = {
+    "pet free": {"no_pets": True},
+    "dogs only": {"types": ["dogs"]},
+    "cats only": {"types": ["cats"]},
+    "other": {"types": ["other"]},
+}
+
+
+def _idaho_pets(record):
+    raw = record.get("id_pet_policy")
+    if raw is None or not str(raw).strip() or _is_sentinel(raw):
+        return {}
+    parsed = _ID_PET_POLICY.get(str(raw).strip().lower())
+    if parsed is None:
+        logger.warning("pets(idaho): unmapped id_pet_policy %r -> None", raw)
+    return parsed or {}
+
+
+_register_pets(
+    "idaho",
+    ["id_pet_policy"],
+    _idaho_pets,
+    "ID `id_pet_policy` (Pet Free / Dogs only / Cats only / Other) -> `has_pets`, `pet_types`; unknown values logged.",
+)
+
+_VT_PET_TOKENS = {
+    "dog": "dogs",
+    "cat": "cats",
+    "other furry animal": "other",
+    "other non-furry animal": "other",
+}
+
+
+def _vermont_pets(record):
+    types = []
+    for label in _schedule_source("vt_pets", ",")(record):
+        if _is_sentinel(label):
+            continue
+        kind = _VT_PET_TOKENS.get(label.lower())
+        if kind is None:
+            logger.warning("pets(vermont): unmapped vt_pets entry %r -> dropped", label)
+            continue
+        types.append(kind)
+    return {"types": types}
+
+
+_register_pets(
+    "vermont",
+    ["vt_pets"],
+    _vermont_pets,
+    "VT `vt_pets` (`, `-separated Dog / Cat / Other ... Animal`) -> `has_pets`, `pet_types`; absent = None, not False.",
+)
+
+
+def _label_pets_parser(field, separator):
+    """Parser for the "No pets" / "Pets" entries inside an environment list."""
+
+    def parse(record):
+        keys = {label.lower() for label in _schedule_source(field, separator)(record)}
+        return {"no_pets": "no pets" in keys, "pets": "pets" in keys}
+
+    return parse
+
+
+for _state, _field, _separator, _doc in (
+    ("georgia", "ga_environment", ";", "GA `ga_environment` entry `No pets` -> `has_pets` False; absent = None."),
+    (
+        "utah",
+        "ut_environment",
+        ",",
+        "UT `ut_environment` `No Pets` -> `has_pets` False, `Pets` -> True; absent = None.",
+    ),
+    (
+        "new_jersey",
+        "nj_environmental_features_labels",
+        ";",
+        "NJ `nj_environmental_features_labels` label `No pets` -> `has_pets` False; absent = None.",
+    ),
+):
+    _register_pets(_state, [_field], _label_pets_parser(_field, _separator), _doc)
+
+_NH_PETS_ANY = {"pets", "indoor pets", "outdoor pets"}
+_NH_PETS_TYPES = {"dog": "dogs", "dogs": "dogs", "cat": "cats", "cats": "cats"}
+_NH_PETS_NEGATIVES = {f"no {k}": v for k, v in _NH_PETS_TYPES.items()}
+
+
+def _new_hampshire_pets(record):
+    keys = {label.lower() for label in _schedule_source("nh_environment", ",")(record)}
+    return {
+        "no_pets": "no pets" in keys,
+        "pets": bool(keys & _NH_PETS_ANY),
+        "types": [v for k, v in _NH_PETS_TYPES.items() if k in keys],
+        "excluded": [v for k, v in _NH_PETS_NEGATIVES.items() if k in keys],
+    }
+
+
+_register_pets(
+    "new_hampshire",
+    ["nh_environment"],
+    _new_hampshire_pets,
+    "NH `nh_environment` pet entries (NO PETS / PETS / DOG / CAT) -> `has_pets`, `pet_types`; NO DOG / NO CAT -> "
+    "`pets_excluded` only.",
+)
+
+
 # --------------------------------------------------------------------------- #
 # Rates (CT, GA, KY, PA, TN, MA, NJ, WY; NH deliberately skipped)
 # --------------------------------------------------------------------------- #
@@ -2333,6 +2487,7 @@ _register_rates(
 )
 
 _MA_RATE_TYPE_RE = re.compile(r"^\s*(hourly|daily|weekly|monthly)\s+(full|part)\s+time\s*$", re.IGNORECASE)
+_MA_OTHER_RATE_TYPE_RE = re.compile(r"^\s*other\s+(full|part)\s+time\s*$", re.IGNORECASE)
 
 
 def _massachusetts_rates(record):
@@ -2345,9 +2500,14 @@ def _massachusetts_rates(record):
     for entry in entries:
         if str(entry.get("schedule_type") or "").strip().lower() != wanted:
             continue
-        match = _MA_RATE_TYPE_RE.match(str(entry.get("rate_type") or ""))
+        rate_type = str(entry.get("rate_type") or "")
+        match = _MA_RATE_TYPE_RE.match(rate_type)
+        other = _MA_OTHER_RATE_TYPE_RE.match(rate_type)
         if match:
             period, unit = RATE_PERIODS[match.group(1).lower()], RATE_UNITS[match.group(2).lower()]
+        elif other:
+            # "Other Full/Part Time": the period is genuinely unknown (amounts run $12 to $24k).
+            period, unit = None, RATE_UNITS[other.group(1).lower()]
         else:
             logger.warning("rates(massachusetts): unrecognised rate_type %r", entry.get("rate_type"))
             period = unit = None
