@@ -4735,3 +4735,62 @@ def test_program_description_short_answers_kept(raw):
     item = norm.normalize_item({"vt_program_description": raw}, "vermont")
     assert item["program_description"] == raw
     assert item["vt_program_description"] == raw
+
+
+@pytest.mark.parametrize("raw", [True, False])
+def test_licensed_connecticut_copy(raw):
+    item = norm.normalize_item({"ct_licensed": raw}, "connecticut")
+    assert item["licensed"] is raw
+    assert item["ct_licensed"] is raw
+
+
+@pytest.mark.parametrize("raw, expected", [("Licensed", True), ("License Exempt", False)])
+def test_licensed_louisiana_vocab(raw, expected):
+    item = norm.normalize_item({"la_licensed": raw}, "louisiana")
+    assert item["licensed"] is expected
+    assert item["la_licensed"] == raw
+
+
+def test_licensed_louisiana_blank_is_unset():
+    item = norm.normalize_item({"la_licensed": ""}, "louisiana")
+    assert item.get("licensed") is None
+
+
+def test_licensed_new_hampshire_yes_and_absent():
+    item = norm.normalize_item({"nh_licensed": "Yes"}, "new_hampshire")
+    assert item["licensed"] is True
+    assert item["nh_licensed"] == "Yes"
+    assert norm.normalize_item({}, "new_hampshire").get("licensed") is None
+
+
+@pytest.mark.parametrize("raw, expected", [("License", True), ("Approval", False), ("Exempt", False)])
+def test_licensed_south_carolina_vocab(raw, expected):
+    item = norm.normalize_item({"sc_license_category": raw}, "south_carolina")
+    assert item["licensed"] is expected
+    assert item["sc_license_category"] == raw
+
+
+def test_licensed_south_carolina_unknown_logged(caplog):
+    with caplog.at_level(logging.WARNING):
+        item = norm.normalize_item({"sc_license_category": "Mystery"}, "south_carolina")
+    assert item.get("licensed") is None
+    assert "unmapped value 'Mystery'" in caplog.text
+
+
+def test_licensed_exempt_category_fallback_false():
+    item = norm.normalize_item({"provider_type": "Self-Declared Provider"}, "north_dakota")
+    assert item["facility_category"] == "exempt"
+    assert item["licensed"] is False
+
+
+def test_licensed_fallback_does_not_override_source_true():
+    record = {"provider_type": "Exempt Only", "ct_licensed": True}
+    item = norm.normalize_item(record, "connecticut")
+    assert item["facility_category"] == "exempt"
+    assert item["licensed"] is True
+
+
+def test_licensed_non_exempt_category_stays_unset():
+    item = norm.normalize_item({"provider_type": "Child Care Center"}, "north_dakota")
+    assert item["facility_category"] != "exempt"
+    assert item.get("licensed") is None

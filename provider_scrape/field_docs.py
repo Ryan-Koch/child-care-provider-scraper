@@ -183,6 +183,15 @@ FIELD_DOCS = {
     "one label can give several tokens (`Before and After School`). Evening/overnight/weekend/year-round labels "
     "and non-schedule services are ignored silently (they feed other fields); an unknown label is logged and "
     "dropped. Empty -> unset. The state labels stay in the `xx_` source fields.",
+    "licensed": "Whether the provider is licensed (bool): True = licensed, False = license-exempt or "
+    "approved-only. CT copies the `ct_licensed` bool. LA maps `la_licensed` through an explicit vocab "
+    "(`Licensed` -> True, `License Exempt` -> False; never generic coercion, so exempt can't read as True). NH reads "
+    "`nh_licensed` (`Yes` -> True); absent -> unset (None), not False. SC maps `sc_license_category` through an "
+    "explicit vocab (`License` -> True; `Approval` -> False, approved but not licensed; `Exempt` -> False); an "
+    "unknown value is logged and left unset. For every state, a record still unset whose `facility_category` is "
+    "`exempt` gets False. True is never inferred from `facility_category`, and a source value is never "
+    "overwritten. `licensed` and `facility_category` can disagree (e.g. LA `License Exempt` records are mostly "
+    "`family_home`).",
     "program_description": "The provider's own description of their program (string), verbatim apart from "
     "trimming. ID uses `id_program_description` first and falls back to `id_philosophy_description` when that is "
     "missing or filler (`id_philosophy_comment` is curriculum notes and is ignored); ND copies `nd_philosophy`; VT "

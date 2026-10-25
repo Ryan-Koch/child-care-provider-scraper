@@ -52,6 +52,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `license_holder_address` | Whitespace cleanup; Field collapse from state-specific source (transforms: license_holder_address) | The license holder's own single-line address, separate from the facility address. MI, NC; whitespace/comma cleanup via clean_address, case kept as-is, MI's literal `null` pieces dropped (all-null -> unset). |
 | `license_number` | Whitespace cleanup | State-issued license/registration identifier, kept as emitted (only whitespace-cleaned). |
 | `license_type` | Whitespace cleanup; Field collapse from state-specific source | Type/category of license, collapsed from a single populated state-specific *_license_type field. |
+| `licensed` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_bool, vocab(la_licensed), vocab(sc_license_category)) | Whether the provider is licensed (bool): True = licensed, False = license-exempt or approved-only. CT copies the `ct_licensed` bool. LA maps `la_licensed` through an explicit vocab (`Licensed` -> True, `License Exempt` -> False; never generic coercion, so exempt can't read as True). NH reads `nh_licensed` (`Yes` -> True); absent -> unset (None), not False. SC maps `sc_license_category` through an explicit vocab (`License` -> True; `Approval` -> False, approved but not licensed; `Exempt` -> False); an unknown value is logged and left unset. For every state, a record still unset whose `facility_category` is `exempt` gets False. True is never inferred from `facility_category`, and a source value is never overwritten. `licensed` and `facility_category` can disagree (e.g. LA `License Exempt` records are mostly `family_home`). |
 | `licensing_specialist` | Whitespace cleanup; Field collapse from state-specific source (transforms: last_first_name, person_name) | State staff member assigned to oversee the provider's license, as `First Last` (ALL-CAPS Title-cased; SC's `Last, First` flipped; `N/A` -> empty). Collapsed from AK, MA, ME, OK, SC, TN, WV; VA's packed `Name: phone` string is split by an adapter. |
 | `licensing_specialist_email` | Whitespace cleanup; Field collapse from state-specific source (transforms: lower_email) | Lower-cased email of the assigned licensing specialist (published by ME). |
 | `licensing_specialist_phone` | Whitespace cleanup; Field collapse from state-specific source (transforms: none_if_sentinel) | Phone number of the assigned licensing specialist, as emitted by the state (OK, SC, and VA's split-out number); empty when not published. |
@@ -137,6 +138,7 @@ Each common field is populated from a single populated source field (additive â€
 | `license_begin_date` | `nc_license_effective_date` (to_iso_date) |
 | `license_holder_address` | `mi_licensee_address` (license_holder_address), `nc_owner_mailing_address` (license_holder_address) |
 | `license_type` | `ak_license_type`, `az_license_type`, `co_license_type`, `ct_license_type`, `hi_license_type`, `mt_license_type`, `nc_license_type`, `nj_license_type_label`, `ut_license_type`, `va_license_type`, `wa_license_type`, `wv_license_type` |
+| `licensed` | `ct_licensed` (to_bool), `la_licensed` (vocab(la_licensed)), `nh_licensed` (to_bool), `sc_license_category` (vocab(sc_license_category)) |
 | `licensing_specialist` | `ak_licensing_specialist` (person_name), `ma_licensor` (person_name), `me_licensing_specialist` (person_name), `ok_licensing_specialist` (person_name), `sc_licensing_specialist_name` (last_first_name), `tn_regulatory_individual` (person_name), `wv_licensing_specialist` (person_name) |
 | `licensing_specialist_email` | `me_licensing_specialist_email` (lower_email) |
 | `licensing_specialist_phone` | `ok_licensing_specialist_phone` (none_if_sentinel), `sc_licensing_specialist_phone` (none_if_sentinel) |
@@ -452,7 +454,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ct_inspection_id` -> pass-through
 - `ct_inspection_status` -> pass-through
 - `ct_license_type` -> collapses into `license_type`
-- `ct_licensed` -> pass-through
+- `ct_licensed` -> collapses into `licensed` (via to_bool)
 - `ct_oec_contact_id` -> pass-through
 - `ct_provider_id` -> collapses into `source_provider_id` (via to_id_string)
 - `ct_provider_uid` -> pass-through
@@ -696,7 +698,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `la_after_care` -> feeds adapter, fills `care_schedules`
 - `la_before_care` -> feeds adapter, fills `care_schedules`
 - `la_inspection_url` -> pass-through
-- `la_licensed` -> pass-through
+- `la_licensed` -> collapses into `licensed` (via vocab(la_licensed))
 - `la_night_care` -> feeds adapter, fills `evening_care`, `night_care`, `nontraditional_hours`, `weekend_care`
 - `la_performance_rating` -> pass-through
 - `la_performance_report_url` -> pass-through
@@ -903,7 +905,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nh_head_start` -> collapses into `head_start` (via coerce_bool)
 - `nh_infant_openings` -> collapses into `vacancies_infant` (via to_int)
 - `nh_level_of_compliance` -> pass-through
-- `nh_licensed` -> pass-through
+- `nh_licensed` -> collapses into `licensed` (via to_bool)
 - `nh_licensed_plus` -> pass-through
 - `nh_licensor` -> pass-through
 - `nh_preschool_openings` -> collapses into `vacancies_preschool` (via to_int)
@@ -1076,7 +1078,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `sc_alert_count` -> pass-through
 - `sc_alert_resolved_count` -> pass-through
 - `sc_deficiencies` -> pass-through
-- `sc_license_category` -> pass-through
+- `sc_license_category` -> collapses into `licensed` (via vocab(sc_license_category))
 - `sc_licensing_specialist_name` -> collapses into `licensing_specialist` (via last_first_name)
 - `sc_licensing_specialist_phone` -> collapses into `licensing_specialist_phone` (via none_if_sentinel)
 - `sc_program_participation` -> feeds adapter, fills `state_prek`, `state_prek_program`

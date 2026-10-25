@@ -302,6 +302,7 @@ class ProviderItem(scrapy.Item):
     # Canonical cross-state facet derived from provider_type (normalization
     # pipeline). Additive: provider_type keeps its exact state value.
     facility_category = scrapy.Field()
+    licensed = scrapy.Field()  # bool: True licensed, False exempt / approved-only; see FIELD_DOCS
     status = scrapy.Field()
     status_date = scrapy.Field()
     address = scrapy.Field()

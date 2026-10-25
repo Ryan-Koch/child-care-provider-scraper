@@ -47,6 +47,7 @@ from provider_scrape.common_fields import (
     to_id_string,
     to_int,
     to_iso_date,
+    vocab,
     vt_year_round,
     wi_total_vacancies,
     wi_vacancies_updated_date,
@@ -1046,6 +1047,10 @@ def _enrollment_zero_to_none(value):
     return count or None
 
 
+LA_LICENSED_MAP = {"Licensed": True, "License Exempt": False}
+SC_LICENSE_CATEGORY_MAP = {"License": True, "Approval": False, "Exempt": False}
+
+
 # common field -> source state-specific fields. Populating the common field
 # never removes the source field (D2). Each entry is either a plain source
 # field name (copied as-is) or a ``(source, transform)`` tuple, where
@@ -1108,6 +1113,17 @@ FIELD_COLLAPSE_MAP = {
     "complaint_count": [
         ("ia_complaint_count", to_int),
         ("ca_complaint_info", _no_complaints_zero),
+    ],
+    # Licensed (True) vs license-exempt / approved-only (False). Explicit vocabs,
+    # never generic coercion: "License Exempt" must not read as True. SC
+    # "Approval" (approved, not licensed) and "Exempt" are both False. NH only
+    # ever says "Yes"; absent stays unset. normalize_item also sets False for
+    # facility_category "exempt" when no source filled this (never True).
+    "licensed": [
+        ("ct_licensed", to_bool),
+        ("la_licensed", vocab(LA_LICENSED_MAP, "la_licensed")),
+        ("nh_licensed", to_bool),
+        ("sc_license_category", vocab(SC_LICENSE_CATEGORY_MAP, "sc_license_category")),
     ],
     # Provider-written program description. ID is an adapter in
     # common_fields.py (description first, philosophy fallback).
@@ -1941,6 +1957,8 @@ def normalize_item(item: dict, state: str) -> dict:
          bug_09)
       8. age-served flags -> bool-or-None (bug_05)
       9. scholarships_accepted -> bool-or-None (bug_06)
+    ``licensed`` is filled by collapse (step 2), then defaulted to False for
+    exempt facilities right after step 6.
     """
     # 1. whitespace / string hygiene on every string/list value. ``inspections``
     #    is handled separately (it is a list of dicts, not strings).
@@ -1990,6 +2008,12 @@ def normalize_item(item: dict, state: str) -> dict:
         item["status"] = canonical_status(item["status"])
     if item.get("provider_type") is not None:
         item["facility_category"] = facility_category_from_type(item["provider_type"])
+
+    # Fallback for `licensed`: an exempt facility_category with no source value
+    # is not licensed. Runs here because facility_category is only final after
+    # step 6; never overwrites a source value and never infers True.
+    if not _is_present(item.get("licensed")) and item.get("facility_category") == "exempt":
+        item["licensed"] = False
 
     # 7. address cleanup (in place, D1) + best-effort component parse (additive,
     #    D2). Components are only set when clearly parsed and not already set.
