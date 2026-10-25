@@ -21,6 +21,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `age_min_months` | Whitespace cleanup | Youngest accepted age in whole months (int; 0 is valid). CT weeks use floor(weeks * 12 / 52) (6 weeks -> 1 month, 624 weeks -> 144); ND/WV `N Years M Months` strings are summed (`6 Weeks` uses the same weeks rule); IL takes the widest of the day and night ranges (`6W TO 12Y`; a bare `0` means not offered and is ignored); WY takes the min over `wy_programs[]`. Unparseable values are logged and left None. `ages_served` and the `xx_` sources are unchanged. |
 | `ages_served` | Whitespace cleanup; List -> string | Ages accepted, normalized to a single string (lists are joined with ", "). |
 | `capacity` | Whitespace cleanup; Integer coercion | Licensed capacity coerced to an integer when it is a clean number; ranges/free text are left unchanged and logged. |
+| `capacity_by_age` | Whitespace cleanup | Licensed capacity by age group: list of rows `{age_group, capacity}` in source order. `age_group` is each state's own label, humanized (not normalized to bands; no cross-state comparison); `capacity` is an int through `to_int`, zero kept. Rows with a blank or unparseable (logged) capacity are dropped; no rows -> unset. MA unpivots `ma_capacity_by_age` via a fixed key table (an unknown key is logged and given a humanized label); RI copies `ri_age_group_capacity` and adds `classrooms` when present; IN labels `Start – End` (just the start when there is no end); CT emits `Three and Under`, `School Aged` and `Full Time (any age)`. The CT full-time bucket is not an age group: it is the family-home rule, typically 6 full-time + 3 school-aged = 9 licensed, so do not add it to an age total. NY is excluded (prose in `ny_capacity_description`). The `xx_` sources and `capacity` are unchanged. |
 | `care_schedules` | Whitespace cleanup | Care arrangements offered: list of canonical tokens from a fixed 12-token list, de-duplicated, in this order: before_school, after_school, drop_in, full_day, half_day, full_time, part_time, summer, school_holidays, emergency, flexible, sick_care. From FL/MS/SD/RI/WI/ND/MA/WY/OK/NJ (lists), IA/VT (`, `-separated), MI/NH (`;`-separated, NH UPPERCASE), GA (three `; `-separated sources merged) and LA (`la_before_care`/`la_after_care` True) by an explicit case-insensitive label table (`CARE_SCHEDULE_LABELS`); one label can give several tokens (`Before and After School`). Evening/overnight/weekend/year-round labels and non-schedule services are ignored silently (they feed other fields); an unknown label is logged and dropped. Empty -> unset. The state labels stay in the `xx_` source fields. |
 | `county` | Whitespace cleanup | County (whitespace-cleaned only). |
 | `curriculum` | Whitespace cleanup; Field collapse from state-specific source | Curriculum, collapsed from a single populated state source (VPK-specific curriculum is excluded). |
@@ -196,6 +197,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `connecticut` | provider | `ct_special_needs` | `serves_special_needs`, `special_needs_types` | CT `ct_special_needs` (list) -> `special_needs_types`; serves True when non-empty. |
 | `connecticut` | provider | `ct_rates` | `rates` | CT `ct_rates`: one row per `{unit}_{period}` amount column; age_group is `Infant (0-17 Months)` style. |
 | `connecticut` | provider | `ct_age_range_min_weeks`, `ct_age_range_max_weeks` | `age_min_months`, `age_max_months` | CT `ct_age_range_{min,max}_weeks` -> months, floor(weeks * 12 / 52). |
+| `connecticut` | provider | `ct_capacity_three_and_under`, `ct_capacity_school_aged`, `ct_capacity_full_time` | `capacity_by_age` | CT three fixed capacity buckets (three and under, school aged, full time) -> rows; blanks skipped. |
 | `florida` | provider | `hours` | `weekly_schedule`, `days_of_operation` | FL dict-shaped `hours` ({"monday": "6:45AM to 6:00PM", ...}) -> `weekly_schedule`; `hours` kept. |
 | `florida` | provider | `fl_is_vpk` | `state_prek`, `state_prek_program` | `fl_is_vpk` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
 | `florida` | provider | `fl_services` | `care_schedules` | Florida `fl_services` (list) -> `care_schedules` via the explicit label table. |
@@ -211,6 +213,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `illinois` | provider | `il_day_age_range`, `il_night_age_range` | `age_min_months`, `age_max_months` | IL day/night `6W TO 12Y` ranges -> widest span (min of mins, max of maxes); bare `0` ignored. |
 | `indiana` | provider | `in_schedule` | `weekly_schedule`, `days_of_operation` | IN `in_schedule` rows (12h `open`/`close`) -> 24h `weekly_schedule`; days derived. |
 | `indiana` | provider | `in_programs` | `state_prek`, `state_prek_program` | `in_programs` entry `On My Way Pre-K` -> `state_prek` True; absent -> unset (never False). |
+| `indiana` | provider | `in_licensed_ages` | `capacity_by_age` | IN `in_licensed_ages` start/end age -> `Start – End` label (just start when no end); quantity -> capacity. |
 | `iowa` | provider | `ia_openings_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Sum IA `fullTime` + `partTime` openings per band across the 7 age labels. |
 | `iowa` | provider | `ia_care_types` | `care_schedules` | Iowa `ia_care_types` (`, `-separated string) -> `care_schedules` via the explicit label table. |
 | `kentucky` | provider | `ky_prek_partnership` | `state_prek`, `state_prek_program` | `ky_prek_partnership` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
@@ -223,6 +226,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `massachusetts` | provider | `ma_financial_assistance` | `discounts` | Massachusetts `ma_financial_assistance` (list) -> `discounts` via the explicit label table; subsidy labels are skipped (they feed `scholarships_accepted`). |
 | `massachusetts` | provider | `ma_environment` | `environment_features` | Massachusetts `ma_environment` (list) -> `environment_features` via the explicit label table; pet and wheelchair labels are skipped (they belong to other fields). |
 | `massachusetts` | provider | `ma_cost_table` | `rates` | MA `ma_cost_table`: ONE schedule (Full Year > School Year > Summer > first) -> rows tagged `schedule_type`. |
+| `massachusetts` | provider | `ma_capacity_by_age` | `capacity_by_age` | MA `ma_capacity_by_age` camelCase keys -> rows with a fixed label table, in table order. |
 | `michigan` | provider | `mi_services_provided` | `care_schedules` | Michigan `mi_services_provided` (`;`-separated string) -> `care_schedules` via the explicit label table. |
 | `mississippi` | provider | `ms_months_of_operation` | `operating_months`, `year_round` | MS `ms_months_of_operation` (list of month names) -> `operating_months`; year_round = all 12. |
 | `mississippi` | provider | `ms_services` | `care_schedules` | Mississippi `ms_services` (list) -> `care_schedules` via the explicit label table. |
@@ -252,6 +256,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `pennsylvania` | provider | `pa_cost_table` | `rates` | Pennsylvania `pa_cost_table` -> full_time/part_time rows; period `day` is inferred from the amounts. |
 | `rhode_island` | provider | `ri_state_prek` | `state_prek`, `state_prek_program` | `ri_state_prek` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
 | `rhode_island` | provider | `ri_services_offered` | `care_schedules` | Rhode Island `ri_services_offered` (list) -> `care_schedules` via the explicit label table. |
+| `rhode_island` | provider | `ri_age_group_capacity` | `capacity_by_age` | RI `ri_age_group_capacity` rows copied with their own age_group label and classroom count. |
 | `south_carolina` | provider | `sc_program_participation` | `state_prek`, `state_prek_program` | `sc_program_participation` entry `First Steps 4K` -> `state_prek` True; absent -> unset (never False). |
 | `south_dakota` | provider | `sd_months_of_operation` | `year_round` | SD `sd_months_of_operation` category list (`12 Months` / seasonal) -> `year_round`. |
 | `south_dakota` | provider | `sd_services_offered` | `care_schedules` | South Dakota `sd_services_offered` (list) -> `care_schedules` via the explicit label table. |
@@ -404,9 +409,9 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ct_administers_meds` -> pass-through
 - `ct_age_range_max_weeks` -> feeds adapter, fills `age_max_months`, `age_min_months`
 - `ct_age_range_min_weeks` -> feeds adapter, fills `age_max_months`, `age_min_months`
-- `ct_capacity_full_time` -> pass-through
-- `ct_capacity_school_aged` -> pass-through
-- `ct_capacity_three_and_under` -> pass-through
+- `ct_capacity_full_time` -> feeds adapter, fills `capacity_by_age`
+- `ct_capacity_school_aged` -> feeds adapter, fills `capacity_by_age`
+- `ct_capacity_three_and_under` -> feeds adapter, fills `capacity_by_age`
 - `ct_case_uid` -> pass-through
 - `ct_date_established` -> pass-through
 - `ct_document_count` -> pass-through
@@ -612,7 +617,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `in_is_ccdf` -> pass-through
 - `in_is_health_violation` -> pass-through
 - `in_is_temporarily_closed` -> pass-through
-- `in_licensed_ages` -> pass-through
+- `in_licensed_ages` -> feeds adapter, fills `capacity_by_age`
 - `in_location_id` -> pass-through
 - `in_noncompliance` -> pass-through
 - `in_programs` -> feeds adapter, fills `state_prek`, `state_prek_program`
@@ -678,7 +683,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ma_account_id` -> pass-through
 - `ma_announcement_type` -> pass-through
 - `ma_availability` -> pass-through
-- `ma_capacity_by_age` -> pass-through
+- `ma_capacity_by_age` -> feeds adapter, fills `capacity_by_age`
 - `ma_ccrr_city` -> pass-through
 - `ma_ccrr_name` -> pass-through
 - `ma_ccrr_phone` -> pass-through
@@ -1017,7 +1022,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### Rhode Island (RI)
 
-- `ri_age_group_capacity` -> pass-through
+- `ri_age_group_capacity` -> feeds adapter, fills `capacity_by_age`
 - `ri_availability` -> pass-through
 - `ri_brightstars_rating` -> pass-through
 - `ri_ccap_expiration_date` -> pass-through

@@ -313,6 +313,7 @@ class ProviderItem(scrapy.Item):
     provider_website = scrapy.Field()
     administrator = scrapy.Field()
     capacity = scrapy.Field()
+    capacity_by_age = scrapy.Field()  # list of {age_group, capacity[, classrooms]}; state's own labels
     hours = scrapy.Field()
     days_of_operation = scrapy.Field()  # list of full day names, Monday -> Sunday
     operating_months = scrapy.Field()  # list of 3-letter months (Jan..Dec), calendar order

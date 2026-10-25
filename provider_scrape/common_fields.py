@@ -2706,3 +2706,109 @@ _register_age_range(
     _wyoming_age_range,
     "WY `wy_programs[]` min/max age months -> min of mins, max of maxes.",
 )
+
+
+# --------------------------------------------------------------------------- #
+# capacity_by_age
+# --------------------------------------------------------------------------- #
+# MA `ma_capacity_by_age` keys -> labels, in the order rows are emitted.
+MA_CAPACITY_AGE_LABELS = {
+    "infantBirth": "Infant",
+    "infantToddler": "Infant/Toddler",
+    "toddler": "Toddler",
+    "toddlerPreschool": "Toddler/Preschool",
+    "preschool": "Preschool",
+    "preschoolSA": "Preschool/School Age",
+    "kindergarten": "Kindergarten",
+    "schoolAge": "School Age",
+    "multiAge": "Multi-Age",
+}
+
+
+def capacity_row(age_group, capacity, **extra):
+    """One ``capacity_by_age`` row, or ``None`` when the capacity is blank or unparseable.
+
+    Zero is a real capacity and is kept. ``extra`` (RI ``classrooms``) is omitted when ``None``.
+    Unparseable capacities are logged by ``to_int``.
+    """
+    value = to_int(capacity)
+    if value is None:
+        return None
+    row = {"age_group": str(age_group).strip() if age_group is not None else "", "capacity": value}
+    row.update({key: val for key, val in extra.items() if val is not None})
+    return row
+
+
+def _register_capacity_by_age(state, sources, extract, doc):
+    """Register an adapter filling ``capacity_by_age`` from the rows ``extract(record)`` returns."""
+
+    @register_adapter(state, sources=sources, fills=["capacity_by_age"])
+    def adapter(record):
+        return {"capacity_by_age": [row for row in extract(record) if row is not None]}
+
+    adapter.__doc__ = doc
+    adapter.__name__ = f"{state}_capacity_by_age"
+    return adapter
+
+
+def _humanize_camel_case(key):
+    """``multiAgeGroup`` -> ``Multi Age Group`` (fallback label for an unknown key)."""
+    return re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", str(key)).title()
+
+
+def _massachusetts_capacity_by_age(record):
+    counts = record.get("ma_capacity_by_age")
+    if not isinstance(counts, dict):
+        return []
+    rows = [capacity_row(label, counts.get(key)) for key, label in MA_CAPACITY_AGE_LABELS.items() if key in counts]
+    for key in counts:
+        if key not in MA_CAPACITY_AGE_LABELS:
+            logger.warning("capacity_by_age(massachusetts): unknown age key %r", key)
+            rows.append(capacity_row(_humanize_camel_case(key), counts[key]))
+    return rows
+
+
+_register_capacity_by_age(
+    "massachusetts",
+    ["ma_capacity_by_age"],
+    _massachusetts_capacity_by_age,
+    "MA `ma_capacity_by_age` camelCase keys -> rows with a fixed label table, in table order.",
+)
+_register_capacity_by_age(
+    "rhode_island",
+    ["ri_age_group_capacity"],
+    lambda record: [
+        capacity_row(e.get("age_group"), e.get("capacity"), classrooms=to_int(e.get("classrooms")))
+        for e in _dict_entries(record.get("ri_age_group_capacity"), "rhode_island")
+    ],
+    "RI `ri_age_group_capacity` rows copied with their own age_group label and classroom count.",
+)
+_register_capacity_by_age(
+    "connecticut",
+    ["ct_capacity_three_and_under", "ct_capacity_school_aged", "ct_capacity_full_time"],
+    lambda record: [
+        capacity_row("Three and Under", record.get("ct_capacity_three_and_under")),
+        capacity_row("School Aged", record.get("ct_capacity_school_aged")),
+        # Not an age group: the family-home full-time bucket, kept so rows sum to the license.
+        capacity_row("Full Time (any age)", record.get("ct_capacity_full_time")),
+    ],
+    "CT three fixed capacity buckets (three and under, school aged, full time) -> rows; blanks skipped.",
+)
+
+
+def _indiana_capacity_by_age(record):
+    rows = []
+    for entry in _dict_entries(record.get("in_licensed_ages"), "indiana"):
+        start = str(entry.get("start_age") or "").strip()
+        end = str(entry.get("end_age") or "").strip()
+        label = f"{start} – {end}" if start and end else start or end
+        rows.append(capacity_row(label, entry.get("quantity")))
+    return rows
+
+
+_register_capacity_by_age(
+    "indiana",
+    ["in_licensed_ages"],
+    _indiana_capacity_by_age,
+    "IN `in_licensed_ages` start/end age -> `Start – End` label (just start when no end); quantity -> capacity.",
+)

@@ -171,6 +171,15 @@ FIELD_DOCS = {
     "one label can give several tokens (`Before and After School`). Evening/overnight/weekend/year-round labels "
     "and non-schedule services are ignored silently (they feed other fields); an unknown label is logged and "
     "dropped. Empty -> unset. The state labels stay in the `xx_` source fields.",
+    "capacity_by_age": "Licensed capacity by age group: list of rows `{age_group, capacity}` in source order. "
+    "`age_group` is each state's own label, humanized (not normalized to bands; no cross-state comparison); "
+    "`capacity` is an int through `to_int`, zero kept. Rows with a blank or unparseable (logged) capacity are "
+    "dropped; no rows -> unset. MA unpivots `ma_capacity_by_age` via a fixed key table (an unknown key is logged "
+    "and given a humanized label); RI copies `ri_age_group_capacity` and adds `classrooms` when present; IN labels "
+    "`Start – End` (just the start when there is no end); CT emits `Three and Under`, `School Aged` and "
+    "`Full Time (any age)`. The CT full-time bucket is not an age group: it is the family-home rule, typically 6 "
+    "full-time + 3 school-aged = 9 licensed, so do not add it to an age total. NY is excluded (prose in "
+    "`ny_capacity_description`). The `xx_` sources and `capacity` are unchanged.",
     "rates": "Published tuition: list of rows `{age_group, unit, period, amount}` in source order. `age_group` is the "
     "state's own label (state-specific; no cross-state band mapping). `unit` full_time/part_time/None; `period` "
     "hour/day/week/month/None (an unknown period is kept as None, never guessed); `amount` is a float with `$`/`,` "

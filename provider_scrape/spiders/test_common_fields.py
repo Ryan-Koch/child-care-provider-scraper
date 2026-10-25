@@ -4073,3 +4073,118 @@ def test_age_range_never_overwrites_existing_and_other_states_untouched():
     item = norm.normalize_item({"nd_min_age": "1 Year", "nd_max_age": "5 Years", "age_min_months": 3}, "north_dakota")
     assert (item["age_min_months"], item["age_max_months"]) == (3, 60)
     assert _age_range("texas", nd_min_age="1 Year", nd_max_age="5 Years") == (None, None)
+
+
+# --------------------------------------------------------------------------- #
+# capacity_by_age
+# --------------------------------------------------------------------------- #
+def _capacity_by_age(state, **record):
+    return norm.normalize_item(dict(record), state).get("capacity_by_age")
+
+
+def test_capacity_by_age_massachusetts_table_order_not_source_order():
+    rows = _capacity_by_age(
+        "massachusetts", ma_capacity_by_age={"preschool": 60, "toddlerPreschool": 9, "toddler": 18, "multiAge": 4}
+    )
+    assert rows == [
+        {"age_group": "Toddler", "capacity": 18},
+        {"age_group": "Toddler/Preschool", "capacity": 9},
+        {"age_group": "Preschool", "capacity": 60},
+        {"age_group": "Multi-Age", "capacity": 4},
+    ]
+
+
+def test_capacity_by_age_massachusetts_full_label_table():
+    keys = ["infantBirth", "infantToddler", "preschoolSA", "kindergarten", "schoolAge"]
+    rows = _capacity_by_age("massachusetts", ma_capacity_by_age={key: 1 for key in keys})
+    assert [r["age_group"] for r in rows] == [
+        "Infant",
+        "Infant/Toddler",
+        "Preschool/School Age",
+        "Kindergarten",
+        "School Age",
+    ]
+
+
+def test_capacity_by_age_massachusetts_unknown_key_logged_and_humanized(caplog):
+    with caplog.at_level(logging.WARNING):
+        rows = _capacity_by_age("massachusetts", ma_capacity_by_age={"schoolAge": 5, "afterSchoolCare": 7})
+    assert rows == [{"age_group": "School Age", "capacity": 5}, {"age_group": "After School Care", "capacity": 7}]
+    assert "unknown age key 'afterSchoolCare'" in caplog.text
+
+
+def test_capacity_by_age_rhode_island_with_and_without_classrooms():
+    rows = _capacity_by_age(
+        "rhode_island",
+        ri_age_group_capacity=[
+            {"age_group": "Toddler (18 months up to 36 months)", "classrooms": 2, "capacity": 16},
+            {"age_group": "Preschool (3 years)", "classrooms": None, "capacity": 20},
+        ],
+    )
+    assert rows == [
+        {"age_group": "Toddler (18 months up to 36 months)", "capacity": 16, "classrooms": 2},
+        {"age_group": "Preschool (3 years)", "capacity": 20},
+    ]
+
+
+def test_capacity_by_age_connecticut_zero_kept_blank_skipped_full_time_row():
+    rows = _capacity_by_age(
+        "connecticut",
+        ct_capacity_three_and_under="0",
+        ct_capacity_school_aged="",
+        ct_capacity_full_time="6",
+    )
+    assert rows == [
+        {"age_group": "Three and Under", "capacity": 0},
+        {"age_group": "Full Time (any age)", "capacity": 6},
+    ]
+    assert _capacity_by_age("connecticut", ct_capacity_school_aged="3") == [{"age_group": "School Aged", "capacity": 3}]
+
+
+def test_capacity_by_age_indiana_label_with_and_without_end_age():
+    rows = _capacity_by_age(
+        "indiana",
+        in_licensed_ages=[
+            {"start_age": "Infant", "end_age": "Twelve", "quantity": 12},
+            {"start_age": "Infant", "end_age": "35 Months", "quantity": 6},
+            {"start_age": "Toddler", "end_age": None, "quantity": 4},
+            {"start_age": "Preschool", "end_age": "  ", "quantity": 0},
+        ],
+    )
+    assert rows == [
+        {"age_group": "Infant – Twelve", "capacity": 12},
+        {"age_group": "Infant – 35 Months", "capacity": 6},
+        {"age_group": "Toddler", "capacity": 4},
+        {"age_group": "Preschool", "capacity": 0},
+    ]
+
+
+def test_capacity_by_age_unparseable_capacity_dropped_and_logged(caplog):
+    with caplog.at_level(logging.WARNING):
+        rows = _capacity_by_age(
+            "indiana",
+            in_licensed_ages=[
+                {"start_age": "Infant", "end_age": None, "quantity": "lots"},
+                {"start_age": "Toddler", "end_age": None, "quantity": 3},
+            ],
+        )
+    assert rows == [{"age_group": "Toddler", "capacity": 3}]
+    assert "could not parse number 'lots'" in caplog.text
+
+
+def test_capacity_by_age_no_rows_is_none():
+    assert _capacity_by_age("massachusetts", ma_capacity_by_age={}) is None
+    assert _capacity_by_age("rhode_island", ri_age_group_capacity=[]) is None
+    assert _capacity_by_age("connecticut", ct_capacity_full_time="") is None
+    assert _capacity_by_age("indiana", in_licensed_ages=[{"start_age": "Infant", "quantity": None}]) is None
+    assert _capacity_by_age("massachusetts") is None
+
+
+def test_capacity_by_age_new_york_not_parsed_and_sources_and_capacity_kept():
+    assert _capacity_by_age("new_york", ny_capacity_description="Infant 8, Toddler 12") is None
+    item = norm.normalize_item(
+        {"ct_capacity_three_and_under": "6", "ct_capacity_school_aged": "3", "capacity": 9}, "connecticut"
+    )
+    assert item["capacity"] == 9
+    assert item["ct_capacity_three_and_under"] == "6"
+    assert item["ct_capacity_school_aged"] == "3"
