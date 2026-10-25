@@ -1024,18 +1024,26 @@ def oklahoma_schedule(record):
 _MA_SCHEDULE_PREFERENCE = ("full year schedule", "school year schedule", "summer schedule")
 
 
+def _pick_preferred_schedule_type(entries, usable=lambda entry: True):
+    """Pick one entry by ``schedule_type``: Full Year, else first School Year, else first Summer, else first.
+
+    ``entries`` are dicts carrying a ``schedule_type``; only ``usable`` ones are candidates.
+    """
+    candidates = [e for e in entries if isinstance(e, dict) and usable(e)]
+    for wanted in _MA_SCHEDULE_PREFERENCE:
+        for entry in candidates:
+            if str(entry.get("schedule_type") or "").strip().lower() == wanted:
+                return entry
+    return candidates[0] if candidates else None
+
+
 def _pick_massachusetts_schedule(schedules):
     """Full Year, else first School Year, else first Summer, else first listed.
 
     Only schedules that actually list days are candidates, so an empty
     preferred schedule does not hide a usable one.
     """
-    candidates = [s for s in schedules if isinstance(s, dict) and s.get("days")]
-    for wanted in _MA_SCHEDULE_PREFERENCE:
-        for schedule in candidates:
-            if str(schedule.get("schedule_type") or "").strip().lower() == wanted:
-                return schedule
-    return candidates[0] if candidates else None
+    return _pick_preferred_schedule_type(schedules, lambda schedule: bool(schedule.get("days")))
 
 
 @register_adapter(
@@ -1907,4 +1915,246 @@ _register_care_schedules(
         if to_bool(record.get(field)) is True
     ],
     "LA `la_before_care`/`la_after_care` (bool) -> `before_school`/`after_school`; False adds nothing.",
+)
+
+
+# --------------------------------------------------------------------------- #
+# Rates (CT, GA, KY, PA, TN, MA, NJ, WY; NH deliberately skipped)
+# --------------------------------------------------------------------------- #
+RATE_PERIODS = {
+    "hour": "hour",
+    "hourly": "hour",
+    "day": "day",
+    "daily": "day",
+    "week": "week",
+    "weekly": "week",
+    "month": "month",
+    "monthly": "month",
+}
+RATE_UNITS = {
+    "full_time": "full_time",
+    "full-time": "full_time",
+    "full time": "full_time",
+    "full": "full_time",
+    "part_time": "part_time",
+    "part-time": "part_time",
+    "part time": "part_time",
+    "part": "part_time",
+}
+
+
+def rate_row(age_group, amount, *, unit=None, period=None, context="", **extra):
+    """One canonical ``rates`` row, or ``None`` when the amount is blank, unparseable or <= 0.
+
+    ``extra`` carries the optional ``schedule_type`` / ``care_type`` keys (omitted when blank).
+    Unparseable amounts are logged by ``to_float``.
+    """
+    value = to_float(amount)
+    if value is None or value <= 0:
+        return None
+    row = {
+        "age_group": str(age_group).strip() if age_group is not None else "",
+        "unit": unit,
+        "period": period,
+        "amount": value,
+    }
+    row.update({key: val for key, val in extra.items() if val})
+    return row
+
+
+def _rate_rows(rows):
+    return [row for row in rows if row is not None]
+
+
+def _register_rates(state, sources, extract, doc):
+    """Register an adapter filling ``rates`` from the rows ``extract(record)`` returns."""
+
+    @register_adapter(state, sources=sources, fills=["rates"])
+    def adapter(record):
+        return {"rates": _rate_rows(extract(record))}
+
+    adapter.__doc__ = doc
+    adapter.__name__ = f"{state}_rates"
+    return adapter
+
+
+def _dict_entries(value, context):
+    """The dict entries of a list-valued source; anything else is logged and skipped."""
+    for entry in value if isinstance(value, list) else []:
+        if isinstance(entry, dict):
+            yield entry
+        else:
+            logger.warning("rates(%s): non-dict entry %r dropped", context, entry)
+
+
+def _unit_period_column(column):
+    """``full_time_weekly`` -> ``("full_time", "week")``; ``None`` when not a ``{unit}_{period}`` name."""
+    unit_text, _, period_text = column.rpartition("_")
+    unit = RATE_UNITS.get(unit_text)
+    period = RATE_PERIODS.get(period_text)
+    return (unit, period) if unit and period else None
+
+
+def _connecticut_rates(record):
+    rows = []
+    for entry in _dict_entries(record.get("ct_rates"), "connecticut"):
+        age_group = entry.get("age_group")
+        label = entry.get("label")
+        name = f"{age_group} ({label})" if age_group and label else (age_group or label)
+        for column, amount in entry.items():
+            if column in ("age_group", "label"):
+                continue
+            parsed = _unit_period_column(column)
+            if parsed is None:
+                logger.warning("rates(connecticut): unknown rate column %r ignored", column)
+                continue
+            rows.append(rate_row(name, amount, unit=parsed[0], period=parsed[1]))
+    return rows
+
+
+_register_rates(
+    "connecticut",
+    ["ct_rates"],
+    _connecticut_rates,
+    "CT `ct_rates`: one row per `{unit}_{period}` amount column; age_group is `Infant (0-17 Months)` style.",
+)
+_register_rates(
+    "georgia",
+    ["ga_weekly_rates"],
+    lambda record: [
+        rate_row(e.get("age"), e.get("weekly_full_day"), unit="full_time", period="week")
+        for e in _dict_entries(record.get("ga_weekly_rates"), "georgia")
+    ],
+    "GA `ga_weekly_rates`: full-day weekly rate per age -> full_time / week row.",
+)
+
+
+def _full_part_rates(state, source, full_key, part_key, period):
+    """Register a state whose rows carry full/part-time amounts with one inferred ``period``."""
+    _register_rates(
+        state,
+        [source],
+        lambda record: [
+            rate_row(e.get("age_group"), e.get(key), unit=unit, period=period)
+            for e in _dict_entries(record.get(source), state)
+            for key, unit in ((full_key, "full_time"), (part_key, "part_time"))
+        ],
+        f"{state.replace('_', ' ').title()} `{source}` -> full_time/part_time rows; "
+        f"period `{period}` is inferred from the amounts.",
+    )
+
+
+_full_part_rates("kentucky", "ky_service_costs", "full_time_cost", "part_time_cost", "day")
+_full_part_rates("pennsylvania", "pa_cost_table", "full_time_rate", "part_time_rate", "day")
+
+_TN_UNIT_OF_CARE = {"full-time": ("full_time", "week"), "part-time": ("part_time", "week")}
+# Descriptors whose amount is not a weekly figure (sample medians: Hourly care $12,
+# Drop In $15). Drop In may be hourly or daily, so its period is left unknown.
+_TN_DESCRIPTOR_PERIODS = {"hourly care": "hour", "drop in": None}
+
+
+def _tennessee_rates(record):
+    rows = []
+    for entry in _dict_entries(record.get("tn_age_group_rates"), "tennessee"):
+        descriptor = str(entry.get("unit_of_care") or "").strip()
+        key = descriptor.lower()
+        care_type = None
+        if key in _TN_UNIT_OF_CARE:
+            unit, period = _TN_UNIT_OF_CARE[key]
+        elif key in ("weekly", "daily", "monthly"):
+            unit, period = None, RATE_PERIODS[key]
+        elif key in _TN_DESCRIPTOR_PERIODS:
+            unit, period, care_type = None, _TN_DESCRIPTOR_PERIODS[key], descriptor
+        else:
+            # Before/After, Summer, Sch out, Yearly ...: keep the label, the amount is still a weekly figure.
+            unit, period, care_type = None, "week", descriptor
+        rows.append(
+            rate_row(entry.get("age_group"), entry.get("weekly_rate"), unit=unit, period=period, care_type=care_type)
+        )
+    return rows
+
+
+_register_rates(
+    "tennessee",
+    ["tn_age_group_rates"],
+    _tennessee_rates,
+    "TN `tn_age_group_rates`: unit_of_care sets unit (Full/Part-time) or period (Weekly/Daily/Monthly); "
+    "other descriptors -> `care_type`; `$0.00` skipped.",
+)
+
+_MA_RATE_TYPE_RE = re.compile(r"^\s*(hourly|daily|weekly|monthly)\s+(full|part)\s+time\s*$", re.IGNORECASE)
+
+
+def _massachusetts_rates(record):
+    entries = list(_dict_entries(record.get("ma_cost_table"), "massachusetts"))
+    chosen = _pick_preferred_schedule_type(entries)
+    if chosen is None:
+        return []
+    wanted = str(chosen.get("schedule_type") or "").strip().lower()
+    rows = []
+    for entry in entries:
+        if str(entry.get("schedule_type") or "").strip().lower() != wanted:
+            continue
+        match = _MA_RATE_TYPE_RE.match(str(entry.get("rate_type") or ""))
+        if match:
+            period, unit = RATE_PERIODS[match.group(1).lower()], RATE_UNITS[match.group(2).lower()]
+        else:
+            logger.warning("rates(massachusetts): unrecognised rate_type %r", entry.get("rate_type"))
+            period = unit = None
+        schedule_type = str(entry.get("schedule_type") or "").strip()
+        rows.append(
+            rate_row(entry.get("age_group"), entry.get("amount"), unit=unit, period=period, schedule_type=schedule_type)
+        )
+    return rows
+
+
+_register_rates(
+    "massachusetts",
+    ["ma_cost_table"],
+    _massachusetts_rates,
+    "MA `ma_cost_table`: ONE schedule (Full Year > School Year > Summer > first) -> rows tagged `schedule_type`.",
+)
+
+_NJ_TUITION_AGES = ("infant", "toddler", "preschool", "school_age")
+_NJ_TUITION_PERIODS = ("hourly", "daily", "weekly", "monthly")
+_NJ_TUITION_FIELDS = [f"nj_tuition_{age}_{period}" for age in _NJ_TUITION_AGES for period in _NJ_TUITION_PERIODS]
+
+
+def _new_jersey_rates(record):
+    return [
+        rate_row(age.replace("_", " ").title(), record.get(f"nj_tuition_{age}_{period}"), period=RATE_PERIODS[period])
+        for age in _NJ_TUITION_AGES
+        for period in _NJ_TUITION_PERIODS
+    ]
+
+
+_register_rates(
+    "new_jersey",
+    _NJ_TUITION_FIELDS,
+    _new_jersey_rates,
+    "NJ `nj_tuition_{age}_{period}` (16 columns) -> one row per amount > 0; `0.0` means blank.",
+)
+
+
+def _wyoming_rates(record):
+    rows = []
+    for program in _dict_entries(record.get("wy_programs"), "wyoming"):
+        age_group = program.get("name") or program.get("type")
+        for rate in _dict_entries(program.get("rates"), "wyoming"):
+            raw_period = rate.get("period")
+            period = RATE_PERIODS.get(str(raw_period or "").strip().lower())
+            if period is None and raw_period:
+                logger.warning("rates(wyoming): unknown period %r kept as None", raw_period)
+            raw_type = str(rate.get("type") or "").strip()
+            unit = RATE_UNITS.get(raw_type.lower())
+            care_type = None if unit else raw_type
+            rows.append(rate_row(age_group, rate.get("rate"), unit=unit, period=period, care_type=care_type))
+    return rows
+
+
+_register_rates(
+    "wyoming",
+    ["wy_programs"],
+    _wyoming_rates,
+    "WY `wy_programs[].rates`: program name as age_group; FULL_TIME/PART_TIME -> unit, other types -> `care_type`.",
 )

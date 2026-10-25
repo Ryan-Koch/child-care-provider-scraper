@@ -3332,3 +3332,212 @@ def test_care_schedules_louisiana_bools():
 def test_care_schedules_does_not_overwrite_and_ignores_other_states():
     assert _schedules("florida", fl_services=["Drop In"], care_schedules=["summer"]) == ["summer"]
     assert _schedules("texas", fl_services=["Drop In"]) is None
+
+
+# --------------------------------------------------------------------------- #
+# rates
+# --------------------------------------------------------------------------- #
+def _rates(state, **record):
+    return norm.normalize_item(dict(record), state).get("rates")
+
+
+def test_rates_connecticut_unpivots_both_columns_and_labels():
+    rates = _rates(
+        "connecticut",
+        ct_rates=[
+            {"age_group": "Infant", "label": "0-17 Months", "full_time_weekly": "225.00", "full_time_hourly": "6.50"},
+            {"age_group": "Toddler", "part_time_daily": "30"},
+        ],
+    )
+    assert rates == [
+        {"age_group": "Infant (0-17 Months)", "unit": "full_time", "period": "week", "amount": 225.0},
+        {"age_group": "Infant (0-17 Months)", "unit": "full_time", "period": "hour", "amount": 6.5},
+        {"age_group": "Toddler", "unit": "part_time", "period": "day", "amount": 30.0},
+    ]
+
+
+def test_rates_connecticut_unknown_column_logged(caplog):
+    with caplog.at_level(logging.WARNING):
+        rates = _rates("connecticut", ct_rates=[{"age_group": "Infant", "bogus": "5", "full_time_weekly": "9"}])
+    assert [r["amount"] for r in rates] == [9.0]
+    assert "unknown rate column 'bogus'" in caplog.text
+
+
+def test_rates_georgia_strips_dollar_and_comma():
+    rates = _rates("georgia", ga_weekly_rates=[{"age": "1 year", "weekly_full_day": "$1,150.00"}])
+    assert rates == [{"age_group": "1 year", "unit": "full_time", "period": "week", "amount": 1150.0}]
+    assert _rates("georgia", ga_weekly_rates=[{"age": "2 years", "weekly_full_day": None}]) is None
+
+
+def test_rates_kentucky_and_pennsylvania_period_is_day():
+    ky = _rates("kentucky", ky_service_costs=[{"age_group": "Infant", "full_time_cost": 40.0, "part_time_cost": 20.0}])
+    assert ky == [
+        {"age_group": "Infant", "unit": "full_time", "period": "day", "amount": 40.0},
+        {"age_group": "Infant", "unit": "part_time", "period": "day", "amount": 20.0},
+    ]
+    pa = _rates(
+        "pennsylvania",
+        pa_cost_table=[{"age_group": "Toddler", "full_time_rate": "$34.00", "part_time_rate": None, "openings": "x"}],
+    )
+    assert pa == [{"age_group": "Toddler", "unit": "full_time", "period": "day", "amount": 34.0}]
+
+
+def test_rates_tennessee_every_unit_of_care_class_and_zero_skipped():
+    def row(descriptor, rate="$144.00"):
+        return {"age_group": "Infant", "weekly_rate": rate, "unit_of_care": descriptor, "vacancy": "Yes"}
+
+    rates = _rates(
+        "tennessee",
+        tn_age_group_rates=[
+            row("Full-time"),
+            row("Part-time"),
+            row("Weekly"),
+            row("Daily"),
+            row("Monthly"),
+            row("Before/After"),
+            row("Summer", "$0.00"),
+        ],
+    )
+    assert [(r["unit"], r["period"], r.get("care_type")) for r in rates] == [
+        ("full_time", "week", None),
+        ("part_time", "week", None),
+        (None, "week", None),
+        (None, "day", None),
+        (None, "month", None),
+        (None, "week", "Before/After"),
+    ]
+    assert all(r["amount"] == 144.0 for r in rates)
+
+
+def test_rates_tennessee_non_weekly_descriptors():
+    rates = _rates(
+        "tennessee",
+        tn_age_group_rates=[
+            {"age_group": "Infant", "weekly_rate": "$12.00", "unit_of_care": "Hourly care"},
+            {"age_group": "Infant", "weekly_rate": "$15.00", "unit_of_care": "Drop In"},
+            {"age_group": "Infant", "weekly_rate": "$345.00", "unit_of_care": "Yearly"},
+        ],
+    )
+    assert [(r["period"], r.get("care_type")) for r in rates] == [
+        ("hour", "Hourly care"),
+        (None, "Drop In"),
+        ("week", "Yearly"),  # a year-round descriptor; the amount is weekly
+    ]
+
+
+@pytest.mark.parametrize(
+    ("rate_type", "unit", "period"),
+    [
+        ("Hourly Full Time", "full_time", "hour"),
+        ("Hourly Part Time", "part_time", "hour"),
+        ("Daily Full Time", "full_time", "day"),
+        ("Daily Part Time", "part_time", "day"),
+        ("Weekly Full Time", "full_time", "week"),
+        ("Weekly Part Time", "part_time", "week"),
+        ("Monthly Full Time", "full_time", "month"),
+        ("Monthly Part Time", "part_time", "month"),
+        ("Per Fortnight", None, None),
+    ],
+)
+def test_rates_massachusetts_rate_type(rate_type, unit, period, caplog):
+    table = [
+        {"schedule_type": "Full Year Schedule", "age_group": "Preschool", "rate_type": rate_type, "amount": "$360.81"}
+    ]
+    with caplog.at_level(logging.WARNING):
+        rates = _rates("massachusetts", ma_cost_table=table)
+    assert rates == [
+        {
+            "age_group": "Preschool",
+            "unit": unit,
+            "period": period,
+            "amount": 360.81,
+            "schedule_type": "Full Year Schedule",
+        }
+    ]
+    assert ("unrecognised rate_type" in caplog.text) == (unit is None)
+
+
+@pytest.mark.parametrize(
+    ("present", "expected"),
+    [
+        (["Summer Schedule", "School Year Schedule", "Full Year Schedule"], "Full Year Schedule"),
+        (["Summer Schedule", "School Year Schedule"], "School Year Schedule"),
+        (["Other Schedule", "Summer Schedule"], "Summer Schedule"),
+        (["Other Schedule", "Odd Schedule"], "Other Schedule"),
+    ],
+)
+def test_rates_massachusetts_schedule_priority(present, expected):
+    table = [
+        {"schedule_type": s, "age_group": "Infant", "rate_type": "Daily Full Time", "amount": "10.00"} for s in present
+    ]
+    rates = _rates("massachusetts", ma_cost_table=table)
+    assert [r["schedule_type"] for r in rates] == [expected]
+
+
+def test_rates_new_jersey_skips_zero_and_none():
+    rates = _rates(
+        "new_jersey",
+        nj_tuition_infant_weekly=250.0,
+        nj_tuition_infant_hourly=0.0,
+        nj_tuition_school_age_monthly=800.5,
+        nj_tuition_toddler_daily=None,
+    )
+    assert rates == [
+        {"age_group": "Infant", "unit": None, "period": "week", "amount": 250.0},
+        {"age_group": "School Age", "unit": None, "period": "month", "amount": 800.5},
+    ]
+    assert _rates("new_jersey", nj_tuition_infant_weekly=0.0) is None
+
+
+def test_rates_wyoming_maps_period_and_type(caplog):
+    programs = [
+        {
+            "name": "Infant Care",
+            "type": "Infant Care",
+            "rates": [
+                {"rate": 36.96, "period": "DAILY", "type": "FULL_TIME"},
+                {"rate": 18.48, "period": "DAILY", "type": "PART_TIME"},
+                {"rate": 5, "period": "HOURLY", "type": "DROP_IN"},
+                {"rate": 9, "period": "FORTNIGHTLY", "type": "FULL_TIME"},
+            ],
+        }
+    ]
+    with caplog.at_level(logging.WARNING):
+        rates = _rates("wyoming", wy_programs=programs)
+    assert rates == [
+        {"age_group": "Infant Care", "unit": "full_time", "period": "day", "amount": 36.96},
+        {"age_group": "Infant Care", "unit": "part_time", "period": "day", "amount": 18.48},
+        {"age_group": "Infant Care", "unit": None, "period": "hour", "amount": 5.0, "care_type": "DROP_IN"},
+        {"age_group": "Infant Care", "unit": "full_time", "period": None, "amount": 9.0},
+    ]
+    assert "unknown period 'FORTNIGHTLY'" in caplog.text
+
+
+def test_rates_new_hampshire_produces_none_and_source_kept():
+    text = "Please contact the child care provider for the rates."
+    item = norm.normalize_item({"nh_rates": text}, "new_hampshire")
+    assert "rates" not in item
+    assert item["nh_rates"] == text
+
+
+def test_rates_unparseable_logged_and_nonpositive_dropped(caplog):
+    with caplog.at_level(logging.WARNING):
+        rates = _rates(
+            "georgia",
+            ga_weekly_rates=[
+                {"age": "a", "weekly_full_day": "call us"},
+                {"age": "b", "weekly_full_day": "$0.00"},
+                {"age": "c", "weekly_full_day": "-5"},
+                {"age": "d", "weekly_full_day": " $12.50 "},
+            ],
+        )
+    assert rates == [{"age_group": "d", "unit": "full_time", "period": "week", "amount": 12.5}]
+    assert "could not parse number 'call us'" in caplog.text
+
+
+def test_rates_keeps_sources_and_never_overwrites():
+    source = [{"age": "1 year", "weekly_full_day": "$150.00"}]
+    item = norm.normalize_item({"ga_weekly_rates": source}, "georgia")
+    assert item["ga_weekly_rates"] == source
+    existing = [{"age_group": "x", "unit": None, "period": None, "amount": 1.0}]
+    assert _rates("georgia", ga_weekly_rates=source, rates=existing) == existing

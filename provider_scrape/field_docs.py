@@ -163,6 +163,18 @@ FIELD_DOCS = {
     "one label can give several tokens (`Before and After School`). Evening/overnight/weekend/year-round labels "
     "and non-schedule services are ignored silently (they feed other fields); an unknown label is logged and "
     "dropped. Empty -> unset. The state labels stay in the `xx_` source fields.",
+    "rates": "Published tuition: list of rows `{age_group, unit, period, amount}` in source order. `age_group` is the "
+    "state's own label (state-specific; no cross-state band mapping). `unit` full_time/part_time/None; `period` "
+    "hour/day/week/month/None (an unknown period is kept as None, never guessed); `amount` is a float with `$`/`,` "
+    "stripped. Rows with a blank, unparseable (logged) or <= 0 amount are dropped. Optional keys: `schedule_type` "
+    "(MA) and `care_type` (TN, WY; the state's label when it is not a unit/period). From CT (one row per "
+    "`{unit}_{period}` column; age_group `Infant (0-17 Months)`), GA (weekly full day), KY and PA (the period `day` "
+    "is inferred from the amounts, not stated by the source), TN (`unit_of_care` Full/Part-time -> unit, "
+    "Weekly/Daily/Monthly -> period, any other descriptor -> `care_type` with period week; `$0.00` skipped), MA "
+    "(`rate_type` parsed; ONE schedule type per provider chosen with the same pick as `weekly_schedule`: Full Year, "
+    "else School Year, else Summer, else first), NJ (16 `nj_tuition_*` columns, `0.0` skipped) and WY (program name "
+    "as age_group). NH is skipped (`nh_rates` is free text and is left alone). Empty -> unset. The `xx_` sources "
+    "are kept.",
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
     "deficiencies": "Deficiency/violation count for the provider, coerced to an "
     "integer (bug_10). Digit strings, comma-grouped counts, and integral "

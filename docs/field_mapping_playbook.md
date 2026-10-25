@@ -74,6 +74,7 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `evening_care` | Evening / second-shift care | Bool (WY bool; NC second-shift capacity > 0; OK `Evening Hours` True, absent unset) |
 | `weekend_care` | Weekend care | Bool (WY bool; OK `Weekend Hours` True, absent unset) |
 | `care_schedules` | Care arrangements offered | List from a fixed 12-token list (`CARE_SCHEDULE_LABELS` in `common_fields.py`: explicit case-insensitive label table, one label may give several tokens, canonical order, de-duped; ignored labels silent, unknown logged and dropped; FL/MS/SD/RI/WI/ND/MA/WY/OK/NJ/IA/VT/MI/NH/GA/LA via per-state adapters, GA merges three sources, LA from two bools) |
+| `rates` | Published tuition by age group | List of `{age_group, unit, period, amount}` (+ optional `schedule_type` MA, `care_type` TN/WY); float amounts, `$`/`,` stripped, <= 0/blank/unparseable dropped; state age labels kept; unknown period -> None. CT/GA/TN/MA/NJ/WY unpivoted via per-state adapters; KY/PA period `day` inferred from amounts; MA picks one schedule like `weekly_schedule`; NH skipped |
 | `ages_served` | Ages accepted | String (lists joined with `, `) |
 | `county` | County | String |
 | `scholarships_accepted` | Subsidy/scholarship acceptance | bool-or-None via `coerce_scholarships_accepted_flag`; FL/VA/WA collapsed from their subsidy flags (WA empty -> unset), NH from the `STATE CC ASSISTANCE (SCHOLARSHIP)` token as a fallback only; OK set by its spider |

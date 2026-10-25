@@ -56,6 +56,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `provider_name` | Whitespace cleanup; Title Case (ALL-CAPS names) | The facility's name. ALL-CAPS values are converted to Title Case; whitespace is cleaned. |
 | `provider_type` | Whitespace cleanup; Preserved (drives facility_category) | The raw state license category, preserved exactly. It drives the derived facility_category facet. |
 | `provider_website` | Whitespace cleanup | Provider website URL (whitespace-cleaned only). |
+| `rates` | Whitespace cleanup | Published tuition: list of rows `{age_group, unit, period, amount}` in source order. `age_group` is the state's own label (state-specific; no cross-state band mapping). `unit` full_time/part_time/None; `period` hour/day/week/month/None (an unknown period is kept as None, never guessed); `amount` is a float with `$`/`,` stripped. Rows with a blank, unparseable (logged) or <= 0 amount are dropped. Optional keys: `schedule_type` (MA) and `care_type` (TN, WY; the state's label when it is not a unit/period). From CT (one row per `{unit}_{period}` column; age_group `Infant (0-17 Months)`), GA (weekly full day), KY and PA (the period `day` is inferred from the amounts, not stated by the source), TN (`unit_of_care` Full/Part-time -> unit, Weekly/Daily/Monthly -> period, any other descriptor -> `care_type` with period week; `$0.00` skipped), MA (`rate_type` parsed; ONE schedule type per provider chosen with the same pick as `weekly_schedule`: Full Year, else School Year, else Summer, else first), NJ (16 `nj_tuition_*` columns, `0.0` skipped) and WY (program name as age_group). NH is skipped (`nh_rates` is free text and is left alone). Empty -> unset. The `xx_` sources are kept. |
 | `scholarships_accepted` | Whitespace cleanup; Field collapse from state-specific source (transforms: has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP)), scholarships_flag) | Whether the provider accepts child-care subsidies/scholarships: bool-or-None. States that emit "Yes"/"No" or NM's "Accepted"/"Not Accepted" are coerced via the shared strict token rule (bug_06); an unparseable token becomes None rather than a guessed True. |
 | `school` | Whitespace cleanup | Whether the provider serves school-age children: bool-or-None. See infant. |
 | `school_district` | Whitespace cleanup; Field collapse from state-specific source | Associated school district, collapsed from a single populated state-specific source field. |
@@ -184,23 +185,27 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `colorado` | provider | `co_special_needs` | `serves_special_needs`, `special_needs_types` | CO `co_special_needs` (`;`-separated) -> `serves_special_needs` + `special_needs_types`; `None` -> False. |
 | `connecticut` | provider | `ct_schedule` | `weekly_schedule`, `days_of_operation` | CT `ct_schedule` rows (already 24h `open`/`close`) -> `weekly_schedule`; days derived. |
 | `connecticut` | provider | `ct_special_needs` | `serves_special_needs`, `special_needs_types` | CT `ct_special_needs` (list) -> `special_needs_types`; serves True when non-empty. |
+| `connecticut` | provider | `ct_rates` | `rates` | CT `ct_rates`: one row per `{unit}_{period}` amount column; age_group is `Infant (0-17 Months)` style. |
 | `florida` | provider | `hours` | `weekly_schedule`, `days_of_operation` | FL dict-shaped `hours` ({"monday": "6:45AM to 6:00PM", ...}) -> `weekly_schedule`; `hours` kept. |
 | `florida` | provider | `fl_is_vpk` | `state_prek`, `state_prek_program` | `fl_is_vpk` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
 | `florida` | provider | `fl_services` | `care_schedules` | Florida `fl_services` (list) -> `care_schedules` via the explicit label table. |
 | `georgia` | provider | `ga_operating_months` | `operating_months`, `year_round` | GA `ga_operating_months` (`JAN,FEB,...`) -> `operating_months`; year_round = all 12. |
 | `georgia` | provider | `ga_other_care_type` | `state_prek`, `state_prek_program` | `ga_other_care_type` entry `Georgia's Pre-K` -> `state_prek` True; absent -> unset (never False). |
 | `georgia` | provider | `ga_special_hours`, `ga_accepts_children_type`, `ga_summer_camp` | `care_schedules` | GA `ga_special_hours`, `ga_accepts_children_type`, `ga_summer_camp` (`; `-separated) merged -> `care_schedules`. |
+| `georgia` | provider | `ga_weekly_rates` | `rates` | GA `ga_weekly_rates`: full-day weekly rate per age -> full_time / week row. |
 | `illinois` | provider | `il_night_capacity` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | `il_night_capacity` (string int) -> `night_care` = capacity > 0. |
 | `indiana` | provider | `in_schedule` | `weekly_schedule`, `days_of_operation` | IN `in_schedule` rows (12h `open`/`close`) -> 24h `weekly_schedule`; days derived. |
 | `indiana` | provider | `in_programs` | `state_prek`, `state_prek_program` | `in_programs` entry `On My Way Pre-K` -> `state_prek` True; absent -> unset (never False). |
 | `iowa` | provider | `ia_openings_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Sum IA `fullTime` + `partTime` openings per band across the 7 age labels. |
 | `iowa` | provider | `ia_care_types` | `care_schedules` | Iowa `ia_care_types` (`, `-separated string) -> `care_schedules` via the explicit label table. |
 | `kentucky` | provider | `ky_prek_partnership` | `state_prek`, `state_prek_program` | `ky_prek_partnership` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
+| `kentucky` | provider | `ky_service_costs` | `rates` | Kentucky `ky_service_costs` -> full_time/part_time rows; period `day` is inferred from the amounts. |
 | `louisiana` | provider | `la_night_care` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | `la_night_care` (bool) -> `night_care`; roll-up True when night care is offered. |
 | `louisiana` | provider | `la_before_care`, `la_after_care` | `care_schedules` | LA `la_before_care`/`la_after_care` (bool) -> `before_school`/`after_school`; False adds nothing. |
 | `massachusetts` | provider | `ma_schedules` | `weekly_schedule`, `days_of_operation` | MA `ma_schedules`: ONE schedule (Full Year > School Year > Summer > first) -> rows tagged `schedule_type`. |
 | `massachusetts` | provider | `ma_special_needs` | `serves_special_needs`, `special_needs_types` | MA `ma_special_needs` (`;`-separated) -> types; `Experience` -> serves True, never a type. |
 | `massachusetts` | provider | `ma_schedule_options` | `care_schedules` | Massachusetts `ma_schedule_options` (list) -> `care_schedules` via the explicit label table. |
+| `massachusetts` | provider | `ma_cost_table` | `rates` | MA `ma_cost_table`: ONE schedule (Full Year > School Year > Summer > first) -> rows tagged `schedule_type`. |
 | `michigan` | provider | `mi_services_provided` | `care_schedules` | Michigan `mi_services_provided` (`;`-separated string) -> `care_schedules` via the explicit label table. |
 | `mississippi` | provider | `ms_months_of_operation` | `operating_months`, `year_round` | MS `ms_months_of_operation` (list of month names) -> `operating_months`; year_round = all 12. |
 | `mississippi` | provider | `ms_services` | `care_schedules` | Mississippi `ms_services` (list) -> `care_schedules` via the explicit label table. |
@@ -209,6 +214,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `new_hampshire` | provider | `nh_special_needs` | `serves_special_needs`, `special_needs_types` | NH `nh_special_needs` (`, `-separated UPPERCASE) -> types; `EXPERIENCE` -> serves True, never a type. |
 | `new_hampshire` | provider | `nh_schedule_options` | `care_schedules` | New Hampshire `nh_schedule_options` (`;`-separated UPPERCASE string) -> `care_schedules` via the explicit label table. |
 | `new_jersey` | provider | `nj_special_schedules_labels` | `care_schedules` | New Jersey `nj_special_schedules_labels` (list) -> `care_schedules` via the explicit label table. |
+| `new_jersey` | provider | `nj_tuition_infant_hourly`, `nj_tuition_infant_daily`, `nj_tuition_infant_weekly`, `nj_tuition_infant_monthly`, `nj_tuition_toddler_hourly`, `nj_tuition_toddler_daily`, `nj_tuition_toddler_weekly`, `nj_tuition_toddler_monthly`, `nj_tuition_preschool_hourly`, `nj_tuition_preschool_daily`, `nj_tuition_preschool_weekly`, `nj_tuition_preschool_monthly`, `nj_tuition_school_age_hourly`, `nj_tuition_school_age_daily`, `nj_tuition_school_age_weekly`, `nj_tuition_school_age_monthly` | `rates` | NJ `nj_tuition_{age}_{period}` (16 columns) -> one row per amount > 0; `0.0` means blank. |
 | `new_york` | provider | `ny_address_omitted`, `ny_phone_number_omitted` | `address_suppressed`, `phone_suppressed` | NY `Address Omitted` / `Phone Number Omitted`: `Y` -> True, blank or absent -> False. |
 | `north_carolina` | provider | `nc_capacity_second_shift`, `nc_capacity_third_shift` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | `nc_capacity_second_shift`/`nc_capacity_third_shift` (int) -> `evening_care`/`night_care` = capacity > 0. |
 | `north_dakota` | provider | `nd_vacancies_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map ND `nd_vacancies_by_age` rows (by age label) onto the four vacancy bands. |
@@ -219,11 +225,13 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `oklahoma` | provider | `ok_care_types` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | OK `ok_care_types` Evening/Weekend/Overnight Hours -> evening/weekend/night care True; absent -> unset. |
 | `oklahoma` | provider | `ok_care_types` | `care_schedules` | OK `ok_care_types` (list) -> `care_schedules` (Drop In, Sick Care, Summer Only, School Vacation Only). |
 | `pennsylvania` | provider | `meals` | `food_program` | The common `meals` text mentioning the food program -> `food_program` True; else unset. |
+| `pennsylvania` | provider | `pa_cost_table` | `rates` | Pennsylvania `pa_cost_table` -> full_time/part_time rows; period `day` is inferred from the amounts. |
 | `rhode_island` | provider | `ri_state_prek` | `state_prek`, `state_prek_program` | `ri_state_prek` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
 | `rhode_island` | provider | `ri_services_offered` | `care_schedules` | Rhode Island `ri_services_offered` (list) -> `care_schedules` via the explicit label table. |
 | `south_carolina` | provider | `sc_program_participation` | `state_prek`, `state_prek_program` | `sc_program_participation` entry `First Steps 4K` -> `state_prek` True; absent -> unset (never False). |
 | `south_dakota` | provider | `sd_months_of_operation` | `year_round` | SD `sd_months_of_operation` category list (`12 Months` / seasonal) -> `year_round`. |
 | `south_dakota` | provider | `sd_services_offered` | `care_schedules` | South Dakota `sd_services_offered` (list) -> `care_schedules` via the explicit label table. |
+| `tennessee` | provider | `tn_age_group_rates` | `rates` | TN `tn_age_group_rates`: unit_of_care sets unit (Full/Part-time) or period (Weekly/Daily/Monthly); other descriptors -> `care_type`; `$0.00` skipped. |
 | `utah` | provider | `meals` | `food_program` | The common `meals` text mentioning the food program -> `food_program` True; else unset. |
 | `vermont` | provider | `vt_program_participation` | `state_prek`, `state_prek_program` | `vt_program_participation` entry `Pre-K Program` -> `state_prek` True; absent -> unset (never False). |
 | `vermont` | provider | `vt_type_of_care` | `care_schedules` | Vermont `vt_type_of_care` (`, `-separated string) -> `care_schedules` via the explicit label table. |
@@ -239,6 +247,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `wyoming` | provider | `wy_schedule` | `weekly_schedule`, `days_of_operation` | WY `wy_schedule` rows (`start`/`end`, 24h) -> `weekly_schedule`; days derived. |
 | `wyoming` | provider | `wy_evening_care`, `wy_weekend_care` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | `wy_evening_care`/`wy_weekend_care` (bool) -> `evening_care`/`weekend_care`; roll-up True if either. |
 | `wyoming` | provider | `wy_services` | `care_schedules` | Wyoming `wy_services` (list) -> `care_schedules` via the explicit label table. |
+| `wyoming` | provider | `wy_programs` | `rates` | WY `wy_programs[].rates`: program name as age_group; FULL_TIME/PART_TIME -> unit, other types -> `care_type`. |
 
 ## Controlled vocabulary: `status`
 
@@ -381,7 +390,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ct_oec_contact_id` -> pass-through
 - `ct_provider_id` -> collapses into `source_provider_id` (via to_id_string)
 - `ct_provider_uid` -> pass-through
-- `ct_rates` -> pass-through
+- `ct_rates` -> feeds adapter, fills `rates`
 - `ct_reason` -> pass-through
 - `ct_resolution` -> pass-through
 - `ct_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
@@ -486,7 +495,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ga_summer_camp` -> feeds adapter, fills `care_schedules`
 - `ga_transportation` -> collapses into `transportation`
 - `ga_transportation_notes` -> pass-through
-- `ga_weekly_rates` -> pass-through
+- `ga_weekly_rates` -> feeds adapter, fills `rates`
 
 ### Hawaii (HI)
 
@@ -613,7 +622,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ky_prek_partnership` -> feeds adapter, fills `state_prek`, `state_prek_program`
 - `ky_provider_id` -> collapses into `source_provider_id` (via to_id_string)
 - `ky_report_name` -> pass-through
-- `ky_service_costs` -> pass-through
+- `ky_service_costs` -> feeds adapter, fills `rates`
 - `ky_stars_rating` -> pass-through
 
 ### Louisiana (LA)
@@ -644,7 +653,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ma_ccrr_phone` -> pass-through
 - `ma_ccrr_website` -> pass-through
 - `ma_contact_redacted` -> collapses into `phone_suppressed` (via to_bool)
-- `ma_cost_table` -> pass-through
+- `ma_cost_table` -> feeds adapter, fills `rates`
 - `ma_domain_compliance_counts` -> pass-through
 - `ma_domain_counts` -> pass-through
 - `ma_domains` -> pass-through
@@ -878,22 +887,22 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nj_special_schedules_labels` -> feeds adapter, fills `care_schedules`
 - `nj_transportation` -> pass-through
 - `nj_transportation_labels` -> collapses into `transportation`
-- `nj_tuition_infant_daily` -> pass-through
-- `nj_tuition_infant_hourly` -> pass-through
-- `nj_tuition_infant_monthly` -> pass-through
-- `nj_tuition_infant_weekly` -> pass-through
-- `nj_tuition_preschool_daily` -> pass-through
-- `nj_tuition_preschool_hourly` -> pass-through
-- `nj_tuition_preschool_monthly` -> pass-through
-- `nj_tuition_preschool_weekly` -> pass-through
-- `nj_tuition_school_age_daily` -> pass-through
-- `nj_tuition_school_age_hourly` -> pass-through
-- `nj_tuition_school_age_monthly` -> pass-through
-- `nj_tuition_school_age_weekly` -> pass-through
-- `nj_tuition_toddler_daily` -> pass-through
-- `nj_tuition_toddler_hourly` -> pass-through
-- `nj_tuition_toddler_monthly` -> pass-through
-- `nj_tuition_toddler_weekly` -> pass-through
+- `nj_tuition_infant_daily` -> feeds adapter, fills `rates`
+- `nj_tuition_infant_hourly` -> feeds adapter, fills `rates`
+- `nj_tuition_infant_monthly` -> feeds adapter, fills `rates`
+- `nj_tuition_infant_weekly` -> feeds adapter, fills `rates`
+- `nj_tuition_preschool_daily` -> feeds adapter, fills `rates`
+- `nj_tuition_preschool_hourly` -> feeds adapter, fills `rates`
+- `nj_tuition_preschool_monthly` -> feeds adapter, fills `rates`
+- `nj_tuition_preschool_weekly` -> feeds adapter, fills `rates`
+- `nj_tuition_school_age_daily` -> feeds adapter, fills `rates`
+- `nj_tuition_school_age_hourly` -> feeds adapter, fills `rates`
+- `nj_tuition_school_age_monthly` -> feeds adapter, fills `rates`
+- `nj_tuition_school_age_weekly` -> feeds adapter, fills `rates`
+- `nj_tuition_toddler_daily` -> feeds adapter, fills `rates`
+- `nj_tuition_toddler_hourly` -> feeds adapter, fills `rates`
+- `nj_tuition_toddler_monthly` -> feeds adapter, fills `rates`
+- `nj_tuition_toddler_weekly` -> feeds adapter, fills `rates`
 - `nj_unique_program_id` -> collapses into `source_provider_id` (via to_id_string)
 - `nj_yearly_schedule` -> pass-through
 - `nj_yearly_schedule_label` -> pass-through
@@ -969,7 +978,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 ### Pennsylvania (PA)
 
 - `pa_certificate_status` -> pass-through
-- `pa_cost_table` -> pass-through
+- `pa_cost_table` -> feeds adapter, fills `rates`
 - `pa_meal_options` -> collapses into `meals`
 - `pa_schedule` -> pass-through
 - `pa_school_district` -> collapses into `school_district`
@@ -1014,7 +1023,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### Tennessee (TN)
 
-- `tn_age_group_rates` -> pass-through
+- `tn_age_group_rates` -> feeds adapter, fills `rates`
 - `tn_participates_certificate` -> pass-through
 - `tn_provider_id` -> collapses into `source_provider_id` (via to_id_string)
 - `tn_quality_rating` -> pass-through
@@ -1146,7 +1155,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wy_evening_care` -> feeds adapter, fills `evening_care`, `night_care`, `nontraditional_hours`, `weekend_care`
 - `wy_facility_id` -> collapses into `source_provider_id` (via to_id_string)
 - `wy_pre_enrollment_visit_required` -> pass-through
-- `wy_programs` -> pass-through
+- `wy_programs` -> feeds adapter, fills `rates`
 - `wy_record_type` -> pass-through
 - `wy_registration_fee` -> pass-through
 - `wy_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
