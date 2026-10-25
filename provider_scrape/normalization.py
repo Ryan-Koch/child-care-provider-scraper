@@ -28,6 +28,7 @@ from provider_scrape.common_fields import (
     INSPECTION_LEVEL,
     announced_flag,
     day_names,
+    description_text,
     food_program_token,
     has_list_token,
     invert,
@@ -1107,6 +1108,12 @@ FIELD_COLLAPSE_MAP = {
     "complaint_count": [
         ("ia_complaint_count", to_int),
         ("ca_complaint_info", _no_complaints_zero),
+    ],
+    # Provider-written program description. ID is an adapter in
+    # common_fields.py (description first, philosophy fallback).
+    "program_description": [
+        ("nd_philosophy", description_text),
+        ("vt_program_description", description_text),
     ],
     # Children currently enrolled. DC is an adapter in common_fields.py (sum of
     # the per-age-group rows).

@@ -183,6 +183,13 @@ FIELD_DOCS = {
     "one label can give several tokens (`Before and After School`). Evening/overnight/weekend/year-round labels "
     "and non-schedule services are ignored silently (they feed other fields); an unknown label is logged and "
     "dropped. Empty -> unset. The state labels stay in the `xx_` source fields.",
+    "program_description": "The provider's own description of their program (string), verbatim apart from "
+    "trimming. ID uses `id_program_description` first and falls back to `id_philosophy_description` when that is "
+    "missing or filler (`id_philosophy_comment` is curriculum notes and is ignored); ND copies `nd_philosophy`; VT "
+    "copies `vt_program_description`. Filler -> unset: blank or sentinel, punctuation/symbol-only text (`.`, `-`, "
+    "`*`), runs of `x`, `Please ask provider` / `Please ask program` (with or without the period), `Ask provider` "
+    "and `Coming soon`. "
+    "Short real answers (`Montessori`, `Public PreK`) are kept.",
     "current_enrollment": "Children currently enrolled (int). ND copies `nd_total_enrollment`, but 0 -> unset: ND "
     "reports 0 for 394 of 1,262 active providers (135 of 138 `HHS Four-Year Old Program` records), so 0 means not "
     "reported there. DC sums the numeric `dc_enrollment[].current_enrollment` rows (a real 0 from numeric `0` rows "

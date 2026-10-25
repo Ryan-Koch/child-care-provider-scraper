@@ -68,6 +68,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `phone_extension` | Whitespace cleanup; Field collapse from state-specific source (transforms: phone_extension_digits) | Extension that goes with `phone`, digits only, kept as a string (leading zeros survive). NJ, NY; NY input-mask underscores are stripped, and non-numeric junk (`NJ`, `class`) -> None. |
 | `phone_suppressed` | Whitespace cleanup; Field collapse from state-specific source (transforms: invert, to_bool) | True = the state deliberately withheld the phone number. FL inverted from displayPhoneOnWeb; NY `Y` -> True, blank -> False; MA's single contact-redacted flag feeds this too. |
 | `preschool` | Whitespace cleanup | Whether the provider serves preschoolers: bool-or-None. See infant. |
+| `program_description` | Whitespace cleanup; Field collapse from state-specific source (transforms: description_text) | The provider's own description of their program (string), verbatim apart from trimming. ID uses `id_program_description` first and falls back to `id_philosophy_description` when that is missing or filler (`id_philosophy_comment` is curriculum notes and is ignored); ND copies `nd_philosophy`; VT copies `vt_program_description`. Filler -> unset: blank or sentinel, punctuation/symbol-only text (`.`, `-`, `*`), runs of `x`, `Please ask provider` / `Please ask program` (with or without the period), `Ask provider` and `Coming soon`. Short real answers (`Montessori`, `Public PreK`) are kept. |
 | `provider_name` | Whitespace cleanup; Title Case (ALL-CAPS names) | The facility's name. ALL-CAPS values are converted to Title Case; whitespace is cleaned. |
 | `provider_type` | Whitespace cleanup; Preserved (drives facility_category) | The raw state license category, preserved exactly. It drives the derived facility_category facet. |
 | `provider_website` | Whitespace cleanup | Provider website URL (whitespace-cleaned only). |
@@ -144,6 +145,7 @@ Each common field is populated from a single populated source field (additive â€
 | `original_license_date` | `ca_license_first_date` (to_iso_date), `ma_original_license_date` (to_iso_date), `mn_original_license_date` (to_iso_date), `ny_facility_opened_date` (to_iso_date), `ri_original_license_date` (to_iso_date), `vt_original_license_date` (to_iso_date) |
 | `phone_extension` | `nj_phone_extension` (phone_extension_digits), `ny_phone_extension` (phone_extension_digits) |
 | `phone_suppressed` | `fl_display_phone_on_web` (invert), `ma_contact_redacted` (to_bool) |
+| `program_description` | `nd_philosophy` (description_text), `vt_program_description` (description_text) |
 | `registration_fee` | `ga_registration_fee` (to_float), `wy_registration_fee` (to_float) |
 | `scholarships_accepted` | `fl_is_offering_school_readiness` (scholarships_flag), `nh_financial_assistance` (has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP))), `va_current_subsidy_provider` (scholarships_flag), `wa_subsidy` (scholarships_flag) |
 | `school_district` | `co_school_district`, `ct_school_districts`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
@@ -226,6 +228,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `georgia` | provider | `ga_environment` | `has_pets`, `pet_types`, `pets_excluded` | GA `ga_environment` entry `No pets` -> `has_pets` False; absent = None. |
 | `georgia` | provider | `ga_weekly_rates` | `rates` | GA `ga_weekly_rates`: full-day weekly rate per age -> full_time / week row. |
 | `hawaii` | provider | `hi_license_history` | `license_history` | HI `hi_license_history` rows: dates, `P`/`R` expanded to a license type, capacity. |
+| `idaho` | provider | `id_program_description`, `id_philosophy_description` | `program_description` | Program description first, falling back to the philosophy description. |
 | `idaho` | provider | `id_pet_policy` | `has_pets`, `pet_types`, `pets_excluded` | ID `id_pet_policy` (Pet Free / Dogs only / Cats only / Other) -> `has_pets`, `pet_types`; unknown values logged. |
 | `illinois` | provider | `il_night_capacity` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | `il_night_capacity` (string int) -> `night_care` = capacity > 0. |
 | `illinois` | provider | `il_day_age_range`, `il_night_age_range` | `age_min_months`, `age_max_months` | IL day/night `6W TO 12Y` ranges -> widest span (min of mins, max of maxes); bare `0` ignored. |
@@ -619,8 +622,8 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `id_pet_policy` -> feeds adapter, fills `has_pets`, `pet_types`, `pets_excluded`
 - `id_pet_policy_comment` -> pass-through
 - `id_philosophy_comment` -> pass-through
-- `id_philosophy_description` -> pass-through
-- `id_program_description` -> pass-through
+- `id_philosophy_description` -> feeds adapter, fills `program_description`
+- `id_program_description` -> feeds adapter, fills `program_description`
 - `id_program_philosophy` -> pass-through
 - `id_quality_achievements` -> pass-through
 - `id_quality_achiever_status` -> pass-through
@@ -860,7 +863,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nd_max_age` -> feeds adapter, fills `age_max_months`, `age_min_months`
 - `nd_min_age` -> feeds adapter, fills `age_max_months`, `age_min_months`
 - `nd_org_id` -> pass-through
-- `nd_philosophy` -> pass-through
+- `nd_philosophy` -> collapses into `program_description` (via description_text)
 - `nd_program_id` -> collapses into `source_provider_id` (via to_id_string)
 - `nd_quality_rating` -> pass-through
 - `nd_special_populations` -> feeds adapter, fills `serves_special_needs`, `special_needs_types`
@@ -1143,7 +1146,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `vt_pets` -> feeds adapter, fills `has_pets`, `pet_types`, `pets_excluded`
 - `vt_preschool_capacity` -> pass-through
 - `vt_preschool_vacancies` -> collapses into `vacancies_preschool` (via to_int)
-- `vt_program_description` -> pass-through
+- `vt_program_description` -> collapses into `program_description` (via description_text)
 - `vt_program_participation` -> collapses into `food_program` (via has_token(food program|CACFP))
 - `vt_provider_id` -> pass-through
 - `vt_religious_activity` -> pass-through

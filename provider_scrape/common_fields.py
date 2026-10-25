@@ -312,6 +312,41 @@ def none_if_sentinel(value):
     return None if _is_sentinel(value) else value.strip()
 
 
+# Provider-written descriptions that say nothing. Matched whole-string,
+# case-insensitively, after trimming; short real answers ("Montessori") are kept.
+DESCRIPTION_FILLER = {
+    "please ask provider",
+    "please ask provider.",
+    "please ask program",
+    "please ask program.",
+    "ask provider",
+    "coming soon",
+}
+_X_RUN_RE = re.compile(r"^x+$", re.IGNORECASE)
+_PUNCTUATION_ONLY_RE = re.compile(r"^[\W_]+$")
+
+
+def description_text(value):
+    """Trimmed free-text description, or ``None`` when it is filler.
+
+    Filler: blank or a sentinel, punctuation/symbol-only (``.``, ``-``, ``*``),
+    a run of ``x``, and the phrases in ``DESCRIPTION_FILLER``. Text is kept
+    verbatim apart from trimming. Non-strings are returned unchanged.
+    """
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        return value
+    text = value.strip()
+    if not text or _is_sentinel(text):
+        return None
+    if _PUNCTUATION_ONLY_RE.match(text) or _X_RUN_RE.match(text):
+        return None
+    if text.lower() in DESCRIPTION_FILLER:
+        return None
+    return text
+
+
 def to_id_string(value):
     """Stringify a state record key without reformatting it.
 
@@ -824,6 +859,24 @@ def indiana_complaint_count(record):
     """Count `in_complaints` rows; the spider omits the key when there are none -> 0."""
     complaints = record.get("in_complaints")
     return {"complaint_count": len(complaints) if isinstance(complaints, list) else 0}
+
+
+@register_adapter(
+    "idaho",
+    sources=["id_program_description", "id_philosophy_description"],
+    fills=["program_description"],
+)
+def idaho_program_description(record):
+    """Program description first, falling back to the philosophy description.
+
+    Either source that is filler is skipped. `id_philosophy_comment` (curriculum
+    notes) is deliberately not used.
+    """
+    for source in ("id_program_description", "id_philosophy_description"):
+        text = description_text(record.get(source))
+        if text:
+            return {"program_description": text}
+    return {}
 
 
 @register_adapter("iowa", sources=["ia_openings_by_age"], fills=list(VACANCY_FIELDS.values()))

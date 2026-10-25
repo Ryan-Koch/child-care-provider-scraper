@@ -4675,3 +4675,63 @@ def test_current_enrollment_dc_no_numeric_rows_is_none(values):
 def test_current_enrollment_dc_numeric_zeros_stay_zero():
     item = norm.normalize_item({"dc_enrollment": _dc_enrollment("0", "0", "No Data Available")}, "washington_dc")
     assert item["current_enrollment"] == 0
+
+
+def test_program_description_idaho_description_wins():
+    record = {"id_program_description": " We teach. ", "id_philosophy_description": "Play-based"}
+    item = norm.normalize_item(record, "idaho")
+    assert item["program_description"] == "We teach."
+    assert item["id_philosophy_description"] == "Play-based"
+
+
+@pytest.mark.parametrize("description", [None, "", "x", "Please ask provider."])
+def test_program_description_idaho_philosophy_fallback(description):
+    record = {"id_philosophy_description": "Play-based", "id_philosophy_comment": "Curriculum notes"}
+    if description is not None:
+        record["id_program_description"] = description
+    item = norm.normalize_item(record, "idaho")
+    assert item["program_description"] == "Play-based"
+    assert item["id_philosophy_comment"] == "Curriculum notes"
+
+
+def test_program_description_idaho_comment_ignored():
+    item = norm.normalize_item({"id_philosophy_comment": "Curriculum notes"}, "idaho")
+    assert item.get("program_description") is None
+
+
+def test_program_description_north_dakota_copy():
+    item = norm.normalize_item({"nd_philosophy": " We love kids. "}, "north_dakota")
+    assert item["program_description"] == "We love kids."
+    assert item["nd_philosophy"].strip() == "We love kids."
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "",
+        "   ",
+        ".",
+        "..",
+        "-",
+        "*",
+        "x",
+        "xxx",
+        "XXXXX",
+        "Please ask provider.",
+        "please ask provider",
+        "Ask provider",
+        "Please ask program.",
+        "Coming soon",
+        "N/A",
+    ],
+)
+def test_program_description_vermont_filler_is_none(raw):
+    item = norm.normalize_item({"vt_program_description": raw}, "vermont")
+    assert item.get("program_description") is None
+
+
+@pytest.mark.parametrize("raw", ["Montessori", "Public PreK", "Preschool"])
+def test_program_description_short_answers_kept(raw):
+    item = norm.normalize_item({"vt_program_description": raw}, "vermont")
+    assert item["program_description"] == raw
+    assert item["vt_program_description"] == raw
