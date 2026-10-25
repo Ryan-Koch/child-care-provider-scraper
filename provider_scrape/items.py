@@ -346,6 +346,7 @@ class ProviderItem(scrapy.Item):
     school = scrapy.Field()
     county = scrapy.Field()
     scholarships_accepted = scrapy.Field()
+    temporarily_closed = scrapy.Field()  # bool: licensed but not currently operating; see FIELD_DOCS
     license_begin_date = scrapy.Field()
     original_license_date = scrapy.Field()  # first-ever license date (ISO); see FIELD_DOCS
     last_renewed_date = scrapy.Field()  # current-term start, only once renewed (ISO); see FIELD_DOCS

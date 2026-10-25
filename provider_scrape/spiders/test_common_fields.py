@@ -4407,3 +4407,40 @@ def test_last_renewed_date_missouri_anniversary_not_mapped():
     item = norm.normalize_item({"mo_license_anniversary_date": "05/01"}, "missouri")
     assert item.get("last_renewed_date") is None
     assert item["mo_license_anniversary_date"] == "05/01"
+
+
+# --------------------------------------------------------------------------- #
+# temporarily_closed
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    ("state", "field", "raw", "expected"),
+    [
+        ("maine", "me_temporarily_closed", "Yes", True),
+        ("maine", "me_temporarily_closed", "No", False),
+        ("indiana", "in_is_temporarily_closed", True, True),
+    ],
+)
+def test_temporarily_closed_collapse(state, field, raw, expected):
+    item = norm.normalize_item({field: raw, "status": "active"}, state)
+    assert item["temporarily_closed"] is expected
+    assert item[field] == raw
+    assert item["status"] == "active"
+
+
+def test_temporarily_closed_indiana_missing_is_none():
+    item = norm.normalize_item({"in_temporarily_closed_message": None}, "indiana")
+    assert item.get("temporarily_closed") is None
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "raw"),
+    [
+        ("new_hampshire", "nh_covid_closure", False),
+        ("massachusetts", "ma_temporary_status", "Reopened"),
+        ("massachusetts", "ma_temporary_status", "Provisionally Reopened"),
+    ],
+)
+def test_temporarily_closed_covid_era_fields_not_mapped(state, field, raw):
+    item = norm.normalize_item({field: raw}, state)
+    assert item.get("temporarily_closed") is None
+    assert item[field] == raw

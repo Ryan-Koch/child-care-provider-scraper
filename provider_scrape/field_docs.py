@@ -263,6 +263,10 @@ FIELD_DOCS = {
     'bool-or-None. States that emit "Yes"/"No" or NM\'s "Accepted"/"Not '
     'Accepted" are coerced via the shared strict token rule (bug_06); an '
     "unparseable token becomes None rather than a guessed True.",
+    "temporarily_closed": "Whether a licensed provider is temporarily not operating: bool-or-None. From ME "
+    "`me_temporarily_closed` (Yes/No) and IN `in_is_temporarily_closed`; IN only ever reports True (key absent "
+    "otherwise -> None, never False). NH `nh_covid_closure` and MA `ma_temporary_status` are COVID-era and not "
+    "mapped. The `xx_` sources are kept; `status` is untouched.",
     "licensing_specialist": "State staff member assigned to oversee the provider's license, as `First Last` "
     "(ALL-CAPS Title-cased; SC's `Last, First` flipped; `N/A` -> empty). Collapsed from AK, MA, ME, OK, SC, TN, "
     "WV; VA's packed `Name: phone` string is split by an adapter.",

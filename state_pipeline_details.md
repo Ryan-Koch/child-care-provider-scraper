@@ -79,6 +79,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `state_prek_program` | Whitespace cleanup | The state's pre-K program brand (string), set only when `state_prek` is True: VPK, RI Pre-K, ECEAP, Pre-K Enhancement and Expansion, Preschool Partnership, On My Way Pre-K, Georgia's Pre-K, First Steps 4K, Vermont Universal Pre-K, Nevada Ready! Pre-K. One constant per state (`STATE_PREK_PROGRAMS`). |
 | `status` | Whitespace cleanup; Controlled vocabulary (status) | License status mapped to the 5-bucket canonical vocabulary (active/provisional/pending/enforcement/closed, else unknown). Replaced in place. |
 | `status_date` | Whitespace cleanup; ISO 8601 date | Date the current status took effect, normalized to ISO 8601 (YYYY-MM-DD). |
+| `temporarily_closed` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_bool) | Whether a licensed provider is temporarily not operating: bool-or-None. From ME `me_temporarily_closed` (Yes/No) and IN `in_is_temporarily_closed`; IN only ever reports True (key absent otherwise -> None, never False). NH `nh_covid_closure` and MA `ma_temporary_status` are COVID-era and not mapped. The `xx_` sources are kept; `status` is untouched. |
 | `toddler` | Whitespace cleanup | Whether the provider serves toddlers: bool-or-None. See infant. |
 | `total_vacancies` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int, wi_total_vacancies) | Total open slots the provider reports (int; `0` = full, empty = not reported). Only what the state publishes -- never summed from the per-age `vacancies_*`. IA, ID, ND, TN, UT, VT, WA, WI; WI's prose (`0 vacancies have been reported...`) is parsed for the leading count and `None Reported.` is empty. |
 | `transportation` | Whitespace cleanup; Field collapse from state-specific source | Transportation offered, collapsed from a single populated state source. |
@@ -140,6 +141,7 @@ Each common field is populated from a single populated source field (additive â€
 | `school_district` | `co_school_district`, `ct_school_districts`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
 | `serves_special_needs` | `ia_serves_special_needs` (to_bool), `nc_special_features` (has_list_token(Will enroll children with special needs)), `ne_serves_special_needs` (to_bool) |
 | `source_provider_id` | `ak_facility_gen_id` (to_id_string), `az_facility_id` (to_id_string), `ct_provider_id` (to_id_string), `hi_service_id` (to_id_string), `il_provider_id` (to_id_string), `in_provider_id` (to_id_string), `ky_provider_id` (to_id_string), `la_unique_id` (to_id_string), `ma_program_number` (to_id_string), `ms_facility_id` (to_id_string), `nd_program_id` (to_id_string), `ne_resource_id` (to_id_string), `nh_account_id` (to_id_string), `nj_unique_program_id` (to_id_string), `nv_operation_id` (to_id_string), `ny_facility_id` (to_id_string), `sc_provider_id` (to_id_string), `tn_provider_id` (to_id_string), `tx_operation_id` (to_id_string), `va_ID` (to_id_string), `wa_provider_id` (to_id_string), `wi_facility_number` (to_id_string), `wy_facility_id` (to_id_string) |
+| `temporarily_closed` | `in_is_temporarily_closed` (to_bool), `me_temporarily_closed` (to_bool) |
 | `total_vacancies` | `ia_total_openings` (to_int), `id_number_of_openings` (to_int), `nd_total_vacancies` (to_int), `tn_vacancy` (to_int), `ut_vacancies` (to_int), `vt_current_vacancy` (to_int), `wa_available_slots` (to_int), `wi_vacancies` (wi_total_vacancies) |
 | `transportation` | `ct_transportation`, `ga_transportation`, `nj_transportation_labels` |
 | `vacancies_infant` | `co_infant_openings` (to_int), `me_infant_slots` (to_int), `nh_infant_openings` (to_int), `vt_infant_vacancies` (to_int) |
@@ -627,7 +629,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `in_health_violation_count` -> pass-through
 - `in_is_ccdf` -> pass-through
 - `in_is_health_violation` -> pass-through
-- `in_is_temporarily_closed` -> pass-through
+- `in_is_temporarily_closed` -> collapses into `temporarily_closed` (via to_bool)
 - `in_licensed_ages` -> feeds adapter, fills `capacity_by_age`
 - `in_location_id` -> pass-through
 - `in_noncompliance` -> pass-through
@@ -753,7 +755,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `me_preschool_slots` -> collapses into `vacancies_preschool` (via to_int)
 - `me_school_age_slots` -> collapses into `vacancies_school_age` (via to_int)
 - `me_star_rating` -> pass-through
-- `me_temporarily_closed` -> pass-through
+- `me_temporarily_closed` -> collapses into `temporarily_closed` (via to_bool)
 - `me_times_renewed` -> pass-through
 - `me_toddler_slots` -> collapses into `vacancies_toddler` (via to_int)
 

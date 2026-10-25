@@ -1075,6 +1075,14 @@ FIELD_COLLAPSE_MAP = {
         ("wa_subsidy", _scholarships_flag),
         ("nh_financial_assistance", has_list_token("STATE CC ASSISTANCE (SCHOLARSHIP)")),
     ],
+    # Licensed but not currently operating. ME is Yes/No. IN's spider sets
+    # True only for a closed location and omits the key otherwise, so absence
+    # stays unset (None), never False. NH nh_covid_closure and MA
+    # ma_temporary_status are COVID-era snapshots: not mapped.
+    "temporarily_closed": [
+        ("me_temporarily_closed", to_bool),
+        ("in_is_temporarily_closed", to_bool),
+    ],
     # Start of the CURRENT license term. NC's spider takes licenses[0] as the
     # current license (older ones go to nc_license_history), so its effective
     # date is the term start. Other states' license_begin_date are untouched.
