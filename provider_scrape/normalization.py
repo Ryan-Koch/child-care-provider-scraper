@@ -1037,6 +1037,14 @@ def _no_complaints_zero(value):
     return None
 
 
+def _enrollment_zero_to_none(value):
+    """ND ``nd_total_enrollment``: int (or int string) -> int, but 0 -> None.
+    ND reports 0 for providers with no enrollment on file (e.g. nearly every
+    Four-Year Old Program record), so 0 means not reported rather than empty."""
+    count = to_int(value)
+    return count or None
+
+
 # common field -> source state-specific fields. Populating the common field
 # never removes the source field (D2). Each entry is either a plain source
 # field name (copied as-is) or a ``(source, transform)`` tuple, where
@@ -1100,6 +1108,9 @@ FIELD_COLLAPSE_MAP = {
         ("ia_complaint_count", to_int),
         ("ca_complaint_info", _no_complaints_zero),
     ],
+    # Children currently enrolled. DC is an adapter in common_fields.py (sum of
+    # the per-age-group rows).
+    "current_enrollment": [("nd_total_enrollment", _enrollment_zero_to_none)],
     # Reported serious injuries / deaths. MD's page does not state the
     # reporting period. DE is an adapter in common_fields.py (per-year text).
     "serious_injury_count": [("md_serious_injuries", to_int)],

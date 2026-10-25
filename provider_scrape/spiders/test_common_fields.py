@@ -4642,3 +4642,36 @@ def test_license_history_north_carolina_excluded():
     item = norm.normalize_item({"nc_license_history": history}, "north_carolina")
     assert item.get("license_history") is None
     assert item["nc_license_history"] == history
+
+
+@pytest.mark.parametrize(("raw", "expected"), [(12, 12), ("12", 12), ("0", None), (0, None), (None, None)])
+def test_current_enrollment_north_dakota(raw, expected):
+    record = {} if raw is None else {"nd_total_enrollment": raw}
+    item = norm.normalize_item(record, "north_dakota")
+    assert item.get("current_enrollment") == expected
+    if raw is not None:
+        assert item["nd_total_enrollment"] == raw
+
+
+def _dc_enrollment(*values):
+    labels = list(cf.DC_AGE_BANDS)
+    return [{"age_group": labels[i], "current_enrollment": v, "openings": "2"} for i, v in enumerate(values)]
+
+
+def test_current_enrollment_dc_sums_numeric_rows():
+    rows = _dc_enrollment("3", "No Data Available", "Not Applicable", "4")
+    item = norm.normalize_item({"dc_enrollment": rows}, "washington_dc")
+    assert item["current_enrollment"] == 7
+    assert item["dc_enrollment"] == rows
+    assert item["vacancies_infant"] == 2
+
+
+@pytest.mark.parametrize("values", [("No Data Available", "Not Applicable", None), ()])
+def test_current_enrollment_dc_no_numeric_rows_is_none(values):
+    item = norm.normalize_item({"dc_enrollment": _dc_enrollment(*values)}, "washington_dc")
+    assert item.get("current_enrollment") is None
+
+
+def test_current_enrollment_dc_numeric_zeros_stay_zero():
+    item = norm.normalize_item({"dc_enrollment": _dc_enrollment("0", "0", "No Data Available")}, "washington_dc")
+    assert item["current_enrollment"] == 0

@@ -848,6 +848,25 @@ def washington_dc_vacancies(record):
     return _vacancies_by_band(record.get("dc_enrollment"), "age_group", DC_AGE_BANDS, ("openings",), "washington_dc")
 
 
+@register_adapter("washington_dc", sources=["dc_enrollment"], fills=["current_enrollment"])
+def washington_dc_current_enrollment(record):
+    """Sum the numeric `current_enrollment` rows of DC `dc_enrollment`.
+
+    `Not Applicable` (age group not served), `No Data Available` and None are
+    skipped; no numeric row -> None, while numeric `0` rows give a real 0. Rows
+    marked `No Data Available` may hide children, so the total can undercount.
+    """
+    counts = []
+    for entry in _dict_entries(record.get("dc_enrollment"), "current_enrollment(washington_dc)"):
+        raw = entry.get("current_enrollment")
+        if raw is None or _is_sentinel(raw):
+            continue
+        count = to_int(raw)
+        if count is not None:
+            counts.append(count)
+    return {"current_enrollment": sum(counts)} if counts else {}
+
+
 # --------------------------------------------------------------------------- #
 # Address / phone suppressed (NY)
 # --------------------------------------------------------------------------- #

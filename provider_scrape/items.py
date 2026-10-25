@@ -313,6 +313,7 @@ class ProviderItem(scrapy.Item):
     provider_website = scrapy.Field()
     administrator = scrapy.Field()
     capacity = scrapy.Field()
+    current_enrollment = scrapy.Field()  # int: children currently enrolled; see FIELD_DOCS
     capacity_by_age = scrapy.Field()  # list of {age_group, capacity[, classrooms]}; state's own labels
     license_conditions = scrapy.Field()  # list of restriction/condition strings, state's own text
     license_history = (

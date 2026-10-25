@@ -183,6 +183,12 @@ FIELD_DOCS = {
     "one label can give several tokens (`Before and After School`). Evening/overnight/weekend/year-round labels "
     "and non-schedule services are ignored silently (they feed other fields); an unknown label is logged and "
     "dropped. Empty -> unset. The state labels stay in the `xx_` source fields.",
+    "current_enrollment": "Children currently enrolled (int). ND copies `nd_total_enrollment`, but 0 -> unset: ND "
+    "reports 0 for 394 of 1,262 active providers (135 of 138 `HHS Four-Year Old Program` records), so 0 means not "
+    "reported there. DC sums the numeric `dc_enrollment[].current_enrollment` rows (a real 0 from numeric `0` rows "
+    "stays 0); `Not Applicable` (age group not served), `No Data Available` and blank rows are skipped, and no "
+    "numeric row -> unset. Rows marked `No Data Available` may hide children, so the DC total can undercount. "
+    "Enrollment can exceed `capacity` because it counts part-time children.",
     "capacity_by_age": "Licensed capacity by age group: list of rows `{age_group, capacity}` in source order. "
     "`age_group` is each state's own label, humanized (not normalized to bands; no cross-state comparison); "
     "`capacity` is an int through `to_int`, zero kept. Rows with a blank or unparseable (logged) capacity are "

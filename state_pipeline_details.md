@@ -25,6 +25,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `care_schedules` | Whitespace cleanup | Care arrangements offered: list of canonical tokens from a fixed 12-token list, de-duplicated, in this order: before_school, after_school, drop_in, full_day, half_day, full_time, part_time, summer, school_holidays, emergency, flexible, sick_care. From FL/MS/SD/RI/WI/ND/MA/WY/OK/NJ (lists), IA/VT (`, `-separated), MI/NH (`;`-separated, NH UPPERCASE), GA (three `; `-separated sources merged) and LA (`la_before_care`/`la_after_care` True) by an explicit case-insensitive label table (`CARE_SCHEDULE_LABELS`); one label can give several tokens (`Before and After School`). Evening/overnight/weekend/year-round labels and non-schedule services are ignored silently (they feed other fields); an unknown label is logged and dropped. Empty -> unset. The state labels stay in the `xx_` source fields. |
 | `complaint_count` | Whitespace cleanup; Field collapse from state-specific source (transforms: no_complaints_zero, to_int) | Number of complaints the state lists against the provider (int; `0` is a real value). Counts ALL complaints, not only substantiated ones. Collapsed from IA `ia_complaint_count`, CA `ca_complaint_info` (`No Complaints` -> 0; a date of the latest complaint -> unset, the count is unknown) and IN `in_complaints` (list length; IN comes from one detail API that omits the list when empty, so absence -> 0). AL is excluded (user decision): `al_substantiated_complaints` is substantiated-only and would mix semantics, so it stays state-specific. The `xx_` sources are kept. |
 | `county` | Whitespace cleanup | County (whitespace-cleaned only). |
+| `current_enrollment` | Whitespace cleanup; Field collapse from state-specific source (transforms: enrollment_zero_to_none) | Children currently enrolled (int). ND copies `nd_total_enrollment`, but 0 -> unset: ND reports 0 for 394 of 1,262 active providers (135 of 138 `HHS Four-Year Old Program` records), so 0 means not reported there. DC sums the numeric `dc_enrollment[].current_enrollment` rows (a real 0 from numeric `0` rows stays 0); `Not Applicable` (age group not served), `No Data Available` and blank rows are skipped, and no numeric row -> unset. Rows marked `No Data Available` may hide children, so the DC total can undercount. Enrollment can exceed `capacity` because it counts part-time children. |
 | `curriculum` | Whitespace cleanup; Field collapse from state-specific source | Curriculum, collapsed from a single populated state source (VPK-specific curriculum is excluded). |
 | `days_of_operation` | Whitespace cleanup; Field collapse from state-specific source (transforms: day_names) | Weekdays the provider is open: list of full day names in Monday -> Sunday order (e.g. `["Monday", "Tuesday"]`). GA (`MO,TU`), IA (`Mon, Tue`) and VT (`Monday, Tuesday`) via day_names: case/whitespace tolerant, de-duplicated, unrecognised tokens logged and dropped, none left -> unset. CT/IN/NH/OK/WY/MA/FL derive it from `weekly_schedule` (distinct days present); a direct source always wins. |
 | `deficiencies` | Whitespace cleanup; Integer coercion (bug_10) | Deficiency/violation count for the provider, coerced to an integer (bug_10). Digit strings, comma-grouped counts, and integral floats (e.g. 2.0) all become int; blank/None stays None; negative or non-numeric values (and stray booleans) become None rather than a guessed number. |
@@ -124,6 +125,7 @@ Each common field is populated from a single populated source field (additive â€
 | `accreditation` | `al_accreditations`, `ct_accreditations`, `ga_accreditation`, `hi_accreditations`, `md_accreditation`, `nj_accreditation_labels` |
 | `address_suppressed` | `ct_address_suppressed` (to_bool), `fl_display_address_on_web` (invert), `ks_address_suppressed` (to_bool), `ma_contact_redacted` (to_bool) |
 | `complaint_count` | `ca_complaint_info` (no_complaints_zero), `ia_complaint_count` (to_int) |
+| `current_enrollment` | `nd_total_enrollment` (enrollment_zero_to_none) |
 | `curriculum` | `ga_curriculum`, `nj_curriculum` |
 | `days_of_operation` | `ga_operating_days` (day_names), `ia_days_of_operation` (day_names), `vt_days_of_operation` (day_names) |
 | `doing_business_as` | `fl_dba` (none_if_sentinel), `ok_doing_business_as` (none_if_sentinel) |
@@ -296,6 +298,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `washington` | provider | `wa_eceap` | `state_prek`, `state_prek_program` | `wa_eceap` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
 | `washington` | provider | `wa_license_history` | `license_history` | WA `wa_license_history` rows; `closure_date` becomes `expiration_date` (a closure, not an expiry). |
 | `washington_dc` | provider | `dc_enrollment` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map DC `dc_enrollment` `openings` (text; `Not Applicable` -> None) onto the four vacancy bands. |
+| `washington_dc` | provider | `dc_enrollment` | `current_enrollment` | Sum the numeric `current_enrollment` rows of DC `dc_enrollment`. |
 | `washington_dc` | provider | `meals` | `food_program` | The common `meals` text mentioning the food program -> `food_program` True; else unset. |
 | `washington_dc` | provider | `dc_prek_enhancement` | `state_prek`, `state_prek_program` | `dc_prek_enhancement` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
 | `washington_dc` | provider | `dc_nontraditional_hours` | `nontraditional_hours` | DC `dc_nontraditional_hours` (bool) -> the `nontraditional_hours` roll-up only; False is a real no. |
@@ -468,7 +471,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `dc_capital_quality_designation` -> pass-through
 - `dc_capital_quality_participant` -> pass-through
-- `dc_enrollment` -> feeds adapter, fills `vacancies_infant`, `vacancies_preschool`, `vacancies_school_age`, `vacancies_toddler`
+- `dc_enrollment` -> feeds adapter, fills `current_enrollment`, `vacancies_infant`, `vacancies_preschool`, `vacancies_school_age`, `vacancies_toddler`
 - `dc_nontraditional_hours` -> feeds adapter, fills `nontraditional_hours`
 - `dc_pay_equity_fund` -> pass-through
 - `dc_prek_enhancement` -> feeds adapter, fills `state_prek`, `state_prek_program`
@@ -862,7 +865,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nd_quality_rating` -> pass-through
 - `nd_special_populations` -> feeds adapter, fills `serves_special_needs`, `special_needs_types`
 - `nd_supplemental_care` -> feeds adapter, fills `care_schedules`
-- `nd_total_enrollment` -> pass-through
+- `nd_total_enrollment` -> collapses into `current_enrollment` (via enrollment_zero_to_none)
 - `nd_total_vacancies` -> collapses into `total_vacancies` (via to_int)
 - `nd_vacancies_by_age` -> feeds adapter, fills `vacancies_infant`, `vacancies_preschool`, `vacancies_school_age`, `vacancies_toddler`
 - `nd_vacancies_details` -> pass-through
