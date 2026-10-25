@@ -1081,6 +1081,18 @@ FIELD_COLLAPSE_MAP = {
     "license_begin_date": [
         ("nc_license_effective_date", to_iso_date),
     ],
+    # First-ever license date (ISO), one source per state. CA/NY arrive as
+    # M/D/YYYY; MN/VT/MA/RI are already ISO from their spiders (to_iso_date is
+    # idempotent). CT ct_date_established (business founding date) and CO
+    # co_license_issue_date (the current license's issue date) are NOT mapped.
+    "original_license_date": [
+        ("ca_license_first_date", to_iso_date),
+        ("ma_original_license_date", to_iso_date),
+        ("mn_original_license_date", to_iso_date),
+        ("ny_facility_opened_date", to_iso_date),
+        ("ri_original_license_date", to_iso_date),
+        ("vt_original_license_date", to_iso_date),
+    ],
     # The state system's own record key, one source per state. Opaque and
     # state-specific. AK uses facility_gen_id (the key in its profile and
     # inspection URLs), not ak_facility_number; NV has no fallback to

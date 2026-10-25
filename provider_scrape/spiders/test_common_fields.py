@@ -4295,3 +4295,46 @@ def test_license_conditions_sources_kept():
     assert item["mo_limitations"] == "A;B"
     item = norm.normalize_item({"nc_license_restrictions": ["Other - X"]}, "north_carolina")
     assert item["nc_license_restrictions"] == ["Other - X"]
+
+
+# --------------------------------------------------------------------------- #
+# Original license date
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    ("state", "field", "raw", "expected"),
+    [
+        ("california", "ca_license_first_date", "6/18/2008", "2008-06-18"),
+        ("new_york", "ny_facility_opened_date", "10/17/1991", "1991-10-17"),
+        ("minnesota", "mn_original_license_date", "2014-07-01", "2014-07-01"),
+        ("vermont", "vt_original_license_date", "2005-03-01", "2005-03-01"),
+        ("massachusetts", "ma_original_license_date", "1999-11-05", "1999-11-05"),
+        ("rhode_island", "ri_original_license_date", "1997-01-01", "1997-01-01"),
+    ],
+)
+def test_original_license_date_map_states(state, field, raw, expected):
+    item = norm.normalize_item({field: raw, "license_begin_date": "3/25/2024"}, state)
+    assert item["original_license_date"] == expected
+    assert item[field] == raw  # additive: source kept
+    assert item["license_begin_date"] == "2024-03-25"  # current term untouched
+
+
+@pytest.mark.parametrize(
+    ("state", "field"),
+    [
+        ("connecticut", "ct_date_established"),
+        ("colorado", "co_license_issue_date"),
+    ],
+)
+def test_original_license_date_excluded_states(state, field):
+    item = norm.normalize_item({field: "04/04/2003"}, state)
+    assert item.get("original_license_date") is None
+    assert item[field] == "04/04/2003"
+
+
+@pytest.mark.parametrize(
+    ("state", "field"),
+    [("california", "ca_license_first_date"), ("new_york", "ny_facility_opened_date")],
+)
+def test_original_license_date_missing_is_none(state, field):
+    for raw in (None, "", "N/A"):
+        assert norm.normalize_item({field: raw}, state).get("original_license_date") is None

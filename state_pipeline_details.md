@@ -56,6 +56,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `night_care` | Whitespace cleanup | Overnight / third-shift care (bool). LA `la_night_care`; AL any `al_nighttime_hours` range -> True (regardless of end time), `N/A - N/A` -> False; IL/WI night capacity and NC third-shift capacity -> capacity > 0 (`0` and junk `0 0` -> False); OK `Overnight Hours` -> True (absent -> unset). The `xx_` sources are kept. Caveat: for the capacity-based states (IL, WI, NC) True means the license permits night/shift care, not confirmed operating hours (IL night capacity equals day capacity for ~80% of its positives). |
 | `nontraditional_hours` | Whitespace cleanup | Roll-up (bool): True if the record has night, evening or weekend care True, or DC's `dc_nontraditional_hours` is True. False ONLY from DC's explicit False; otherwise unset, even when every reported specific flag is False. Computed in each state's adapter after its specific flags. |
 | `operating_months` | Whitespace cleanup | Months the provider operates: list of 3-letter Title-case months (`Jan`..`Dec`) in calendar order, de-duplicated. Only where the state lists months: GA (`JAN,FEB,...`; GA's non-month `OtherSchoolBreak` marker is dropped, other unknown tokens logged), MS (list) and WI (range `Sep - Jun`, expanded inclusively and wrapping the year). Unparseable or empty -> unset. |
+| `original_license_date` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_iso_date) | Date the facility was FIRST licensed (`YYYY-MM-DD`; empty = not published). Distinct from `license_begin_date`, which is the start of the CURRENT license term. CA (License First Date), NY (Facility Opened Date; never later than the current term start in sampled records), MN, VT, MA, RI. CT is excluded (`ct_date_established` is the business founding date, not a license date) and so is CO (`co_license_issue_date` is the issue date of the current license; ~31% fall in 2025-26, i.e. reissues). The MN 2014 HCBS category-start cluster, the VT 2005 cluster and the RI 1997 spike are real source data and are kept (bug_11, bug_13). |
 | `pet_types` | Whitespace cleanup | Animal types present: list of `dogs`, `cats`, `other` (in that order, de-duplicated). Set only when the types are known (ID, VT, NH DOG / CAT entries); a bare `Pets` (UT, NH) leaves it None, never []. Unknown VT entries and ID values are logged and dropped. |
 | `pets_excluded` | Whitespace cleanup | Animals the source explicitly says are absent: list of `dogs`, `cats`. From NH NO DOG / NO CAT (also NO DOGS / NO CATS) only, which never set `has_pets` or `pet_types`. None when none stated, never []. |
 | `phone` | Whitespace cleanup | Contact phone number (whitespace-cleaned only). |
@@ -130,6 +131,7 @@ Each common field is populated from a single populated source field (additive â€
 | `licensing_specialist_phone` | `ok_licensing_specialist_phone` (none_if_sentinel), `sc_licensing_specialist_phone` (none_if_sentinel) |
 | `mailing_address` | `al_mailing_address`, `ga_mailing_address`, `hi_mailing_address` |
 | `meals` | `ga_meals`, `hi_meals`, `nj_meal_options_labels`, `nm_meals`, `pa_meal_options`, `ut_meals` |
+| `original_license_date` | `ca_license_first_date` (to_iso_date), `ma_original_license_date` (to_iso_date), `mn_original_license_date` (to_iso_date), `ny_facility_opened_date` (to_iso_date), `ri_original_license_date` (to_iso_date), `vt_original_license_date` (to_iso_date) |
 | `phone_extension` | `nj_phone_extension` (phone_extension_digits), `ny_phone_extension` (phone_extension_digits) |
 | `phone_suppressed` | `fl_display_phone_on_web` (invert), `ma_contact_redacted` (to_bool) |
 | `registration_fee` | `ga_registration_fee` (to_float), `wy_registration_fee` (to_float) |
@@ -378,7 +380,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ca_inspect_typea` -> pass-through
 - `ca_inspect_typeb` -> pass-through
 - `ca_inspection_visit_dates` -> pass-through
-- `ca_license_first_date` -> pass-through
+- `ca_license_first_date` -> collapses into `original_license_date` (via to_iso_date)
 - `ca_other_typea` -> pass-through
 - `ca_other_typeb` -> pass-through
 - `ca_other_visit_dates` -> pass-through
@@ -710,7 +712,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ma_level_of_compliance` -> pass-through
 - `ma_licensor` -> collapses into `licensing_specialist` (via person_name)
 - `ma_noncompliance_identified` -> pass-through
-- `ma_original_license_date` -> pass-through
+- `ma_original_license_date` -> collapses into `original_license_date` (via to_iso_date)
 - `ma_program_number` -> collapses into `source_provider_id` (via to_id_string)
 - `ma_regional_office_address` -> pass-through
 - `ma_regional_website` -> pass-through
@@ -765,7 +767,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `mn_license_holder_onsite` -> pass-through
 - `mn_license_info_misc` -> pass-through
 - `mn_licensed_to_provide` -> pass-through
-- `mn_original_license_date` -> pass-through
+- `mn_original_license_date` -> collapses into `original_license_date` (via to_iso_date)
 - `mn_restrictions` -> feeds adapter, fills `license_conditions`
 - `mn_setting` -> pass-through
 - `mn_type_of_license` -> pass-through
@@ -985,7 +987,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ny_capacity_school_age` -> pass-through
 - `ny_capacity_toddler` -> pass-through
 - `ny_facility_id` -> collapses into `source_provider_id` (via to_id_string)
-- `ny_facility_opened_date` -> pass-through
+- `ny_facility_opened_date` -> collapses into `original_license_date` (via to_iso_date)
 - `ny_phone_extension` -> collapses into `phone_extension` (via phone_extension_digits)
 - `ny_phone_number_omitted` -> feeds adapter, fills `address_suppressed`, `phone_suppressed`
 - `ny_region_code` -> pass-through
@@ -1038,7 +1040,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ri_license_decision` -> pass-through
 - `ri_licensor` -> pass-through
 - `ri_most_recently_renewed` -> pass-through
-- `ri_original_license_date` -> pass-through
+- `ri_original_license_date` -> collapses into `original_license_date` (via to_iso_date)
 - `ri_provider_contact_name` -> pass-through
 - `ri_provider_email` -> pass-through
 - `ri_services_offered` -> feeds adapter, fills `care_schedules`
@@ -1117,7 +1119,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `vt_guidance` -> pass-through
 - `vt_infant_capacity` -> pass-through
 - `vt_infant_vacancies` -> collapses into `vacancies_infant` (via to_int)
-- `vt_original_license_date` -> pass-through
+- `vt_original_license_date` -> collapses into `original_license_date` (via to_iso_date)
 - `vt_pets` -> feeds adapter, fills `has_pets`, `pet_types`, `pets_excluded`
 - `vt_preschool_capacity` -> pass-through
 - `vt_preschool_vacancies` -> collapses into `vacancies_preschool` (via to_int)

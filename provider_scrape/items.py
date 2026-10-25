@@ -347,6 +347,7 @@ class ProviderItem(scrapy.Item):
     county = scrapy.Field()
     scholarships_accepted = scrapy.Field()
     license_begin_date = scrapy.Field()
+    original_license_date = scrapy.Field()  # first-ever license date (ISO); see FIELD_DOCS
     license_expiration = scrapy.Field()
     deficiencies = scrapy.Field()
     languages = scrapy.Field()
@@ -549,8 +550,7 @@ class ProviderItem(scrapy.Item):
     # Large clusters at 2014-07-01 (2,519 records) and 2014-01-01 (963) are
     # real: 245D Home and Community Based Services licenses whose *license
     # category* began on those dates, not a data-migration artifact -- do
-    # not null them out. Pending collapse into a common
-    # original_license_date field.
+    # not null them out. Feeds the common original_license_date field.
     mn_original_license_date = scrapy.Field()
     mn_licensed_to_provide = scrapy.Field()
     mn_restrictions = scrapy.Field()
@@ -685,8 +685,8 @@ class ProviderItem(scrapy.Item):
     # (normalize_date), since it's not in normalization.DATE_FIELDS (that
     # list is common-fields-only).
     ri_most_recently_renewed = scrapy.Field()
-    # The original/first-ever license date (originalLicenseStartDate),
-    # pending collapse into a common original_license_date field. A sharp 1997 spike (16.8% of hf_sample) is a suspected
+    # The original/first-ever license date (originalLicenseStartDate); feeds
+    # the common original_license_date field. A sharp 1997 spike (16.8% of hf_sample) is a suspected
     # registry system-migration/backfill artifact -- kept as-is, not
     # nulled, per the bug_11 (VT) precedent: a migration artifact can't be
     # told apart from a genuine 1997 date on a per-record basis, and
@@ -914,7 +914,8 @@ class ProviderItem(scrapy.Item):
     # represents a "current term start". The common `license_begin_date` is
     # therefore left None for every VT record, and the page's one date moves
     # here instead (normalized to ISO by the spider via normalize_date,
-    # since this field is not in normalization.DATE_FIELDS). About 22% of
+    # since this field is not in normalization.DATE_FIELDS); it feeds the
+    # common original_license_date field. About 22% of
     # values cluster in 2005 (half on the 1st of a month, including
     # decades-old Head Start programs) -- suspected system-cutover dates
     # from a VT registry migration that may understate provider age, not
@@ -1167,7 +1168,7 @@ class ProviderItem(scrapy.Item):
     # normalization.DATE_FIELDS (that list is common-fields-only).
     ma_last_issue_date = scrapy.Field()
     # The original/first-ever issuance (First_Issue_Date__c / firstIssueDate),
-    # pending collapse into a common original_license_date field.
+    # feeds the common original_license_date field.
     ma_original_license_date = scrapy.Field()
     ma_temporary_status = scrapy.Field()  # Temporary_Status__c, e.g. "Reopened"
     ma_capacity_by_age = scrapy.Field()  # dict of the non-zero per-age-group counts

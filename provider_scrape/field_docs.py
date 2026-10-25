@@ -43,6 +43,13 @@ FIELD_DOCS = {
     "current-term date at all, in which case this is left empty rather than falling back to an "
     "original/migration date; see that state's xx_original_license_date field, where published.",
     "license_expiration": "License expiration date, normalized to ISO 8601.",
+    "original_license_date": "Date the facility was FIRST licensed (`YYYY-MM-DD`; empty = not published). "
+    "Distinct from `license_begin_date`, which is the start of the CURRENT license term. CA (License First "
+    "Date), NY (Facility Opened Date; never later than the current term start in sampled records), MN, VT, "
+    "MA, RI. CT is excluded (`ct_date_established` is the business founding date, not a license date) and "
+    "so is CO (`co_license_issue_date` is the issue date of the current license; ~31% fall in 2025-26, i.e. "
+    "reissues). The MN 2014 HCBS category-start cluster, the VT 2005 cluster and the RI 1997 spike are real "
+    "source data and are kept (bug_11, bug_13).",
     # Address
     "address": "Full street address; whitespace-cleaned, trailing country "
     '(", United States"/", USA") stripped, comma spacing '
