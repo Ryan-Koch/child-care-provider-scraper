@@ -3335,6 +3335,95 @@ def test_care_schedules_does_not_overwrite_and_ignores_other_states():
 
 
 # --------------------------------------------------------------------------- #
+# discounts
+# --------------------------------------------------------------------------- #
+def _discounts(state, **fields):
+    return norm.normalize_item(dict(fields), state).get("discounts")
+
+
+def test_discount_table_covers_all_tokens():
+    assert set(cf.DISCOUNT_LABELS.values()) == set(cf.DISCOUNT_TOKENS)
+
+
+def test_discounts_georgia_labels_and_source_kept():
+    raw = "Multi-Child Discount; Scholarship; Sliding Scale Fee"
+    item = norm.normalize_item({"ga_financial_info": raw}, "georgia")
+    assert item["discounts"] == ["sibling", "sliding_scale"]
+    assert item["ga_financial_info"] == raw
+
+
+def test_discounts_massachusetts_labels_and_source_kept():
+    raw = ["EEC Subsidies", "Sibling Discounts", "Employee Discounts", "Sliding Fee Scale", "Other", "Head Start"]
+    item = norm.normalize_item({"ma_financial_assistance": list(raw)}, "massachusetts")
+    assert item["discounts"] == ["sibling", "sliding_scale", "employee", "other"]
+    assert item["ma_financial_assistance"] == raw
+
+
+def test_discounts_new_hampshire_uppercase_comma_string():
+    raw = "MULTI-CHILD DISCOUNT, SLIDING FEE SCALE, STATE CC ASSISTANCE (SCHOLARSHIP), PREVENTIVE AND PROTECTIVE CARE"
+    item = norm.normalize_item({"nh_financial_assistance": raw}, "new_hampshire")
+    assert item["discounts"] == ["sibling", "sliding_scale"]
+    assert item["nh_financial_assistance"] == raw
+
+
+def test_discounts_new_jersey_labels():
+    labels = [
+        "Discounts provided for parents in military service",
+        "Discounts provided for employees",
+        "Discount provided for siblings",
+        "Discounts provided on a sliding scale",
+    ]
+    item = norm.normalize_item({"nj_discounts": [1, 2, 3, 4], "nj_discounts_labels": labels}, "new_jersey")
+    assert item["discounts"] == ["sibling", "sliding_scale", "employee", "military"]
+    assert item["nj_discounts"] == [1, 2, 3, 4]
+    assert _discounts("new_jersey", nj_discounts=[1]) is None
+
+
+def test_discounts_vermont_yes_no():
+    item = norm.normalize_item({"vt_sibling_discount": "Yes"}, "vermont")
+    assert item["discounts"] == ["sibling"]
+    assert item["vt_sibling_discount"] == "Yes"
+    assert _discounts("vermont", vt_sibling_discount="No") is None
+    assert _discounts("vermont", vt_sibling_discount=None) is None
+
+
+def test_discounts_skipped_subsidies_do_not_warn(caplog):
+    with caplog.at_level(logging.WARNING):
+        assert _discounts("georgia", ga_financial_info="Scholarship") is None
+        assert (
+            _discounts("massachusetts", ma_financial_assistance=["EEC Subsidies", "Private Scholarships/Grants"])
+            is None
+        )
+        assert _discounts("new_hampshire", nh_financial_assistance="STATE CC ASSISTANCE (SCHOLARSHIP)") is None
+    assert "unmapped" not in caplog.text
+
+
+def test_discounts_unknown_label_logged_and_dropped(caplog):
+    with caplog.at_level(logging.WARNING):
+        result = _discounts("georgia", ga_financial_info="Multi-Child Discount; Pet Rock Rebate")
+    assert result == ["sibling"]
+    assert "discounts: unmapped value 'Pet Rock Rebate'" in caplog.text
+
+
+def test_discounts_dedup_order_and_case_insensitive():
+    labels = [" sliding fee scale ", "SIBLING DISCOUNTS", "sibling discounts", "Other", "employee discounts"]
+    assert _discounts("massachusetts", ma_financial_assistance=labels) == [
+        "sibling",
+        "sliding_scale",
+        "employee",
+        "other",
+    ]
+
+
+def test_discounts_empty_sources_are_none_and_no_overwrite():
+    assert _discounts("georgia", ga_financial_info="") is None
+    assert _discounts("massachusetts", ma_financial_assistance=[]) is None
+    assert _discounts("new_hampshire", nh_financial_assistance=None) is None
+    assert _discounts("georgia", ga_financial_info="Sliding Scale Fee", discounts=["military"]) == ["military"]
+    assert _discounts("texas", ga_financial_info="Sliding Scale Fee") is None
+
+
+# --------------------------------------------------------------------------- #
 # rates
 # --------------------------------------------------------------------------- #
 def _rates(state, **record):

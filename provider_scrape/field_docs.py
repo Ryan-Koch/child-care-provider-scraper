@@ -179,6 +179,13 @@ FIELD_DOCS = {
     "(`ga_registration_fee`, `$`/`,` stripped; `$0.00` -> 0.0, null -> unset) and WY (`wy_registration_fee`; "
     "the spider only sets it when a fee is charged, so absence is None, not 0.0). NJ is not mapped (`nj_fees` "
     "holds fee types only, no amount). The `xx_` sources are kept.",
+    "discounts": "Price discounts offered: list of canonical tokens from a fixed list, de-duplicated, in this order: "
+    "sibling, sliding_scale, employee, military, other. From GA `ga_financial_info` (`; `-separated), MA "
+    "`ma_financial_assistance` (list), NH `nh_financial_assistance` (`, `-separated UPPERCASE), NJ "
+    "`nj_discounts_labels` (resolved labels) by an explicit case-insensitive label table (`DISCOUNT_LABELS`), and "
+    "VT `vt_sibling_discount` (Yes -> sibling). MA `Other` -> other. Subsidies and scholarships are not discounts: "
+    "they are skipped silently and routed to `scholarships_accepted`. An unknown label is logged and dropped. "
+    "No discount (VT No, subsidy-only, empty) is None, never an empty list. The `xx_` sources are kept.",
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
     "deficiencies": "Deficiency/violation count for the provider, coerced to an "
     "integer (bug_10). Digit strings, comma-grouped counts, and integral "

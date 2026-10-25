@@ -1919,6 +1919,110 @@ _register_care_schedules(
 
 
 # --------------------------------------------------------------------------- #
+# Discounts (GA, MA, NH, VT, NJ)
+# --------------------------------------------------------------------------- #
+# Fixed token list, in the order ``discounts`` is emitted.
+DISCOUNT_TOKENS = ("sibling", "sliding_scale", "employee", "military", "other")
+
+# Raw state label -> canonical token. Lookups are case-insensitive and
+# whitespace-trimmed, which also covers NH's UPPERCASE labels. Anything in
+# neither this table nor ``DISCOUNT_IGNORED`` is logged and dropped.
+DISCOUNT_LABELS = {
+    # sibling
+    "Multi-Child Discount": "sibling",  # GA, NH
+    "Sibling Discounts": "sibling",  # MA
+    "Discount provided for siblings": "sibling",  # NJ
+    # sliding_scale
+    "Sliding Scale Fee": "sliding_scale",  # GA
+    "Sliding Fee Scale": "sliding_scale",  # MA, NH
+    "Discounts provided on a sliding scale": "sliding_scale",  # NJ
+    # employee
+    "Employee Discounts": "employee",  # MA
+    "Discounts provided for employees": "employee",  # NJ
+    # military
+    "Discounts provided for parents in military service": "military",  # NJ
+    # other
+    "Other": "other",  # MA
+}
+
+# Known subsidy/scholarship labels: they feed ``scholarships_accepted`` and are
+# not discounts, so they are dropped silently (not logged).
+DISCOUNT_IGNORED = {
+    "Scholarship",  # GA
+    "EEC Subsidies",  # MA
+    "Private Scholarships/Grants",  # MA
+    "Head Start",  # MA
+    "STATE CC ASSISTANCE (SCHOLARSHIP)",  # NH
+    "PREVENTIVE AND PROTECTIVE CARE",  # NH
+}
+
+
+def _discount_key(label):
+    """Lookup key: trimmed and lower-cased."""
+    return str(label).strip().lower()
+
+
+_DISCOUNT_LOOKUP = {_discount_key(k): v for k, v in DISCOUNT_LABELS.items()}
+_DISCOUNT_IGNORED_KEYS = {_discount_key(k) for k in DISCOUNT_IGNORED}
+
+
+def discount_tokens(labels):
+    """Raw labels -> de-duplicated canonical tokens in ``DISCOUNT_TOKENS`` order, or ``None``.
+
+    Subsidy labels and sentinels are dropped silently; an unknown label is
+    logged (so the table can be extended) and dropped. No discount at all is
+    ``None``, never ``[]``.
+    """
+    found = set()
+    for label in labels:
+        if label is None or not str(label).strip() or _is_sentinel(label):
+            continue
+        key = _discount_key(label)
+        if key in _DISCOUNT_IGNORED_KEYS:
+            continue
+        token = _DISCOUNT_LOOKUP.get(key)
+        if token is None:
+            logger.warning("discounts: unmapped value %r -> dropped", label)
+            continue
+        found.add(token)
+    return sorted(found, key=DISCOUNT_TOKENS.index) or None
+
+
+def _register_discounts(state, sources, extract, doc):
+    """Register an adapter filling ``discounts`` from the labels ``extract(record)`` returns."""
+
+    @register_adapter(state, sources=sources, fills=["discounts"])
+    def adapter(record):
+        return {"discounts": discount_tokens(extract(record))}
+
+    adapter.__doc__ = doc
+    adapter.__name__ = f"{state}_discounts"
+    return adapter
+
+
+for _state, _field, _separator, _shape in (
+    ("georgia", "ga_financial_info", ";", "`; `-separated string"),
+    ("massachusetts", "ma_financial_assistance", ";", "list"),
+    ("new_hampshire", "nh_financial_assistance", ",", "`, `-separated UPPERCASE string"),
+    ("new_jersey", "nj_discounts_labels", ";", "list of resolved labels"),
+):
+    _register_discounts(
+        _state,
+        [_field],
+        _schedule_source(_field, _separator),
+        f"{_state.replace('_', ' ').title()} `{_field}` ({_shape}) -> `discounts` via the explicit label table; "
+        "subsidy labels are skipped (they feed `scholarships_accepted`).",
+    )
+
+_register_discounts(
+    "vermont",
+    ["vt_sibling_discount"],
+    lambda record: ["Sibling Discounts"] if str(record.get("vt_sibling_discount")).strip().lower() == "yes" else [],
+    "VT `vt_sibling_discount` (Yes/No) -> `discounts`: Yes -> `sibling`, No -> None.",
+)
+
+
+# --------------------------------------------------------------------------- #
 # Rates (CT, GA, KY, PA, TN, MA, NJ, WY; NH deliberately skipped)
 # --------------------------------------------------------------------------- #
 RATE_PERIODS = {
