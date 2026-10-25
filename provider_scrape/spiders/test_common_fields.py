@@ -4794,3 +4794,39 @@ def test_licensed_non_exempt_category_stays_unset():
     item = norm.normalize_item({"provider_type": "Child Care Center"}, "north_dakota")
     assert item["facility_category"] != "exempt"
     assert item.get("licensed") is None
+
+
+@pytest.mark.parametrize("raw, expected", [("house", "residence"), ("building", "non_residential")])
+def test_building_type_iowa_vocab(raw, expected):
+    item = norm.normalize_item({"ia_business_type": raw}, "iowa")
+    assert item["building_type"] == expected
+    assert item["ia_business_type"] == raw
+
+
+@pytest.mark.parametrize(
+    "raw, expected",
+    [
+        ("Non-Residential", "non_residential"),
+        ("House", "residence"),
+        ("Workplace-Based", "workplace"),
+        ("Mobile Home", "residence"),
+        ("Apartment", "residence"),
+    ],
+)
+def test_building_type_vermont_vocab(raw, expected):
+    item = norm.normalize_item({"vt_building_type": raw}, "vermont")
+    assert item["building_type"] == expected
+    assert item["vt_building_type"] == raw
+
+
+def test_building_type_unknown_logged(caplog):
+    with caplog.at_level(logging.WARNING):
+        item = norm.normalize_item({"vt_building_type": "Yurt"}, "vermont")
+    assert item.get("building_type") is None
+    assert "unmapped value 'Yurt'" in caplog.text
+
+
+def test_building_type_minnesota_not_populated():
+    item = norm.normalize_item({"mn_setting": "House"}, "minnesota")
+    assert item.get("building_type") is None
+    assert item["mn_setting"] == "House"

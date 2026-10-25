@@ -20,6 +20,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `age_max_months` | Whitespace cleanup | Oldest accepted age in whole months (int), same parsing as `age_min_months` (IL max of the day and night maxes, WY max over programs). A max of 0 or below the min is logged and set to None, keeping the min. Either bound may be None independently. |
 | `age_min_months` | Whitespace cleanup | Youngest accepted age in whole months (int; 0 is valid). CT weeks use floor(weeks * 12 / 52) (6 weeks -> 1 month, 624 weeks -> 144); ND/WV `N Years M Months` strings are summed (`6 Weeks` uses the same weeks rule); IL takes the widest of the day and night ranges (`6W TO 12Y`; a bare `0` means not offered and is ignored); WY takes the min over `wy_programs[]`. Unparseable values are logged and left None. `ages_served` and the `xx_` sources are unchanged. |
 | `ages_served` | Whitespace cleanup; List -> string | Ages accepted, normalized to a single string (lists are joined with ", "). |
+| `building_type` | Whitespace cleanup; Field collapse from state-specific source (transforms: vocab(ia_business_type), vocab(vt_building_type)) | Physical setting where care happens (string), not the license class: `residence`, `non_residential`, `workplace`, `other`. IA maps `ia_business_type` through an explicit vocab (`house` -> `residence`, `building` -> `non_residential`). VT maps `vt_building_type` (`House`, `Mobile Home` and `Apartment` -> `residence`; `Non-Residential` -> `non_residential`; `Workplace-Based` -> `workplace`, a non-residential workplace-based site). MN's `mn_setting` is never populated, so it is not wired. Nothing maps to `other` yet. An unknown value is logged and left unset. The state values stay in the `xx_` source fields. |
 | `capacity` | Whitespace cleanup; Integer coercion | Licensed capacity coerced to an integer when it is a clean number; ranges/free text are left unchanged and logged. |
 | `capacity_by_age` | Whitespace cleanup | Licensed capacity by age group: list of rows `{age_group, capacity}` in source order. `age_group` is each state's own label, humanized (not normalized to bands; no cross-state comparison); `capacity` is an int through `to_int`, zero kept. Rows with a blank or unparseable (logged) capacity are dropped; no rows -> unset. MA unpivots `ma_capacity_by_age` via a fixed key table (an unknown key is logged and given a humanized label); RI copies `ri_age_group_capacity` and adds `classrooms` when present; IN labels `Start â€“ End` (just the start when there is no end); CT emits `Three and Under`, `School Aged` and `Full Time (any age)`. The CT full-time bucket is not an age group: it is the family-home rule, typically 6 full-time + 3 school-aged = 9 licensed, so do not add it to an age total. NY is excluded (prose in `ny_capacity_description`). The `xx_` sources and `capacity` are unchanged. |
 | `care_schedules` | Whitespace cleanup | Care arrangements offered: list of canonical tokens from a fixed 12-token list, de-duplicated, in this order: before_school, after_school, drop_in, full_day, half_day, full_time, part_time, summer, school_holidays, emergency, flexible, sick_care. From FL/MS/SD/RI/WI/ND/MA/WY/OK/NJ (lists), IA/VT (`, `-separated), MI/NH (`;`-separated, NH UPPERCASE), GA (three `; `-separated sources merged) and LA (`la_before_care`/`la_after_care` True) by an explicit case-insensitive label table (`CARE_SCHEDULE_LABELS`); one label can give several tokens (`Before and After School`). Evening/overnight/weekend/year-round labels and non-schedule services are ignored silently (they feed other fields); an unknown label is logged and dropped. Empty -> unset. The state labels stay in the `xx_` source fields. |
@@ -126,6 +127,7 @@ Each common field is populated from a single populated source field (additive â€
 | `accepting_new_children` | `co_accepting_new_children`, `ct_accepting_referrals`, `ga_accepting_new_children` |
 | `accreditation` | `al_accreditations`, `ct_accreditations`, `ga_accreditation`, `hi_accreditations`, `md_accreditation`, `nj_accreditation_labels` |
 | `address_suppressed` | `ct_address_suppressed` (to_bool), `fl_display_address_on_web` (invert), `ks_address_suppressed` (to_bool), `ma_contact_redacted` (to_bool) |
+| `building_type` | `ia_business_type` (vocab(ia_business_type)), `vt_building_type` (vocab(vt_building_type)) |
 | `complaint_count` | `ca_complaint_info` (no_complaints_zero), `ia_complaint_count` (to_int) |
 | `current_enrollment` | `nd_total_enrollment` (enrollment_zero_to_none) |
 | `curriculum` | `ga_curriculum`, `nj_curriculum` |
@@ -589,7 +591,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### Iowa (IA)
 
-- `ia_business_type` -> pass-through
+- `ia_business_type` -> collapses into `building_type` (via vocab(ia_business_type))
 - `ia_care_types` -> feeds adapter, fills `care_schedules`
 - `ia_complaint_count` -> collapses into `complaint_count` (via to_int)
 - `ia_compliance_report_count` -> pass-through
@@ -1138,7 +1140,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 ### Vermont (VT)
 
 - `vt_area_description` -> feeds adapter, fills `environment_features`
-- `vt_building_type` -> pass-through
+- `vt_building_type` -> collapses into `building_type` (via vocab(vt_building_type))
 - `vt_current_vacancy` -> collapses into `total_vacancies` (via to_int)
 - `vt_days_of_operation` -> collapses into `days_of_operation` (via day_names)
 - `vt_guidance` -> pass-through

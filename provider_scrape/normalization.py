@@ -1049,6 +1049,15 @@ def _enrollment_zero_to_none(value):
 
 LA_LICENSED_MAP = {"Licensed": True, "License Exempt": False}
 SC_LICENSE_CATEGORY_MAP = {"License": True, "Approval": False, "Exempt": False}
+# Physical setting of care. "other" is reserved for future sources.
+IA_BUILDING_TYPE_MAP = {"house": "residence", "building": "non_residential"}
+VT_BUILDING_TYPE_MAP = {
+    "Non-Residential": "non_residential",
+    "House": "residence",
+    "Workplace-Based": "workplace",
+    "Mobile Home": "residence",
+    "Apartment": "residence",
+}
 
 
 # common field -> source state-specific fields. Populating the common field
@@ -1124,6 +1133,12 @@ FIELD_COLLAPSE_MAP = {
         ("la_licensed", vocab(LA_LICENSED_MAP, "la_licensed")),
         ("nh_licensed", to_bool),
         ("sc_license_category", vocab(SC_LICENSE_CATEGORY_MAP, "sc_license_category")),
+    ],
+    # Physical setting of care (not the license class). MN's mn_setting is never
+    # populated by the spider, so it is not wired.
+    "building_type": [
+        ("ia_business_type", vocab(IA_BUILDING_TYPE_MAP, "ia_business_type")),
+        ("vt_building_type", vocab(VT_BUILDING_TYPE_MAP, "vt_building_type")),
     ],
     # Provider-written program description. ID is an adapter in
     # common_fields.py (description first, philosophy fallback).

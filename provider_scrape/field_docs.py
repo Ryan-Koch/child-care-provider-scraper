@@ -192,6 +192,13 @@ FIELD_DOCS = {
     "`exempt` gets False. True is never inferred from `facility_category`, and a source value is never "
     "overwritten. `licensed` and `facility_category` can disagree (e.g. LA `License Exempt` records are mostly "
     "`family_home`).",
+    "building_type": "Physical setting where care happens (string), not the license class: `residence`, "
+    "`non_residential`, `workplace`, `other`. IA maps `ia_business_type` through an explicit vocab (`house` -> "
+    "`residence`, `building` -> `non_residential`). VT maps `vt_building_type` (`House`, `Mobile Home` and "
+    "`Apartment` -> `residence`; `Non-Residential` -> `non_residential`; `Workplace-Based` -> `workplace`, a "
+    "non-residential workplace-based site). MN's `mn_setting` is never populated, so it is not wired. Nothing "
+    "maps to `other` yet. An unknown value is logged and left unset. The state values stay in the `xx_` source "
+    "fields.",
     "program_description": "The provider's own description of their program (string), verbatim apart from "
     "trimming. ID uses `id_program_description` first and falls back to `id_philosophy_description` when that is "
     "missing or filler (`id_philosophy_comment` is curriculum notes and is ignored); ND copies `nd_philosophy`; VT "
