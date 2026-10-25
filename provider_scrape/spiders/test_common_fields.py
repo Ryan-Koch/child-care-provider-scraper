@@ -1135,11 +1135,20 @@ def test_license_holder_address_does_not_feed_mailing_address(state, field):
     assert "mailing_address" not in item
 
 
-def test_mo_mailing_address_not_mapped():
-    item = norm.normalize_item({"mo_mailing_address": "1 Corp Way, Overland Park, KS"}, "missouri")
-    assert "license_holder_address" not in item
+def test_mo_mailing_address_feeds_license_holder_address():
+    raw = "6901 SHAWNEE MISSION PKWY STE 300, OVERLAND PARK, KS 66202-4029"
+    item = norm.normalize_item({"mo_mailing_address": raw}, "missouri")
+    assert item["license_holder_address"] == raw
     assert "mailing_address" not in item
-    assert item["mo_mailing_address"] == "1 Corp Way, Overland Park, KS"
+    assert item["mo_mailing_address"] == raw  # additive: source kept
+
+
+def test_mo_mailing_address_does_not_overwrite_license_holder_address():
+    item = norm.normalize_item(
+        {"mo_mailing_address": "1 Corp Way, Overland Park, KS", "license_holder_address": "9 Owner St, Joplin, MO"},
+        "missouri",
+    )
+    assert item["license_holder_address"] == "9 Owner St, Joplin, MO"
 
 
 def test_license_holder_address_absent_when_no_source():

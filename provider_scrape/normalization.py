@@ -1082,7 +1082,8 @@ VT_BUILDING_TYPE_MAP = {
 # below), and quality ratings are never collapsed (they stay state-specific).
 # Keep VPK-specific curriculum (fl_vpk_curriculum) OUT of these lists. Owner/licensee mailing addresses
 # (nc_owner_mailing_address, mi_licensee_address) stay out of
-# `mailing_address`; they feed `license_holder_address` instead.
+# `mailing_address`; they feed `license_holder_address` instead (as does
+# MO's mo_mailing_address).
 FIELD_COLLAPSE_MAP = {
     # Trade name ("doing business as"). FL note: the FL API already returns the
     # DBA as `providerName`, so fl_dba always equals provider_name; mapping it
@@ -1094,10 +1095,11 @@ FIELD_COLLAPSE_MAP = {
     ],
     # License holder's own address (distinct from the facility's mailing
     # address). The transform cleans it, so it does not depend on the
-    # `address` cleanup step. MO's mo_mailing_address is deferred, not mapped.
+    # `address` cleanup step.
     "license_holder_address": [
         ("mi_licensee_address", license_holder_address),
         ("nc_owner_mailing_address", license_holder_address),
+        ("mo_mailing_address", license_holder_address),
     ],
     # Weekdays open, as full day names in Monday -> Sunday order. GA uses
     # 2-letter codes, IA 3-letter abbreviations, VT full names.

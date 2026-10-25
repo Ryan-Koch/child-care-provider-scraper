@@ -47,7 +47,7 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `license_number` | License/registration id | String (as emitted) |
 | `source_provider_id` | State system's own record key | Opaque string via `to_id_string` (leading zeros kept); one source per state (AK `ak_facility_gen_id`); VT excluded; not unique/comparable across states |
 | `license_holder` | Licensee / holder name | String; ALL-CAPS → Title Case |
-| `license_holder_address` | Licensee / owner's own address | Single-line string (MI, NC): `clean_address`, case kept; MI's literal `null` pieces dropped |
+| `license_holder_address` | Licensee / owner's own address | Single-line string (MI, NC, MO): `clean_address`, case kept; MI's literal `null` pieces dropped; MO's comes from the report's "Mailing Address" listed under Owner |
 | `administrator` | On-site administrator/director | String; ALL-CAPS → Title Case |
 | `provider_type` | Raw state license category | String (preserved exactly) |
 | `facility_category` | Canonical facet of `provider_type` | Vocab: `center` / `family_home` / `group_home` / `school_age` / `exempt` / `other` |
