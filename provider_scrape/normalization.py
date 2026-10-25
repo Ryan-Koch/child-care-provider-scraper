@@ -1100,6 +1100,10 @@ FIELD_COLLAPSE_MAP = {
         ("ia_complaint_count", to_int),
         ("ca_complaint_info", _no_complaints_zero),
     ],
+    # Reported serious injuries / deaths. MD's page does not state the
+    # reporting period. DE is an adapter in common_fields.py (per-year text).
+    "serious_injury_count": [("md_serious_injuries", to_int)],
+    "fatality_count": [("md_fatalities", to_int)],
     # Start of the CURRENT license term. NC's spider takes licenses[0] as the
     # current license (older ones go to nc_license_history), so its effective
     # date is the term start. Other states' license_begin_date are untouched.

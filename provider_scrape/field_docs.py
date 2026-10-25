@@ -273,6 +273,18 @@ FIELD_DOCS = {
     "and IN `in_complaints` (list length; IN comes from one detail API that omits the list when empty, so "
     "absence -> 0). AL is excluded (user decision): `al_substantiated_complaints` is substantiated-only and would "
     "mix semantics, so it stays state-specific. The `xx_` sources are kept.",
+    "serious_injury_count": "Number of serious injuries the state reports at the facility (int; `0` = none "
+    "reported, a real value). Collapsed from MD `md_serious_injuries` (the page does not state the reporting "
+    "period, so it is unspecified) and DE `de_injuries_report` (adapter). DE publishes one segment per year; only "
+    "the MOST RECENT year listed in the record is counted (user decision), and that year can differ between "
+    "providers: a provider whose only listed injury year is 2022 reports 2022's count. No year segments and "
+    "`No facility injuries reported` -> 0; an unrecognised DE string -> unset (warning logged). LA "
+    "`la_serious_injuries_url` is excluded (a URL only, no count). The `xx_` sources are kept.",
+    "fatality_count": "Number of deaths the state reports at the facility (int; `0` = none reported, a real "
+    "value). Collapsed from MD `md_fatalities` (reporting period unspecified on the page) and DE "
+    "`de_injuries_report` (adapter; `N facility death(s)` / `No facility deaths reported`). As for "
+    "`serious_injury_count`, DE counts only the MOST RECENT year listed in the record, which can differ between "
+    "providers. An unrecognised DE string -> unset. The `xx_` sources are kept.",
     "licensing_specialist": "State staff member assigned to oversee the provider's license, as `First Last` "
     "(ALL-CAPS Title-cased; SC's `Last, First` flipped; `N/A` -> empty). Collapsed from AK, MA, ME, OK, SC, TN, "
     "WV; VA's packed `Name: phone` string is split by an adapter.",

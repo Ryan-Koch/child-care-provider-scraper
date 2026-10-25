@@ -777,6 +777,48 @@ def _vacancies_by_band(rows, label_key, band_table, value_keys, state):
     return {VACANCY_FIELDS[band]: total for band, total in totals.items()}
 
 
+# One DE segment: "2026: 1 facility injury. No facility deaths reported."
+_DE_YEAR_SEGMENT = re.compile(r"^\s*(\d{4})\s*:\s*(.*)$", re.DOTALL)
+_DE_INJURIES = re.compile(r"(?:(\d+)\s+facility\s+injur(?:y|ies)|No\s+facility\s+injuries\s+reported)", re.I)
+_DE_DEATHS = re.compile(r"(?:(\d+)\s+facility\s+deaths?|No\s+facility\s+deaths\s+reported)", re.I)
+
+
+def _de_count(pattern, text):
+    """First match of ``pattern`` in ``text``: its number, 0 for "No ... reported", else None."""
+    match = pattern.search(text)
+    if match is None:
+        return None
+    return int(match.group(1)) if match.group(1) else 0
+
+
+@register_adapter(
+    "delaware",
+    sources=["de_injuries_report"],
+    fills=["serious_injury_count", "fatality_count"],
+)
+def delaware_injuries(record):
+    """Parse `de_injuries_report` ("; "-separated per-year segments).
+
+    Only the segment with the highest year is used. With no year segments, the
+    "No facility ... reported" text means 0. Anything unrecognised -> None.
+    """
+    report = record.get("de_injuries_report")
+    if not isinstance(report, str) or not report.strip():
+        return {}
+    segments = []  # (year, text)
+    for part in report.split(";"):
+        year_match = _DE_YEAR_SEGMENT.match(part)
+        if year_match:
+            segments.append((int(year_match.group(1)), year_match.group(2)))
+    text = max(segments)[1] if segments else report
+    injuries = _de_count(_DE_INJURIES, text)
+    deaths = _de_count(_DE_DEATHS, text)
+    if injuries is None or deaths is None:
+        logger.warning("delaware: unrecognised de_injuries_report %r -> None", report)
+        return {"serious_injury_count": None, "fatality_count": None}
+    return {"serious_injury_count": injuries, "fatality_count": deaths}
+
+
 @register_adapter("indiana", sources=["in_complaints"], fills=["complaint_count"])
 def indiana_complaint_count(record):
     """Count `in_complaints` rows; the spider omits the key when there are none -> 0."""

@@ -34,6 +34,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `email` | Whitespace cleanup | Contact email (whitespace-cleaned only). |
 | `environment_features` | Whitespace cleanup | Facility amenities: list of canonical tokens from a fixed list, de-duplicated, in order: smoke_free, fenced_yard, outdoor_play, air_conditioned, peanut_free, secure_entry, video_surveillance, parent_webcam, pool, sports_facilities, separate_play_areas, field_trips, near_public_transit, no_tv. From GA `ga_environment` (`; `-separated), MA `ma_environment` (list), NH `nh_environment` (`, `-separated UPPERCASE), UT `ut_environment` and VT `vt_area_description` (`,`-separated), and NJ `nj_environmental_features_labels` (resolved labels) by an explicit case-insensitive label table (`ENVIRONMENT_LABELS`). Pet labels and wheelchair/handicap labels belong to other fields and are skipped silently, as are non-amenity labels (approved assistant, mixed age, school bus route, provide your own equipment). NJ codes 6-13 have no known label ("Unknown (code N)") and are skipped silently. An unknown label is logged and dropped. None found is None, never an empty list. The `xx_` sources are kept. |
 | `evening_care` | Whitespace cleanup | Evening / second-shift care (bool). WY `wy_evening_care`; NC second-shift capacity > 0 (0 -> False); OK `Evening Hours` -> True (absent -> unset). The `xx_` sources are kept. For NC, True means licensed second-shift capacity, not confirmed operating hours. |
+| `fatality_count` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Number of deaths the state reports at the facility (int; `0` = none reported, a real value). Collapsed from MD `md_fatalities` (reporting period unspecified on the page) and DE `de_injuries_report` (adapter; `N facility death(s)` / `No facility deaths reported`). As for `serious_injury_count`, DE counts only the MOST RECENT year listed in the record, which can differ between providers. An unrecognised DE string -> unset. The `xx_` sources are kept. |
 | `food_program` | Whitespace cleanup; Field collapse from state-specific source (transforms: has_token(food program\|CACFP), to_bool) | Whether the provider participates in the USDA food program, CACFP (bool). HI/ID/WA copy their flag (`Yes`/`No` or bool; WA is `Yes` or blank, blank -> unset). DE (`de_financial_arrangements`), VT (`vt_program_participation`), WY (`wy_services`) and UT/PA/DC (the common `meals` text) are matched with one case-insensitive phrase, `food program\|CACFP`: present -> True, absent -> unset (never False). `meals` is unchanged; the `xx_` sources are kept. |
 | `has_pets` | Whitespace cleanup | Whether animals are present at the provider: True = pets present, False = explicitly none, None = not stated (absence is never False). From ID `id_pet_policy` (Pet Free = False; Dogs only / Cats only / Other = True), VT `vt_pets` (any recognised entry = True), GA `ga_environment` and NJ `nj_environmental_features_labels` (`No pets` = False), UT `ut_environment` (`No Pets` = False, `Pets` = True) and NH `nh_environment` (NO PETS = False; PETS / INDOOR PETS / OUTDOOR PETS / DOG / CAT = True). NH NO DOG / NO CAT alone do not set it. Conflicting entries in one record are logged and left None. The `xx_` sources are kept. |
 | `head_start` | Whitespace cleanup; Field collapse from state-specific source (-> boolean) | Head Start participation, collapsed from a single state source and coerced to a boolean. |
@@ -73,6 +74,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `scholarships_accepted` | Whitespace cleanup; Field collapse from state-specific source (transforms: has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP)), scholarships_flag) | Whether the provider accepts child-care subsidies/scholarships: bool-or-None. States that emit "Yes"/"No" or NM's "Accepted"/"Not Accepted" are coerced via the shared strict token rule (bug_06); an unparseable token becomes None rather than a guessed True. |
 | `school` | Whitespace cleanup | Whether the provider serves school-age children: bool-or-None. See infant. |
 | `school_district` | Whitespace cleanup; Field collapse from state-specific source | Associated school district, collapsed from a single populated state-specific source field. |
+| `serious_injury_count` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Number of serious injuries the state reports at the facility (int; `0` = none reported, a real value). Collapsed from MD `md_serious_injuries` (the page does not state the reporting period, so it is unspecified) and DE `de_injuries_report` (adapter). DE publishes one segment per year; only the MOST RECENT year listed in the record is counted (user decision), and that year can differ between providers: a provider whose only listed injury year is 2022 reports 2022's count. No year segments and `No facility injuries reported` -> 0; an unrecognised DE string -> unset (warning logged). LA `la_serious_injuries_url` is excluded (a URL only, no count). The `xx_` sources are kept. |
 | `serves_special_needs` | Whitespace cleanup; Field collapse from state-specific source (transforms: has_list_token(Will enroll children with special needs), to_bool) | Whether the provider accommodates children with special needs (bool). IA (`Yes`/`No`) and NE (bool) are copied; NC is True when `nc_special_features` has the `Will enroll children with special needs` entry, else unset (never False). CO: `None` -> False, `Willing to Support` or any mapped label -> True, only unmapped labels -> unset. CT/ND: True when the list has a real entry. MA/NH: True for a mapped label or `Experience` (which is never a type). Absent/empty source -> unset. |
 | `source_provider_id` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_id_string) | The state system's own record key for the provider, as an opaque string (leading zeros kept, ints stringified). State-specific: not comparable across states and not guaranteed unique. One source per state (AK facility_gen_id; VT excluded, NV/WI have no fallback). |
 | `special_needs_types` | Whitespace cleanup | Kinds of special needs accommodated: list of canonical categories from a fixed 11-category list, de-duplicated, in this order: Autism, Behavioral/Social-Emotional, ADHD, Developmental/Cognitive, Speech/Language, Physical, Hearing/Vision, Medical/Health, Dietary, Sensory, At Risk. From CO (`;`-separated), CT/ND (list), MA (`;`-separated) and NH (`, `-separated, UPPERCASE) by an explicit case-insensitive label lookup; `Experience`, `Willing to Support`, `None` and `N/A` are never types and an unmapped label is logged and dropped. Empty -> unset. The state labels stay in the `xx_` source fields. |
@@ -125,6 +127,7 @@ Each common field is populated from a single populated source field (additive â€
 | `days_of_operation` | `ga_operating_days` (day_names), `ia_days_of_operation` (day_names), `vt_days_of_operation` (day_names) |
 | `doing_business_as` | `fl_dba` (none_if_sentinel), `ok_doing_business_as` (none_if_sentinel) |
 | `early_head_start` | `ms_early_head_start` (coerce_bool), `nh_early_head_start` (coerce_bool), `wa_early_head_start` (coerce_bool) |
+| `fatality_count` | `md_fatalities` (to_int) |
 | `food_program` | `de_financial_arrangements` (has_token(food program\|CACFP)), `hi_usda_food_program` (to_bool), `id_usda_food_program` (to_bool), `vt_program_participation` (has_token(food program\|CACFP)), `wa_food_program` (to_bool), `wy_services` (has_token(food program\|CACFP)) |
 | `head_start` | `az_headstart` (coerce_bool), `co_head_start` (coerce_bool), `ct_head_start` (coerce_bool), `fl_is_head_start` (coerce_bool), `nh_head_start` (coerce_bool), `ri_head_start` (coerce_bool), `wa_head_start` (coerce_bool) |
 | `license_begin_date` | `nc_license_effective_date` (to_iso_date) |
@@ -141,6 +144,7 @@ Each common field is populated from a single populated source field (additive â€
 | `registration_fee` | `ga_registration_fee` (to_float), `wy_registration_fee` (to_float) |
 | `scholarships_accepted` | `fl_is_offering_school_readiness` (scholarships_flag), `nh_financial_assistance` (has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP))), `va_current_subsidy_provider` (scholarships_flag), `wa_subsidy` (scholarships_flag) |
 | `school_district` | `co_school_district`, `ct_school_districts`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
+| `serious_injury_count` | `md_serious_injuries` (to_int) |
 | `serves_special_needs` | `ia_serves_special_needs` (to_bool), `nc_special_features` (has_list_token(Will enroll children with special needs)), `ne_serves_special_needs` (to_bool) |
 | `source_provider_id` | `ak_facility_gen_id` (to_id_string), `az_facility_id` (to_id_string), `ct_provider_id` (to_id_string), `hi_service_id` (to_id_string), `il_provider_id` (to_id_string), `in_provider_id` (to_id_string), `ky_provider_id` (to_id_string), `la_unique_id` (to_id_string), `ma_program_number` (to_id_string), `ms_facility_id` (to_id_string), `nd_program_id` (to_id_string), `ne_resource_id` (to_id_string), `nh_account_id` (to_id_string), `nj_unique_program_id` (to_id_string), `nv_operation_id` (to_id_string), `ny_facility_id` (to_id_string), `sc_provider_id` (to_id_string), `tn_provider_id` (to_id_string), `tx_operation_id` (to_id_string), `va_ID` (to_id_string), `wa_provider_id` (to_id_string), `wi_facility_number` (to_id_string), `wy_facility_id` (to_id_string) |
 | `temporarily_closed` | `in_is_temporarily_closed` (to_bool), `me_temporarily_closed` (to_bool) |
@@ -206,6 +210,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `connecticut` | provider | `ct_rates` | `rates` | CT `ct_rates`: one row per `{unit}_{period}` amount column; age_group is `Infant (0-17 Months)` style. |
 | `connecticut` | provider | `ct_age_range_min_weeks`, `ct_age_range_max_weeks` | `age_min_months`, `age_max_months` | CT `ct_age_range_{min,max}_weeks` -> months, floor(weeks * 12 / 52). |
 | `connecticut` | provider | `ct_capacity_three_and_under`, `ct_capacity_school_aged`, `ct_capacity_full_time` | `capacity_by_age` | CT three fixed capacity buckets (three and under, school aged, full time) -> rows; blanks skipped. |
+| `delaware` | provider | `de_injuries_report` | `serious_injury_count`, `fatality_count` | Parse `de_injuries_report` ("; "-separated per-year segments). |
 | `delaware` | provider | `de_special_conditions` | `license_conditions` | DE `de_special_conditions` string -> `;` split. |
 | `florida` | provider | `hours` | `weekly_schedule`, `days_of_operation` | FL dict-shaped `hours` ({"monday": "6:45AM to 6:00PM", ...}) -> `weekly_schedule`; `hours` kept. |
 | `florida` | provider | `fl_is_vpk` | `state_prek`, `state_prek_program` | `fl_is_vpk` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
@@ -469,7 +474,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `de_enforcement_action` -> pass-through
 - `de_financial_arrangements` -> collapses into `food_program` (via has_token(food program|CACFP))
-- `de_injuries_report` -> pass-through
+- `de_injuries_report` -> feeds adapter, fills `fatality_count`, `serious_injury_count`
 - `de_intent_to_revoke` -> pass-through
 - `de_investigation_conclusion` -> pass-through
 - `de_portal_listed` -> pass-through
@@ -740,12 +745,12 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `md_accreditation` -> collapses into `accreditation`
 - `md_approved_education` -> pass-through
 - `md_excels_level` -> pass-through
-- `md_fatalities` -> pass-through
+- `md_fatalities` -> collapses into `fatality_count` (via to_int)
 - `md_finding` -> pass-through
 - `md_inspection_status` -> pass-through
 - `md_regulation` -> pass-through
 - `md_school_name` -> pass-through
-- `md_serious_injuries` -> pass-through
+- `md_serious_injuries` -> collapses into `serious_injury_count` (via to_int)
 
 ### Maine (ME)
 

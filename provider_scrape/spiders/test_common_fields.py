@@ -4481,3 +4481,66 @@ def test_complaint_count_alabama_substantiated_not_mapped():
     item = norm.normalize_item({"al_substantiated_complaints": raw}, "alabama")
     assert item.get("complaint_count") is None
     assert item["al_substantiated_complaints"] == raw
+
+
+# --------------------------------------------------------------------------- #
+# serious_injury_count / fatality_count
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    ("raw_injuries", "raw_fatalities", "injuries", "fatalities"),
+    [("0", "0", 0, 0), ("2", "1", 2, 1), (None, None, None, None)],
+)
+def test_injury_counts_maryland(raw_injuries, raw_fatalities, injuries, fatalities):
+    record = {"md_serious_injuries": raw_injuries, "md_fatalities": raw_fatalities}
+    item = norm.normalize_item(dict(record), "maryland")
+    assert item.get("serious_injury_count") == injuries
+    assert item.get("fatality_count") == fatalities
+    assert item["md_serious_injuries"] == raw_injuries
+    assert item["md_fatalities"] == raw_fatalities
+
+
+@pytest.mark.parametrize(
+    ("report", "injuries", "fatalities"),
+    [
+        ("No facility injuries reported. No facility deaths reported.", 0, 0),
+        ("2026: 1 facility injury. No facility deaths reported.", 1, 0),
+        (
+            "2026: 1 facility injury. No facility deaths reported.; "
+            "2025: 2 facility injuries. No facility deaths reported.",
+            1,
+            0,
+        ),
+        # highest year wins even when it is not listed first
+        (
+            "2024: 1 facility injury. No facility deaths reported.; "
+            "2025: 3 facility injuries. No facility deaths reported.",
+            3,
+            0,
+        ),
+        ("2022: 2 facility injuries. No facility deaths reported.", 2, 0),
+        ("2025: No facility injuries reported. 1 facility death.", 0, 1),
+        ("2025: No facility injuries reported. 2 facility deaths.", 0, 2),
+    ],
+)
+def test_injury_counts_delaware(report, injuries, fatalities):
+    item = norm.normalize_item({"de_injuries_report": report}, "delaware")
+    assert item["serious_injury_count"] == injuries
+    assert item["fatality_count"] == fatalities
+    assert item["de_injuries_report"] == report
+
+
+def test_injury_counts_delaware_unrecognised_logs_and_is_none(caplog):
+    with caplog.at_level("WARNING"):
+        item = norm.normalize_item({"de_injuries_report": "see facility"}, "delaware")
+    assert item.get("serious_injury_count") is None
+    assert item.get("fatality_count") is None
+    assert item["de_injuries_report"] == "see facility"
+    assert "unrecognised de_injuries_report" in caplog.text
+
+
+def test_injury_counts_louisiana_url_not_mapped():
+    url = "https://example.org/injuries"
+    item = norm.normalize_item({"la_serious_injuries_url": url}, "louisiana")
+    assert item.get("serious_injury_count") is None
+    assert item.get("fatality_count") is None
+    assert item["la_serious_injuries_url"] == url
