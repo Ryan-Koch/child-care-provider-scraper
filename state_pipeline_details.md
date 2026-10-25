@@ -28,6 +28,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `doing_business_as` | Whitespace cleanup; Field collapse from state-specific source (transforms: none_if_sentinel) | Trade name (doing business as) alongside the licensed name, free text. FL, OK; sentinels such as `N/A` -> unset. FL's value always equals provider_name (its API already returns the DBA as the name). WA license name and MA umbrella org are not DBAs and are not mapped. |
 | `early_head_start` | Whitespace cleanup; Field collapse from state-specific source (-> boolean) | Early Head Start participation (federal infant/toddler program), coerced to a boolean. MS, NH, WA. Distinct from `head_start`: EHS sources never feed it. |
 | `email` | Whitespace cleanup | Contact email (whitespace-cleaned only). |
+| `environment_features` | Whitespace cleanup | Facility amenities: list of canonical tokens from a fixed list, de-duplicated, in order: smoke_free, fenced_yard, outdoor_play, air_conditioned, peanut_free, secure_entry, video_surveillance, parent_webcam, pool, sports_facilities, separate_play_areas, field_trips, near_public_transit, no_tv. From GA `ga_environment` (`; `-separated), MA `ma_environment` (list), NH `nh_environment` (`, `-separated UPPERCASE), UT `ut_environment` and VT `vt_area_description` (`,`-separated), and NJ `nj_environmental_features_labels` (resolved labels) by an explicit case-insensitive label table (`ENVIRONMENT_LABELS`). Pet labels and wheelchair/handicap labels belong to other fields and are skipped silently, as are non-amenity labels (approved assistant, mixed age, school bus route, provide your own equipment). NJ codes 6-13 have no known label ("Unknown (code N)") and are skipped silently. An unknown label is logged and dropped. None found is None, never an empty list. The `xx_` sources are kept. |
 | `evening_care` | Whitespace cleanup | Evening / second-shift care (bool). WY `wy_evening_care`; NC second-shift capacity > 0 (0 -> False); OK `Evening Hours` -> True (absent -> unset). The `xx_` sources are kept. For NC, True means licensed second-shift capacity, not confirmed operating hours. |
 | `food_program` | Whitespace cleanup; Field collapse from state-specific source (transforms: has_token(food program\|CACFP), to_bool) | Whether the provider participates in the USDA food program, CACFP (bool). HI/ID/WA copy their flag (`Yes`/`No` or bool; WA is `Yes` or blank, blank -> unset). DE (`de_financial_arrangements`), VT (`vt_program_participation`), WY (`wy_services`) and UT/PA/DC (the common `meals` text) are matched with one case-insensitive phrase, `food program\|CACFP`: present -> True, absent -> unset (never False). `meals` is unchanged; the `xx_` sources are kept. |
 | `head_start` | Whitespace cleanup; Field collapse from state-specific source (-> boolean) | Head Start participation, collapsed from a single state source and coerced to a boolean. |
@@ -196,6 +197,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `georgia` | provider | `ga_other_care_type` | `state_prek`, `state_prek_program` | `ga_other_care_type` entry `Georgia's Pre-K` -> `state_prek` True; absent -> unset (never False). |
 | `georgia` | provider | `ga_special_hours`, `ga_accepts_children_type`, `ga_summer_camp` | `care_schedules` | GA `ga_special_hours`, `ga_accepts_children_type`, `ga_summer_camp` (`; `-separated) merged -> `care_schedules`. |
 | `georgia` | provider | `ga_financial_info` | `discounts` | Georgia `ga_financial_info` (`; `-separated string) -> `discounts` via the explicit label table; subsidy labels are skipped (they feed `scholarships_accepted`). |
+| `georgia` | provider | `ga_environment` | `environment_features` | Georgia `ga_environment` (`; `-separated string) -> `environment_features` via the explicit label table; pet and wheelchair labels are skipped (they belong to other fields). |
 | `georgia` | provider | `ga_weekly_rates` | `rates` | GA `ga_weekly_rates`: full-day weekly rate per age -> full_time / week row. |
 | `illinois` | provider | `il_night_capacity` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | `il_night_capacity` (string int) -> `night_care` = capacity > 0. |
 | `indiana` | provider | `in_schedule` | `weekly_schedule`, `days_of_operation` | IN `in_schedule` rows (12h `open`/`close`) -> 24h `weekly_schedule`; days derived. |
@@ -210,6 +212,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `massachusetts` | provider | `ma_special_needs` | `serves_special_needs`, `special_needs_types` | MA `ma_special_needs` (`;`-separated) -> types; `Experience` -> serves True, never a type. |
 | `massachusetts` | provider | `ma_schedule_options` | `care_schedules` | Massachusetts `ma_schedule_options` (list) -> `care_schedules` via the explicit label table. |
 | `massachusetts` | provider | `ma_financial_assistance` | `discounts` | Massachusetts `ma_financial_assistance` (list) -> `discounts` via the explicit label table; subsidy labels are skipped (they feed `scholarships_accepted`). |
+| `massachusetts` | provider | `ma_environment` | `environment_features` | Massachusetts `ma_environment` (list) -> `environment_features` via the explicit label table; pet and wheelchair labels are skipped (they belong to other fields). |
 | `massachusetts` | provider | `ma_cost_table` | `rates` | MA `ma_cost_table`: ONE schedule (Full Year > School Year > Summer > first) -> rows tagged `schedule_type`. |
 | `michigan` | provider | `mi_services_provided` | `care_schedules` | Michigan `mi_services_provided` (`;`-separated string) -> `care_schedules` via the explicit label table. |
 | `mississippi` | provider | `ms_months_of_operation` | `operating_months`, `year_round` | MS `ms_months_of_operation` (list of month names) -> `operating_months`; year_round = all 12. |
@@ -219,8 +222,10 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `new_hampshire` | provider | `nh_special_needs` | `serves_special_needs`, `special_needs_types` | NH `nh_special_needs` (`, `-separated UPPERCASE) -> types; `EXPERIENCE` -> serves True, never a type. |
 | `new_hampshire` | provider | `nh_schedule_options` | `care_schedules` | New Hampshire `nh_schedule_options` (`;`-separated UPPERCASE string) -> `care_schedules` via the explicit label table. |
 | `new_hampshire` | provider | `nh_financial_assistance` | `discounts` | New Hampshire `nh_financial_assistance` (`, `-separated UPPERCASE string) -> `discounts` via the explicit label table; subsidy labels are skipped (they feed `scholarships_accepted`). |
+| `new_hampshire` | provider | `nh_environment` | `environment_features` | New Hampshire `nh_environment` (`, `-separated UPPERCASE string) -> `environment_features` via the explicit label table; pet and wheelchair labels are skipped (they belong to other fields). |
 | `new_jersey` | provider | `nj_special_schedules_labels` | `care_schedules` | New Jersey `nj_special_schedules_labels` (list) -> `care_schedules` via the explicit label table. |
 | `new_jersey` | provider | `nj_discounts_labels` | `discounts` | New Jersey `nj_discounts_labels` (list of resolved labels) -> `discounts` via the explicit label table; subsidy labels are skipped (they feed `scholarships_accepted`). |
+| `new_jersey` | provider | `nj_environmental_features_labels` | `environment_features` | New Jersey `nj_environmental_features_labels` (list of resolved labels) -> `environment_features` via the explicit label table; pet and wheelchair labels are skipped (they belong to other fields). |
 | `new_jersey` | provider | `nj_tuition_infant_hourly`, `nj_tuition_infant_daily`, `nj_tuition_infant_weekly`, `nj_tuition_infant_monthly`, `nj_tuition_toddler_hourly`, `nj_tuition_toddler_daily`, `nj_tuition_toddler_weekly`, `nj_tuition_toddler_monthly`, `nj_tuition_preschool_hourly`, `nj_tuition_preschool_daily`, `nj_tuition_preschool_weekly`, `nj_tuition_preschool_monthly`, `nj_tuition_school_age_hourly`, `nj_tuition_school_age_daily`, `nj_tuition_school_age_weekly`, `nj_tuition_school_age_monthly` | `rates` | NJ `nj_tuition_{age}_{period}` (16 columns) -> one row per amount > 0; `0.0` means blank. |
 | `new_york` | provider | `ny_address_omitted`, `ny_phone_number_omitted` | `address_suppressed`, `phone_suppressed` | NY `Address Omitted` / `Phone Number Omitted`: `Y` -> True, blank or absent -> False. |
 | `north_carolina` | provider | `nc_capacity_second_shift`, `nc_capacity_third_shift` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | `nc_capacity_second_shift`/`nc_capacity_third_shift` (int) -> `evening_care`/`night_care` = capacity > 0. |
@@ -240,9 +245,11 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `south_dakota` | provider | `sd_services_offered` | `care_schedules` | South Dakota `sd_services_offered` (list) -> `care_schedules` via the explicit label table. |
 | `tennessee` | provider | `tn_age_group_rates` | `rates` | TN `tn_age_group_rates`: unit_of_care sets unit (Full/Part-time) or period (Weekly/Daily/Monthly); other descriptors -> `care_type`; `$0.00` skipped. |
 | `utah` | provider | `meals` | `food_program` | The common `meals` text mentioning the food program -> `food_program` True; else unset. |
+| `utah` | provider | `ut_environment` | `environment_features` | Utah `ut_environment` (`,`-separated string) -> `environment_features` via the explicit label table; pet and wheelchair labels are skipped (they belong to other fields). |
 | `vermont` | provider | `vt_program_participation` | `state_prek`, `state_prek_program` | `vt_program_participation` entry `Pre-K Program` -> `state_prek` True; absent -> unset (never False). |
 | `vermont` | provider | `vt_type_of_care` | `care_schedules` | Vermont `vt_type_of_care` (`, `-separated string) -> `care_schedules` via the explicit label table. |
 | `vermont` | provider | `vt_sibling_discount` | `discounts` | VT `vt_sibling_discount` (Yes/No) -> `discounts`: Yes -> `sibling`, No -> None. |
+| `vermont` | provider | `vt_area_description` | `environment_features` | Vermont `vt_area_description` (`, `-separated string) -> `environment_features` via the explicit label table; pet and wheelchair labels are skipped (they belong to other fields). |
 | `virginia` | provider | `va_inspector` | `licensing_specialist`, `licensing_specialist_phone` | Split `va_inspector` ("Name: (555) 555-5555") into specialist name + phone; `N/A` -> None. |
 | `washington` | provider | `wa_eceap` | `state_prek`, `state_prek_program` | `wa_eceap` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
 | `washington_dc` | provider | `dc_enrollment` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map DC `dc_enrollment` `openings` (text; `Not Applicable` -> None) onto the four vacancy bands. |
@@ -484,7 +491,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ga_activity_fee` -> pass-through
 - `ga_compliance_status` -> pass-through
 - `ga_curriculum` -> collapses into `curriculum`
-- `ga_environment` -> pass-through
+- `ga_environment` -> feeds adapter, fills `environment_features`
 - `ga_family_engagement` -> pass-through
 - `ga_financial_info` -> feeds adapter, fills `discounts`
 - `ga_liability_insurance` -> pass-through
@@ -667,7 +674,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ma_domains` -> pass-through
 - `ma_dph_summer_camp` -> pass-through
 - `ma_encrypted_id` -> pass-through
-- `ma_environment` -> pass-through
+- `ma_environment` -> feeds adapter, fills `environment_features`
 - `ma_financial_assistance` -> feeds adapter, fills `discounts`
 - `ma_investigation_id` -> pass-through
 - `ma_investigator` -> pass-through
@@ -872,7 +879,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nj_discounts_labels` -> feeds adapter, fills `discounts`
 - `nj_doh_id` -> pass-through
 - `nj_environmental_features` -> pass-through
-- `nj_environmental_features_labels` -> pass-through
+- `nj_environmental_features_labels` -> feeds adapter, fills `environment_features`
 - `nj_facility_type` -> pass-through
 - `nj_fees` -> pass-through
 - `nj_fees_labels` -> pass-through
@@ -1051,7 +1058,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### Utah (UT)
 
-- `ut_environment` -> pass-through
+- `ut_environment` -> feeds adapter, fills `environment_features`
 - `ut_license_type` -> collapses into `license_type`
 - `ut_licensed_since` -> pass-through
 - `ut_meals` -> collapses into `meals`
@@ -1077,7 +1084,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### Vermont (VT)
 
-- `vt_area_description` -> pass-through
+- `vt_area_description` -> feeds adapter, fills `environment_features`
 - `vt_building_type` -> pass-through
 - `vt_current_vacancy` -> collapses into `total_vacancies` (via to_int)
 - `vt_days_of_operation` -> collapses into `days_of_operation` (via day_names)

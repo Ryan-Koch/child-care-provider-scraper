@@ -2023,6 +2023,152 @@ _register_discounts(
 
 
 # --------------------------------------------------------------------------- #
+# Environment features (GA, MA, NH, UT, VT, NJ)
+# --------------------------------------------------------------------------- #
+# Fixed token list, in the order ``environment_features`` is emitted.
+ENVIRONMENT_TOKENS = (
+    "smoke_free",
+    "fenced_yard",
+    "outdoor_play",
+    "air_conditioned",
+    "peanut_free",
+    "secure_entry",
+    "video_surveillance",
+    "parent_webcam",
+    "pool",
+    "sports_facilities",
+    "separate_play_areas",
+    "field_trips",
+    "near_public_transit",
+    "no_tv",
+)
+
+# Raw state label -> canonical token. Lookups are case-insensitive and
+# whitespace-trimmed, which also covers NH's UPPERCASE labels. Anything that is
+# in none of this table, ``ENVIRONMENT_IGNORED`` or the skip patterns below is
+# logged and dropped.
+ENVIRONMENT_LABELS = {
+    # smoke_free
+    "Smoke Free Environment": "smoke_free",  # GA
+    "Smoke Free": "smoke_free",  # MA, NH, VT
+    "Smoke-free Environment": "smoke_free",  # UT, NJ
+    # fenced_yard
+    "Fenced Yard": "fenced_yard",  # MA, VT
+    "Fenced In Yard": "fenced_yard",  # NH
+    "Fenced-in play area": "fenced_yard",  # NJ
+    # outdoor_play
+    "Outdoor Play area": "outdoor_play",  # GA
+    "Outdoor Play Equipment": "outdoor_play",  # NH
+    # air_conditioned
+    "Air Conditioned": "air_conditioned",  # MA, NH
+    # peanut_free
+    "Peanut Free": "peanut_free",  # MA, NH
+    # secure_entry
+    "Secure Grounds/Keypad Access": "secure_entry",  # GA
+    # video_surveillance
+    "Video surveillance": "video_surveillance",  # GA
+    # parent_webcam
+    "Webcam for parents": "parent_webcam",  # GA
+    # pool
+    "Pool": "pool",  # GA
+    "Adult Pool": "pool",  # MA
+    "Wading Pool": "pool",  # NH
+    # sports_facilities
+    "Sports fields": "sports_facilities",  # GA
+    "Tennis Courts": "sports_facilities",  # GA
+    # separate_play_areas
+    "Separated play areas": "separate_play_areas",  # NJ
+    # field_trips
+    "Field Trips Taken": "field_trips",  # MA, NH
+    # near_public_transit
+    "Near Public Transportation": "near_public_transit",  # UT
+    "Public Transportation": "near_public_transit",  # NH
+    # no_tv
+    "No TV Use": "no_tv",  # NH
+}
+
+# Known labels that are not environment amenities. They are dropped silently
+# (not logged): wheelchair/handicap labels feed ``wheelchair_accessible`` and
+# the rest describe the program, not the facility.
+ENVIRONMENT_IGNORED = {
+    "Wheelchair Accessible",  # MA, NH
+    "Not Wheelchair Accessible",  # NH
+    "Handicap accessible",  # NJ
+    "Approved Assistant",  # MA, NH
+    "School Bus Route",  # NH
+    "Provide your own equipment",  # GA
+}
+
+# Whole-word pet labels ("No pets", "NO CAT", "INDOOR PETS", "OUTDOOR PETS",
+# "DOG"...) belong to a separate pets field; "MIXED AGE (0-3)" style labels are
+# age-grouping notes; "Unknown (code N)" is the NJ spider's placeholder for
+# environmental-feature codes 6-13, which have no known label (it already logs
+# an aggregate count). All are dropped silently.
+_ENVIRONMENT_SKIP_PATTERNS = (
+    re.compile(r"\b(pets?|cat|dog)\b"),
+    re.compile(r"^mixed age \("),
+    re.compile(r"^unknown \(code \d+\)$"),
+)
+
+
+def _environment_key(label):
+    """Lookup key: trimmed and lower-cased."""
+    return str(label).strip().lower()
+
+
+_ENVIRONMENT_LOOKUP = {_environment_key(k): v for k, v in ENVIRONMENT_LABELS.items()}
+_ENVIRONMENT_IGNORED_KEYS = {_environment_key(k) for k in ENVIRONMENT_IGNORED}
+
+
+def environment_tokens(labels):
+    """Raw labels -> de-duplicated canonical tokens in ``ENVIRONMENT_TOKENS`` order, or ``None``.
+
+    Pet, wheelchair, non-amenity and NJ placeholder labels (and sentinels) are
+    dropped silently; an unknown label is logged (so the table can be extended)
+    and dropped. No feature at all is ``None``, never ``[]``.
+    """
+    found = set()
+    for label in labels:
+        if label is None or not str(label).strip() or _is_sentinel(label):
+            continue
+        key = _environment_key(label)
+        if key in _ENVIRONMENT_IGNORED_KEYS or any(p.search(key) for p in _ENVIRONMENT_SKIP_PATTERNS):
+            continue
+        token = _ENVIRONMENT_LOOKUP.get(key)
+        if token is None:
+            logger.warning("environment_features: unmapped value %r -> dropped", label)
+            continue
+        found.add(token)
+    return sorted(found, key=ENVIRONMENT_TOKENS.index) or None
+
+
+def _register_environment(state, field, separator, shape):
+    """Register an adapter filling ``environment_features`` from one source field."""
+
+    @register_adapter(state, sources=[field], fills=["environment_features"])
+    def adapter(record):
+        return {"environment_features": environment_tokens(_schedule_source(field, separator)(record))}
+
+    adapter.__doc__ = (
+        f"{state.replace('_', ' ').title()} `{field}` ({shape}) -> `environment_features` via the explicit label "
+        "table; pet and wheelchair labels are skipped (they belong to other fields)."
+    )
+    adapter.__name__ = f"{state}_environment_features"
+    return adapter
+
+
+for _state, _field, _separator, _shape in (
+    ("georgia", "ga_environment", ";", "`; `-separated string"),
+    ("massachusetts", "ma_environment", ";", "list"),
+    ("new_hampshire", "nh_environment", ",", "`, `-separated UPPERCASE string"),
+    ("utah", "ut_environment", ",", "`,`-separated string"),
+    ("vermont", "vt_area_description", ",", "`, `-separated string"),
+    ("new_jersey", "nj_environmental_features_labels", ";", "list of resolved labels"),
+):
+    _register_environment(_state, _field, _separator, _shape)
+
+
+# --------------------------------------------------------------------------- #
 # Rates (CT, GA, KY, PA, TN, MA, NJ, WY; NH deliberately skipped)
 # --------------------------------------------------------------------------- #
 RATE_PERIODS = {

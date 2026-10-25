@@ -3672,3 +3672,146 @@ def test_registration_fee_new_jersey_not_mapped():
     item = norm.normalize_item({"nj_fees": [1, 2]}, "new_jersey")
     assert item.get("registration_fee") is None
     assert item["nj_fees"] == [1, 2]
+
+
+# --------------------------------------------------------------------------- #
+# environment_features
+# --------------------------------------------------------------------------- #
+def _environment(state, **fields):
+    return norm.normalize_item(dict(fields), state).get("environment_features")
+
+
+def test_environment_table_covers_all_tokens():
+    assert set(cf.ENVIRONMENT_LABELS.values()) == set(cf.ENVIRONMENT_TOKENS)
+
+
+def test_environment_georgia_labels_and_source_kept():
+    raw = (
+        "No pets; Outdoor Play area; Smoke Free Environment; Secure Grounds/Keypad Access; Video surveillance; "
+        "Webcam for parents; Pool; Sports fields; Tennis Courts; Provide your own equipment"
+    )
+    item = norm.normalize_item({"ga_environment": raw}, "georgia")
+    assert item["environment_features"] == [
+        "smoke_free",
+        "outdoor_play",
+        "secure_entry",
+        "video_surveillance",
+        "parent_webcam",
+        "pool",
+        "sports_facilities",
+    ]
+    assert item["ga_environment"] == raw
+
+
+def test_environment_massachusetts_labels_and_source_kept():
+    raw = [
+        "Wheelchair Accessible",
+        "Adult Pool",
+        "Peanut Free",
+        "Field Trips Taken",
+        "Air Conditioned",
+        "Fenced Yard",
+        "Smoke Free",
+        "Approved Assistant",
+    ]
+    item = norm.normalize_item({"ma_environment": list(raw)}, "massachusetts")
+    assert item["environment_features"] == [
+        "smoke_free",
+        "fenced_yard",
+        "air_conditioned",
+        "peanut_free",
+        "pool",
+        "field_trips",
+    ]
+    assert item["ma_environment"] == raw
+
+
+def test_environment_new_hampshire_uppercase_comma_string():
+    raw = (
+        "WHEELCHAIR ACCESSIBLE, NO CAT, NO TV USE, OUTDOOR PLAY EQUIPMENT, MIXED AGE (3-5), NO DOG, "
+        "PUBLIC TRANSPORTATION, WADING POOL, FENCED IN YARD"
+    )
+    item = norm.normalize_item({"nh_environment": raw}, "new_hampshire")
+    assert item["environment_features"] == [
+        "fenced_yard",
+        "outdoor_play",
+        "pool",
+        "near_public_transit",
+        "no_tv",
+    ]
+    assert item["nh_environment"] == raw
+    other = "SMOKE FREE, AIR CONDITIONED, PEANUT FREE, FIELD TRIPS TAKEN, SCHOOL BUS ROUTE, NOT WHEELCHAIR ACCESSIBLE"
+    assert _environment("new_hampshire", nh_environment=other) == [
+        "smoke_free",
+        "air_conditioned",
+        "peanut_free",
+        "field_trips",
+    ]
+
+
+def test_environment_utah_comma_string_without_space():
+    raw = "Smoke-free Environment,No Pets,Near Public Transportation"
+    item = norm.normalize_item({"ut_environment": raw}, "utah")
+    assert item["environment_features"] == ["smoke_free", "near_public_transit"]
+    assert item["ut_environment"] == raw
+    assert _environment("utah", ut_environment="Pets") is None
+
+
+def test_environment_vermont_area_description():
+    item = norm.normalize_item({"vt_area_description": "Fenced Yard, Smoke Free"}, "vermont")
+    assert item["environment_features"] == ["smoke_free", "fenced_yard"]
+    assert item["vt_area_description"] == "Fenced Yard, Smoke Free"
+
+
+def test_environment_new_jersey_labels_and_unknown_codes_silent(caplog):
+    labels = [
+        "Smoke-free environment",
+        "Separated play areas",
+        "Fenced-in play area",
+        "No pets",
+        "Handicap accessible",
+        "Unknown (code 10)",
+    ]
+    with caplog.at_level(logging.WARNING):
+        item = norm.normalize_item(
+            {"nj_environmental_features": [5, 4, 2, 1, 3, 10], "nj_environmental_features_labels": labels},
+            "new_jersey",
+        )
+        assert _environment("new_jersey", nj_environmental_features_labels=["Unknown (code 10)"]) is None
+    assert item["environment_features"] == ["smoke_free", "fenced_yard", "separate_play_areas"]
+    assert item["nj_environmental_features"] == [5, 4, 2, 1, 3, 10]
+    assert caplog.text == ""
+    assert _environment("new_jersey", nj_environmental_features=[2]) is None
+
+
+def test_environment_skipped_labels_do_not_warn(caplog):
+    with caplog.at_level(logging.WARNING):
+        assert (
+            _environment(
+                "new_hampshire",
+                nh_environment="CAT, DOG, INDOOR PETS, OUTDOOR PETS, NO PETS, MIXED AGE (0-3), SCHOOL BUS ROUTE",
+            )
+            is None
+        )
+        assert _environment("georgia", ga_environment="No pets; Provide your own equipment") is None
+        assert _environment("massachusetts", ma_environment=["Wheelchair Accessible", "Approved Assistant"]) is None
+    assert "unmapped" not in caplog.text
+
+
+def test_environment_unknown_label_logged_and_dropped(caplog):
+    with caplog.at_level(logging.WARNING):
+        result = _environment("georgia", ga_environment="Pool; Trampoline Park")
+    assert result == ["pool"]
+    assert "environment_features: unmapped value 'Trampoline Park'" in caplog.text
+
+
+def test_environment_dedup_order_and_case_insensitive():
+    labels = [" wading pool ", "SMOKE FREE", "smoke free", "Fenced Yard", "Adult Pool"]
+    assert _environment("massachusetts", ma_environment=labels) == ["smoke_free", "fenced_yard", "pool"]
+
+
+def test_environment_empty_sources_are_none_and_no_overwrite():
+    assert _environment("georgia", ga_environment="") is None
+    assert _environment("massachusetts", ma_environment=[]) is None
+    assert _environment("georgia", ga_environment="Pool", environment_features=["no_tv"]) == ["no_tv"]
+    assert _environment("texas", ga_environment="Pool") is None

@@ -186,6 +186,16 @@ FIELD_DOCS = {
     "VT `vt_sibling_discount` (Yes -> sibling). MA `Other` -> other. Subsidies and scholarships are not discounts: "
     "they are skipped silently and routed to `scholarships_accepted`. An unknown label is logged and dropped. "
     "No discount (VT No, subsidy-only, empty) is None, never an empty list. The `xx_` sources are kept.",
+    "environment_features": "Facility amenities: list of canonical tokens from a fixed list, de-duplicated, in order: "
+    "smoke_free, fenced_yard, outdoor_play, air_conditioned, peanut_free, secure_entry, video_surveillance, "
+    "parent_webcam, pool, sports_facilities, separate_play_areas, field_trips, near_public_transit, no_tv. From GA "
+    "`ga_environment` (`; `-separated), MA `ma_environment` (list), NH `nh_environment` (`, `-separated UPPERCASE), "
+    "UT `ut_environment` and VT `vt_area_description` (`,`-separated), and NJ `nj_environmental_features_labels` "
+    "(resolved labels) by an explicit case-insensitive label table (`ENVIRONMENT_LABELS`). Pet labels and "
+    "wheelchair/handicap labels belong to other fields and are skipped silently, as are non-amenity labels "
+    "(approved assistant, mixed age, school bus route, provide your own equipment). NJ codes 6-13 have no known "
+    'label ("Unknown (code N)") and are skipped silently. An unknown label is logged and dropped. None found '
+    "is None, never an empty list. The `xx_` sources are kept.",
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
     "deficiencies": "Deficiency/violation count for the provider, coerced to an "
     "integer (bug_10). Digit strings, comma-grouped counts, and integral "
