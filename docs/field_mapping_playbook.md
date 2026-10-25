@@ -82,6 +82,8 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `pet_types` | Which animals are present | List of `dogs`, `cats`, `other` in that order, de-duped; only when types known (ID, VT, NH DOG/CAT), else None, never [] |
 | `pets_excluded` | Animals stated absent | List of `dogs`, `cats` from NH NO DOG / NO CAT only; None when none stated, never [] |
 | `ages_served` | Ages accepted | String (lists joined with `, `) |
+| `age_min_months` | Youngest accepted age | Int months, 0 valid; weeks -> `floor(weeks * 12 / 52)` (6 wk -> 1, 624 wk -> 144); `age_to_months` parses `6 Weeks` / `2 Years 0 Months` / IL `6W`,`15M`,`12Y`; CT/ND/WV/IL/WY via per-state adapters; IL widest of day+night (bare `0` = not offered, ignored); WY min of program mins; unparseable logged -> None |
+| `age_max_months` | Oldest accepted age | Int months, same parsing as min (IL/WY max of maxes); max of 0 or below min is logged and set to None, min kept |
 | `county` | County | String |
 | `scholarships_accepted` | Subsidy/scholarship acceptance | bool-or-None via `coerce_scholarships_accepted_flag`; FL/VA/WA collapsed from their subsidy flags (WA empty -> unset), NH from the `STATE CC ASSISTANCE (SCHOLARSHIP)` token as a fallback only; OK set by its spider |
 | `license_begin_date` | License start | `YYYY-MM-DD`; NC collapsed from `nc_license_effective_date` (current license's effective date; a spider-set value wins) |

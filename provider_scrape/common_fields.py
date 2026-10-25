@@ -2568,3 +2568,141 @@ _register_rates(
     _wyoming_rates,
     "WY `wy_programs[].rates`: program name as age_group; FULL_TIME/PART_TIME -> unit, other types -> `care_type`.",
 )
+
+
+# Age range in months (CT, ND, WV, IL, WY)
+# --------------------------------------------------------------------------- #
+_AGE_TOKEN_RE = re.compile(r"(\d+)\s*(years?|yrs?|y|months?|mos?|m|weeks?|wks?|w)\b", re.IGNORECASE)
+_AGE_EXPRESSION_RE = re.compile(rf"^\s*(?:{_AGE_TOKEN_RE.pattern}[\s,]*)+$", re.IGNORECASE)
+_AGE_UNIT_MONTHS = {"y": 12, "m": 1}
+
+
+def weeks_to_months(weeks):
+    """Whole months for ``weeks``: floor(weeks * 12 / 52), so 6 wk -> 1, 624 wk -> 144 (exact years)."""
+    return weeks * 12 // 52
+
+
+def age_to_months(value):
+    """One age expression -> int months, or ``None`` (unparseable input is logged).
+
+    Handles ``"6 Weeks"``, ``"2 Years 0 Months"``, ``"0 Years 1 Month"`` (singular/plural,
+    summed) and the compact IL tokens ``"6W"``, ``"15M"``, ``"12Y"``. A bare ``"0"`` is 0;
+    any other bare number has no unit and is rejected. Weeks use ``weeks_to_months``.
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value if value >= 0 else None
+    text = str(value).strip()
+    if not text or _is_sentinel(text):
+        return None
+    if text == "0":
+        return 0
+    if _AGE_EXPRESSION_RE.match(text):
+        months = 0
+        for amount, unit in _AGE_TOKEN_RE.findall(text):
+            amount, unit = int(amount), unit[0].lower()
+            months += weeks_to_months(amount) if unit == "w" else amount * _AGE_UNIT_MONTHS[unit]
+        return months
+    logger.warning("age_to_months: could not parse age %r -> None", value)
+    return None
+
+
+def _age_range_fields(state, low, high):
+    """``age_min_months``/``age_max_months`` dict from parsed bounds, applying the max sanity rule.
+
+    A max of 0 or below the min is a source artifact: it is logged and the max dropped
+    (min kept). A min of 0 is valid. Both ``None`` -> ``{}``.
+    """
+    if high is not None and (high == 0 or (low is not None and high < low)):
+        logger.warning("age range(%s): implausible max %r (min %r) -> max None", state, high, low)
+        high = None
+    fields = {"age_min_months": low, "age_max_months": high}
+    return {k: v for k, v in fields.items() if v is not None}
+
+
+def _bounds(lows, highs):
+    """Widest span of the parsed bounds: min of mins, max of maxes, ignoring ``None``."""
+    lows, highs = [v for v in lows if v is not None], [v for v in highs if v is not None]
+    return (min(lows) if lows else None, max(highs) if highs else None)
+
+
+def _register_age_range(state, sources, extract, doc):
+    """Register an adapter filling the age-range fields from ``extract(record)`` -> ``(low, high)`` months."""
+
+    @register_adapter(state, sources=sources, fills=["age_min_months", "age_max_months"])
+    def adapter(record):
+        return _age_range_fields(state, *extract(record))
+
+    adapter.__doc__ = doc
+    adapter.__name__ = f"{state}_age_range"
+    return adapter
+
+
+def _weeks_to_months_or_none(value):
+    weeks = to_int(value)
+    return None if weeks is None or weeks < 0 else weeks_to_months(weeks)
+
+
+_register_age_range(
+    "connecticut",
+    ["ct_age_range_min_weeks", "ct_age_range_max_weeks"],
+    lambda r: (
+        _weeks_to_months_or_none(r.get("ct_age_range_min_weeks")),
+        _weeks_to_months_or_none(r.get("ct_age_range_max_weeks")),
+    ),
+    "CT `ct_age_range_{min,max}_weeks` -> months, floor(weeks * 12 / 52).",
+)
+_register_age_range(
+    "north_dakota",
+    ["nd_min_age", "nd_max_age"],
+    lambda r: (age_to_months(r.get("nd_min_age")), age_to_months(r.get("nd_max_age"))),
+    "ND `nd_min_age`/`nd_max_age` (`6 Weeks`, `12 Years`) -> months; a max of 0 is dropped.",
+)
+_register_age_range(
+    "west_virginia",
+    ["wv_age_from", "wv_age_to"],
+    lambda r: (age_to_months(r.get("wv_age_from")), age_to_months(r.get("wv_age_to"))),
+    "WV `wv_age_from`/`wv_age_to` (`2 Years 0 Months`) -> months.",
+)
+
+
+def _il_range_bounds(value):
+    """``(low, high)`` months from one IL range such as ``6W TO 12Y``; bare ``0``/blank -> ``(None, None)``."""
+    if not is_present(value) or str(value).strip() == "0":
+        return None, None  # a bare 0 means that care (day/night) is not offered
+    parts = re.split(r"\s+TO\s+", str(value).strip(), flags=re.IGNORECASE)
+    if len(parts) != 2:
+        logger.warning("age range(illinois): could not split range %r -> None", value)
+        return None, None
+    return age_to_months(parts[0]), age_to_months(parts[1])
+
+
+def _illinois_age_range(record):
+    day = _il_range_bounds(record.get("il_day_age_range"))
+    night = _il_range_bounds(record.get("il_night_age_range"))
+    return _bounds((day[0], night[0]), (day[1], night[1]))
+
+
+_register_age_range(
+    "illinois",
+    ["il_day_age_range", "il_night_age_range"],
+    _illinois_age_range,
+    "IL day/night `6W TO 12Y` ranges -> widest span (min of mins, max of maxes); bare `0` ignored.",
+)
+
+
+def _wyoming_age_range(record):
+    programs = [p for p in record.get("wy_programs") or [] if isinstance(p, dict)]
+    return _bounds(
+        (to_int(p.get("min_age_months")) for p in programs),
+        (to_int(p.get("max_age_months")) for p in programs),
+    )
+
+
+_register_age_range(
+    "wyoming",
+    ["wy_programs"],
+    _wyoming_age_range,
+    "WY `wy_programs[]` min/max age months -> min of mins, max of maxes.",
+)

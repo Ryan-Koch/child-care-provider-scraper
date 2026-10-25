@@ -17,6 +17,8 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `address` | Whitespace cleanup; Address cleanup; Component parse -> city/state/zip | Full street address; whitespace-cleaned, trailing country (", United States"/", USA") stripped, comma spacing normalized. |
 | `address_suppressed` | Whitespace cleanup; Field collapse from state-specific source (transforms: invert, to_bool) | True = the state deliberately withheld the street address (typically family homes), so a blank address is not a data gap. CT, KS, MA bools; FL inverted from displayAddressOnWeb; NY `Y` -> True, blank -> False. |
 | `administrator` | Whitespace cleanup; Title Case (ALL-CAPS names) | On-site administrator or director name. ALL-CAPS values are Title-cased. |
+| `age_max_months` | Whitespace cleanup | Oldest accepted age in whole months (int), same parsing as `age_min_months` (IL max of the day and night maxes, WY max over programs). A max of 0 or below the min is logged and set to None, keeping the min. Either bound may be None independently. |
+| `age_min_months` | Whitespace cleanup | Youngest accepted age in whole months (int; 0 is valid). CT weeks use floor(weeks * 12 / 52) (6 weeks -> 1 month, 624 weeks -> 144); ND/WV `N Years M Months` strings are summed (`6 Weeks` uses the same weeks rule); IL takes the widest of the day and night ranges (`6W TO 12Y`; a bare `0` means not offered and is ignored); WY takes the min over `wy_programs[]`. Unparseable values are logged and left None. `ages_served` and the `xx_` sources are unchanged. |
 | `ages_served` | Whitespace cleanup; List -> string | Ages accepted, normalized to a single string (lists are joined with ", "). |
 | `capacity` | Whitespace cleanup; Integer coercion | Licensed capacity coerced to an integer when it is a clean number; ranges/free text are left unchanged and logged. |
 | `care_schedules` | Whitespace cleanup | Care arrangements offered: list of canonical tokens from a fixed 12-token list, de-duplicated, in this order: before_school, after_school, drop_in, full_day, half_day, full_time, part_time, summer, school_holidays, emergency, flexible, sick_care. From FL/MS/SD/RI/WI/ND/MA/WY/OK/NJ (lists), IA/VT (`, `-separated), MI/NH (`;`-separated, NH UPPERCASE), GA (three `; `-separated sources merged) and LA (`la_before_care`/`la_after_care` True) by an explicit case-insensitive label table (`CARE_SCHEDULE_LABELS`); one label can give several tokens (`Before and After School`). Evening/overnight/weekend/year-round labels and non-schedule services are ignored silently (they feed other fields); an unknown label is logged and dropped. Empty -> unset. The state labels stay in the `xx_` source fields. |
@@ -193,6 +195,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `connecticut` | provider | `ct_schedule` | `weekly_schedule`, `days_of_operation` | CT `ct_schedule` rows (already 24h `open`/`close`) -> `weekly_schedule`; days derived. |
 | `connecticut` | provider | `ct_special_needs` | `serves_special_needs`, `special_needs_types` | CT `ct_special_needs` (list) -> `special_needs_types`; serves True when non-empty. |
 | `connecticut` | provider | `ct_rates` | `rates` | CT `ct_rates`: one row per `{unit}_{period}` amount column; age_group is `Infant (0-17 Months)` style. |
+| `connecticut` | provider | `ct_age_range_min_weeks`, `ct_age_range_max_weeks` | `age_min_months`, `age_max_months` | CT `ct_age_range_{min,max}_weeks` -> months, floor(weeks * 12 / 52). |
 | `florida` | provider | `hours` | `weekly_schedule`, `days_of_operation` | FL dict-shaped `hours` ({"monday": "6:45AM to 6:00PM", ...}) -> `weekly_schedule`; `hours` kept. |
 | `florida` | provider | `fl_is_vpk` | `state_prek`, `state_prek_program` | `fl_is_vpk` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
 | `florida` | provider | `fl_services` | `care_schedules` | Florida `fl_services` (list) -> `care_schedules` via the explicit label table. |
@@ -205,6 +208,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `georgia` | provider | `ga_weekly_rates` | `rates` | GA `ga_weekly_rates`: full-day weekly rate per age -> full_time / week row. |
 | `idaho` | provider | `id_pet_policy` | `has_pets`, `pet_types`, `pets_excluded` | ID `id_pet_policy` (Pet Free / Dogs only / Cats only / Other) -> `has_pets`, `pet_types`; unknown values logged. |
 | `illinois` | provider | `il_night_capacity` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | `il_night_capacity` (string int) -> `night_care` = capacity > 0. |
+| `illinois` | provider | `il_day_age_range`, `il_night_age_range` | `age_min_months`, `age_max_months` | IL day/night `6W TO 12Y` ranges -> widest span (min of mins, max of maxes); bare `0` ignored. |
 | `indiana` | provider | `in_schedule` | `weekly_schedule`, `days_of_operation` | IN `in_schedule` rows (12h `open`/`close`) -> 24h `weekly_schedule`; days derived. |
 | `indiana` | provider | `in_programs` | `state_prek`, `state_prek_program` | `in_programs` entry `On My Way Pre-K` -> `state_prek` True; absent -> unset (never False). |
 | `iowa` | provider | `ia_openings_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Sum IA `fullTime` + `partTime` openings per band across the 7 age labels. |
@@ -239,6 +243,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `north_dakota` | provider | `nd_vacancies_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map ND `nd_vacancies_by_age` rows (by age label) onto the four vacancy bands. |
 | `north_dakota` | provider | `nd_special_populations` | `serves_special_needs`, `special_needs_types` | ND `nd_special_populations` (list) -> `special_needs_types`; serves True when non-empty. |
 | `north_dakota` | provider | `nd_supplemental_care` | `care_schedules` | North Dakota `nd_supplemental_care` (list) -> `care_schedules` via the explicit label table. |
+| `north_dakota` | provider | `nd_min_age`, `nd_max_age` | `age_min_months`, `age_max_months` | ND `nd_min_age`/`nd_max_age` (`6 Weeks`, `12 Years`) -> months; a max of 0 is dropped. |
 | `oklahoma` | provider | `ok_schedule` | `weekly_schedule`, `days_of_operation` | OK `ok_schedule` `hours` ("6:30AM - 6:00PM", None when closed) -> `weekly_schedule`; days derived. |
 | `oklahoma` | provider | `ok_care_types` | `year_round` | OK `ok_care_types`: `Year Round` -> True; else a seasonal-only label -> False; else unset. |
 | `oklahoma` | provider | `ok_care_types` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | OK `ok_care_types` Evening/Weekend/Overnight Hours -> evening/weekend/night care True; absent -> unset. |
@@ -265,6 +270,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `washington_dc` | provider | `meals` | `food_program` | The common `meals` text mentioning the food program -> `food_program` True; else unset. |
 | `washington_dc` | provider | `dc_prek_enhancement` | `state_prek`, `state_prek_program` | `dc_prek_enhancement` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
 | `washington_dc` | provider | `dc_nontraditional_hours` | `nontraditional_hours` | DC `dc_nontraditional_hours` (bool) -> the `nontraditional_hours` roll-up only; False is a real no. |
+| `west_virginia` | provider | `wv_age_from`, `wv_age_to` | `age_min_months`, `age_max_months` | WV `wv_age_from`/`wv_age_to` (`2 Years 0 Months`) -> months. |
 | `wisconsin` | provider | `wi_months_open` | `operating_months`, `year_round` | WI `wi_months_open` (`Sep - Jun`, wraps the year) -> `operating_months`; year_round = all 12. |
 | `wisconsin` | provider | `wi_night_capacity` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | `wi_night_capacity` -> `night_care` = capacity > 0 (junk `0 0` -> False). |
 | `wisconsin` | provider | `wi_special_care_types` | `care_schedules` | Wisconsin `wi_special_care_types` (list) -> `care_schedules` via the explicit label table. |
@@ -272,6 +278,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `wyoming` | provider | `wy_evening_care`, `wy_weekend_care` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | `wy_evening_care`/`wy_weekend_care` (bool) -> `evening_care`/`weekend_care`; roll-up True if either. |
 | `wyoming` | provider | `wy_services` | `care_schedules` | Wyoming `wy_services` (list) -> `care_schedules` via the explicit label table. |
 | `wyoming` | provider | `wy_programs` | `rates` | WY `wy_programs[].rates`: program name as age_group; FULL_TIME/PART_TIME -> unit, other types -> `care_type`. |
+| `wyoming` | provider | `wy_programs` | `age_min_months`, `age_max_months` | WY `wy_programs[]` min/max age months -> min of mins, max of maxes. |
 
 ## Controlled vocabulary: `status`
 
@@ -395,8 +402,8 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ct_accreditations` -> collapses into `accreditation`
 - `ct_address_suppressed` -> collapses into `address_suppressed` (via to_bool)
 - `ct_administers_meds` -> pass-through
-- `ct_age_range_max_weeks` -> pass-through
-- `ct_age_range_min_weeks` -> pass-through
+- `ct_age_range_max_weeks` -> feeds adapter, fills `age_max_months`, `age_min_months`
+- `ct_age_range_min_weeks` -> feeds adapter, fills `age_max_months`, `age_min_months`
 - `ct_capacity_full_time` -> pass-through
 - `ct_capacity_school_aged` -> pass-through
 - `ct_capacity_three_and_under` -> pass-through
@@ -590,10 +597,10 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### Illinois (IL)
 
-- `il_day_age_range` -> pass-through
+- `il_day_age_range` -> feeds adapter, fills `age_max_months`, `age_min_months`
 - `il_day_capacity` -> pass-through
 - `il_facility_type` -> pass-through
-- `il_night_age_range` -> pass-through
+- `il_night_age_range` -> feeds adapter, fills `age_max_months`, `age_min_months`
 - `il_night_capacity` -> feeds adapter, fills `evening_care`, `night_care`, `nontraditional_hours`, `weekend_care`
 - `il_provider_id` -> collapses into `source_provider_id` (via to_id_string)
 
@@ -818,8 +825,8 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `nd_desired_capacity` -> pass-through
 - `nd_enrollment_schedule` -> collapses into `year_round` (via vocab(nd_year_round))
-- `nd_max_age` -> pass-through
-- `nd_min_age` -> pass-through
+- `nd_max_age` -> feeds adapter, fills `age_max_months`, `age_min_months`
+- `nd_min_age` -> feeds adapter, fills `age_max_months`, `age_min_months`
 - `nd_org_id` -> pass-through
 - `nd_philosophy` -> pass-through
 - `nd_program_id` -> collapses into `source_provider_id` (via to_id_string)
@@ -1160,8 +1167,8 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### West Virginia (WV)
 
-- `wv_age_from` -> pass-through
-- `wv_age_to` -> pass-through
+- `wv_age_from` -> feeds adapter, fills `age_max_months`, `age_min_months`
+- `wv_age_to` -> feeds adapter, fills `age_max_months`, `age_min_months`
 - `wv_contact` -> pass-through
 - `wv_contact_title` -> pass-through
 - `wv_corrective_action_plan_end` -> pass-through
@@ -1179,7 +1186,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wy_evening_care` -> feeds adapter, fills `evening_care`, `night_care`, `nontraditional_hours`, `weekend_care`
 - `wy_facility_id` -> collapses into `source_provider_id` (via to_id_string)
 - `wy_pre_enrollment_visit_required` -> pass-through
-- `wy_programs` -> feeds adapter, fills `rates`
+- `wy_programs` -> feeds adapter, fills `age_max_months`, `age_min_months`, `rates`
 - `wy_record_type` -> pass-through
 - `wy_registration_fee` -> collapses into `registration_fee` (via to_float)
 - `wy_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`

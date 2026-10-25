@@ -66,6 +66,14 @@ FIELD_DOCS = {
     "capacity": "Licensed capacity coerced to an integer when it is a clean "
     "number; ranges/free text are left unchanged and logged.",
     "ages_served": 'Ages accepted, normalized to a single string (lists are joined with ", ").',
+    "age_min_months": "Youngest accepted age in whole months (int; 0 is valid). CT weeks use "
+    "floor(weeks * 12 / 52) (6 weeks -> 1 month, 624 weeks -> 144); ND/WV `N Years M Months` strings are "
+    "summed (`6 Weeks` uses the same weeks rule); IL takes the widest of the day and night ranges "
+    "(`6W TO 12Y`; a bare `0` means not offered and is ignored); WY takes the min over `wy_programs[]`. "
+    "Unparseable values are logged and left None. `ages_served` and the `xx_` sources are unchanged.",
+    "age_max_months": "Oldest accepted age in whole months (int), same parsing as `age_min_months` (IL max of the "
+    "day and night maxes, WY max over programs). A max of 0 or below the min is logged and set to None, keeping the "
+    "min. Either bound may be None independently.",
     "latitude": "Latitude kept as a trimmed string to avoid float precision drift.",
     "longitude": "Longitude kept as a trimmed string to avoid float precision drift.",
     # Collapsed common fields

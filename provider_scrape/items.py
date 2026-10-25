@@ -336,6 +336,8 @@ class ProviderItem(scrapy.Item):
     weekend_care = scrapy.Field()  # bool: Saturday/Sunday care
     weekly_schedule = scrapy.Field()  # list of {day, open, close} rows, 24h HH:MM
     ages_served = scrapy.Field()
+    age_min_months = scrapy.Field()  # int: youngest accepted age in months (0 is valid)
+    age_max_months = scrapy.Field()  # int: oldest accepted age in months; None if absent/implausible
     infant = scrapy.Field()
     toddler = scrapy.Field()
     preschool = scrapy.Field()

@@ -3953,3 +3953,123 @@ def test_pets_new_hampshire_dog_conflict_logged(caplog):
 
 def test_pets_other_states_untouched():
     assert _pets("texas", ga_environment="No pets") == (None, None, None)
+
+
+# --------------------------------------------------------------------------- #
+# Age range in months
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("0 Months", 0),
+        ("6 Weeks", 1),
+        ("4 Weeks", 0),
+        ("1 Week", 0),
+        ("12 Years", 144),
+        ("1 Year", 12),
+        ("18 Months", 18),
+        ("2 Years 0 Months", 24),
+        ("0 Years 1 Month", 1),
+        ("13 Years 0 Months", 156),
+        ("6W", 1),
+        ("15M", 15),
+        ("12Y", 144),
+        ("0", 0),
+        ("624 Weeks", 144),
+        (36, 36),
+        (None, None),
+        ("", None),
+        (True, None),
+    ],
+)
+def test_age_to_months(raw, expected):
+    assert cf.age_to_months(raw) == expected
+
+
+@pytest.mark.parametrize("raw", ["garbage", "5", "3 fortnights", "Years"])
+def test_age_to_months_garbage_logged(raw, caplog):
+    with caplog.at_level(logging.WARNING):
+        assert cf.age_to_months(raw) is None
+    assert "could not parse age" in caplog.text
+
+
+def test_weeks_to_months_floor():
+    assert [cf.weeks_to_months(w) for w in (6, 4, 156, 624)] == [1, 0, 36, 144]
+
+
+def _age_range(state, **record):
+    item = norm.normalize_item(dict(record), state)
+    return item.get("age_min_months"), item.get("age_max_months")
+
+
+def test_age_range_connecticut():
+    item = norm.normalize_item(
+        {"ct_age_range_min_weeks": "6", "ct_age_range_max_weeks": "624", "ages_served": "x"}, "connecticut"
+    )
+    assert (item["age_min_months"], item["age_max_months"]) == (1, 144)
+    assert item["ct_age_range_min_weeks"] == "6"
+    assert item["ages_served"] == "x"
+    assert _age_range("connecticut", ct_age_range_min_weeks="0", ct_age_range_max_weeks=None) == (0, None)
+    assert _age_range("connecticut", ct_age_range_min_weeks=None, ct_age_range_max_weeks="") == (None, None)
+
+
+def test_age_range_north_dakota():
+    assert _age_range("north_dakota", nd_min_age="6 Weeks", nd_max_age="12 Years") == (1, 144)
+    assert _age_range("north_dakota", nd_min_age="0 Months", nd_max_age="18 Months") == (0, 18)
+    assert _age_range("north_dakota", nd_min_age="3 Years", nd_max_age=None) == (36, None)
+
+
+def test_age_range_west_virginia():
+    assert _age_range("west_virginia", wv_age_from="2 Years 0 Months", wv_age_to="13 Years 0 Months") == (24, 156)
+    assert _age_range("west_virginia", wv_age_from="0 Years 1 Month", wv_age_to=None) == (1, None)
+
+
+def test_age_range_illinois_day_only():
+    assert _age_range("illinois", il_day_age_range="6W TO 12Y") == (1, 144)
+    assert _age_range("illinois", il_day_age_range="0 TO 12Y") == (0, 144)
+    assert _age_range("illinois", il_day_age_range="15m to 6y") == (15, 72)
+
+
+def test_age_range_illinois_widest_of_day_and_night():
+    item = norm.normalize_item({"il_day_age_range": "2M TO 6Y", "il_night_age_range": "6W TO 12Y"}, "illinois")
+    assert (item["age_min_months"], item["age_max_months"]) == (1, 144)
+    assert item["il_night_age_range"] == "6W TO 12Y"
+    assert _age_range("illinois", il_day_age_range="15M TO 6Y", il_night_age_range="2Y TO 12Y") == (15, 144)
+
+
+def test_age_range_illinois_bare_zero_and_blank_ignored():
+    assert _age_range("illinois", il_day_age_range="0") == (None, None)
+    assert _age_range("illinois", il_day_age_range="0", il_night_age_range="2M TO 12Y") == (2, 144)
+    assert _age_range("illinois", il_day_age_range="6W TO 12Y", il_night_age_range="0") == (1, 144)
+    assert _age_range("illinois", il_day_age_range="", il_night_age_range=None) == (None, None)
+
+
+def test_age_range_wyoming_min_max_with_none_entries():
+    programs = [
+        {"min_age_months": 6, "max_age_months": 24},
+        {"min_age_months": None, "max_age_months": None},
+        {"min_age_months": 0, "max_age_months": 144},
+        {"min_age_months": 30, "max_age_months": None},
+    ]
+    assert _age_range("wyoming", wy_programs=programs) == (0, 144)
+    assert _age_range("wyoming", wy_programs=[{"min_age_months": None, "max_age_months": None}]) == (None, None)
+    assert _age_range("wyoming", wy_programs=[]) == (None, None)
+    assert _age_range("wyoming", wy_programs=[{"min_age_months": 12, "max_age_months": None}]) == (12, None)
+
+
+def test_age_range_max_zero_dropped_keeps_min(caplog):
+    with caplog.at_level(logging.WARNING):
+        assert _age_range("north_dakota", nd_min_age="6 Weeks", nd_max_age="0 Years") == (1, None)
+    assert "implausible max" in caplog.text
+
+
+def test_age_range_max_below_min_dropped_keeps_min(caplog):
+    with caplog.at_level(logging.WARNING):
+        assert _age_range("west_virginia", wv_age_from="5 Years 0 Months", wv_age_to="2 Years 0 Months") == (60, None)
+    assert "implausible max" in caplog.text
+
+
+def test_age_range_never_overwrites_existing_and_other_states_untouched():
+    item = norm.normalize_item({"nd_min_age": "1 Year", "nd_max_age": "5 Years", "age_min_months": 3}, "north_dakota")
+    assert (item["age_min_months"], item["age_max_months"]) == (3, 60)
+    assert _age_range("texas", nd_min_age="1 Year", nd_max_age="5 Years") == (None, None)
