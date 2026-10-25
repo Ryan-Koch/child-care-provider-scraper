@@ -321,6 +321,7 @@ class ProviderItem(scrapy.Item):
     special_needs_types = scrapy.Field()  # list of canonical categories (fixed list)
     care_schedules = scrapy.Field()  # list of canonical schedule tokens (fixed list)
     rates = scrapy.Field()  # list of {age_group, unit, period, amount[, schedule_type|care_type]}
+    registration_fee = scrapy.Field()  # float: one-time enrollment fee in dollars, 0.0 = no fee
     food_program = scrapy.Field()  # bool: True = participates in USDA CACFP
     state_prek = scrapy.Field()  # bool: True = participates in a publicly funded state pre-K
     state_prek_program = scrapy.Field()  # program brand, set only when state_prek is True

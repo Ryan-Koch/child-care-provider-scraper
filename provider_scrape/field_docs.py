@@ -175,6 +175,10 @@ FIELD_DOCS = {
     "else School Year, else Summer, else first), NJ (16 `nj_tuition_*` columns, `0.0` skipped) and WY (program name "
     "as age_group). NH is skipped (`nh_rates` is free text and is left alone). Empty -> unset. The `xx_` sources "
     "are kept.",
+    "registration_fee": "One-time enrollment/registration fee in dollars (float); 0.0 = no fee. From GA "
+    "(`ga_registration_fee`, `$`/`,` stripped; `$0.00` -> 0.0, null -> unset) and WY (`wy_registration_fee`; "
+    "the spider only sets it when a fee is charged, so absence is None, not 0.0). NJ is not mapped (`nj_fees` "
+    "holds fee types only, no amount). The `xx_` sources are kept.",
     "languages": "Languages, as emitted (string or list; whitespace-cleaned).",
     "deficiencies": "Deficiency/violation count for the provider, coerced to an "
     "integer (bug_10). Digit strings, comma-grouped counts, and integral "

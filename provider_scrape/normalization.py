@@ -42,6 +42,7 @@ from provider_scrape.common_fields import (
     phone_extension_digits,
     run_adapters,
     to_bool,
+    to_float,
     to_id_string,
     to_int,
     to_iso_date,
@@ -1306,6 +1307,13 @@ FIELD_COLLAPSE_MAP = {
         ("nd_vacancies_updated", to_iso_date),
         ("vt_vacancy_as_of", to_iso_date),
         ("wi_vacancies", wi_vacancies_updated_date),
+    ],
+    # One-time registration fee in dollars; 0.0 = no fee. GA "$0.00" is a real
+    # zero. WY emits the amount only when a fee is charged, so absence stays
+    # None. NJ is not mapped: nj_fees lists fee-type codes with no amount.
+    "registration_fee": [
+        ("ga_registration_fee", to_float),
+        ("wy_registration_fee", to_float),
     ],
 }
 # NOTE Most states set `scholarships_accepted` directly in the spider.

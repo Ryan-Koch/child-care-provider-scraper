@@ -3541,3 +3541,45 @@ def test_rates_keeps_sources_and_never_overwrites():
     assert item["ga_weekly_rates"] == source
     existing = [{"age_group": "x", "unit": None, "period": None, "amount": 1.0}]
     assert _rates("georgia", ga_weekly_rates=source, rates=existing) == existing
+
+
+# --------------------------------------------------------------------------- #
+# registration_fee
+# --------------------------------------------------------------------------- #
+def _registration_fee(state, **record):
+    return norm.normalize_item(dict(record), state).get("registration_fee")
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [("$100.00", 100.0), ("$0.00", 0.0), ("$1,250.00", 1250.0)],
+)
+def test_registration_fee_georgia_parses_dollars(raw, expected):
+    fee = _registration_fee("georgia", ga_registration_fee=raw)
+    assert fee == expected
+    assert isinstance(fee, float)
+
+
+def test_registration_fee_georgia_none_is_unset():
+    assert _registration_fee("georgia", ga_registration_fee=None) is None
+
+
+def test_registration_fee_wyoming_copies_amount():
+    assert _registration_fee("wyoming", wy_registration_fee=50.0) == 50.0
+
+
+def test_registration_fee_wyoming_missing_is_none():
+    assert _registration_fee("wyoming") is None
+
+
+def test_registration_fee_keeps_sources():
+    ga = norm.normalize_item({"ga_registration_fee": "$100.00"}, "georgia")
+    assert ga["ga_registration_fee"] == "$100.00"
+    wy = norm.normalize_item({"wy_registration_fee": 50.0}, "wyoming")
+    assert wy["wy_registration_fee"] == 50.0
+
+
+def test_registration_fee_new_jersey_not_mapped():
+    item = norm.normalize_item({"nj_fees": [1, 2]}, "new_jersey")
+    assert item.get("registration_fee") is None
+    assert item["nj_fees"] == [1, 2]

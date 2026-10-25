@@ -57,6 +57,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `provider_type` | Whitespace cleanup; Preserved (drives facility_category) | The raw state license category, preserved exactly. It drives the derived facility_category facet. |
 | `provider_website` | Whitespace cleanup | Provider website URL (whitespace-cleaned only). |
 | `rates` | Whitespace cleanup | Published tuition: list of rows `{age_group, unit, period, amount}` in source order. `age_group` is the state's own label (state-specific; no cross-state band mapping). `unit` full_time/part_time/None; `period` hour/day/week/month/None (an unknown period is kept as None, never guessed); `amount` is a float with `$`/`,` stripped. Rows with a blank, unparseable (logged) or <= 0 amount are dropped. Optional keys: `schedule_type` (MA) and `care_type` (TN, WY; the state's label when it is not a unit/period). From CT (one row per `{unit}_{period}` column; age_group `Infant (0-17 Months)`), GA (weekly full day), KY and PA (the period `day` is inferred from the amounts, not stated by the source), TN (`unit_of_care` Full/Part-time -> unit, Weekly/Daily/Monthly -> period, any other descriptor -> `care_type` with period week; `$0.00` skipped), MA (`rate_type` parsed; ONE schedule type per provider chosen with the same pick as `weekly_schedule`: Full Year, else School Year, else Summer, else first), NJ (16 `nj_tuition_*` columns, `0.0` skipped) and WY (program name as age_group). NH is skipped (`nh_rates` is free text and is left alone). Empty -> unset. The `xx_` sources are kept. |
+| `registration_fee` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_float) | One-time enrollment/registration fee in dollars (float); 0.0 = no fee. From GA (`ga_registration_fee`, `$`/`,` stripped; `$0.00` -> 0.0, null -> unset) and WY (`wy_registration_fee`; the spider only sets it when a fee is charged, so absence is None, not 0.0). NJ is not mapped (`nj_fees` holds fee types only, no amount). The `xx_` sources are kept. |
 | `scholarships_accepted` | Whitespace cleanup; Field collapse from state-specific source (transforms: has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP)), scholarships_flag) | Whether the provider accepts child-care subsidies/scholarships: bool-or-None. States that emit "Yes"/"No" or NM's "Accepted"/"Not Accepted" are coerced via the shared strict token rule (bug_06); an unparseable token becomes None rather than a guessed True. |
 | `school` | Whitespace cleanup | Whether the provider serves school-age children: bool-or-None. See infant. |
 | `school_district` | Whitespace cleanup; Field collapse from state-specific source | Associated school district, collapsed from a single populated state-specific source field. |
@@ -122,6 +123,7 @@ Each common field is populated from a single populated source field (additive â€
 | `meals` | `ga_meals`, `hi_meals`, `nj_meal_options_labels`, `nm_meals`, `pa_meal_options`, `ut_meals` |
 | `phone_extension` | `nj_phone_extension` (phone_extension_digits), `ny_phone_extension` (phone_extension_digits) |
 | `phone_suppressed` | `fl_display_phone_on_web` (invert), `ma_contact_redacted` (to_bool) |
+| `registration_fee` | `ga_registration_fee` (to_float), `wy_registration_fee` (to_float) |
 | `scholarships_accepted` | `fl_is_offering_school_readiness` (scholarships_flag), `nh_financial_assistance` (has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP))), `va_current_subsidy_provider` (scholarships_flag), `wa_subsidy` (scholarships_flag) |
 | `school_district` | `co_school_district`, `ct_school_districts`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
 | `serves_special_needs` | `ia_serves_special_needs` (to_bool), `nc_special_features` (has_list_token(Will enroll children with special needs)), `ne_serves_special_needs` (to_bool) |
@@ -488,7 +490,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ga_profit_status` -> pass-through
 - `ga_program_status` -> pass-through
 - `ga_quality_rated_level` -> pass-through
-- `ga_registration_fee` -> pass-through
+- `ga_registration_fee` -> collapses into `registration_fee` (via to_float)
 - `ga_school_break_notes` -> pass-through
 - `ga_services` -> pass-through
 - `ga_special_hours` -> feeds adapter, fills `care_schedules`
@@ -1157,7 +1159,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wy_pre_enrollment_visit_required` -> pass-through
 - `wy_programs` -> feeds adapter, fills `rates`
 - `wy_record_type` -> pass-through
-- `wy_registration_fee` -> pass-through
+- `wy_registration_fee` -> collapses into `registration_fee` (via to_float)
 - `wy_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `wy_services` -> collapses into `food_program` (via has_token(food program|CACFP))
 - `wy_violation_found` -> pass-through
