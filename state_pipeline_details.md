@@ -70,6 +70,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `phone_extension` | Whitespace cleanup; Field collapse from state-specific source (transforms: phone_extension_digits) | Extension that goes with `phone`, digits only, kept as a string (leading zeros survive). NJ, NY; NY input-mask underscores are stripped, and non-numeric junk (`NJ`, `class`) -> None. |
 | `phone_suppressed` | Whitespace cleanup; Field collapse from state-specific source (transforms: invert, to_bool) | True = the state deliberately withheld the phone number. FL inverted from displayPhoneOnWeb; NY `Y` -> True, blank -> False; MA's single contact-redacted flag feeds this too. |
 | `preschool` | Whitespace cleanup | Whether the provider serves preschoolers: bool-or-None. See infant. |
+| `profit_status` | Whitespace cleanup; Field collapse from state-specific source (transforms: vocab(de_profit_status)) | Operator ownership type (string): `for_profit`, `nonprofit`, `public`. DE maps `de_profit_status` through an explicit vocab (`Nonprofit` -> `nonprofit`, `Publicly Operated` -> `public`, `Profit` and `Private` -> `for_profit`). DE splits for-profit into `Private` and `Profit`; both are for-profit (`Private` means privately owned and run as a business). GA is excluded: the API returns `profitStatus: null` on every record (bug_08), so `ga_profit_status` is always empty and has no vocab. An unknown value is logged and left unset. The state values stay in the `xx_` source fields. |
 | `program_description` | Whitespace cleanup; Field collapse from state-specific source (transforms: description_text) | The provider's own description of their program (string), verbatim apart from trimming. ID uses `id_program_description` first and falls back to `id_philosophy_description` when that is missing or filler (`id_philosophy_comment` is curriculum notes and is ignored); ND copies `nd_philosophy`; VT copies `vt_program_description`. Filler -> unset: blank or sentinel, punctuation/symbol-only text (`.`, `-`, `*`), runs of `x`, `Please ask provider` / `Please ask program` (with or without the period), `Ask provider` and `Coming soon`. Short real answers (`Montessori`, `Public PreK`) are kept. |
 | `provider_name` | Whitespace cleanup; Title Case (ALL-CAPS names) | The facility's name. ALL-CAPS values are converted to Title Case; whitespace is cleaned. |
 | `provider_type` | Whitespace cleanup; Preserved (drives facility_category) | The raw state license category, preserved exactly. It drives the derived facility_category facet. |
@@ -149,6 +150,7 @@ Each common field is populated from a single populated source field (additive â€
 | `original_license_date` | `ca_license_first_date` (to_iso_date), `ma_original_license_date` (to_iso_date), `mn_original_license_date` (to_iso_date), `ny_facility_opened_date` (to_iso_date), `ri_original_license_date` (to_iso_date), `vt_original_license_date` (to_iso_date) |
 | `phone_extension` | `nj_phone_extension` (phone_extension_digits), `ny_phone_extension` (phone_extension_digits) |
 | `phone_suppressed` | `fl_display_phone_on_web` (invert), `ma_contact_redacted` (to_bool) |
+| `profit_status` | `de_profit_status` (vocab(de_profit_status)) |
 | `program_description` | `nd_philosophy` (description_text), `vt_program_description` (description_text) |
 | `registration_fee` | `ga_registration_fee` (to_float), `wy_registration_fee` (to_float) |
 | `scholarships_accepted` | `fl_is_offering_school_readiness` (scholarships_flag), `nh_financial_assistance` (has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP))), `va_current_subsidy_provider` (scholarships_flag), `wa_subsidy` (scholarships_flag) |
@@ -491,7 +493,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `de_intent_to_revoke` -> pass-through
 - `de_investigation_conclusion` -> pass-through
 - `de_portal_listed` -> pass-through
-- `de_profit_status` -> pass-through
+- `de_profit_status` -> collapses into `profit_status` (via vocab(de_profit_status))
 - `de_special_conditions` -> feeds adapter, fills `license_conditions`
 - `de_violation_count` -> pass-through
 - `de_violations` -> pass-through

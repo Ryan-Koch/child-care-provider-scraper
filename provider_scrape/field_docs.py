@@ -199,6 +199,12 @@ FIELD_DOCS = {
     "non-residential workplace-based site). MN's `mn_setting` is never populated, so it is not wired. Nothing "
     "maps to `other` yet. An unknown value is logged and left unset. The state values stay in the `xx_` source "
     "fields.",
+    "profit_status": "Operator ownership type (string): `for_profit`, `nonprofit`, `public`. DE maps "
+    "`de_profit_status` through an explicit vocab (`Nonprofit` -> `nonprofit`, `Publicly Operated` -> `public`, "
+    "`Profit` and `Private` -> `for_profit`). DE splits for-profit into `Private` and `Profit`; both are "
+    "for-profit (`Private` means privately owned and run as a business). GA is excluded: the API returns "
+    "`profitStatus: null` on every record (bug_08), so `ga_profit_status` is always empty and has no vocab. An "
+    "unknown value is logged and left unset. The state values stay in the `xx_` source fields.",
     "program_description": "The provider's own description of their program (string), verbatim apart from "
     "trimming. ID uses `id_program_description` first and falls back to `id_philosophy_description` when that is "
     "missing or filler (`id_philosophy_comment` is curriculum notes and is ignored); ND copies `nd_philosophy`; VT "

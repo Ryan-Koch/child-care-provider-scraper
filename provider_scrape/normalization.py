@@ -1051,6 +1051,13 @@ LA_LICENSED_MAP = {"Licensed": True, "License Exempt": False}
 SC_LICENSE_CATEGORY_MAP = {"License": True, "Approval": False, "Exempt": False}
 # Physical setting of care. "other" is reserved for future sources.
 IA_BUILDING_TYPE_MAP = {"house": "residence", "building": "non_residential"}
+# DE splits for-profit into "Profit" and "Private"; both are for_profit.
+DE_PROFIT_STATUS_MAP = {
+    "Nonprofit": "nonprofit",
+    "Profit": "for_profit",
+    "Private": "for_profit",
+    "Publicly Operated": "public",
+}
 VT_BUILDING_TYPE_MAP = {
     "Non-Residential": "non_residential",
     "House": "residence",
@@ -1139,6 +1146,11 @@ FIELD_COLLAPSE_MAP = {
     "building_type": [
         ("ia_business_type", vocab(IA_BUILDING_TYPE_MAP, "ia_business_type")),
         ("vt_building_type", vocab(VT_BUILDING_TYPE_MAP, "vt_building_type")),
+    ],
+    # Operator ownership. GA's ga_profit_status is always null at the source, so
+    # it is not wired.
+    "profit_status": [
+        ("de_profit_status", vocab(DE_PROFIT_STATUS_MAP, "de_profit_status")),
     ],
     # Provider-written program description. ID is an adapter in
     # common_fields.py (description first, philosophy fallback).

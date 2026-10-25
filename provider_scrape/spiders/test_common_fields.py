@@ -4830,3 +4830,32 @@ def test_building_type_minnesota_not_populated():
     item = norm.normalize_item({"mn_setting": "House"}, "minnesota")
     assert item.get("building_type") is None
     assert item["mn_setting"] == "House"
+
+
+@pytest.mark.parametrize(
+    "raw, expected",
+    [
+        ("Nonprofit", "nonprofit"),
+        ("Profit", "for_profit"),
+        ("Private", "for_profit"),
+        ("Publicly Operated", "public"),
+    ],
+)
+def test_profit_status_delaware_vocab(raw, expected):
+    item = norm.normalize_item({"de_profit_status": raw}, "delaware")
+    assert item["profit_status"] == expected
+    assert item["de_profit_status"] == raw
+
+
+def test_profit_status_unknown_logged(caplog):
+    with caplog.at_level(logging.WARNING):
+        item = norm.normalize_item({"de_profit_status": "Cooperative"}, "delaware")
+    assert item.get("profit_status") is None
+    assert "unmapped value 'Cooperative'" in caplog.text
+
+
+def test_profit_status_georgia_not_populated():
+    item = norm.normalize_item({"ga_profit_status": None}, "georgia")
+    assert item.get("profit_status") is None
+    item = norm.normalize_item({"ga_profit_status": "Nonprofit"}, "georgia")
+    assert item.get("profit_status") is None

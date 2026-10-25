@@ -304,6 +304,7 @@ class ProviderItem(scrapy.Item):
     facility_category = scrapy.Field()
     licensed = scrapy.Field()  # bool: True licensed, False exempt / approved-only; see FIELD_DOCS
     building_type = scrapy.Field()  # residence / non_residential / workplace / other; see FIELD_DOCS
+    profit_status = scrapy.Field()  # for_profit / nonprofit / public; see FIELD_DOCS
     status = scrapy.Field()
     status_date = scrapy.Field()
     address = scrapy.Field()
