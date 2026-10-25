@@ -315,6 +315,9 @@ class ProviderItem(scrapy.Item):
     capacity = scrapy.Field()
     capacity_by_age = scrapy.Field()  # list of {age_group, capacity[, classrooms]}; state's own labels
     license_conditions = scrapy.Field()  # list of restriction/condition strings, state's own text
+    license_history = (
+        scrapy.Field()
+    )  # list of {license_type, effective_date, expiration_date, license_id, status, capacity}; see FIELD_DOCS
     hours = scrapy.Field()
     days_of_operation = scrapy.Field()  # list of full day names, Monday -> Sunday
     operating_months = scrapy.Field()  # list of 3-letter months (Jan..Dec), calendar order

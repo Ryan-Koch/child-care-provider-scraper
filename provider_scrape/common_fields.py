@@ -2438,7 +2438,7 @@ def _dict_entries(value, context):
         if isinstance(entry, dict):
             yield entry
         else:
-            logger.warning("rates(%s): non-dict entry %r dropped", context, entry)
+            logger.warning("%s: non-dict entry %r dropped", context, entry)
 
 
 def _unit_period_column(column):
@@ -2451,7 +2451,7 @@ def _unit_period_column(column):
 
 def _connecticut_rates(record):
     rows = []
-    for entry in _dict_entries(record.get("ct_rates"), "connecticut"):
+    for entry in _dict_entries(record.get("ct_rates"), "rates(connecticut)"):
         age_group = entry.get("age_group")
         label = entry.get("label")
         name = f"{age_group} ({label})" if age_group and label else (age_group or label)
@@ -2477,7 +2477,7 @@ _register_rates(
     ["ga_weekly_rates"],
     lambda record: [
         rate_row(e.get("age"), e.get("weekly_full_day"), unit="full_time", period="week")
-        for e in _dict_entries(record.get("ga_weekly_rates"), "georgia")
+        for e in _dict_entries(record.get("ga_weekly_rates"), "rates(georgia)")
     ],
     "GA `ga_weekly_rates`: full-day weekly rate per age -> full_time / week row.",
 )
@@ -2490,7 +2490,7 @@ def _full_part_rates(state, source, full_key, part_key, period):
         [source],
         lambda record: [
             rate_row(e.get("age_group"), e.get(key), unit=unit, period=period)
-            for e in _dict_entries(record.get(source), state)
+            for e in _dict_entries(record.get(source), f"rates({state})")
             for key, unit in ((full_key, "full_time"), (part_key, "part_time"))
         ],
         f"{state.replace('_', ' ').title()} `{source}` -> full_time/part_time rows; "
@@ -2509,7 +2509,7 @@ _TN_DESCRIPTOR_PERIODS = {"hourly care": "hour", "drop in": None}
 
 def _tennessee_rates(record):
     rows = []
-    for entry in _dict_entries(record.get("tn_age_group_rates"), "tennessee"):
+    for entry in _dict_entries(record.get("tn_age_group_rates"), "rates(tennessee)"):
         descriptor = str(entry.get("unit_of_care") or "").strip()
         key = descriptor.lower()
         care_type = None
@@ -2541,7 +2541,7 @@ _MA_OTHER_RATE_TYPE_RE = re.compile(r"^\s*other\s+(full|part)\s+time\s*$", re.IG
 
 
 def _massachusetts_rates(record):
-    entries = list(_dict_entries(record.get("ma_cost_table"), "massachusetts"))
+    entries = list(_dict_entries(record.get("ma_cost_table"), "rates(massachusetts)"))
     chosen = _pick_preferred_schedule_type(entries)
     if chosen is None:
         return []
@@ -2598,9 +2598,9 @@ _register_rates(
 
 def _wyoming_rates(record):
     rows = []
-    for program in _dict_entries(record.get("wy_programs"), "wyoming"):
+    for program in _dict_entries(record.get("wy_programs"), "rates(wyoming)"):
         age_group = program.get("name") or program.get("type")
-        for rate in _dict_entries(program.get("rates"), "wyoming"):
+        for rate in _dict_entries(program.get("rates"), "rates(wyoming)"):
             raw_period = rate.get("period")
             period = RATE_PERIODS.get(str(raw_period or "").strip().lower())
             if period is None and raw_period:
@@ -2829,7 +2829,7 @@ _register_capacity_by_age(
     ["ri_age_group_capacity"],
     lambda record: [
         capacity_row(e.get("age_group"), e.get("capacity"), classrooms=to_int(e.get("classrooms")))
-        for e in _dict_entries(record.get("ri_age_group_capacity"), "rhode_island")
+        for e in _dict_entries(record.get("ri_age_group_capacity"), "capacity_by_age(rhode_island)")
     ],
     "RI `ri_age_group_capacity` rows copied with their own age_group label and classroom count.",
 )
@@ -2848,7 +2848,7 @@ _register_capacity_by_age(
 
 def _indiana_capacity_by_age(record):
     rows = []
-    for entry in _dict_entries(record.get("in_licensed_ages"), "indiana"):
+    for entry in _dict_entries(record.get("in_licensed_ages"), "capacity_by_age(indiana)"):
         start = str(entry.get("start_age") or "").strip()
         end = str(entry.get("end_age") or "").strip()
         label = f"{start} – {end}" if start and end else start or end
@@ -3012,3 +3012,81 @@ def massachusetts_last_renewed_date(record):
     return {
         "last_renewed_date": _renewed_date(record, "ma_last_issue_date", "ma_original_license_date", "massachusetts")
     }
+
+
+# HI `licenseType` codes -> label; unknown codes are logged and kept raw.
+HI_LICENSE_TYPE_LABELS = {"P": "Provisional", "R": "Regular"}
+
+
+def license_history_row(
+    license_type=None, effective_date=None, expiration_date=None, license_id=None, status=None, capacity=None
+):
+    """One canonical ``license_history`` row, or ``None`` when nothing usable is left.
+
+    Keys with a missing, blank or sentinel value (including ``Unknown``) are omitted.
+    Dates go through ``to_iso_date`` and ``capacity`` through ``to_int``.
+    """
+    row = {}
+    for key, value in (("license_type", license_type), ("license_id", license_id), ("status", status)):
+        if value is None or _is_sentinel(value) or not str(value).strip():
+            continue
+        row[key] = str(value).strip()
+    for key, value in (("effective_date", effective_date), ("expiration_date", expiration_date)):
+        if value is None or not str(value).strip():
+            continue
+        iso = to_iso_date(str(value).strip())
+        if iso:
+            row[key] = iso
+    count = to_int(capacity)
+    if count is not None:
+        row["capacity"] = count
+    return row or None
+
+
+def _license_history(rows):
+    """Drop empty rows and sort by ``effective_date`` ascending (undated last, source order kept)."""
+    rows = [row for row in rows if row]
+    rows.sort(key=lambda row: (row.get("effective_date") is None, row.get("effective_date") or ""))
+    return rows
+
+
+def _hi_license_type(code):
+    """HI `licenseType` code -> label (``P``/``R``); an unknown code is logged and kept raw."""
+    if code is None or not str(code).strip():
+        return None
+    label = HI_LICENSE_TYPE_LABELS.get(str(code).strip().upper())
+    if label is None:
+        logger.warning("license_history(hawaii): unknown licenseType %r kept raw", code)
+        return str(code).strip()
+    return label
+
+
+@register_adapter("hawaii", sources=["hi_license_history"], fills=["license_history"])
+def hawaii_license_history(record):
+    """HI `hi_license_history` rows: dates, `P`/`R` expanded to a license type, capacity."""
+    rows = [
+        license_history_row(
+            license_type=_hi_license_type(entry.get("licenseType")),
+            effective_date=entry.get("effectiveDate"),
+            expiration_date=entry.get("expirationDate"),
+            capacity=entry.get("capacity"),
+        )
+        for entry in _dict_entries(record.get("hi_license_history"), "license_history(hawaii)")
+    ]
+    return {"license_history": _license_history(rows)}
+
+
+@register_adapter("washington", sources=["wa_license_history"], fills=["license_history"])
+def washington_license_history(record):
+    """WA `wa_license_history` rows; `closure_date` becomes `expiration_date` (a closure, not an expiry)."""
+    rows = [
+        license_history_row(
+            license_type=entry.get("license_type"),
+            effective_date=entry.get("issue_date"),
+            expiration_date=entry.get("closure_date"),
+            license_id=entry.get("license_id"),
+            status=entry.get("license_status"),
+        )
+        for entry in _dict_entries(record.get("wa_license_history"), "license_history(washington)")
+    ]
+    return {"license_history": _license_history(rows)}

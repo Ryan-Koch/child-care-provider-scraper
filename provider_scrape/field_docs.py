@@ -285,6 +285,16 @@ FIELD_DOCS = {
     "`de_injuries_report` (adapter; `N facility death(s)` / `No facility deaths reported`). As for "
     "`serious_injury_count`, DE counts only the MOST RECENT year listed in the record, which can differ between "
     "providers. An unrecognised DE string -> unset. The `xx_` sources are kept.",
+    "license_history": "Prior and current license terms: list of rows in chronological order (effective_date "
+    "ascending; undated rows last, in source order). A row holds only these keys, each omitted when missing, blank "
+    "or a sentinel (`Unknown`): `license_type`, `effective_date` (ISO), `expiration_date` (ISO), `license_id`, "
+    "`status`, `capacity` (int). A row left empty is dropped; no rows -> unset (never `[]`). HI `hi_license_history`: "
+    "`licenseType` `P` -> `Provisional`, `R` -> `Regular` (an unknown code is logged and kept raw), `printNumber` "
+    "(a certificate print counter, not an id) is dropped; HI has no license id or status. WA `wa_license_history`: "
+    "`issue_date` -> `effective_date`, `license_status` -> `status`; `expiration_date` is the WA `closure_date`, "
+    "i.e. when the license was closed, NOT a scheduled expiry. NC `nc_license_history` is excluded: it always holds "
+    "exactly one entry, the current license, so it is not a history. Full per-row detail (regulation fields, age "
+    "ranges, status reason) stays in the `xx_` source fields, which are kept.",
     "licensing_specialist": "State staff member assigned to oversee the provider's license, as `First Last` "
     "(ALL-CAPS Title-cased; SC's `Last, First` flipped; `N/A` -> empty). Collapsed from AK, MA, ME, OK, SC, TN, "
     "WV; VA's packed `Name: phone` string is split by an adapter.",

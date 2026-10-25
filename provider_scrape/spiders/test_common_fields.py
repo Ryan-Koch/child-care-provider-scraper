@@ -4544,3 +4544,101 @@ def test_injury_counts_louisiana_url_not_mapped():
     assert item.get("serious_injury_count") is None
     assert item.get("fatality_count") is None
     assert item["la_serious_injuries_url"] == url
+
+
+# --------------------------------------------------------------------------- #
+# license_history
+# --------------------------------------------------------------------------- #
+def test_license_history_hawaii():
+    history = [
+        {
+            "effectiveDate": "2005-03-01",
+            "expirationDate": "2007-03-01",
+            "printNumber": 3,
+            "licenseType": "R",
+            "capacity": 12,
+        },
+        {
+            "effectiveDate": "2002-02-13",
+            "expirationDate": "2003-02-13",
+            "printNumber": 1,
+            "licenseType": "P",
+            "capacity": 8,
+        },
+    ]
+    item = norm.normalize_item({"hi_license_history": history}, "hawaii")
+    assert item["license_history"] == [
+        {"license_type": "Provisional", "effective_date": "2002-02-13", "expiration_date": "2003-02-13", "capacity": 8},
+        {"license_type": "Regular", "effective_date": "2005-03-01", "expiration_date": "2007-03-01", "capacity": 12},
+    ]
+    assert item["hi_license_history"] == history
+
+
+def test_license_history_hawaii_unknown_code_logged_and_kept(caplog):
+    history = [{"effectiveDate": "2002-02-13", "licenseType": "X", "capacity": 5}]
+    with caplog.at_level("WARNING"):
+        item = norm.normalize_item({"hi_license_history": history}, "hawaii")
+    assert item["license_history"] == [{"license_type": "X", "effective_date": "2002-02-13", "capacity": 5}]
+    assert "unknown licenseType" in caplog.text
+
+
+def test_license_history_washington():
+    history = [
+        {
+            "license_id": "PL-65132",
+            "license_type": "Non-Expiring",
+            "license_status": "Closed",
+            "issue_date": "09/01/2015",
+            "closure_date": "03/15/2019",
+        },
+        {
+            "license_id": "PL-70001",
+            "license_type": "Unknown",
+            "license_status": "Open",
+            "issue_date": "",
+            "closure_date": "",
+        },
+    ]
+    item = norm.normalize_item({"wa_license_history": history}, "washington")
+    assert item["license_history"] == [
+        {
+            "license_id": "PL-65132",
+            "license_type": "Non-Expiring",
+            "status": "Closed",
+            "effective_date": "2015-09-01",
+            "expiration_date": "2019-03-15",
+        },
+        {"license_id": "PL-70001", "status": "Open"},
+    ]
+    assert item["wa_license_history"] == history
+
+
+def test_license_history_sorted_chronologically_undated_last():
+    history = [
+        {"license_id": "B", "issue_date": ""},
+        {"license_id": "C", "issue_date": "01/01/2020"},
+        {"license_id": "A", "issue_date": "01/01/2010"},
+        {"license_id": "D", "issue_date": ""},
+    ]
+    item = norm.normalize_item({"wa_license_history": history}, "washington")
+    assert [row["license_id"] for row in item["license_history"]] == ["A", "C", "B", "D"]
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "value"),
+    [
+        ("washington", "wa_license_history", []),
+        ("washington", "wa_license_history", [{"license_id": "", "license_type": "Unknown", "issue_date": ""}]),
+        ("hawaii", "hi_license_history", [{"printNumber": 2, "licenseType": ""}]),
+    ],
+)
+def test_license_history_empty_is_none(state, field, value):
+    item = norm.normalize_item({field: value}, state)
+    assert item.get("license_history") is None
+
+
+def test_license_history_north_carolina_excluded():
+    history = [{"license_type": "Center", "effective_date": "5/1/2024", "age_range": "0-12"}]
+    item = norm.normalize_item({"nc_license_history": history}, "north_carolina")
+    assert item.get("license_history") is None
+    assert item["nc_license_history"] == history

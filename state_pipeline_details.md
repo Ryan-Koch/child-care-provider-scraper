@@ -46,6 +46,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `license_begin_date` | Whitespace cleanup; ISO 8601 date | Start date of the provider's CURRENT license term, normalized to ISO 8601 -- not necessarily the facility's first-ever license date (bug_11). Some states publish no current-term date at all, in which case this is left empty rather than falling back to an original/migration date; see that state's xx_original_license_date field, where published. |
 | `license_conditions` | Whitespace cleanup | Restrictions or conditions attached to the license: list of strings in source order, the state's own text kept verbatim (trimmed, de-duplicated case-insensitively, first spelling wins). Sentinels and blanks are dropped, so MN's literal `None` -> unset, and no conditions -> unset, never an empty list. MN splits `mn_restrictions` on `;` and also before a short fixed list of standard phrases the source runs together (`No infants in care`, `No transporting of children under age nine`, `Group E Occupancy Restrictions:`, `EXTENSION` followed by a dash, `TEMPORARY PROVISIONAL LICENSE`; case-insensitive, never at the start of the text); other text is not split. NC strips the leading `Other -` from each `nc_license_restrictions` entry (a bare `Other -` is dropped). MO splits `mo_limitations` on `;` and keeps its ALL CAPS. DE splits `de_special_conditions` on `;`. The `xx_` sources are unchanged. |
 | `license_expiration` | Whitespace cleanup; ISO 8601 date | License expiration date, normalized to ISO 8601. |
+| `license_history` | Whitespace cleanup | Prior and current license terms: list of rows in chronological order (effective_date ascending; undated rows last, in source order). A row holds only these keys, each omitted when missing, blank or a sentinel (`Unknown`): `license_type`, `effective_date` (ISO), `expiration_date` (ISO), `license_id`, `status`, `capacity` (int). A row left empty is dropped; no rows -> unset (never `[]`). HI `hi_license_history`: `licenseType` `P` -> `Provisional`, `R` -> `Regular` (an unknown code is logged and kept raw), `printNumber` (a certificate print counter, not an id) is dropped; HI has no license id or status. WA `wa_license_history`: `issue_date` -> `effective_date`, `license_status` -> `status`; `expiration_date` is the WA `closure_date`, i.e. when the license was closed, NOT a scheduled expiry. NC `nc_license_history` is excluded: it always holds exactly one entry, the current license, so it is not a history. Full per-row detail (regulation fields, age ranges, status reason) stays in the `xx_` source fields, which are kept. |
 | `license_holder` | Whitespace cleanup; Title Case (ALL-CAPS names) | Name of the license holder/licensee. ALL-CAPS values are Title-cased. |
 | `license_holder_address` | Whitespace cleanup; Field collapse from state-specific source (transforms: license_holder_address) | The license holder's own single-line address, separate from the facility address. MI, NC; whitespace/comma cleanup via clean_address, case kept as-is, MI's literal `null` pieces dropped (all-null -> unset). |
 | `license_number` | Whitespace cleanup | State-issued license/registration identifier, kept as emitted (only whitespace-cleaned). |
@@ -222,6 +223,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `georgia` | provider | `ga_environment` | `environment_features` | Georgia `ga_environment` (`; `-separated string) -> `environment_features` via the explicit label table; pet and wheelchair labels are skipped (they belong to other fields). |
 | `georgia` | provider | `ga_environment` | `has_pets`, `pet_types`, `pets_excluded` | GA `ga_environment` entry `No pets` -> `has_pets` False; absent = None. |
 | `georgia` | provider | `ga_weekly_rates` | `rates` | GA `ga_weekly_rates`: full-day weekly rate per age -> full_time / week row. |
+| `hawaii` | provider | `hi_license_history` | `license_history` | HI `hi_license_history` rows: dates, `P`/`R` expanded to a license type, capacity. |
 | `idaho` | provider | `id_pet_policy` | `has_pets`, `pet_types`, `pets_excluded` | ID `id_pet_policy` (Pet Free / Dogs only / Cats only / Other) -> `has_pets`, `pet_types`; unknown values logged. |
 | `illinois` | provider | `il_night_capacity` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | `il_night_capacity` (string int) -> `night_care` = capacity > 0. |
 | `illinois` | provider | `il_day_age_range`, `il_night_age_range` | `age_min_months`, `age_max_months` | IL day/night `6W TO 12Y` ranges -> widest span (min of mins, max of maxes); bare `0` ignored. |
@@ -292,6 +294,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `vermont` | provider | `vt_pets` | `has_pets`, `pet_types`, `pets_excluded` | VT `vt_pets` (`, `-separated Dog / Cat / Other ... Animal`) -> `has_pets`, `pet_types`; absent = None, not False. |
 | `virginia` | provider | `va_inspector` | `licensing_specialist`, `licensing_specialist_phone` | Split `va_inspector` ("Name: (555) 555-5555") into specialist name + phone; `N/A` -> None. |
 | `washington` | provider | `wa_eceap` | `state_prek`, `state_prek_program` | `wa_eceap` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
+| `washington` | provider | `wa_license_history` | `license_history` | WA `wa_license_history` rows; `closure_date` becomes `expiration_date` (a closure, not an expiry). |
 | `washington_dc` | provider | `dc_enrollment` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map DC `dc_enrollment` `openings` (text; `Not Applicable` -> None) onto the four vacancy bands. |
 | `washington_dc` | provider | `meals` | `food_program` | The common `meals` text mentioning the food program -> `food_program` True; else unset. |
 | `washington_dc` | provider | `dc_prek_enhancement` | `state_prek`, `state_prek_program` | `dc_prek_enhancement` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
@@ -561,7 +564,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `hi_demonstration_project` -> pass-through
 - `hi_diapered_children_accepted` -> pass-through
 - `hi_island` -> pass-through
-- `hi_license_history` -> pass-through
+- `hi_license_history` -> feeds adapter, fills `license_history`
 - `hi_license_type` -> collapses into `license_type`
 - `hi_licensing_period_end` -> pass-through
 - `hi_licensing_period_start` -> pass-through
@@ -1162,7 +1165,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wa_food_program` -> collapses into `food_program` (via to_bool)
 - `wa_head_start` -> collapses into `head_start` (via coerce_bool)
 - `wa_languages_of_instruction` -> pass-through
-- `wa_license_history` -> pass-through
+- `wa_license_history` -> feeds adapter, fills `license_history`
 - `wa_license_name` -> pass-through
 - `wa_license_type` -> collapses into `license_type`
 - `wa_provider_id` -> collapses into `source_provider_id` (via to_id_string)
