@@ -167,6 +167,7 @@ INSPECTION_DATE_FIELDS = (
     "in_correction_date",
     "ms_end_date",
     "mo_disposition_date",
+    "correction_date",
 )
 
 # strptime patterns tried in order for purely numeric dates.
@@ -1527,6 +1528,16 @@ INSPECTION_FIELD_COLLAPSE_MAP = {
         ("md_regulation", none_if_sentinel),
         ("in_rule_code", none_if_sentinel),
         ("wi_rule_number", none_if_sentinel),
+    ],
+    # Date the cited issue was corrected, ISO. AZ and IN publish it directly
+    # (one cited issue per row). WV is an inspection-level adapter in
+    # common_fields.py because it only counts when `wv_outcome_code` is
+    # "Achieved". NH's `nh_corrective_action_accepted` is deliberately NOT
+    # mapped: an accepted plan is not a correction. An unparseable value is
+    # kept as emitted (and logged), like every other date field.
+    "correction_date": [
+        ("az_date_resolved", to_iso_date),
+        ("in_correction_date", to_iso_date),
     ],
 }
 

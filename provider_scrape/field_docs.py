@@ -378,6 +378,13 @@ FIELD_DOCS = {
     "(`R6-5-5203.4, R6-5-5203.4.B`) or a non-rule label (`DES CONTRACT`, `INCIDENT`), kept as emitted with no "
     "splitting or filtering. Citation formats are state-specific (`AAC R9-5-208.C.`, `13A.15.03.04A(3)`, "
     "`470 IAC 3-4.5-4(1)`, `251.05(2)(a)2.`), so values cannot be compared across states.",
+    "correction_date": "Inspection field: ISO date (`YYYY-MM-DD`) the cited issue was corrected, for states that "
+    "emit one cited issue per row. AZ copies `az_date_resolved` and IN copies `in_correction_date`. WV converts "
+    "`wv_issue_completed_date` (`8/9/2024`) only when `wv_outcome_code` is exactly `Achieved`: Pending, Not "
+    "Achieved and blank outcomes are unset even with a real date (a date there is a close-out, not a correction), "
+    "and the system's null placeholder `1/1/1753` is unset even on an Achieved row. NH is excluded: "
+    "`nh_corrective_action_accepted` is when the plan was accepted, not when the issue was corrected. A date that "
+    "cannot be parsed is kept as emitted (and logged). Source fields are kept.",
     "compliance_domains": "Inspection field (MA and NH, which share a licensing platform): per-visit list of "
     'per-domain checklist roll-ups, `[{"domain": str, "compliant": int, "reviewed": int}]`, counts only. '
     "`compliant` / `reviewed` are checklist items in that domain, so any finding means `compliant < reviewed`. "

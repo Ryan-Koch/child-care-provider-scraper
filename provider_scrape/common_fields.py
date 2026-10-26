@@ -859,6 +859,32 @@ def kansas_items_reviewed(record):
 
 
 # --------------------------------------------------------------------------- #
+# Correction date (WV; AZ and IN are plain collapse entries)
+# --------------------------------------------------------------------------- #
+WV_NULL_DATE = "1/1/1753"  # SQL Server minimum date, WV's "no date" placeholder
+
+
+@register_adapter(
+    "west_virginia",
+    level=INSPECTION_LEVEL,
+    sources=["wv_issue_completed_date", "wv_outcome_code"],
+    fills=["correction_date"],
+)
+def west_virginia_correction_date(record):
+    """WV `wv_issue_completed_date` as ISO, only when `wv_outcome_code` is exactly `Achieved`.
+
+    Pending, Not Achieved and blank outcomes are not corrections even with a real date,
+    and `1/1/1753` is the null placeholder (also on Achieved rows) -> unset.
+    """
+    if record.get("wv_outcome_code") != "Achieved":
+        return {}
+    raw = record.get("wv_issue_completed_date")
+    if isinstance(raw, str) and raw.strip() == WV_NULL_DATE:
+        return {}
+    return {"correction_date": to_iso_date(raw)}
+
+
+# --------------------------------------------------------------------------- #
 # Vacancies by age band (IA, ND, DC)
 # --------------------------------------------------------------------------- #
 # Each state labels its age bands differently (and defines them differently:

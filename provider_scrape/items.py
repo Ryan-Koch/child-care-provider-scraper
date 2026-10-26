@@ -20,6 +20,7 @@ class InspectionItem(scrapy.Item):
     items_compliant = scrapy.Field()  # int, numerator of the visit's compliant-over-reviewed ratio
     items_reviewed = scrapy.Field()  # int, denominator; items (MA/RI/NH), areas (OK), regulations (KS)
     regulation_cited = scrapy.Field()  # rule/code section cited on a one-citation-per-row inspection, as emitted
+    correction_date = scrapy.Field()  # ISO date the cited issue was corrected (AZ, IN, WV Achieved only)
     va_shsi = scrapy.Field()
     va_complaint_related = scrapy.Field()
     va_violations = scrapy.Field()

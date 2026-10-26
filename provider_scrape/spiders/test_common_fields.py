@@ -2410,6 +2410,92 @@ def test_items_not_derived_for_other_states():
 
 
 # --------------------------------------------------------------------------- #
+# correction_date (AZ, IN, WV)
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    ("state", "source"),
+    [("arizona", "az_date_resolved"), ("indiana", "in_correction_date")],
+)
+def test_correction_date_copied_as_iso(state, source):
+    insp = norm.normalize_inspection({source: "2024-08-09"}, state)
+    assert insp["correction_date"] == "2024-08-09"
+    assert insp[source] == "2024-08-09"  # source kept
+
+
+@pytest.mark.parametrize(
+    ("state", "source"),
+    [("arizona", "az_date_resolved"), ("indiana", "in_correction_date")],
+)
+@pytest.mark.parametrize("empty", [None, "", "   ", "N/A"])
+def test_correction_date_empty_source_unset(state, source, empty):
+    insp = norm.normalize_inspection({source: empty}, state)
+    assert not insp.get("correction_date")
+
+
+def test_correction_date_unparseable_kept_as_emitted():
+    insp = norm.normalize_inspection({"az_date_resolved": "soon"}, "arizona")
+    assert insp["correction_date"] == "soon"
+
+
+@pytest.mark.parametrize(
+    ("state", "source"),
+    [("arizona", "az_date_resolved"), ("indiana", "in_correction_date")],
+)
+def test_correction_date_does_not_overwrite_existing(state, source):
+    insp = norm.normalize_inspection({source: "2024-08-09", "correction_date": "2020-01-02"}, state)
+    assert insp["correction_date"] == "2020-01-02"
+
+
+def _wv(outcome, completed):
+    return {"wv_outcome_code": outcome, "wv_issue_completed_date": completed}
+
+
+def test_correction_date_wv_achieved_real_date():
+    insp = norm.normalize_inspection(_wv("Achieved", "8/9/2024"), "west_virginia")
+    assert insp["correction_date"] == "2024-08-09"
+    assert insp["wv_issue_completed_date"] == "8/9/2024"  # source kept
+    assert insp["wv_outcome_code"] == "Achieved"
+
+
+@pytest.mark.parametrize("completed", ["1/1/1753", " 1/1/1753 ", "", None])
+def test_correction_date_wv_achieved_placeholder_or_empty_unset(completed):
+    insp = norm.normalize_inspection(_wv("Achieved", completed), "west_virginia")
+    assert not insp.get("correction_date")
+
+
+@pytest.mark.parametrize("outcome", ["Pending", "Not Achieved", "", None, "achieved", "ACHIEVED"])
+def test_correction_date_wv_other_outcomes_unset_even_with_date(outcome):
+    insp = norm.normalize_inspection(_wv(outcome, "8/9/2024"), "west_virginia")
+    assert not insp.get("correction_date")
+
+
+def test_correction_date_wv_missing_outcome_key_unset():
+    insp = norm.normalize_inspection({"wv_issue_completed_date": "8/9/2024"}, "west_virginia")
+    assert not insp.get("correction_date")
+
+
+def test_correction_date_wv_does_not_overwrite_existing():
+    raw = {**_wv("Achieved", "8/9/2024"), "correction_date": "2020-01-02"}
+    assert norm.normalize_inspection(raw, "west_virginia")["correction_date"] == "2020-01-02"
+
+
+def test_correction_date_wv_unparseable_kept_as_emitted():
+    insp = norm.normalize_inspection(_wv("Achieved", "someday"), "west_virginia")
+    assert insp["correction_date"] == "someday"
+
+
+def test_correction_date_new_hampshire_never_set():
+    raw = {"nh_corrective_action_accepted": "06/25/2025"}
+    insp = norm.normalize_inspection(raw, "new_hampshire")
+    assert "correction_date" not in insp
+    assert insp["nh_corrective_action_accepted"] == "06/25/2025"
+
+
+def test_correction_date_wv_adapter_not_applied_to_other_states():
+    assert "correction_date" not in norm.normalize_inspection(_wv("Achieved", "8/9/2024"), "ohio")
+
+
+# --------------------------------------------------------------------------- #
 # year_round / operating_months
 # --------------------------------------------------------------------------- #
 ALL_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
