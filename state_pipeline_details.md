@@ -398,9 +398,9 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ak_facility_subtype` -> pass-through
 - `ak_legacy_license_number` -> pass-through
 - `ak_license_type` -> collapses into `license_type`
-- `ak_licensing_specialist` -> collapses into `licensing_specialist` (via person_name)
+- `ak_licensing_specialist` -> collapses into `inspector` (via person_name), `licensing_specialist` (via person_name)
 - `ak_vendor_id` -> pass-through
-- `ak_visit_type` -> pass-through
+- `ak_visit_type` -> collapses into `announced` (via announced_flag)
 
 ### Alabama (AL)
 
@@ -424,11 +424,11 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 ### Arizona (AZ)
 
 - `az_affiliation` -> pass-through
-- `az_civil_penalty` -> pass-through
-- `az_date_resolved` -> pass-through
-- `az_decision_correction` -> pass-through
+- `az_civil_penalty` -> feeds adapter, fills `enforcement_type`, `penalty_amount`
+- `az_date_resolved` -> collapses into `correction_date` (via to_iso_date)
+- `az_decision_correction` -> collapses into `finding_text` (via finding_text_az)
 - `az_desprovider` -> pass-through
-- `az_enforcement_name` -> pass-through
+- `az_enforcement_name` -> collapses into `inspection_id` (via to_id_string)
 - `az_facility_id` -> collapses into `source_provider_id` (via to_id_string)
 - `az_first_slot_end` -> pass-through
 - `az_first_slot_start` -> pass-through
@@ -437,7 +437,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `az_operatinghourid` -> pass-through
 - `az_quality_rating` -> pass-through
 - `az_regionalpartnership` -> collapses into `region` (via none_if_sentinel)
-- `az_regulation` -> pass-through
+- `az_regulation` -> collapses into `regulation_cited` (via none_if_sentinel)
 - `az_shiftcomment` -> pass-through
 - `az_status_label` -> pass-through
 
@@ -496,7 +496,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ct_education_levels` -> pass-through
 - `ct_elevate_membership_level` -> pass-through
 - `ct_head_start` -> collapses into `head_start` (via coerce_bool)
-- `ct_inspection_id` -> pass-through
+- `ct_inspection_id` -> collapses into `inspection_id` (via to_id_string)
 - `ct_inspection_status` -> pass-through
 - `ct_license_type` -> collapses into `license_type`
 - `ct_licensed` -> collapses into `licensed` (via to_bool)
@@ -513,8 +513,8 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ct_special_needs` -> feeds adapter, fills `serves_special_needs`, `special_needs_types`
 - `ct_transportation` -> collapses into `transportation`
 - `ct_type_of_care` -> pass-through
-- `ct_violations` -> pass-through
-- `ct_violations_count` -> pass-through
+- `ct_violations` -> feeds adapter, fills `violations`
+- `ct_violations_count` -> collapses into `violation_count` (via to_int)
 - `ct_wheelchair_accessible` -> collapses into `wheelchair_accessible` (via coerce_bool)
 
 ### District Of Columbia (DC)
@@ -532,12 +532,12 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `de_financial_arrangements` -> collapses into `food_program` (via has_token(food program|CACFP))
 - `de_injuries_report` -> feeds adapter, fills `fatality_count`, `serious_injury_count`
 - `de_intent_to_revoke` -> feeds adapter, fills `enforcement_action`
-- `de_investigation_conclusion` -> pass-through
+- `de_investigation_conclusion` -> collapses into `finding_text` (via none_if_sentinel)
 - `de_portal_listed` -> collapses into `publicly_listed` (via to_bool)
 - `de_profit_status` -> collapses into `profit_status` (via vocab(de_profit_status))
 - `de_special_conditions` -> feeds adapter, fills `license_conditions`
-- `de_violation_count` -> pass-through
-- `de_violations` -> pass-through
+- `de_violation_count` -> collapses into `violation_count` (via to_int)
+- `de_violations` -> feeds adapter, fills `violations`
 
 ### Florida (FL)
 
@@ -549,10 +549,10 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `fl_display_phone_on_web` -> collapses into `phone_suppressed` (via invert)
 - `fl_dll_badge_date` -> pass-through
 - `fl_gold_seal` -> pass-through
-- `fl_has_violation` -> pass-through
+- `fl_has_violation` -> collapses into `violation_found` (via to_bool)
 - `fl_inclusion_badge_date` -> pass-through
 - `fl_infant_toddler_badge_date` -> pass-through
-- `fl_inspection_id` -> pass-through
+- `fl_inspection_id` -> collapses into `inspection_id` (via to_id_string)
 - `fl_is_dll_badge` -> pass-through
 - `fl_is_faith_based` -> collapses into `faith_based` (via to_bool)
 - `fl_is_gold_seal` -> pass-through
@@ -619,18 +619,18 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `hi_island` -> collapses into `region` (via none_if_sentinel)
 - `hi_license_history` -> feeds adapter, fills `license_history`
 - `hi_license_type` -> collapses into `license_type`
-- `hi_licensing_period_end` -> pass-through
-- `hi_licensing_period_start` -> pass-through
+- `hi_licensing_period_end` -> feeds adapter, fills `licensing_period_end`, `licensing_period_start`
+- `hi_licensing_period_start` -> feeds adapter, fills `licensing_period_end`, `licensing_period_start`
 - `hi_mailing_address` -> collapses into `mailing_address`
 - `hi_meals` -> collapses into `meals`
 - `hi_provider_id` -> pass-through
 - `hi_provider_kind` -> pass-through
-- `hi_requirements_not_met` -> pass-through
+- `hi_requirements_not_met` -> collapses into `violation_count` (via to_int)
 - `hi_service_id` -> collapses into `source_provider_id` (via to_id_string)
 - `hi_service_type_code` -> pass-through
 - `hi_status_history` -> pass-through
 - `hi_usda_food_program` -> collapses into `food_program` (via to_bool)
-- `hi_visit_id` -> pass-through
+- `hi_visit_id` -> collapses into `inspection_id` (via to_id_string)
 
 ### Iowa (IA)
 
@@ -671,7 +671,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `id_philosophy_comment` -> pass-through
 - `id_philosophy_description` -> feeds adapter, fills `program_description`
 - `id_program_description` -> feeds adapter, fills `program_description`
-- `id_program_philosophy` -> collapses into `curriculum` (via id_curriculum)
+- `id_program_philosophy` -> collapses into `curriculum` (via id_curriculum), `faith_based` (via id_faith_based)
 - `id_quality_achievements` -> pass-through
 - `id_quality_achiever_status` -> pass-through
 - `id_usda_food_program` -> collapses into `food_program` (via to_bool)
@@ -689,19 +689,19 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 ### Indiana (IN)
 
 - `in_complaints` -> feeds adapter, fills `complaint_count`
-- `in_correction_date` -> pass-through
+- `in_correction_date` -> collapses into `correction_date` (via to_iso_date)
 - `in_health_violation_count` -> pass-through
 - `in_is_ccdf` -> pass-through
 - `in_is_health_violation` -> pass-through
 - `in_is_temporarily_closed` -> collapses into `temporarily_closed` (via to_bool)
 - `in_licensed_ages` -> feeds adapter, fills `capacity_by_age`
 - `in_location_id` -> pass-through
-- `in_noncompliance` -> pass-through
+- `in_noncompliance` -> collapses into `finding_text` (via none_if_sentinel)
 - `in_programs` -> feeds adapter, fills `state_prek`, `state_prek_program`
 - `in_provider_id` -> collapses into `source_provider_id` (via to_id_string)
 - `in_ptq_level` -> pass-through
-- `in_rule_code` -> pass-through
-- `in_rule_description` -> pass-through
+- `in_rule_code` -> collapses into `regulation_cited` (via none_if_sentinel)
+- `in_rule_description` -> collapses into `regulation_description` (via none_if_sentinel)
 - `in_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `in_temporarily_closed_message` -> pass-through
 
@@ -711,24 +711,24 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ks_facility_response` -> pass-through
 - `ks_facility_token` -> pass-through
 - `ks_findings` -> pass-through
-- `ks_findings_count` -> pass-through
+- `ks_findings_count` -> collapses into `violation_count` (via to_int)
 - `ks_listing_program_type` -> pass-through
-- `ks_nosf_id` -> pass-through
+- `ks_nosf_id` -> collapses into `inspection_id` (via to_id_string)
 - `ks_order_final_status` -> pass-through
 - `ks_order_number` -> pass-through
 - `ks_order_reason` -> pass-through
-- `ks_order_type` -> pass-through
-- `ks_regulations_reviewed` -> pass-through
+- `ks_order_type` -> feeds adapter, fills `enforcement_type`
+- `ks_regulations_reviewed` -> feeds adapter, fills `items_reviewed`
 - `ks_survey_id` -> pass-through
 - `ks_survey_number` -> pass-through
-- `ks_survey_reason` -> pass-through
+- `ks_survey_reason` -> collapses into `visit_reason` (via none_if_sentinel)
 - `ks_survey_template_url` -> pass-through
 
 ### Kentucky (KY)
 
 - `ky_accreditation_available` -> pass-through
 - `ky_food_permit` -> pass-through
-- `ky_inspection_id` -> pass-through
+- `ky_inspection_id` -> collapses into `inspection_id` (via to_id_string)
 - `ky_ongoing_process` -> feeds adapter, fills `enforcement_action`
 - `ky_ongoing_processes` -> feeds adapter, fills `enforcement_action`
 - `ky_poc_id` -> pass-through
@@ -758,31 +758,31 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 ### Massachusetts (MA)
 
 - `ma_account_id` -> pass-through
-- `ma_announcement_type` -> pass-through
+- `ma_announcement_type` -> collapses into `announced` (via announced_flag)
 - `ma_availability` -> pass-through
 - `ma_capacity_by_age` -> feeds adapter, fills `capacity_by_age`
 - `ma_ccrr_city` -> pass-through
 - `ma_ccrr_name` -> pass-through
 - `ma_ccrr_phone` -> pass-through
 - `ma_ccrr_website` -> pass-through
-- `ma_contact_redacted` -> collapses into `phone_suppressed` (via to_bool)
+- `ma_contact_redacted` -> collapses into `address_suppressed` (via to_bool), `phone_suppressed` (via to_bool)
 - `ma_cost_table` -> feeds adapter, fills `rates`
 - `ma_domain_compliance_counts` -> pass-through
-- `ma_domain_counts` -> pass-through
+- `ma_domain_counts` -> feeds adapter, fills `compliance_domains`
 - `ma_domains` -> pass-through
 - `ma_dph_summer_camp` -> pass-through
 - `ma_encrypted_id` -> pass-through
 - `ma_environment` -> feeds adapter, fills `environment_features`
 - `ma_financial_assistance` -> feeds adapter, fills `discounts`
-- `ma_investigation_id` -> pass-through
-- `ma_investigator` -> pass-through
+- `ma_investigation_id` -> collapses into `inspection_id` (via to_id_string)
+- `ma_investigator` -> collapses into `inspector` (via person_name)
 - `ma_is_gsa` -> pass-through
 - `ma_is_informal` -> pass-through
 - `ma_last_issue_date` -> feeds adapter, fills `last_renewed_date`
-- `ma_level_of_compliance` -> pass-through
-- `ma_licensor` -> collapses into `licensing_specialist` (via person_name)
-- `ma_noncompliance_identified` -> pass-through
-- `ma_original_license_date` -> collapses into `original_license_date` (via to_iso_date)
+- `ma_level_of_compliance` -> feeds adapter, fills `items_compliant`, `items_reviewed`
+- `ma_licensor` -> collapses into `inspector` (via person_name), `licensing_specialist` (via person_name)
+- `ma_noncompliance_identified` -> collapses into `violation_found` (via to_bool)
+- `ma_original_license_date` -> collapses into `original_license_date` (via to_iso_date); feeds adapter, fills `last_renewed_date`
 - `ma_program_number` -> collapses into `source_provider_id` (via to_id_string)
 - `ma_regional_office_address` -> pass-through
 - `ma_regional_website` -> pass-through
@@ -792,9 +792,9 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ma_special_skills` -> pass-through
 - `ma_temporary_status` -> pass-through
 - `ma_umbrella_name` -> pass-through
-- `ma_violations` -> pass-through
-- `ma_visit_id` -> pass-through
-- `ma_visit_reason` -> pass-through
+- `ma_violations` -> feeds adapter, fills `violations`
+- `ma_visit_id` -> collapses into `inspection_id` (via to_id_string)
+- `ma_visit_reason` -> feeds adapter, fills `visit_reason`
 
 ### Maryland (MD)
 
@@ -802,17 +802,17 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `md_approved_education` -> pass-through
 - `md_excels_level` -> pass-through
 - `md_fatalities` -> collapses into `fatality_count` (via to_int)
-- `md_finding` -> pass-through
+- `md_finding` -> collapses into `finding_text` (via finding_text_md), `violation_found` (via md_finding_flag)
 - `md_inspection_status` -> pass-through
-- `md_regulation` -> pass-through
+- `md_regulation` -> collapses into `regulation_cited` (via none_if_sentinel)
 - `md_school_name` -> pass-through
 - `md_serious_injuries` -> collapses into `serious_injury_count` (via to_int)
 
 ### Maine (ME)
 
 - `me_infant_slots` -> collapses into `vacancies_infant` (via to_int)
-- `me_licensed_from` -> pass-through
-- `me_licensed_to` -> pass-through
+- `me_licensed_from` -> feeds adapter, fills `licensing_period_end`, `licensing_period_start`
+- `me_licensed_to` -> feeds adapter, fills `licensing_period_end`, `licensing_period_start`
 - `me_licensing_specialist` -> collapses into `licensing_specialist` (via person_name)
 - `me_licensing_specialist_email` -> collapses into `licensing_specialist_email` (via lower_email)
 - `me_openings_updated` -> collapses into `vacancies_updated_date` (via to_iso_date)
@@ -837,7 +837,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `mn_license_holder_onsite` -> pass-through
 - `mn_license_info_misc` -> pass-through
 - `mn_licensed_to_provide` -> pass-through
-- `mn_original_license_date` -> collapses into `original_license_date` (via to_iso_date)
+- `mn_original_license_date` -> collapses into `original_license_date` (via to_iso_date); feeds adapter, fills `last_renewed_date`
 - `mn_restrictions` -> feeds adapter, fills `license_conditions`
 - `mn_setting` -> pass-through
 - `mn_type_of_license` -> pass-through
@@ -851,16 +851,16 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `mo_corrective_measures` -> pass-through
 - `mo_departure_time` -> pass-through
 - `mo_disposition_date` -> pass-through
-- `mo_in_compliance` -> pass-through
-- `mo_inspection_id` -> pass-through
+- `mo_in_compliance` -> collapses into `violation_found` (via invert)
+- `mo_inspection_id` -> collapses into `inspection_id` (via to_id_string)
 - `mo_investigation_id` -> pass-through
 - `mo_license_anniversary_date` -> pass-through
 - `mo_limitations` -> feeds adapter, fills `license_conditions`
 - `mo_mailing_address` -> collapses into `license_holder_address` (via license_holder_address)
-- `mo_notice` -> pass-through
+- `mo_notice` -> collapses into `announced` (via announced_flag)
 - `mo_open_violations` -> pass-through
-- `mo_specialist` -> pass-through
-- `mo_violations` -> pass-through
+- `mo_specialist` -> collapses into `inspector` (via last_first_name)
+- `mo_violations` -> feeds adapter, fills `violations`
 
 ### Mississippi (MS)
 
@@ -875,7 +875,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### Montana (MT)
 
-- `mt_inspector_name` -> pass-through
+- `mt_inspector_name` -> collapses into `inspector` (via person_name)
 - `mt_license_type` -> collapses into `license_type`
 
 ### North Carolina (NC)
@@ -897,11 +897,11 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nc_sanitation_classification` -> pass-through
 - `nc_sanitation_inspection_date` -> pass-through
 - `nc_sanitation_score` -> pass-through
-- `nc_special_features` -> collapses into `transportation` (via has_list_token(Provides transportation))
+- `nc_special_features` -> collapses into `serves_special_needs` (via has_list_token(Will enroll children with special needs)), `transportation` (via has_list_token(Provides transportation))
 - `nc_staff_child_ratios` -> pass-through
 - `nc_star_rating_max_points` -> pass-through
 - `nc_star_rating_total_points` -> pass-through
-- `nc_violations` -> pass-through
+- `nc_violations` -> feeds adapter, fills `violations`
 
 ### North Dakota (ND)
 
@@ -938,21 +938,21 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `nh_account_id` -> collapses into `source_provider_id` (via to_id_string)
 - `nh_accreditation` -> collapses into `accreditation` (via accreditation_value)
-- `nh_announcement_type` -> pass-through
+- `nh_announcement_type` -> collapses into `announced` (via announced_flag)
 - `nh_corrective_action_accepted` -> pass-through
 - `nh_covid_closure` -> pass-through
-- `nh_domains` -> pass-through
+- `nh_domains` -> feeds adapter, fills `compliance_domains`
 - `nh_early_head_start` -> collapses into `early_head_start` (via coerce_bool)
 - `nh_endorsements` -> pass-through
-- `nh_environment` -> collapses into `wheelchair_accessible` (via has_list_token(WHEELCHAIR ACCESSIBLE))
-- `nh_financial_assistance` -> collapses into `scholarships_accepted` (via has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP)))
+- `nh_environment` -> collapses into `wheelchair_accessible` (via has_list_token(WHEELCHAIR ACCESSIBLE)); feeds adapter, fills `environment_features`, `has_pets`, `pet_types`, `pets_excluded`
+- `nh_financial_assistance` -> collapses into `scholarships_accepted` (via has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP))); feeds adapter, fills `discounts`
 - `nh_gsq_step` -> pass-through
 - `nh_head_start` -> collapses into `head_start` (via coerce_bool)
 - `nh_infant_openings` -> collapses into `vacancies_infant` (via to_int)
-- `nh_level_of_compliance` -> pass-through
+- `nh_level_of_compliance` -> feeds adapter, fills `items_compliant`, `items_reviewed`
 - `nh_licensed` -> collapses into `licensed` (via to_bool)
 - `nh_licensed_plus` -> pass-through
-- `nh_licensor` -> pass-through
+- `nh_licensor` -> collapses into `inspector` (via person_name)
 - `nh_preschool_openings` -> collapses into `vacancies_preschool` (via to_int)
 - `nh_preventive_protective` -> pass-through
 - `nh_qris_rating` -> pass-through
@@ -963,9 +963,9 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nh_special_needs` -> feeds adapter, fills `serves_special_needs`, `special_needs_types`
 - `nh_special_skills` -> pass-through
 - `nh_toddler_openings` -> collapses into `vacancies_toddler` (via to_int)
-- `nh_violations` -> pass-through
+- `nh_violations` -> feeds adapter, fills `violations`
 - `nh_visit_document_id` -> pass-through
-- `nh_visit_id` -> pass-through
+- `nh_visit_id` -> collapses into `inspection_id` (via to_id_string)
 
 ### New Jersey (NJ)
 
@@ -1032,9 +1032,9 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 ### Nevada (NV)
 
 - `nv_credential_type` -> pass-through
-- `nv_deficiency_count` -> pass-through
+- `nv_deficiency_count` -> collapses into `violation_count` (via to_int)
 - `nv_facility_type` -> pass-through
-- `nv_inspection_number` -> pass-through
+- `nv_inspection_number` -> collapses into `inspection_id` (via to_id_string)
 - `nv_license_base` -> pass-through
 - `nv_operation_id` -> collapses into `source_provider_id` (via to_id_string)
 - `nv_program_type` -> pass-through
@@ -1070,22 +1070,22 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 ### Oklahoma (OK)
 
 - `ok_administrator_title` -> pass-through
-- `ok_allegations` -> pass-through
+- `ok_allegations` -> feeds adapter, fills `violations`
 - `ok_care_types` -> feeds adapter, fills `care_schedules`, `evening_care`, `night_care`, `nontraditional_hours`, `weekend_care`, `year_round`
-- `ok_compliance_count` -> pass-through
-- `ok_compliance_total` -> pass-through
+- `ok_compliance_count` -> feeds adapter, fills `items_compliant`, `items_reviewed`
+- `ok_compliance_total` -> feeds adapter, fills `items_compliant`, `items_reviewed`
 - `ok_denial_sent` -> feeds adapter, fills `enforcement_action`
 - `ok_detail_unavailable` -> pass-through
 - `ok_doing_business_as` -> collapses into `doing_business_as` (via none_if_sentinel)
 - `ok_emergency_issued` -> feeds adapter, fills `enforcement_action`
 - `ok_licensing_specialist` -> collapses into `licensing_specialist` (via person_name)
 - `ok_licensing_specialist_phone` -> collapses into `licensing_specialist_phone` (via none_if_sentinel)
-- `ok_noncompliances` -> pass-through
+- `ok_noncompliances` -> collapses into `finding_text` (via finding_text_list)
 - `ok_revocation_sent` -> feeds adapter, fills `enforcement_action`
 - `ok_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `ok_star_level` -> pass-through
 - `ok_subsidy_contract_number` -> pass-through
-- `ok_visit_purpose` -> pass-through
+- `ok_visit_purpose` -> feeds adapter, fills `visit_reason`
 - `ok_visit_type` -> pass-through
 
 ### Pennsylvania (PA)
@@ -1104,13 +1104,13 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ri_brightstars_rating` -> pass-through
 - `ri_ccap_expiration_date` -> pass-through
 - `ri_ccap_status` -> pass-through
-- `ri_compliance` -> pass-through
+- `ri_compliance` -> feeds adapter, fills `items_compliant`, `items_reviewed`
 - `ri_head_start` -> collapses into `head_start` (via coerce_bool)
 - `ri_is_lea` -> pass-through
 - `ri_license_decision` -> pass-through
-- `ri_licensor` -> pass-through
+- `ri_licensor` -> collapses into `inspector` (via person_name)
 - `ri_most_recently_renewed` -> feeds adapter, fills `last_renewed_date`
-- `ri_original_license_date` -> collapses into `original_license_date` (via to_iso_date)
+- `ri_original_license_date` -> collapses into `original_license_date` (via to_iso_date); feeds adapter, fills `last_renewed_date`
 - `ri_provider_contact_name` -> pass-through
 - `ri_provider_email` -> pass-through
 - `ri_services_offered` -> feeds adapter, fills `care_schedules`
@@ -1120,9 +1120,9 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `sc_abc_quality_rating` -> pass-through
 - `sc_abc_rating_history` -> pass-through
-- `sc_alert_count` -> pass-through
+- `sc_alert_count` -> collapses into `violation_count` (via to_int)
 - `sc_alert_resolved_count` -> pass-through
-- `sc_deficiencies` -> pass-through
+- `sc_deficiencies` -> feeds adapter, fills `violations`
 - `sc_license_category` -> collapses into `licensed` (via vocab(sc_license_category))
 - `sc_licensing_specialist_name` -> collapses into `licensing_specialist` (via last_first_name)
 - `sc_licensing_specialist_phone` -> collapses into `licensing_specialist_phone` (via none_if_sentinel)
@@ -1178,7 +1178,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `va_quality_rating` -> pass-through
 - `va_shsi` -> pass-through
 - `va_total_points` -> pass-through
-- `va_violations` -> pass-through
+- `va_violations` -> collapses into `violation_found` (via to_bool)
 
 ### Vermont (VT)
 
@@ -1194,7 +1194,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `vt_preschool_capacity` -> pass-through
 - `vt_preschool_vacancies` -> collapses into `vacancies_preschool` (via to_int)
 - `vt_program_description` -> collapses into `program_description` (via description_text)
-- `vt_program_participation` -> collapses into `food_program` (via has_token(food program|CACFP))
+- `vt_program_participation` -> collapses into `food_program` (via has_token(food program|CACFP)); feeds adapter, fills `state_prek`, `state_prek_program`
 - `vt_provider_id` -> pass-through
 - `vt_religious_activity` -> collapses into `faith_based` (via to_bool)
 - `vt_school_age_capacity` -> pass-through
@@ -1232,18 +1232,18 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wi_appeal` -> pass-through
 - `wi_correction_plan_url` -> pass-through
 - `wi_decision` -> pass-through
-- `wi_description` -> pass-through
-- `wi_enforcement_type` -> pass-through
+- `wi_description` -> collapses into `finding_text` (via none_if_sentinel)
+- `wi_enforcement_type` -> feeds adapter, fills `enforcement_type`, `penalty_amount`
 - `wi_facility_number` -> collapses into `source_provider_id` (via to_id_string)
 - `wi_location_number` -> pass-through
 - `wi_months_open` -> feeds adapter, fills `operating_months`, `year_round`
 - `wi_night_capacity` -> feeds adapter, fills `evening_care`, `night_care`, `nontraditional_hours`, `weekend_care`
-- `wi_program_philosophy` -> collapses into `curriculum` (via wi_curriculum)
-- `wi_rule_number` -> pass-through
-- `wi_rule_summary` -> pass-through
+- `wi_program_philosophy` -> collapses into `curriculum` (via wi_curriculum), `faith_based` (via has_token(\bReligious\b))
+- `wi_rule_number` -> collapses into `regulation_cited` (via none_if_sentinel)
+- `wi_rule_summary` -> collapses into `regulation_description` (via none_if_sentinel)
 - `wi_special_care_types` -> feeds adapter, fills `care_schedules`
 - `wi_unique_services` -> pass-through
-- `wi_vacancies` -> collapses into `vacancies_updated_date` (via wi_vacancies_updated_date)
+- `wi_vacancies` -> collapses into `total_vacancies` (via wi_total_vacancies), `vacancies_updated_date` (via wi_vacancies_updated_date)
 - `wi_waitlist` -> pass-through
 - `wi_youngstar_rating` -> pass-through
 
@@ -1255,11 +1255,11 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wv_contact_title` -> pass-through
 - `wv_corrective_action_plan_end` -> pass-through
 - `wv_corrective_action_plan_start` -> pass-through
-- `wv_issue_completed_date` -> pass-through
+- `wv_issue_completed_date` -> feeds adapter, fills `correction_date`
 - `wv_license_type` -> collapses into `license_type`
 - `wv_licensing_specialist` -> collapses into `licensing_specialist` (via person_name)
-- `wv_non_compliance_code` -> pass-through
-- `wv_outcome_code` -> pass-through
+- `wv_non_compliance_code` -> collapses into `regulation_description` (via none_if_sentinel)
+- `wv_outcome_code` -> feeds adapter, fills `correction_date`
 
 ### Wyoming (WY)
 
@@ -1272,7 +1272,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wy_record_type` -> pass-through
 - `wy_registration_fee` -> collapses into `registration_fee` (via to_float)
 - `wy_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
-- `wy_services` -> collapses into `food_program` (via has_token(food program|CACFP))
-- `wy_violation_found` -> pass-through
-- `wy_violations` -> pass-through
+- `wy_services` -> collapses into `food_program` (via has_token(food program|CACFP)); feeds adapter, fills `care_schedules`
+- `wy_violation_found` -> collapses into `violation_found` (via to_bool)
+- `wy_violations` -> feeds adapter, fills `violations`
 - `wy_weekend_care` -> feeds adapter, fills `evening_care`, `night_care`, `nontraditional_hours`, `weekend_care`

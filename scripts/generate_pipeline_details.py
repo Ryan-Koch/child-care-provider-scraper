@@ -63,21 +63,21 @@ def common_provider_fields():
 
 
 def collapse_source_to_common():
-    """source field -> (common field, transform label or "")."""
+    """source field -> sorted [(common field, transform label or "")] across both
+    collapse maps; one source can feed several common fields."""
     mapping = {}
-    for common, entries in norm.FIELD_COLLAPSE_MAP.items():
-        for entry in entries:
-            source, transform = norm.split_collapse_entry(entry)
-            mapping[source] = (common, cf.describe_transform(transform))
-    return mapping
+    for collapse_map in (norm.FIELD_COLLAPSE_MAP, norm.INSPECTION_FIELD_COLLAPSE_MAP):
+        for common, entries in collapse_map.items():
+            for entry in entries:
+                source, transform = norm.split_collapse_entry(entry)
+                mapping.setdefault(source, set()).add((common, cf.describe_transform(transform)))
+    return {source: sorted(targets) for source, targets in mapping.items()}
 
 
 def adapter_source_to_fills():
-    """provider-level adapter source field -> sorted common fields it feeds."""
+    """adapter source field (provider or inspection level) -> sorted common fields it feeds."""
     mapping = {}
     for adapter in cf.all_adapters():
-        if adapter.level != cf.PROVIDER_LEVEL:
-            continue
         for source in adapter.sources:
             mapping.setdefault(source, set()).update(adapter.fills)
     return {source: sorted(fills) for source, fills in mapping.items()}
@@ -332,17 +332,15 @@ def build_markdown():
         add(f"### {header}")
         add("")
         for field in sorted(by_state[code]):
+            parts = []
             collapsed = source_to_common.get(field)
-            fills = source_to_fills.get(field)
             if collapsed:
-                common, label = collapsed
-                via = f" (via {label})" if label else ""
-                add(f"- `{field}` -> collapses into `{common}`{via}")
-            elif fills:
-                targets = ", ".join(f"`{f}`" for f in fills)
-                add(f"- `{field}` -> feeds adapter, fills {targets}")
-            else:
-                add(f"- `{field}` -> pass-through")
+                targets = ", ".join(f"`{common}`" + (f" (via {label})" if label else "") for common, label in collapsed)
+                parts.append(f"collapses into {targets}")
+            fills = source_to_fills.get(field)
+            if fills:
+                parts.append("feeds adapter, fills " + ", ".join(f"`{f}`" for f in fills))
+            add(f"- `{field}` -> {'; '.join(parts) if parts else 'pass-through'}")
         add("")
 
     return "\n".join(lines).rstrip("\n") + "\n"
