@@ -386,6 +386,7 @@ class ProviderItem(scrapy.Item):
     meals = scrapy.Field()
     accepting_new_children = scrapy.Field()
     transportation = scrapy.Field()
+    enforcement_action = scrapy.Field()  # str: state's label of the current action; unset when none; see FIELD_DOCS
     head_start = scrapy.Field()  # normalized to a boolean
     early_head_start = scrapy.Field()  # normalized to a boolean; distinct from head_start
     wheelchair_accessible = scrapy.Field()  # True / False / None

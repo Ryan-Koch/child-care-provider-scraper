@@ -34,6 +34,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `doing_business_as` | Whitespace cleanup; Field collapse from state-specific source (transforms: none_if_sentinel) | Trade name (doing business as) alongside the licensed name, free text. FL, OK; sentinels such as `N/A` -> unset. FL's value always equals provider_name (its API already returns the DBA as the name). WA license name and MA umbrella org are not DBAs and are not mapped. |
 | `early_head_start` | Whitespace cleanup; Field collapse from state-specific source (-> boolean) | Early Head Start participation (federal infant/toddler program), coerced to a boolean. MS, NH, WA. Distinct from `head_start`: EHS sources never feed it. |
 | `email` | Whitespace cleanup | Contact email (whitespace-cleaned only). |
+| `enforcement_action` | Whitespace cleanup | The state's own label for the enforcement action currently in force against the license; unset when there is none (never False or ''). An overlay that is independent of `status`, which stays the license standing. DE: `de_enforcement_action`, else `de_intent_to_revoke` (same precedence as status); `Revoked` is kept here even though `status` is `closed`. KY: the `process_type` of each `On-going` entry in `ky_ongoing_processes` (including `Directed Plan of Correction`), joined with '; ' without duplicates. OK: a fixed label per true flag, in this order, joined with '; ': `Revocation sent` (`ok_revocation_sent`), `Denial sent` (`ok_denial_sent`), `Emergency order issued` (`ok_emergency_issued`). AL is excluded: every `al_adverse_actions` entry is a past corrective action. Labels are state-specific, with no shared vocabulary. |
 | `environment_features` | Whitespace cleanup | Facility amenities: list of canonical tokens from a fixed list, de-duplicated, in order: smoke_free, fenced_yard, outdoor_play, air_conditioned, peanut_free, secure_entry, video_surveillance, parent_webcam, pool, sports_facilities, separate_play_areas, field_trips, near_public_transit, no_tv. From GA `ga_environment` (`; `-separated), MA `ma_environment` (list), NH `nh_environment` (`, `-separated UPPERCASE), UT `ut_environment` and VT `vt_area_description` (`,`-separated), and NJ `nj_environmental_features_labels` (resolved labels) by an explicit case-insensitive label table (`ENVIRONMENT_LABELS`). Pet labels and wheelchair/handicap labels belong to other fields and are skipped silently, as are non-amenity labels (approved assistant, mixed age, school bus route, provide your own equipment). NJ codes 6-13 have no known label ("Unknown (code N)") and are skipped silently. An unknown label is logged and dropped. None found is None, never an empty list. The `xx_` sources are kept. |
 | `evening_care` | Whitespace cleanup | Evening / second-shift care (bool). WY `wy_evening_care`; NC second-shift capacity > 0 (0 -> False); OK `Evening Hours` -> True (absent -> unset). The `xx_` sources are kept. For NC, True means licensed second-shift capacity, not confirmed operating hours. |
 | `fatality_count` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Number of deaths the state reports at the facility (int; `0` = none reported, a real value). Collapsed from MD `md_fatalities` (reporting period unspecified on the page) and DE `de_injuries_report` (adapter; `N facility death(s)` / `No facility deaths reported`). As for `serious_injury_count`, DE counts only the MOST RECENT year listed in the record, which can differ between providers. An unrecognised DE string -> unset. The `xx_` sources are kept. |
@@ -245,6 +246,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `connecticut` | provider | `ct_age_range_min_weeks`, `ct_age_range_max_weeks` | `age_min_months`, `age_max_months` | CT `ct_age_range_{min,max}_weeks` -> months, floor(weeks * 12 / 52). |
 | `connecticut` | provider | `ct_capacity_three_and_under`, `ct_capacity_school_aged`, `ct_capacity_full_time` | `capacity_by_age` | CT three fixed capacity buckets (three and under, school aged, full time) -> rows; blanks skipped. |
 | `delaware` | provider | `de_injuries_report` | `serious_injury_count`, `fatality_count` | Parse `de_injuries_report` ("; "-separated per-year segments). |
+| `delaware` | provider | `de_enforcement_action`, `de_intent_to_revoke` | `enforcement_action` | DE `de_enforcement_action`, else `de_intent_to_revoke` -> `enforcement_action` (same precedence as status). |
 | `delaware` | provider | `de_special_conditions` | `license_conditions` | DE `de_special_conditions` string -> `;` split. |
 | `florida` | provider | `hours` | `weekly_schedule`, `days_of_operation` | FL dict-shaped `hours` ({"monday": "6:45AM to 6:00PM", ...}) -> `weekly_schedule`; `hours` kept. |
 | `florida` | provider | `fl_is_vpk` | `state_prek`, `state_prek_program` | `fl_is_vpk` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
@@ -267,6 +269,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `indiana` | provider | `in_licensed_ages` | `capacity_by_age` | IN `in_licensed_ages` start/end age -> `Start – End` label (just start when no end); quantity -> capacity. |
 | `iowa` | provider | `ia_openings_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Sum IA `fullTime` + `partTime` openings per band across the 7 age labels. |
 | `iowa` | provider | `ia_care_types` | `care_schedules` | Iowa `ia_care_types` (`, `-separated string) -> `care_schedules` via the explicit label table. |
+| `kentucky` | provider | `ky_ongoing_processes`, `ky_ongoing_process` | `enforcement_action` | KY `ky_ongoing_processes`: `process_type` of each `On-going` entry, joined `; `. |
 | `kentucky` | provider | `ky_prek_partnership` | `state_prek`, `state_prek_program` | `ky_prek_partnership` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
 | `kentucky` | provider | `ky_service_costs` | `rates` | Kentucky `ky_service_costs` -> full_time/part_time rows; period `day` is inferred from the amounts. |
 | `louisiana` | provider | `la_night_care` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | `la_night_care` (bool) -> `night_care`; roll-up True when night care is offered. |
@@ -306,6 +309,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `north_dakota` | provider | `nd_min_age`, `nd_max_age` | `age_min_months`, `age_max_months` | ND `nd_min_age`/`nd_max_age` (`6 Weeks`, `12 Years`) -> months; a max of 0 is dropped. |
 | `oklahoma` | provider | `ok_schedule` | `weekly_schedule`, `days_of_operation` | OK `ok_schedule` `hours` ("6:30AM - 6:00PM", None when closed) -> `weekly_schedule`; days derived. |
 | `oklahoma` | provider | `ok_care_types` | `year_round` | OK `ok_care_types`: `Year Round` -> True; else a seasonal-only label -> False; else unset. |
+| `oklahoma` | provider | `ok_revocation_sent`, `ok_denial_sent`, `ok_emergency_issued` | `enforcement_action` | OK `ok_revocation_sent` / `ok_denial_sent` / `ok_emergency_issued` -> fixed label per true flag, joined `; `. |
 | `oklahoma` | provider | `ok_care_types` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | OK `ok_care_types` Evening/Weekend/Overnight Hours -> evening/weekend/night care True; absent -> unset. |
 | `oklahoma` | provider | `ok_care_types` | `care_schedules` | OK `ok_care_types` (list) -> `care_schedules` (Drop In, Sick Care, Summer Only, School Vacation Only). |
 | `pennsylvania` | provider | `meals` | `food_program` | The common `meals` text mentioning the food program -> `food_program` True; else unset. |
@@ -510,10 +514,10 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 ### Delaware (DE)
 
-- `de_enforcement_action` -> pass-through
+- `de_enforcement_action` -> feeds adapter, fills `enforcement_action`
 - `de_financial_arrangements` -> collapses into `food_program` (via has_token(food program|CACFP))
 - `de_injuries_report` -> feeds adapter, fills `fatality_count`, `serious_injury_count`
-- `de_intent_to_revoke` -> pass-through
+- `de_intent_to_revoke` -> feeds adapter, fills `enforcement_action`
 - `de_investigation_conclusion` -> pass-through
 - `de_portal_listed` -> pass-through
 - `de_profit_status` -> collapses into `profit_status` (via vocab(de_profit_status))
@@ -711,8 +715,8 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ky_accreditation_available` -> pass-through
 - `ky_food_permit` -> pass-through
 - `ky_inspection_id` -> pass-through
-- `ky_ongoing_process` -> pass-through
-- `ky_ongoing_processes` -> pass-through
+- `ky_ongoing_process` -> feeds adapter, fills `enforcement_action`
+- `ky_ongoing_processes` -> feeds adapter, fills `enforcement_action`
 - `ky_poc_id` -> pass-through
 - `ky_prek_partnership` -> feeds adapter, fills `state_prek`, `state_prek_program`
 - `ky_provider_id` -> collapses into `source_provider_id` (via to_id_string)
@@ -1056,14 +1060,14 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ok_care_types` -> feeds adapter, fills `care_schedules`, `evening_care`, `night_care`, `nontraditional_hours`, `weekend_care`, `year_round`
 - `ok_compliance_count` -> pass-through
 - `ok_compliance_total` -> pass-through
-- `ok_denial_sent` -> pass-through
+- `ok_denial_sent` -> feeds adapter, fills `enforcement_action`
 - `ok_detail_unavailable` -> pass-through
 - `ok_doing_business_as` -> collapses into `doing_business_as` (via none_if_sentinel)
-- `ok_emergency_issued` -> pass-through
+- `ok_emergency_issued` -> feeds adapter, fills `enforcement_action`
 - `ok_licensing_specialist` -> collapses into `licensing_specialist` (via person_name)
 - `ok_licensing_specialist_phone` -> collapses into `licensing_specialist_phone` (via none_if_sentinel)
 - `ok_noncompliances` -> pass-through
-- `ok_revocation_sent` -> pass-through
+- `ok_revocation_sent` -> feeds adapter, fills `enforcement_action`
 - `ok_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `ok_star_level` -> pass-through
 - `ok_subsidy_contract_number` -> pass-through

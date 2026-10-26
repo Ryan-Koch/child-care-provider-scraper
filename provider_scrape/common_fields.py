@@ -1796,6 +1796,67 @@ def oklahoma_year_round(record):
 
 
 # --------------------------------------------------------------------------- #
+# Current enforcement action (DE, KY, OK)
+# --------------------------------------------------------------------------- #
+# The state's own label for an action in force against the license, kept as an
+# overlay beside ``status`` (which stays the license standing). Unset when there
+# is none. AL is deliberately not mapped: every ``al_adverse_actions`` entry is a
+# past corrective action.
+ENFORCEMENT_ACTION_SEPARATOR = "; "
+KY_ONGOING_PROCESS_STATUS = "on-going"
+# OK flag field -> fixed label, in the order the labels are joined.
+OK_ENFORCEMENT_FLAGS = (
+    ("ok_revocation_sent", "Revocation sent"),
+    ("ok_denial_sent", "Denial sent"),
+    ("ok_emergency_issued", "Emergency order issued"),
+)
+
+
+def _join_unique(labels):
+    """Join labels with ``; `` in source order, dropping duplicates; ``{}`` if none."""
+    unique = list(dict.fromkeys(labels))
+    if not unique:
+        return {}
+    return {"enforcement_action": ENFORCEMENT_ACTION_SEPARATOR.join(unique)}
+
+
+@register_adapter("delaware", sources=["de_enforcement_action", "de_intent_to_revoke"], fills=["enforcement_action"])
+def delaware_enforcement_action(record):
+    """DE `de_enforcement_action`, else `de_intent_to_revoke` -> `enforcement_action` (same precedence as status)."""
+    for source in ("de_enforcement_action", "de_intent_to_revoke"):
+        label = none_if_sentinel(record.get(source))
+        if isinstance(label, str) and label:
+            return {"enforcement_action": label}
+    return {}
+
+
+@register_adapter("kentucky", sources=["ky_ongoing_processes", "ky_ongoing_process"], fills=["enforcement_action"])
+def kentucky_enforcement_action(record):
+    """KY `ky_ongoing_processes`: `process_type` of each `On-going` entry, joined `; `."""
+    processes = record.get("ky_ongoing_processes")
+    labels = []
+    if isinstance(processes, list):
+        for process in processes:
+            if not isinstance(process, dict):
+                continue
+            status = process.get("status")
+            if not isinstance(status, str) or status.strip().lower() != KY_ONGOING_PROCESS_STATUS:
+                continue
+            label = none_if_sentinel(process.get("process_type"))
+            if isinstance(label, str) and label:
+                labels.append(label)
+    if not labels and record.get("ky_ongoing_process") is True:
+        logger.warning("KY ky_ongoing_process is True but ky_ongoing_processes has no On-going entry")
+    return _join_unique(labels)
+
+
+@register_adapter("oklahoma", sources=[flag for flag, _ in OK_ENFORCEMENT_FLAGS], fills=["enforcement_action"])
+def oklahoma_enforcement_action(record):
+    """OK `ok_revocation_sent` / `ok_denial_sent` / `ok_emergency_issued` -> fixed label per true flag, joined `; `."""
+    return _join_unique(label for flag, label in OK_ENFORCEMENT_FLAGS if record.get(flag) is True)
+
+
+# --------------------------------------------------------------------------- #
 # Special needs (IA, NE, NC, CO, CT, MA, NH, ND)
 # --------------------------------------------------------------------------- #
 # Fixed category list, in the order ``special_needs_types`` is emitted.

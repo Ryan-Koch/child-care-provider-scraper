@@ -5655,3 +5655,138 @@ def test_violations_do_not_overwrite_existing():
 def test_violations_not_emitted_for_other_states():
     insp = norm.normalize_inspection({"mo_violations": [{"rule": "R1"}]}, "kansas")
     assert "violations" not in insp
+
+
+# --------------------------------------------------------------------------- #
+# enforcement_action (DE, KY, OK)
+# --------------------------------------------------------------------------- #
+def _enforcement(record, state):
+    return norm.normalize_item(dict(record), state).get("enforcement_action")
+
+
+@pytest.mark.parametrize(
+    ("record", "expected"),
+    [
+        ({"de_enforcement_action": "Suspended"}, "Suspended"),
+        ({"de_intent_to_revoke": "Intent to Revoke"}, "Intent to Revoke"),
+        (
+            {"de_enforcement_action": " Warning of Probation ", "de_intent_to_revoke": "Intent to Revoke"},
+            "Warning of Probation",
+        ),
+        ({"de_enforcement_action": "Revoked"}, "Revoked"),
+        ({"de_enforcement_action": "N/A", "de_intent_to_revoke": "Intent to Revoke"}, "Intent to Revoke"),
+        ({"de_enforcement_action": "  ", "de_intent_to_revoke": None}, None),
+        ({}, None),
+    ],
+)
+def test_enforcement_action_delaware(record, expected):
+    assert _enforcement(record, "delaware") == expected
+
+
+def test_enforcement_action_delaware_revoked_keeps_status_closed():
+    item = norm.normalize_item({"status": "Revoked", "de_enforcement_action": "Revoked"}, "delaware")
+    assert item["enforcement_action"] == "Revoked"
+    assert item["status"] == "closed"
+
+
+@pytest.mark.parametrize(
+    ("processes", "expected"),
+    [
+        ([{"process_type": "Adverse Action", "status": "On-going"}], "Adverse Action"),
+        (
+            [
+                {"process_type": "Adverse Action", "status": "On-going"},
+                {"process_type": "Directed Plan of Correction", "status": "On-going"},
+            ],
+            "Adverse Action; Directed Plan of Correction",
+        ),
+        (
+            [
+                {"process_type": "Adverse Action", "status": "Completed"},
+                {"process_type": "Directed Plan of Correction", "status": "On-going"},
+            ],
+            "Directed Plan of Correction",
+        ),
+        (
+            [
+                {"process_type": "Adverse Action", "status": "On-going"},
+                {"process_type": " Adverse Action ", "status": "On-going"},
+            ],
+            "Adverse Action",
+        ),
+        ([{"process_type": "Adverse Action", "status": "Completed"}], None),
+        ([{"process_type": "N/A", "status": "On-going"}, None, "x"], None),
+        ([], None),
+        (None, None),
+    ],
+)
+def test_enforcement_action_kentucky(processes, expected):
+    assert _enforcement({"ky_ongoing_processes": processes}, "kentucky") == expected
+
+
+def test_enforcement_action_kentucky_bool_without_list_is_unset_and_logged(caplog):
+    with caplog.at_level(logging.WARNING):
+        assert _enforcement({"ky_ongoing_process": True}, "kentucky") is None
+    assert "ky_ongoing_process is True" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("flags", "expected"),
+    [
+        ({"ok_revocation_sent": True}, "Revocation sent"),
+        ({"ok_denial_sent": True}, "Denial sent"),
+        ({"ok_emergency_issued": True}, "Emergency order issued"),
+        (
+            {"ok_emergency_issued": True, "ok_revocation_sent": True},
+            "Revocation sent; Emergency order issued",
+        ),
+        (
+            {"ok_emergency_issued": True, "ok_denial_sent": True, "ok_revocation_sent": True},
+            "Revocation sent; Denial sent; Emergency order issued",
+        ),
+        ({"ok_revocation_sent": False, "ok_denial_sent": False, "ok_emergency_issued": False}, None),
+        ({}, None),
+    ],
+)
+def test_enforcement_action_oklahoma(flags, expected):
+    assert _enforcement(flags, "oklahoma") == expected
+
+
+def test_enforcement_action_alabama_never_set():
+    record = {"al_adverse_actions": ["Adverse Action CORRECTIVE ACTION 1/1/2020 1/1/2021"]}
+    assert _enforcement(record, "alabama") is None
+
+
+def test_enforcement_action_leaves_status_unchanged():
+    base = {"status": "Active", "ky_ongoing_processes": []}
+    with_action = {"status": "Active", "ky_ongoing_processes": [{"process_type": "X", "status": "On-going"}]}
+    out = norm.normalize_item(dict(with_action), "kentucky")
+    assert out["enforcement_action"] == "X"
+    assert out["status"] == norm.normalize_item(dict(base), "kentucky")["status"]
+
+
+def test_enforcement_action_does_not_overwrite_existing_value():
+    out = norm.normalize_item({"enforcement_action": "Preset", "de_enforcement_action": "Suspended"}, "delaware")
+    assert out["enforcement_action"] == "Preset"
+
+
+def test_enforcement_action_keeps_source_fields():
+    record = {"de_enforcement_action": "Suspended", "de_intent_to_revoke": "Intent"}
+    out = norm.normalize_item(dict(record), "delaware")
+    assert out["de_enforcement_action"] == "Suspended"
+    assert out["de_intent_to_revoke"] == "Intent"
+
+
+@pytest.mark.parametrize(
+    ("state", "record"),
+    [
+        ("kentucky", {"de_enforcement_action": "Suspended"}),
+        ("oklahoma", {"de_enforcement_action": "Suspended"}),
+        ("delaware", {"ok_revocation_sent": True}),
+        ("delaware", {"ky_ongoing_processes": [{"process_type": "X", "status": "On-going"}]}),
+        ("oklahoma", {"ky_ongoing_processes": [{"process_type": "X", "status": "On-going"}]}),
+        ("kentucky", {"ok_denial_sent": True}),
+    ],
+)
+def test_enforcement_action_does_not_cross_fire(state, record):
+    assert _enforcement(record, state) is None

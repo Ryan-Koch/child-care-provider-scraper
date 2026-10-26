@@ -106,6 +106,15 @@ FIELD_DOCS = {
     "NH/VT/TN/LA/ND/IA/NE set a string directly; GA/CT/MA/NJ collapse a list or label text from their own "
     "source field (single populated source only). NC is True when `nc_special_features` has the "
     "`Provides transportation` entry, else unset (never False).",
+    "enforcement_action": "The state's own label for the enforcement action currently in force against the "
+    "license; unset when there is none (never False or ''). An overlay that is independent of `status`, "
+    "which stays the license standing. DE: `de_enforcement_action`, else `de_intent_to_revoke` (same "
+    "precedence as status); `Revoked` is kept here even though `status` is `closed`. KY: the "
+    "`process_type` of each `On-going` entry in `ky_ongoing_processes` (including `Directed Plan of "
+    "Correction`), joined with '; ' without duplicates. OK: a fixed label per true flag, in this order, "
+    "joined with '; ': `Revocation sent` (`ok_revocation_sent`), `Denial sent` (`ok_denial_sent`), "
+    "`Emergency order issued` (`ok_emergency_issued`). AL is excluded: every `al_adverse_actions` entry is a "
+    "past corrective action. Labels are state-specific, with no shared vocabulary.",
     "head_start": "Head Start participation, collapsed from a single state source and coerced to a boolean.",
     "early_head_start": "Early Head Start participation (federal infant/toddler program), coerced to a boolean. "
     "MS, NH, WA. Distinct from `head_start`: EHS sources never feed it.",

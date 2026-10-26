@@ -109,6 +109,7 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `meals` | Meals / food program | String (collapsed) |
 | `accepting_new_children` | Open enrollment flag | As emitted (collapsed) |
 | `transportation` | Transportation offered | Mixed: bool (KY/SD/WY; NC `True` on the `Provides transportation` token, else unset), string/list/label text elsewhere |
+| `enforcement_action` | Current enforcement action against the license | String, the state's own label; unset when none, never `False`. Overlay beside `status` (unchanged). By adapter from DE (`de_enforcement_action`, else `de_intent_to_revoke`; `Revoked` kept alongside `status` `closed`), KY (`process_type` of each `On-going` `ky_ongoing_processes` entry incl. `Directed Plan of Correction`, joined `; `), OK (fixed label per true flag `ok_revocation_sent` / `ok_denial_sent` / `ok_emergency_issued`: `Revocation sent`, `Denial sent`, `Emergency order issued`, joined `; `). AL excluded: `al_adverse_actions` is all past corrective action. Source fields unchanged |
 | `head_start` | Head Start program | **Boolean** (collapsed + coerced) |
 | `early_head_start` | Early Head Start program (separate from `head_start`) | **Boolean** (collapsed MS/NH/WA, coerced via `_coerce_bool`) |
 | `wheelchair_accessible` | Wheelchair-accessible facility | **Boolean** (collapsed CT/TN via `_coerce_bool`; NH from `nh_environment` token, absent -> None not False) |
