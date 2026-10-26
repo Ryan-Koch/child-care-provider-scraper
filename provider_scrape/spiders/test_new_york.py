@@ -72,7 +72,7 @@ class NewYorkSpiderTest(unittest.TestCase):
         self.assertEqual(item["school"], "21")
 
         # The raw counts are duplicated into NY-specific fields so they
-        # survive the common fields' bool coercion (pending story 35).
+        # survive the common fields' bool coercion (pending a common capacity_by_age field).
         self.assertEqual(item["ny_capacity_infant"], "16")
         self.assertEqual(item["ny_capacity_toddler"], "12")
         self.assertEqual(item["ny_capacity_preschool"], "35")

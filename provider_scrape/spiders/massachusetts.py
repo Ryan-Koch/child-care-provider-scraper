@@ -834,9 +834,11 @@ class MassachusettsSpider(scrapy.Spider):
 
         domains = []
         compliance_counts = Counter()
+        domain_counts = {}  # {domainName: Counter(status)}, first-seen order
         for domain in visit.get("visitDomainList") or []:
             compliance = domain.get("levelOfCompliance")
             compliance_counts[compliance or "Unknown"] += 1
+            domain_counts.setdefault(domain.get("domainName"), Counter())[compliance or "Unknown"] += 1
             if compliance in PASSING_DOMAIN_COMPLIANCE:
                 continue
             regulations = [
@@ -858,6 +860,8 @@ class MassachusettsSpider(scrapy.Spider):
             entry["ma_domains"] = domains
         if compliance_counts:
             entry["ma_domain_compliance_counts"] = dict(compliance_counts)
+        if domain_counts:
+            entry["ma_domain_counts"] = {name: dict(counts) for name, counts in domain_counts.items()}
         return entry
 
     @staticmethod

@@ -79,7 +79,7 @@ class NewYorkSpider(scrapy.Spider):
             # bug_05: preserve the raw per-age capacity counts in NY-specific
             # fields before the normalization pipeline coerces the common
             # infant/toddler/preschool/school fields above to bool (count > 0).
-            # Pending story 35 (capacity_by_age).
+            # Pending a common capacity_by_age field.
             item["ny_capacity_infant"] = row.get("Infant Capacity")
             item["ny_capacity_toddler"] = row.get("Toddler Capacity")
             item["ny_capacity_preschool"] = row.get("Preschool Capacity")

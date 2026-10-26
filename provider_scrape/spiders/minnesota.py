@@ -255,7 +255,8 @@ def _row_to_item(row):
     # the current license term's start. license_begin_date must hold the
     # latter to match every other state's semantics; the former moves to
     # mn_original_license_date. mn_last_renewed_date intentionally still
-    # duplicates the current-term value (pending story 38). license_begin_date
+    # duplicates the current-term value; it feeds the common last_renewed_date field only when it
+    # differs from mn_original_license_date. license_begin_date
     # is in normalization.DATE_FIELDS and gets ISO-normalized by the shared
     # pipeline automatically; the other two are state-specific fields the
     # pipeline does not touch, so they are normalized here directly via the

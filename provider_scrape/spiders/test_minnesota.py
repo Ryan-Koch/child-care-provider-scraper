@@ -559,7 +559,7 @@ def test_row_to_item_golden_path():
     # later by the shared pipeline (it's in normalization.DATE_FIELDS).
     # mn_original_license_date holds the facility's first-ever license date
     # ("Initial Effective Date") and mn_last_renewed_date still duplicates
-    # the current-term value (pending story 38) -- both are state-specific
+    # the current-term value (pending a common last_renewed_date field) -- both are state-specific
     # fields the pipeline doesn't touch, so _row_to_item normalizes them to
     # ISO directly.
     assert item["license_begin_date"] == "01/01/2026"

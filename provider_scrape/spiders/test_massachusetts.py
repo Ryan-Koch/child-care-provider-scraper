@@ -603,3 +603,38 @@ def test_massachusetts_status_mapping():
 )
 def test_massachusetts_facility_category_mapping(provider_type, category):
     assert norm.facility_category_from_type(provider_type) == category
+
+
+def test_parse_visit_emits_per_domain_status_counts():
+    visit = {
+        "id": "a04w",
+        "visitDomainList": [
+            _domain_row("Compliant"),
+            {**_domain_row("Non-Compliant"), "domainName": "Medication"},
+            _domain_row("Complete"),
+            {**_domain_row(None), "domainName": "Care of Children"},
+            {**_domain_row("Compliant"), "domainName": "Medication"},
+            _domain_row("Not Complete"),
+        ],
+    }
+    entry = MassachusettsSpider._parse_visit(visit)
+
+    assert entry["ma_domain_counts"] == {
+        "Administration": {"Compliant": 1, "Complete": 1, "Not Complete": 1},
+        "Medication": {"Non-Compliant": 1, "Compliant": 1},
+        "Care of Children": {"Unknown": 1},
+    }
+    assert list(entry["ma_domain_counts"]) == ["Administration", "Medication", "Care of Children"]
+    # Existing fields are unchanged.
+    assert entry["ma_domain_compliance_counts"] == {
+        "Compliant": 2,
+        "Non-Compliant": 1,
+        "Complete": 1,
+        "Unknown": 1,
+        "Not Complete": 1,
+    }
+    assert [d["level_of_compliance"] for d in entry["ma_domains"]] == ["Non-Compliant", None, "Not Complete"]
+
+
+def test_parse_visit_without_domain_rows_has_no_domain_counts():
+    assert "ma_domain_counts" not in MassachusettsSpider._parse_visit({"id": "a04v", "visitDomainList": []})

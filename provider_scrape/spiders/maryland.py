@@ -999,7 +999,8 @@ class MarylandSpider(scrapy.Spider):
             item["md_excels_level"] = self._get_span_text(response, "MainContent_txtEXCELSLevel")
 
         # Inspections
-        item["inspections"] = self._extract_inspections(response)
+        provider_label = f"{item.get('provider_name')} (license {item.get('license_number')})"
+        item["inspections"] = self._extract_inspections(response, provider_label)
 
         first_report_url = self._get_first_report_url(response)
 
@@ -1171,6 +1172,23 @@ class MarylandSpider(scrapy.Spider):
             item["address"] = precise_address
         yield item
 
+    @staticmethod
+    def _is_inspection_pager_row(row):
+        """True if a ``#MainContent_grdInspection`` row is the GridView pager.
+
+        The grid pages at 15 rows and renders its pager as an ordinary table row
+        (no ``dataPager`` class guaranteed), so detect it three ways: the
+        ``dataPager`` class, any ``__doPostBack(...'Page$N')`` link, or a row
+        whose non-empty cells are all bare page numbers.
+        """
+        classes = (row.attrib.get("class") or "").split()
+        if "dataPager" in classes:
+            return True
+        if row.xpath(".//a[contains(@href, 'Page$')]"):
+            return True
+        texts = [t.strip() for t in row.css("td ::text").getall() if t.strip()]
+        return bool(texts) and all(t.isdigit() for t in texts)
+
     def _get_first_report_url(self, response):
         """Get the URL of the first inspection report PDF from the detail page."""
         rows = response.css("#MainContent_grdInspection tr")
@@ -1178,16 +1196,27 @@ class MarylandSpider(scrapy.Spider):
             cols = row.css("td")
             if len(cols) >= 1:
                 link = cols[0].css("a::attr(href)").get()
-                if link:
+                # Skip the pager's javascript:__doPostBack(...) links.
+                if link and not link.strip().lower().startswith("javascript:"):
                     return response.urljoin(link)
         return None
 
-    def _extract_inspections(self, response):
-        """Extract inspection records from the detail page."""
+    def _extract_inspections(self, response, provider=None):
+        """Extract inspection records from the detail page (grid page 1 only).
+
+        The grid's own pager row is skipped. When it shows further pages the
+        older inspections are not scraped (bug_14); that is logged with
+        ``provider`` (name / license) so affected providers can be found.
+        """
         inspections = []
         rows = response.css("#MainContent_grdInspection tr")
+        has_more_pages = False
 
         for row in rows[1:]:
+            if self._is_inspection_pager_row(row):
+                has_more_pages = has_more_pages or bool(row.xpath(".//a[contains(@href, 'Page$')]"))
+                continue
+
             cols = row.css("td")
             if len(cols) < 7:
                 continue
@@ -1195,7 +1224,7 @@ class MarylandSpider(scrapy.Spider):
             insp = InspectionItem()
 
             report_link = cols[0].css("a::attr(href)").get()
-            if report_link:
+            if report_link and not report_link.strip().lower().startswith("javascript:"):
                 insp["report_url"] = response.urljoin(report_link)
 
             insp["date"] = cols[2].css("::text").get("").strip()
@@ -1212,6 +1241,11 @@ class MarylandSpider(scrapy.Spider):
             if insp.get("date") or insp.get("type"):
                 inspections.append(insp)
 
+        if has_more_pages:
+            self.logger.warning(
+                f"Inspection grid has more than one page for {provider or response.url}; "
+                f"only page 1 ({len(inspections)} rows) scraped, older inspections are missing (bug_14)."
+            )
         return inspections
 
     def _get_span_text(self, response, span_id):

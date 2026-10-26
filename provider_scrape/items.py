@@ -10,6 +10,28 @@ class InspectionItem(scrapy.Item):
     corrective_status = scrapy.Field()
     status_updated = scrapy.Field()
     report_url = scrapy.Field()
+    inspector = scrapy.Field()  # staff member who ran the visit, `First Last`
+    inspection_id = scrapy.Field()  # state's own key for the visit, opaque string
+    announced = scrapy.Field()  # True announced / False unannounced / None unknown
+    violation_found = scrapy.Field()  # True any noncompliance / False none / None unknown
+    violation_count = scrapy.Field()  # int, violations / deficiencies / findings on the visit; 0 kept
+    # list of {"domain": str, "compliant": int, "reviewed": int} per-domain checklist roll-ups (MA, NH)
+    compliance_domains = scrapy.Field()
+    items_compliant = scrapy.Field()  # int, numerator of the visit's compliant-over-reviewed ratio
+    items_reviewed = scrapy.Field()  # int, denominator; items (MA/RI/NH), areas (OK), regulations (KS)
+    regulation_cited = scrapy.Field()  # rule/code section cited on a one-citation-per-row inspection, as emitted
+    regulation_description = scrapy.Field()  # text/summary of the cited rule, verbatim (IN, WI, WV)
+    correction_date = scrapy.Field()  # ISO date the cited issue was corrected (AZ, IN, WV Achieved only)
+    licensing_period_start = scrapy.Field()  # ISO start of the license term stamped on the visit (HI, ME)
+    licensing_period_end = scrapy.Field()  # ISO end of that term; both unset when end < start
+    visit_reason = scrapy.Field()  # purpose of the visit, state's own label (MA, OK, KS); MA/OK fall back to type
+    # formal enforcement action: fine/warning/order/probation/suspension/revocation/denial (WI, KS, AZ, MS)
+    enforcement_type = scrapy.Field()
+    penalty_amount = scrapy.Field()  # float dollar amount of a fine (AZ; WI when `Forfeiture: $N`)
+    finding_text = scrapy.Field()  # inspector's narrative of what was found, verbatim (MD, IN, WI, AZ, OK, DE)
+    # list of {"regulation", "regulation_description", "finding_text", "category", "severity", "status",
+    # "corrected_date"} rows, one per violation; absent keys omitted (CT, DE, MA, NH, MO, WY, NC, SC, OK)
+    violations = scrapy.Field()
     va_shsi = scrapy.Field()
     va_complaint_related = scrapy.Field()
     va_violations = scrapy.Field()
@@ -197,6 +219,9 @@ class InspectionItem(scrapy.Item):
     # Every visitDomainList row counted by status, e.g.
     # {"Compliant": 40, "Non-Compliant": 2}; blank status -> "Unknown".
     ma_domain_compliance_counts = scrapy.Field()
+    # The same status tally split per domain, first-seen order:
+    # {"Administration": {"Compliant": 12, "Non-Compliant": 1}}
+    ma_domain_counts = scrapy.Field()
     ma_investigation_id = scrapy.Field()  # investigation `id`
     ma_investigator = scrapy.Field()  # investigator assigned
     ma_noncompliance_identified = scrapy.Field()  # bool
@@ -282,31 +307,77 @@ class InspectionItem(scrapy.Item):
 class ProviderItem(scrapy.Item):
     # This defines all the possible columns for your final CSV file.
     provider_name = scrapy.Field()
+    doing_business_as = scrapy.Field()  # trade name, free text
     license_number = scrapy.Field()
+    source_provider_id = scrapy.Field()  # state system's own record key (opaque string)
     license_holder = scrapy.Field()
+    license_holder_address = scrapy.Field()  # holder's own address, not the facility's
     provider_type = scrapy.Field()
     # Canonical cross-state facet derived from provider_type (normalization
     # pipeline). Additive: provider_type keeps its exact state value.
     facility_category = scrapy.Field()
+    licensed = scrapy.Field()  # bool: True licensed, False exempt / approved-only; see FIELD_DOCS
+    building_type = scrapy.Field()  # residence / non_residential / workplace / other; see FIELD_DOCS
+    profit_status = scrapy.Field()  # for_profit / nonprofit / public; see FIELD_DOCS
     status = scrapy.Field()
     status_date = scrapy.Field()
     address = scrapy.Field()
     latitude = scrapy.Field()
     longitude = scrapy.Field()
     phone = scrapy.Field()
+    phone_extension = scrapy.Field()  # digits only, string
     email = scrapy.Field()
     provider_website = scrapy.Field()
     administrator = scrapy.Field()
     capacity = scrapy.Field()
+    program_description = scrapy.Field()  # str: provider-written free text; see FIELD_DOCS
+    current_enrollment = scrapy.Field()  # int: children currently enrolled; see FIELD_DOCS
+    capacity_by_age = scrapy.Field()  # list of {age_group, capacity[, classrooms]}; state's own labels
+    license_conditions = scrapy.Field()  # list of restriction/condition strings, state's own text
+    license_history = (
+        scrapy.Field()
+    )  # list of {license_type, effective_date, expiration_date, license_id, status, capacity}; see FIELD_DOCS
     hours = scrapy.Field()
+    days_of_operation = scrapy.Field()  # list of full day names, Monday -> Sunday
+    operating_months = scrapy.Field()  # list of 3-letter months (Jan..Dec), calendar order
+    year_round = scrapy.Field()  # bool: True = operates all 12 months
+    serves_special_needs = scrapy.Field()  # bool: True = accommodates special needs
+    special_needs_types = scrapy.Field()  # list of canonical categories (fixed list)
+    care_schedules = scrapy.Field()  # list of canonical schedule tokens (fixed list)
+    rates = scrapy.Field()  # list of {age_group, unit, period, amount[, schedule_type|care_type]}
+    registration_fee = scrapy.Field()  # float: one-time enrollment fee in dollars, 0.0 = no fee
+    discounts = scrapy.Field()  # list of canonical discount tokens (fixed list); None = none offered
+    environment_features = scrapy.Field()  # list of canonical amenity tokens (fixed list); None = none found
+    has_pets = scrapy.Field()  # bool: True = animals present, False = explicitly none; None = unknown
+    pet_types = scrapy.Field()  # list of dogs/cats/other; None = types unknown
+    pets_excluded = scrapy.Field()  # list of dogs/cats the source says are absent; None = none stated
+    food_program = scrapy.Field()  # bool: True = participates in USDA CACFP
+    faith_based = scrapy.Field()  # bool: faith-based operator or religious programming; see FIELD_DOCS
+    accepts_diapered_children = scrapy.Field()  # bool: True = takes children not toilet-trained; see FIELD_DOCS
+    publicly_listed = scrapy.Field()  # bool: True = state public portal shows this provider; see FIELD_DOCS
+    state_prek = scrapy.Field()  # bool: True = participates in a publicly funded state pre-K
+    state_prek_program = scrapy.Field()  # program brand, set only when state_prek is True
+    nontraditional_hours = scrapy.Field()  # bool roll-up: True if night/evening/weekend care offered
+    night_care = scrapy.Field()  # bool: overnight / third-shift care
+    evening_care = scrapy.Field()  # bool: evening / second-shift care
+    weekend_care = scrapy.Field()  # bool: Saturday/Sunday care
+    weekly_schedule = scrapy.Field()  # list of {day, open, close} rows, 24h HH:MM
     ages_served = scrapy.Field()
+    age_min_months = scrapy.Field()  # int: youngest accepted age in months (0 is valid)
+    age_max_months = scrapy.Field()  # int: oldest accepted age in months; None if absent/implausible
     infant = scrapy.Field()
     toddler = scrapy.Field()
     preschool = scrapy.Field()
     school = scrapy.Field()
     county = scrapy.Field()
     scholarships_accepted = scrapy.Field()
+    temporarily_closed = scrapy.Field()  # bool: licensed but not currently operating; see FIELD_DOCS
+    complaint_count = scrapy.Field()  # int: all complaints the state lists, 0 kept; see FIELD_DOCS
+    serious_injury_count = scrapy.Field()  # int: reported serious injuries, 0 kept; see FIELD_DOCS
+    fatality_count = scrapy.Field()  # int: reported deaths, 0 kept; see FIELD_DOCS
     license_begin_date = scrapy.Field()
+    original_license_date = scrapy.Field()  # first-ever license date (ISO); see FIELD_DOCS
+    last_renewed_date = scrapy.Field()  # current-term start, only once renewed (ISO); see FIELD_DOCS
     license_expiration = scrapy.Field()
     deficiencies = scrapy.Field()
     languages = scrapy.Field()
@@ -321,8 +392,28 @@ class ProviderItem(scrapy.Item):
     meals = scrapy.Field()
     accepting_new_children = scrapy.Field()
     transportation = scrapy.Field()
+    enforcement_action = scrapy.Field()  # str: state's label of the current action; unset when none; see FIELD_DOCS
     head_start = scrapy.Field()  # normalized to a boolean
+    early_head_start = scrapy.Field()  # normalized to a boolean; distinct from head_start
+    wheelchair_accessible = scrapy.Field()  # True / False / None
+    address_suppressed = scrapy.Field()  # True = state deliberately withheld the address
+    phone_suppressed = scrapy.Field()  # True = state deliberately withheld the phone
     curriculum = scrapy.Field()
+    # State staff member assigned to the license, plus contact info
+    licensing_specialist = scrapy.Field()
+    licensing_specialist_phone = scrapy.Field()
+    licensing_specialist_email = scrapy.Field()
+    region = scrapy.Field()  # str: state's own region label, no cross-state vocabulary; see FIELD_DOCS
+    # Open slots per age band (int; 0 = full, None = not reported). Bands are the
+    # state's own definitions; unrelated to the infant/toddler/... age-served flags.
+    vacancies_infant = scrapy.Field()
+    vacancies_toddler = scrapy.Field()
+    vacancies_preschool = scrapy.Field()
+    vacancies_school_age = scrapy.Field()
+    # Total open slots the provider reports (int; 0 = full, None = not reported).
+    total_vacancies = scrapy.Field()
+    # Date the provider last updated its vacancy counts (ISO YYYY-MM-DD).
+    vacancies_updated_date = scrapy.Field()
 
     # Best-effort address components parsed from `address` by the normalization
     # pipeline (additive; `address` is preserved). Left None when ambiguous.
@@ -428,7 +519,7 @@ class ProviderItem(scrapy.Item):
     ny_capacity_description = scrapy.Field()
     # bug_05: raw per-age capacity counts, preserved before the normalization
     # pipeline coerces the common infant/toddler/preschool/school fields to
-    # bool (count > 0). Pending story 35 (capacity_by_age).
+    # bool (count > 0). Pending a common capacity_by_age field.
     ny_capacity_infant = scrapy.Field()
     ny_capacity_toddler = scrapy.Field()
     ny_capacity_preschool = scrapy.Field()
@@ -482,17 +573,17 @@ class ProviderItem(scrapy.Item):
     # facility's first-ever license date (the CSV's "Initial Effective
     # Date" -- the site's own naming is reversed from what cross-state
     # consumers expect). mn_last_renewed_date intentionally still carries
-    # the same "Current Effective Date" value as license_begin_date --
-    # story 38 will collapse that duplication into a common
-    # last_renewed_date field. Both are normalized to ISO here by the
+    # the same "Current Effective Date" value as license_begin_date; it
+    # feeds the common last_renewed_date field only when it differs from
+    # (is later than) mn_original_license_date.
+    # Both are normalized to ISO here by the
     # spider (normalize_date), since neither is in normalization.DATE_FIELDS
     # (that list is common-fields-only).
     mn_last_renewed_date = scrapy.Field()
     # Large clusters at 2014-07-01 (2,519 records) and 2014-01-01 (963) are
     # real: 245D Home and Community Based Services licenses whose *license
     # category* began on those dates, not a data-migration artifact -- do
-    # not null them out. Pending story 37 (collapse into a common
-    # original_license_date field).
+    # not null them out. Feeds the common original_license_date field.
     mn_original_license_date = scrapy.Field()
     mn_licensed_to_provide = scrapy.Field()
     mn_restrictions = scrapy.Field()
@@ -621,15 +712,15 @@ class ProviderItem(scrapy.Item):
     # bug_13: license_begin_date (current license term's start) is fed from
     # currentLicenseStartDate -- confirmed directly against the independent
     # licenseExpirationDate field (~1 year gap for >97% of records).
-    # ri_most_recently_renewed intentionally still carries the same value --
-    # story 38 will collapse that duplication into a common
-    # last_renewed_date field. Normalized to ISO here by the spider
+    # ri_most_recently_renewed intentionally still carries the same value;
+    # it feeds the common last_renewed_date field only when it differs from
+    # (is later than) ri_original_license_date.
+    # Normalized to ISO here by the spider
     # (normalize_date), since it's not in normalization.DATE_FIELDS (that
     # list is common-fields-only).
     ri_most_recently_renewed = scrapy.Field()
-    # The original/first-ever license date (originalLicenseStartDate),
-    # pending story 37 (collapse into a common original_license_date
-    # field). A sharp 1997 spike (16.8% of hf_sample) is a suspected
+    # The original/first-ever license date (originalLicenseStartDate); feeds
+    # the common original_license_date field. A sharp 1997 spike (16.8% of hf_sample) is a suspected
     # registry system-migration/backfill artifact -- kept as-is, not
     # nulled, per the bug_11 (VT) precedent: a migration artifact can't be
     # told apart from a genuine 1997 date on a per-record basis, and
@@ -847,7 +938,7 @@ class ProviderItem(scrapy.Item):
     # field-mapping playbook. The `infant`/`toddler`/`preschool`/`school` common
     # fields carry the per-age *capacities* (bug_05: coerced to bool-or-None,
     # `count > 0`, by the normalization pipeline -- the raw count is preserved
-    # here as `vt_{age}_capacity`, pending story 35/capacity_by_age); the
+    # here as `vt_{age}_capacity`, pending a common capacity_by_age field); the
     # per-age *vacancies* (the registry's frequently-updated, VT-unique
     # content) live in the vt_*_vacancies fields.
     #
@@ -857,7 +948,8 @@ class ProviderItem(scrapy.Item):
     # represents a "current term start". The common `license_begin_date` is
     # therefore left None for every VT record, and the page's one date moves
     # here instead (normalized to ISO by the spider via normalize_date,
-    # since this field is not in normalization.DATE_FIELDS). About 22% of
+    # since this field is not in normalization.DATE_FIELDS); it feeds the
+    # common original_license_date field. About 22% of
     # values cluster in 2005 (half on the 1st of a month, including
     # decades-old Head Start programs) -- suspected system-cutover dates
     # from a VT registry migration that may understate provider age, not
@@ -881,7 +973,7 @@ class ProviderItem(scrapy.Item):
     vt_pets = scrapy.Field()
     vt_vacancy_as_of = scrapy.Field()  # "Current as of" date for vacancies
     vt_current_vacancy = scrapy.Field()  # total current vacancy count
-    # bug_05: raw per-age capacity counts (see comment above). Pending story 35.
+    # bug_05: raw per-age capacity counts (see comment above). Pending capacity_by_age.
     vt_infant_capacity = scrapy.Field()
     vt_toddler_capacity = scrapy.Field()
     vt_preschool_capacity = scrapy.Field()
@@ -1104,13 +1196,14 @@ class ProviderItem(scrapy.Item):
     # Last_Issue_Date__c / lastIssueDate -- MA's ~3-year renewal cycle
     # reissues this date on every renewal (confirmed against the provider's
     # own "Renewal"-typed visit dates). ma_last_issue_date intentionally
-    # still carries the same value -- story 38 will collapse that
-    # duplication into a common last_renewed_date field. Normalized to ISO
+    # still carries the same value; it feeds the common last_renewed_date
+    # field only when it differs from (is later than)
+    # ma_original_license_date. Normalized to ISO
     # here by the spider (normalize_date), since it's not in
     # normalization.DATE_FIELDS (that list is common-fields-only).
     ma_last_issue_date = scrapy.Field()
     # The original/first-ever issuance (First_Issue_Date__c / firstIssueDate),
-    # pending story 37 (collapse into a common original_license_date field).
+    # feeds the common original_license_date field.
     ma_original_license_date = scrapy.Field()
     ma_temporary_status = scrapy.Field()  # Temporary_Status__c, e.g. "Reopened"
     ma_capacity_by_age = scrapy.Field()  # dict of the non-zero per-age-group counts
