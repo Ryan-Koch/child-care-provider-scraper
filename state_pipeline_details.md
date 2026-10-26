@@ -207,11 +207,16 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `delaware` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
 | `hawaii` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
 | `kansas` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
+| `kansas` | inspection | `ks_regulations_reviewed` | `items_reviewed` | Copy `ks_regulations_reviewed` to items_reviewed only; items_compliant is never derived from findings. |
 | `massachusetts` | inspection | `ma_domain_counts` | `compliance_domains` | Roll `ma_domain_counts` ({domain: {status: n}}) up to compliant (Compliant + Complete) / reviewed per domain. |
+| `massachusetts` | inspection | `ma_level_of_compliance` | `items_compliant`, `items_reviewed` | Split the visit-level `x / y` compliance ratio into items_compliant / items_reviewed; bad ratio -> unset. |
 | `nevada` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
 | `new_hampshire` | inspection | `nh_domains` | `compliance_domains` | Split each `nh_domains` `level_of_compliance` ("19 / 20") into compliant / reviewed ints per domain. |
+| `new_hampshire` | inspection | `nh_level_of_compliance` | `items_compliant`, `items_reviewed` | Split the visit-level `x / y` compliance ratio into items_compliant / items_reviewed; bad ratio -> unset. |
 | `north_carolina` | inspection | `type` | `announced` | Read announced (True) / unannounced (False) from the `type` text; neither word -> unset. |
+| `oklahoma` | inspection | `ok_compliance_count`, `ok_compliance_total` | `items_compliant`, `items_reviewed` | Copy `ok_compliance_count` / `ok_compliance_total` (areas in compliance / reviewed); invalid pair -> unset. |
 | `rhode_island` | inspection | `type` | `announced` | Read announced (True) / unannounced (False) from the `type` text; neither word -> unset. |
+| `rhode_island` | inspection | `ri_compliance` | `items_compliant`, `items_reviewed` | Split the visit-level `x / y` compliance ratio into items_compliant / items_reviewed; bad ratio -> unset. |
 | `south_carolina` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
 | `wisconsin` | inspection | `original_status` | `violation_found` | Read violation_found from the `original_status` text via an explicit table; unmatched -> unset. |
 | `alabama` | provider | `al_nighttime_hours` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | `al_nighttime_hours` any time range -> `night_care` True; `N/A - N/A` -> False; blank -> unset. |

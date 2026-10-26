@@ -2313,6 +2313,103 @@ def test_compliance_domains_not_derived_for_other_states():
 
 
 # --------------------------------------------------------------------------- #
+# items_compliant / items_reviewed (MA, RI, NH, OK, KS)
+# --------------------------------------------------------------------------- #
+ITEMS_RATIO_SOURCES = [
+    ("massachusetts", "ma_level_of_compliance", "17/17", (17, 17)),
+    ("rhode_island", "ri_compliance", "87/87", (87, 87)),
+    ("new_hampshire", "nh_level_of_compliance", "221 / 222", (221, 222)),
+]
+
+
+@pytest.mark.parametrize(("state", "source", "raw", "expected"), ITEMS_RATIO_SOURCES)
+def test_items_ratio_split(state, source, raw, expected):
+    insp = norm.normalize_inspection({source: raw}, state)
+    assert (insp["items_compliant"], insp["items_reviewed"]) == expected
+    assert insp[source] == raw  # source kept
+
+
+@pytest.mark.parametrize(("state", "source", "_raw", "_expected"), ITEMS_RATIO_SOURCES)
+@pytest.mark.parametrize("bad", ["N/A", "5 / 3", "-1 / 2", "1/2/3", "", None, 17])
+def test_items_ratio_bad_values_leave_both_unset(state, source, _raw, _expected, bad):
+    insp = norm.normalize_inspection({source: bad}, state)
+    assert "items_compliant" not in insp
+    assert "items_reviewed" not in insp
+
+
+def test_items_ratio_zero_over_zero_kept():
+    insp = norm.normalize_inspection({"ma_level_of_compliance": "0/0"}, "massachusetts")
+    assert (insp["items_compliant"], insp["items_reviewed"]) == (0, 0)
+
+
+def test_items_ratio_bad_value_logged(caplog):
+    with caplog.at_level(logging.WARNING):
+        norm.normalize_inspection({"ri_compliance": "5 / 3"}, "rhode_island")
+    assert "ri_compliance" in caplog.text
+
+
+def test_items_ratio_does_not_overwrite_existing():
+    raw = {"ma_level_of_compliance": "17/17", "items_compliant": 1, "items_reviewed": 2}
+    insp = norm.normalize_inspection(raw, "massachusetts")
+    assert (insp["items_compliant"], insp["items_reviewed"]) == (1, 2)
+
+
+def test_items_oklahoma_copy():
+    raw = {"ok_compliance_count": 9, "ok_compliance_total": 10}
+    insp = norm.normalize_inspection(raw, "oklahoma")
+    assert (insp["items_compliant"], insp["items_reviewed"]) == (9, 10)
+    assert insp["ok_compliance_count"] == 9
+    assert insp["ok_compliance_total"] == 10
+
+
+def test_items_oklahoma_zero_kept():
+    insp = norm.normalize_inspection({"ok_compliance_count": 0, "ok_compliance_total": 0}, "oklahoma")
+    assert (insp["items_compliant"], insp["items_reviewed"]) == (0, 0)
+
+
+@pytest.mark.parametrize(
+    ("count", "total"),
+    [(11, 10), (-1, 10), (3, -1), ("9", 10), (9, "10"), (True, 10), (9.0, 10), (None, 10), (9, None)],
+)
+def test_items_oklahoma_invalid_pair_unset(count, total):
+    insp = norm.normalize_inspection({"ok_compliance_count": count, "ok_compliance_total": total}, "oklahoma")
+    assert "items_compliant" not in insp
+    assert "items_reviewed" not in insp
+
+
+def test_items_kansas_reviewed_only():
+    raw = {"ks_regulations_reviewed": 568, "ks_findings_count": 3}
+    insp = norm.normalize_inspection(raw, "kansas")
+    assert insp["items_reviewed"] == 568
+    assert "items_compliant" not in insp
+    assert insp["ks_regulations_reviewed"] == 568  # source kept
+
+
+def test_items_kansas_findings_exceeding_reviewed_never_derives_compliant():
+    insp = norm.normalize_inspection({"ks_regulations_reviewed": 1, "ks_findings_count": 2}, "kansas")
+    assert insp["items_reviewed"] == 1
+    assert "items_compliant" not in insp
+
+
+@pytest.mark.parametrize("bad", [-1, "568", True, 1.5, None])
+def test_items_kansas_invalid_unset(bad):
+    insp = norm.normalize_inspection({"ks_regulations_reviewed": bad}, "kansas")
+    assert "items_reviewed" not in insp
+
+
+def test_items_kansas_does_not_overwrite_existing():
+    insp = norm.normalize_inspection({"ks_regulations_reviewed": 5, "items_reviewed": 9}, "kansas")
+    assert insp["items_reviewed"] == 9
+
+
+def test_items_not_derived_for_other_states():
+    raw = {"ma_level_of_compliance": "1/1", "ok_compliance_count": 1, "ok_compliance_total": 1}
+    insp = norm.normalize_inspection(raw, "ohio")
+    assert "items_compliant" not in insp
+    assert "items_reviewed" not in insp
+
+
+# --------------------------------------------------------------------------- #
 # year_round / operating_months
 # --------------------------------------------------------------------------- #
 ALL_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]

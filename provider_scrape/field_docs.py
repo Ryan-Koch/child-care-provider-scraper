@@ -386,6 +386,20 @@ FIELD_DOCS = {
     "known status (Non-Compliant and Not Complete count as reviewed only; blank statuses are excluded). Rows are in "
     "source order (NH) or first-seen order (MA). Unset when the visit has no domain data. MA values appear only "
     "after an MA re-scrape that emits `ma_domain_counts`. Finding detail lives in the violation fields.",
+    "items_compliant": "Inspection field: numerator of the visit's compliant-over-reviewed ratio, a "
+    "non-negative int. Split from MA `ma_level_of_compliance` (`17/17`), RI `ri_compliance` (`87/87`) and NH "
+    "`nh_level_of_compliance` (`221 / 222`; numerator verified as compliant), or copied from OK "
+    "`ok_compliance_count`. Units differ: checklist items for MA, RI and NH, but areas for OK, so counts are "
+    "not comparable across states. Kansas never sets it: its findings are not one-per-regulation. Unset (with "
+    "`items_reviewed`) when the ratio does not parse, the numerator exceeds the denominator, or a value is "
+    "negative or not an int. Source fields are kept.",
+    "items_reviewed": "Inspection field: denominator of the visit's compliant-over-reviewed ratio, a "
+    "non-negative int. Split from MA `ma_level_of_compliance`, RI `ri_compliance` and NH "
+    "`nh_level_of_compliance`, or copied from OK `ok_compliance_total` and KS `ks_regulations_reviewed`. Units "
+    "differ: checklist items for MA, RI and NH, areas for OK, regulations for KS, so counts are not comparable "
+    "across states. KS fills `items_reviewed` only (no `items_compliant`). For the ratio states it is unset "
+    "together with `items_compliant` when the ratio does not parse, the numerator exceeds the denominator, or "
+    "a value is negative or not an int. Source fields are kept.",
     "licensing_specialist_phone": "Phone number of the assigned licensing specialist, as emitted by the state "
     "(OK, SC, and VA's split-out number); empty when not published.",
     "licensing_specialist_email": "Lower-cased email of the assigned licensing specialist (published by ME).",

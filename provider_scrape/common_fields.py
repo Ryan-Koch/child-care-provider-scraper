@@ -802,6 +802,63 @@ def ma_compliance_domains(record):
 
 
 # --------------------------------------------------------------------------- #
+# Visit-level items compliant / items reviewed (MA, RI, NH, OK, KS)
+# --------------------------------------------------------------------------- #
+# Units differ by state: checklist items for MA / RI / NH, areas for OK, and
+# regulations for KS. A visit whose figures are unusable sets neither field.
+def _is_count(value):
+    """True for a non-negative int (bool excluded)."""
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+
+def _items_pair(compliant, reviewed):
+    """Return the ``items_compliant`` / ``items_reviewed`` dict, or ``{}`` unless the pair is valid."""
+    if not (_is_count(compliant) and _is_count(reviewed)) or compliant > reviewed:
+        return {}
+    return {"items_compliant": compliant, "items_reviewed": reviewed}
+
+
+def _register_items_ratio(state, source):
+    @register_adapter(state, level=INSPECTION_LEVEL, sources=[source], fills=["items_compliant", "items_reviewed"])
+    def items_from_ratio(record):
+        """Split the visit-level `x / y` compliance ratio into items_compliant / items_reviewed; bad ratio -> unset."""
+        ratio = parse_ratio(record.get(source))
+        if ratio is None:
+            if is_present(record.get(source)):
+                logger.warning(
+                    "%s: unparseable %s %r; items_compliant/items_reviewed unset", state, source, record.get(source)
+                )
+            return {}
+        return _items_pair(*ratio)
+
+    items_from_ratio.__name__ = f"{state}_items_from_ratio"
+    return items_from_ratio
+
+
+_register_items_ratio("massachusetts", "ma_level_of_compliance")
+_register_items_ratio("rhode_island", "ri_compliance")
+_register_items_ratio("new_hampshire", "nh_level_of_compliance")
+
+
+@register_adapter(
+    "oklahoma",
+    level=INSPECTION_LEVEL,
+    sources=["ok_compliance_count", "ok_compliance_total"],
+    fills=["items_compliant", "items_reviewed"],
+)
+def oklahoma_items(record):
+    """Copy `ok_compliance_count` / `ok_compliance_total` (areas in compliance / reviewed); invalid pair -> unset."""
+    return _items_pair(record.get("ok_compliance_count"), record.get("ok_compliance_total"))
+
+
+@register_adapter("kansas", level=INSPECTION_LEVEL, sources=["ks_regulations_reviewed"], fills=["items_reviewed"])
+def kansas_items_reviewed(record):
+    """Copy `ks_regulations_reviewed` to items_reviewed only; items_compliant is never derived from findings."""
+    reviewed = record.get("ks_regulations_reviewed")
+    return {"items_reviewed": reviewed} if _is_count(reviewed) else {}
+
+
+# --------------------------------------------------------------------------- #
 # Vacancies by age band (IA, ND, DC)
 # --------------------------------------------------------------------------- #
 # Each state labels its age bands differently (and defines them differently:
