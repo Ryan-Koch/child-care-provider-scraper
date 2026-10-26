@@ -934,6 +934,36 @@ _register_licensing_period("maine", "me_licensed_from", "me_licensed_to")
 
 
 # --------------------------------------------------------------------------- #
+# Visit reason (MA, OK; KS is a plain collapse entry on `ks_survey_reason`)
+# --------------------------------------------------------------------------- #
+# The state's own purpose-of-visit label, copied as emitted after a whitespace
+# trim (no canonical vocabulary). MA and OK fall back to `type` when the reason is
+# unset: their substantiated-complaint / investigation rows carry the purpose only
+# in `type` (`Investigation`, `Complaint`). The fallback is state-scoped on purpose;
+# in most other states `type` is something else, so a plain collapse entry on
+# `type` would be wrong. KS has no fallback (`Administrative Order` stays unset).
+def _visit_reason_text(value):
+    """Trimmed string, or ``None`` for blanks, sentinels and non-strings."""
+    cleaned = none_if_sentinel(value)
+    return cleaned if isinstance(cleaned, str) and cleaned else None
+
+
+def _register_visit_reason(state, reason_source):
+    @register_adapter(state, level=INSPECTION_LEVEL, sources=[reason_source, "type"], fills=["visit_reason"])
+    def visit_reason(record):
+        """Copy the state's visit-reason field; when unset fall back to `type`."""
+        reason = _visit_reason_text(record.get(reason_source)) or _visit_reason_text(record.get("type"))
+        return {"visit_reason": reason} if reason else {}
+
+    visit_reason.__name__ = f"{state}_visit_reason"
+    return visit_reason
+
+
+_register_visit_reason("massachusetts", "ma_visit_reason")
+_register_visit_reason("oklahoma", "ok_visit_purpose")
+
+
+# --------------------------------------------------------------------------- #
 # Vacancies by age band (IA, ND, DC)
 # --------------------------------------------------------------------------- #
 # Each state labels its age bands differently (and defines them differently:

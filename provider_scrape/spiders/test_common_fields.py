@@ -5244,3 +5244,70 @@ def test_licensing_period_source_fields_kept(state):
 def test_licensing_period_not_applied_to_other_states():
     insp = norm.normalize_inspection(_period("maine", "09/09/2024", "09/08/2026"), "ohio")
     assert "licensing_period_start" not in insp
+
+
+# --------------------------------------------------------------------------- #
+# visit_reason (MA, OK, KS)
+# --------------------------------------------------------------------------- #
+_VISIT_REASON_SOURCES = [
+    ("massachusetts", "ma_visit_reason"),
+    ("oklahoma", "ok_visit_purpose"),
+    ("kansas", "ks_survey_reason"),
+]
+
+
+@pytest.mark.parametrize(("state", "source"), _VISIT_REASON_SOURCES)
+def test_visit_reason_copied_trimmed(state, source):
+    insp = norm.normalize_inspection({source: "  Renewal - Full Review ", "type": "Monitoring Visit"}, state)
+    assert insp["visit_reason"] == "Renewal - Full Review"
+    assert insp[source] == "Renewal - Full Review"  # source kept (whitespace-cleaned)
+    assert insp["type"] == "Monitoring Visit"  # type unchanged
+
+
+@pytest.mark.parametrize(
+    ("state", "type_value"),
+    [("massachusetts", "Investigation"), ("oklahoma", "Complaint")],
+)
+def test_visit_reason_falls_back_to_type_for_ma_ok(state, type_value):
+    insp = norm.normalize_inspection({"type": type_value}, state)
+    assert insp["visit_reason"] == type_value
+    assert insp["type"] == type_value
+
+
+@pytest.mark.parametrize(("state", "source"), _VISIT_REASON_SOURCES[:2])
+@pytest.mark.parametrize("empty", [None, "", "   ", "N/A"])
+def test_visit_reason_blank_reason_falls_back_to_type(state, source, empty):
+    insp = norm.normalize_inspection({source: empty, "type": "Complaint"}, state)
+    assert insp["visit_reason"] == "Complaint"
+
+
+@pytest.mark.parametrize(("state", "source"), _VISIT_REASON_SOURCES)
+def test_visit_reason_prefers_reason_over_type(state, source):
+    insp = norm.normalize_inspection({source: "Periodic", "type": "Complaint"}, state)
+    assert insp["visit_reason"] == "Periodic"
+
+
+def test_visit_reason_kansas_has_no_type_fallback():
+    insp = norm.normalize_inspection({"type": "Administrative Order"}, "kansas")
+    assert "visit_reason" not in insp
+    insp = norm.normalize_inspection({"ks_survey_reason": "", "type": "Complaint Survey"}, "kansas")
+    assert "visit_reason" not in insp
+
+
+@pytest.mark.parametrize("state", ["ohio", "virginia", "texas"])
+def test_visit_reason_type_fallback_never_fires_for_other_states(state):
+    insp = norm.normalize_inspection({"type": "Complaint"}, state)
+    assert "visit_reason" not in insp
+
+
+@pytest.mark.parametrize("empty", [None, "", "   ", "N/A"])
+@pytest.mark.parametrize(("state", "source"), _VISIT_REASON_SOURCES)
+def test_visit_reason_sentinels_and_blanks_unset(state, source, empty):
+    insp = norm.normalize_inspection({source: empty, "type": empty}, state)
+    assert not insp.get("visit_reason")
+
+
+@pytest.mark.parametrize(("state", "source"), _VISIT_REASON_SOURCES)
+def test_visit_reason_does_not_overwrite_existing(state, source):
+    insp = norm.normalize_inspection({source: "Periodic", "type": "Complaint", "visit_reason": "Preset"}, state)
+    assert insp["visit_reason"] == "Preset"

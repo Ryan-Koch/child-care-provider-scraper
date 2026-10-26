@@ -400,6 +400,15 @@ FIELD_DOCS = {
     "rarely, follow the end). The period is copied as published. When both dates parse and end is before start "
     "(about 4 ME rows), both `licensing_period_start` and `licensing_period_end` are unset. A date that cannot "
     "be parsed is kept as emitted (and logged). Source fields are kept.",
+    "visit_reason": "Inspection field: the purpose of the visit in the state's own words, trimmed and otherwise "
+    "as emitted. MA copies `ma_visit_reason` (`Monitoring`, `Renewal - Full Review`), OK copies "
+    "`ok_visit_purpose` (`Periodic`, `Permit`) and KS copies `ks_survey_reason` (`Annual Survey`, `To investigate "
+    "a complaint`). MA and OK fall back to `type` when their reason is unset: MA investigation rows carry "
+    "`type` = `Investigation` and OK substantiated-complaint rows carry `type` = `Complaint`, with no reason. KS "
+    "has no fallback, so its `Administrative Order` rows stay unset. The fallback never applies to other states. "
+    "Labels are state-specific and not a canonical vocabulary, so values cannot be compared across states "
+    "without mapping them. `type` is unchanged. Blank and placeholder values (`N/A`) count as unset. Source "
+    "fields are kept.",
     "compliance_domains": "Inspection field (MA and NH, which share a licensing platform): per-visit list of "
     'per-domain checklist roll-ups, `[{"domain": str, "compliant": int, "reviewed": int}]`, counts only. '
     "`compliant` / `reviewed` are checklist items in that domain, so any finding means `compliant < reviewed`. "

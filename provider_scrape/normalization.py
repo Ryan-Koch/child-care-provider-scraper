@@ -1541,6 +1541,13 @@ INSPECTION_FIELD_COLLAPSE_MAP = {
         ("az_date_resolved", to_iso_date),
         ("in_correction_date", to_iso_date),
     ],
+    # Purpose of the visit in the state's own words, trimmed, no canonical
+    # vocabulary. KS copies ks_survey_reason only (no `type` fallback). MA and OK
+    # are inspection-level adapters in common_fields.py because they fall back to
+    # `type`, which must stay state-scoped.
+    "visit_reason": [
+        ("ks_survey_reason", none_if_sentinel),
+    ],
 }
 
 

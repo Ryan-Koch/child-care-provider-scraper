@@ -23,6 +23,7 @@ class InspectionItem(scrapy.Item):
     correction_date = scrapy.Field()  # ISO date the cited issue was corrected (AZ, IN, WV Achieved only)
     licensing_period_start = scrapy.Field()  # ISO start of the license term stamped on the visit (HI, ME)
     licensing_period_end = scrapy.Field()  # ISO end of that term; both unset when end < start
+    visit_reason = scrapy.Field()  # purpose of the visit, state's own label (MA, OK, KS); MA/OK fall back to type
     va_shsi = scrapy.Field()
     va_complaint_related = scrapy.Field()
     va_violations = scrapy.Field()
