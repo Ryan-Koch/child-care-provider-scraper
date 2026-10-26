@@ -351,6 +351,7 @@ class ProviderItem(scrapy.Item):
     food_program = scrapy.Field()  # bool: True = participates in USDA CACFP
     faith_based = scrapy.Field()  # bool: faith-based operator or religious programming; see FIELD_DOCS
     accepts_diapered_children = scrapy.Field()  # bool: True = takes children not toilet-trained; see FIELD_DOCS
+    publicly_listed = scrapy.Field()  # bool: True = state public portal shows this provider; see FIELD_DOCS
     state_prek = scrapy.Field()  # bool: True = participates in a publicly funded state pre-K
     state_prek_program = scrapy.Field()  # program brand, set only when state_prek is True
     nontraditional_hours = scrapy.Field()  # bool roll-up: True if night/evening/weekend care offered

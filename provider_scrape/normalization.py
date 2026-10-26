@@ -1264,6 +1264,13 @@ FIELD_COLLAPSE_MAP = {
         ("nm_potty_training", nm_accepts_diapered),
         ("hi_diapered_children_accepted", to_bool),
     ],
+    # Source-system visibility flag: bool copied as-is (False is real). DE leaves
+    # `de_portal_listed` unset when the advisory portal fetch failed, so None stays unset. IA
+    # `ia_referral_listed` is referral-network membership, not portal visibility, so it is excluded.
+    "publicly_listed": [
+        ("ct_searchable", to_bool),
+        ("de_portal_listed", to_bool),
+    ],
     "license_type": [
         "va_license_type",
         "mt_license_type",

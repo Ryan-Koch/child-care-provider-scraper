@@ -5983,3 +5983,41 @@ def test_region_blank_and_sentinel_stay_unset(state, source, _expected, blank):
 def test_region_never_overwrites_existing_value():
     value, _ = _region("iowa", ia_region="Region 4", region="Existing")
     assert value == "Existing"
+
+
+# --------------------------------------------------------------------------- #
+# publicly_listed
+# --------------------------------------------------------------------------- #
+def _listed(state, **fields):
+    item = norm.normalize_item(dict(fields), state)
+    return item.get("publicly_listed"), item
+
+
+@pytest.mark.parametrize(
+    ("state", "field"),
+    [("connecticut", "ct_searchable"), ("delaware", "de_portal_listed")],
+)
+@pytest.mark.parametrize(("raw", "expected"), [(True, True), (False, False)])
+def test_publicly_listed_copies_bool(state, field, raw, expected):
+    value, item = _listed(state, **{field: raw})
+    assert value is expected  # False is a real answer
+    assert item[field] is raw  # source field kept
+
+
+def test_publicly_listed_de_none_is_unset():
+    value, _ = _listed("delaware", de_portal_listed=None)
+    assert value is None
+
+
+@pytest.mark.parametrize("raw", [True, False, None])
+def test_publicly_listed_ia_referral_never_maps(raw):
+    value, item = _listed("iowa", ia_referral_listed=raw)
+    assert value is None
+    assert item["ia_referral_listed"] is raw
+
+
+def test_publicly_listed_never_overwrites_existing_value():
+    value, _ = _listed("connecticut", ct_searchable=True, publicly_listed=False)
+    assert value is False
+    value, _ = _listed("delaware", de_portal_listed=True, publicly_listed=False)
+    assert value is False

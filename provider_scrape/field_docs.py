@@ -129,6 +129,11 @@ FIELD_DOCS = {
     "`hi_diapered_children_accepted` as-is, so False is a real answer. Blank, missing or unrecognised values "
     "leave it unset, which means unknown. NC `Provides Diapers and Wipes` is not mapped: supplying diapers is "
     "not acceptance.",
+    "publicly_listed": "Whether the state's own public search portal shows this provider (bool; True = shown, "
+    "False = hidden there). A source-system visibility flag, not a provider attribute. CT copies "
+    "`ct_searchable` (False = hidden from the state's search). DE copies `de_portal_listed`, which is unset "
+    "when the advisory portal fetch failed and is nearly always True today. IA `ia_referral_listed` is "
+    "excluded: it reflects referral-network membership, not state-portal visibility.",
     "early_head_start": "Early Head Start participation (federal infant/toddler program), coerced to a boolean. "
     "MS, NH, WA. Distinct from `head_start`: EHS sources never feed it.",
     "wheelchair_accessible": "Whether the facility is wheelchair accessible (True/False/None). CT bool, TN Yes/No; NH "

@@ -78,6 +78,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `provider_name` | Whitespace cleanup; Title Case (ALL-CAPS names) | The facility's name. ALL-CAPS values are converted to Title Case; whitespace is cleaned. |
 | `provider_type` | Whitespace cleanup; Preserved (drives facility_category) | The raw state license category, preserved exactly. It drives the derived facility_category facet. |
 | `provider_website` | Whitespace cleanup | Provider website URL (whitespace-cleaned only). |
+| `publicly_listed` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_bool) | Whether the state's own public search portal shows this provider (bool; True = shown, False = hidden there). A source-system visibility flag, not a provider attribute. CT copies `ct_searchable` (False = hidden from the state's search). DE copies `de_portal_listed`, which is unset when the advisory portal fetch failed and is nearly always True today. IA `ia_referral_listed` is excluded: it reflects referral-network membership, not state-portal visibility. |
 | `rates` | Whitespace cleanup | Published tuition: list of rows `{age_group, unit, period, amount}` in source order. `age_group` is the state's own label (state-specific; no cross-state band mapping). `unit` full_time/part_time/None; `period` hour/day/week/month/None (an unknown period is kept as None, never guessed); `amount` is a float with `$`/`,` stripped. Rows with a blank, unparseable (logged) or <= 0 amount are dropped. Optional keys: `schedule_type` (MA) and `care_type` (TN, WY; the state's label when it is not a unit/period). From CT (one row per `{unit}_{period}` column; age_group `Infant (0-17 Months)`), GA (weekly full day), KY and PA (the period `day` is inferred from the amounts, not stated by the source), TN (`unit_of_care` Full/Part-time -> unit, Weekly/Daily/Monthly -> period, any other descriptor -> `care_type` with period week; `$0.00` skipped), MA (`rate_type` parsed, `Other Full/Part Time` -> unit only, period None; ONE schedule type per provider chosen with the same pick as `weekly_schedule`: Full Year, else School Year, else Summer, else first), NJ (16 `nj_tuition_*` columns, `0.0` skipped) and WY (program name as age_group). NH is skipped (`nh_rates` is free text and is left alone). Empty -> unset. The `xx_` sources are kept. |
 | `region` | Whitespace cleanup; Field collapse from state-specific source (transforms: none_if_sentinel) | The state's own region label for the provider (string), copied as published and trimmed; blank or sentinel -> unset. Values are state-specific labels that only mean something within a state, so they suit per-state filters, not cross-state comparison. Sources: IA `ia_region` (`Region 4`), NV `nv_region` (`South`), NY `ny_region_code` and CA `ca_regional_office` (office codes such as `NYCDOH`, `LIRO`, `07`, copied unexpanded; CA keeps its leading zero), AZ `az_regionalpartnership` (a First Things First regional partnership: a funding region, not a licensing office), HI `hi_island` (the island, e.g. `Oahu`). MA is excluded because its source, `ma_regional_office_address`, is an office address rather than a region name. |
 | `registration_fee` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_float) | One-time enrollment/registration fee in dollars (float); 0.0 = no fee. From GA (`ga_registration_fee`, `$`/`,` stripped; `$0.00` -> 0.0, null -> unset) and WY (`wy_registration_fee`; the spider only sets it when a fee is charged, so absence is None, not 0.0). NJ is not mapped (`nj_fees` holds fee types only, no amount). The `xx_` sources are kept. |
@@ -158,6 +159,7 @@ Each common field is populated from a single populated source field (additive â€
 | `phone_suppressed` | `fl_display_phone_on_web` (invert), `ma_contact_redacted` (to_bool) |
 | `profit_status` | `de_profit_status` (vocab(de_profit_status)) |
 | `program_description` | `nd_philosophy` (description_text), `vt_program_description` (description_text) |
+| `publicly_listed` | `ct_searchable` (to_bool), `de_portal_listed` (to_bool) |
 | `region` | `az_regionalpartnership` (none_if_sentinel), `ca_regional_office` (none_if_sentinel), `hi_island` (none_if_sentinel), `ia_region` (none_if_sentinel), `nv_region` (none_if_sentinel), `ny_region_code` (none_if_sentinel) |
 | `registration_fee` | `ga_registration_fee` (to_float), `wy_registration_fee` (to_float) |
 | `scholarships_accepted` | `fl_is_offering_school_readiness` (scholarships_flag), `nh_financial_assistance` (has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP))), `va_current_subsidy_provider` (scholarships_flag), `wa_subsidy` (scholarships_flag) |
@@ -502,7 +504,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ct_resolution` -> pass-through
 - `ct_schedule` -> feeds adapter, fills `days_of_operation`, `weekly_schedule`
 - `ct_school_districts` -> collapses into `school_district`
-- `ct_searchable` -> pass-through
+- `ct_searchable` -> collapses into `publicly_listed` (via to_bool)
 - `ct_severity` -> pass-through
 - `ct_special_needs` -> feeds adapter, fills `serves_special_needs`, `special_needs_types`
 - `ct_transportation` -> collapses into `transportation`
@@ -527,7 +529,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `de_injuries_report` -> feeds adapter, fills `fatality_count`, `serious_injury_count`
 - `de_intent_to_revoke` -> feeds adapter, fills `enforcement_action`
 - `de_investigation_conclusion` -> pass-through
-- `de_portal_listed` -> pass-through
+- `de_portal_listed` -> collapses into `publicly_listed` (via to_bool)
 - `de_profit_status` -> collapses into `profit_status` (via vocab(de_profit_status))
 - `de_special_conditions` -> feeds adapter, fills `license_conditions`
 - `de_violation_count` -> pass-through
