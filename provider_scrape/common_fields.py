@@ -245,6 +245,55 @@ def md_finding_flag(value):
     return text.lower().rstrip(".") != MD_NO_NONCOMPLIANCE_TEXT
 
 
+# Arizona stamps this placeholder on monitoring visits that found nothing, so
+# it is "no finding", not a narrative. Matched whole (after a trim, ignoring
+# case) and never fuzzily: any other wording is kept as a real finding.
+AZ_NO_ISSUES_TEXT = "monitor visit completed; no issues"
+
+
+def _narrative_text(value):
+    """Trimmed narrative string, or ``None`` for blanks, sentinels and non-strings.
+
+    Text is otherwise kept verbatim (no re-casing, no truncation).
+    """
+    cleaned = none_if_sentinel(value)
+    return cleaned if isinstance(cleaned, str) and cleaned else None
+
+
+def finding_text_md(value):
+    """Maryland finding narrative; the ``No Noncompliances Found`` sentinel -> ``None``.
+
+    Uses the same match as :func:`md_finding_flag` (case-insensitive, trailing
+    period tolerated), so ``finding_text`` is unset exactly when
+    ``violation_found`` is ``False``.
+    """
+    text = _narrative_text(value)
+    if text is None or text.lower().rstrip(".") == MD_NO_NONCOMPLIANCE_TEXT:
+        return None
+    return text
+
+
+def finding_text_az(value):
+    """Arizona decision/correction narrative; the no-issues placeholder -> ``None``."""
+    text = _narrative_text(value)
+    if text is None or text.lower() == AZ_NO_ISSUES_TEXT:
+        return None
+    return text
+
+
+def finding_text_list(value):
+    """Oklahoma list of noncompliance strings joined with a blank line.
+
+    Blank entries are dropped; an empty or all-blank list -> ``None``.
+    """
+    if isinstance(value, str):
+        return _narrative_text(value)
+    if not isinstance(value, (list, tuple)):
+        return None
+    parts = [t for t in (_narrative_text(v) for v in value) if t]
+    return "\n\n".join(parts) if parts else None
+
+
 def has_token(pattern):
     """Build a transform: ``True`` if ``pattern`` (regex, case-insensitive)
     matches the value (a string, or any element of a list); otherwise ``None``.

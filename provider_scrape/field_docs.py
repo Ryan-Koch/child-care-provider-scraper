@@ -409,6 +409,15 @@ FIELD_DOCS = {
     "Labels are state-specific and not a canonical vocabulary, so values cannot be compared across states "
     "without mapping them. `type` is unchanged. Blank and placeholder values (`N/A`) count as unset. Source "
     "fields are kept.",
+    "finding_text": "Inspection field: the inspector's narrative of what was found, trimmed and otherwise kept "
+    "verbatim (no re-casing or truncation). MD copies `md_finding`, IN copies `in_noncompliance`, WI copies "
+    "`wi_description`, AZ copies `az_decision_correction`, OK joins the entries of `ok_noncompliances` with a "
+    "blank line and DE copies `de_investigation_conclusion`. Granularity differs: one narrative per "
+    "citation in MD, IN and WI; per visit in AZ and OK; per complaint investigation in DE. Two no-finding "
+    "placeholders are unset: MD `No Noncompliances Found` (which feeds `violation_found` instead) and AZ "
+    "`MONITOR VISIT COMPLETED; NO ISSUES` (matched whole, ignoring case; other wordings are kept). An empty or "
+    "all-blank OK list, blanks and sentinels (`N/A`) are unset. About 1,286 IN narratives repeat the rule text "
+    "(`in_rule_description`) verbatim; they are copied as published. Source fields are kept.",
     "compliance_domains": "Inspection field (MA and NH, which share a licensing platform): per-visit list of "
     'per-domain checklist roll-ups, `[{"domain": str, "compliant": int, "reviewed": int}]`, counts only. '
     "`compliant` / `reviewed` are checklist items in that domain, so any finding means `compliant < reviewed`. "

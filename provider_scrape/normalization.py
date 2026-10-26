@@ -31,6 +31,9 @@ from provider_scrape.common_fields import (
     announced_flag,
     day_names,
     description_text,
+    finding_text_az,
+    finding_text_list,
+    finding_text_md,
     food_program_token,
     has_list_token,
     invert,
@@ -1547,6 +1550,21 @@ INSPECTION_FIELD_COLLAPSE_MAP = {
     # `type`, which must stay state-scoped.
     "visit_reason": [
         ("ks_survey_reason", none_if_sentinel),
+    ],
+    # Inspector's narrative of what was found, trimmed and otherwise verbatim.
+    # Per citation in MD/IN/WI, per visit in AZ/OK, per complaint investigation
+    # in DE. MD's "No Noncompliances Found" and AZ's "MONITOR VISIT COMPLETED;
+    # NO ISSUES" are "no finding" placeholders -> unset. OK's list is joined
+    # with a blank line. IN is copied as published (some narratives repeat
+    # in_rule_description). Each source field is state-prefixed, so the entries
+    # cannot cross-fire.
+    "finding_text": [
+        ("md_finding", finding_text_md),
+        ("in_noncompliance", none_if_sentinel),
+        ("wi_description", none_if_sentinel),
+        ("az_decision_correction", finding_text_az),
+        ("ok_noncompliances", finding_text_list),
+        ("de_investigation_conclusion", none_if_sentinel),
     ],
 }
 

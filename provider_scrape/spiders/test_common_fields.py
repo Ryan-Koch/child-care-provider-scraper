@@ -5311,3 +5311,119 @@ def test_visit_reason_sentinels_and_blanks_unset(state, source, empty):
 def test_visit_reason_does_not_overwrite_existing(state, source):
     insp = norm.normalize_inspection({source: "Periodic", "type": "Complaint", "visit_reason": "Preset"}, state)
     assert insp["visit_reason"] == "Preset"
+
+
+# --------------------------------------------------------------------------- #
+# finding_text (MD, IN, WI, AZ, OK, DE)
+# --------------------------------------------------------------------------- #
+_FINDING_TEXT_SOURCES = [
+    ("maryland", "md_finding"),
+    ("indiana", "in_noncompliance"),
+    ("wisconsin", "wi_description"),
+    ("arizona", "az_decision_correction"),
+    ("delaware", "de_investigation_conclusion"),
+]
+_NARRATIVE = "Findings: Menu lacking components; Staff Sam was not CPR certified."
+
+
+@pytest.mark.parametrize(("state", "source"), _FINDING_TEXT_SOURCES)
+def test_finding_text_copied_trimmed_and_verbatim(state, source):
+    insp = norm.normalize_inspection({source: f"  {_NARRATIVE} "}, state)
+    assert insp["finding_text"] == _NARRATIVE
+    assert insp[source] == _NARRATIVE  # source kept
+
+
+@pytest.mark.parametrize(("state", "source"), _FINDING_TEXT_SOURCES)
+@pytest.mark.parametrize("empty", [None, "", "   ", "N/A", "None"])
+def test_finding_text_blanks_and_sentinels_unset(state, source, empty):
+    insp = norm.normalize_inspection({source: empty}, state)
+    assert "finding_text" not in insp
+
+
+@pytest.mark.parametrize(("state", "source"), _FINDING_TEXT_SOURCES)
+def test_finding_text_does_not_overwrite_existing(state, source):
+    insp = norm.normalize_inspection({source: _NARRATIVE, "finding_text": "Preset"}, state)
+    assert insp["finding_text"] == "Preset"
+
+
+def test_finding_text_keeps_case():
+    insp = norm.normalize_inspection({"wi_description": "CHILD LEFT UNSUPERVISED"}, "wisconsin")
+    assert insp["finding_text"] == "CHILD LEFT UNSUPERVISED"
+
+
+@pytest.mark.parametrize(
+    "sentinel",
+    ["No Noncompliances Found", "  no noncompliances found  ", "No Noncompliances Found."],
+)
+def test_finding_text_md_sentinel_unset_but_source_kept(sentinel):
+    insp = norm.normalize_inspection({"md_finding": sentinel}, "maryland")
+    assert "finding_text" not in insp
+    assert insp["md_finding"] == sentinel.strip()
+
+
+def test_finding_text_md_other_text_kept():
+    text = "Specialist observed no evidence of a posted emergency plan."
+    insp = norm.normalize_inspection({"md_finding": text}, "maryland")
+    assert insp["finding_text"] == text
+
+
+def test_finding_text_in_copies_rule_text_as_published():
+    rule = "Children must be supervised at all times."
+    insp = norm.normalize_inspection({"in_noncompliance": rule, "in_rule_description": rule}, "indiana")
+    assert insp["finding_text"] == rule
+    assert insp["in_rule_description"] == rule
+
+
+@pytest.mark.parametrize(
+    "placeholder",
+    [
+        "MONITOR VISIT COMPLETED; NO ISSUES",
+        "  MONITOR VISIT COMPLETED; NO ISSUES ",
+        "Monitor Visit Completed; No Issues",
+    ],
+)
+def test_finding_text_az_placeholder_unset_but_source_kept(placeholder):
+    insp = norm.normalize_inspection({"az_decision_correction": placeholder}, "arizona")
+    assert "finding_text" not in insp
+    assert insp["az_decision_correction"] == placeholder.strip()
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "MONITOR VISIT COMPLETED; NO ISSUES FOUND",
+        "MONITOR VISIT COMPLETED; NO ISSUES. Follow-up planned",
+        "Monitor visit completed; no issues with staffing, but menu lacking",
+    ],
+)
+def test_finding_text_az_near_miss_kept(text):
+    insp = norm.normalize_inspection({"az_decision_correction": text}, "arizona")
+    assert insp["finding_text"] == text
+
+
+def test_finding_text_ok_joins_with_blank_line():
+    raw = {"ok_noncompliances": ["First issue.", "Second issue."]}
+    insp = norm.normalize_inspection(raw, "oklahoma")
+    assert insp["finding_text"] == "First issue.\n\nSecond issue."
+    assert insp["ok_noncompliances"] == ["First issue.", "Second issue."]  # source kept
+
+
+def test_finding_text_ok_single_entry():
+    insp = norm.normalize_inspection({"ok_noncompliances": ["Only one."]}, "oklahoma")
+    assert insp["finding_text"] == "Only one."
+
+
+@pytest.mark.parametrize("value", [[], ["", "   "], [None, "N/A"], None])
+def test_finding_text_ok_empty_or_blank_list_unset(value):
+    insp = norm.normalize_inspection({"ok_noncompliances": value}, "oklahoma")
+    assert "finding_text" not in insp
+
+
+def test_finding_text_ok_drops_blank_entries():
+    insp = norm.normalize_inspection({"ok_noncompliances": ["A.", "  ", "B."]}, "oklahoma")
+    assert insp["finding_text"] == "A.\n\nB."
+
+
+def test_finding_text_unset_without_a_source_field():
+    insp = norm.normalize_inspection({"type": "Complaint", "notes": "x"}, "ohio")
+    assert "finding_text" not in insp
