@@ -885,6 +885,55 @@ def west_virginia_correction_date(record):
 
 
 # --------------------------------------------------------------------------- #
+# Licensing period (HI, ME)
+# --------------------------------------------------------------------------- #
+# Both states stamp each inspection with the license term it is associated with.
+# The period is copied as published: it is NOT filtered on whether the visit date
+# falls inside it (renewal visits are filed under the term they led to). One
+# adapter per state fills both fields because the end < start check needs both.
+def _licensing_period(start_raw, end_raw):
+    """Return the ``licensing_period_start`` / ``licensing_period_end`` dict as ISO dates.
+
+    A date that cannot be parsed is kept as emitted (``to_iso_date`` logs it), and a
+    missing side is simply left out. When both sides parse and end < start, neither
+    field is set.
+    """
+    start, end = to_iso_date(start_raw), to_iso_date(end_raw)
+    if (
+        isinstance(start, str)
+        and isinstance(end, str)
+        and _ISO_DATE_RE.fullmatch(start)
+        and _ISO_DATE_RE.fullmatch(end)
+        and end < start
+    ):
+        logger.warning("licensing period end %s is before start %s; both unset", end, start)
+        return {}
+    return {"licensing_period_start": start, "licensing_period_end": end}
+
+
+_ISO_DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+def _register_licensing_period(state, start_source, end_source):
+    @register_adapter(
+        state,
+        level=INSPECTION_LEVEL,
+        sources=[start_source, end_source],
+        fills=["licensing_period_start", "licensing_period_end"],
+    )
+    def licensing_period(record):
+        """Copy the stamped license term as ISO dates; end < start -> both unset."""
+        return _licensing_period(record.get(start_source), record.get(end_source))
+
+    licensing_period.__name__ = f"{state}_licensing_period"
+    return licensing_period
+
+
+_register_licensing_period("hawaii", "hi_licensing_period_start", "hi_licensing_period_end")
+_register_licensing_period("maine", "me_licensed_from", "me_licensed_to")
+
+
+# --------------------------------------------------------------------------- #
 # Vacancies by age band (IA, ND, DC)
 # --------------------------------------------------------------------------- #
 # Each state labels its age bands differently (and defines them differently:

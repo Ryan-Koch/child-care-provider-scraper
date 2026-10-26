@@ -385,6 +385,21 @@ FIELD_DOCS = {
     "and the system's null placeholder `1/1/1753` is unset even on an Achieved row. NH is excluded: "
     "`nh_corrective_action_accepted` is when the plan was accepted, not when the issue was corrected. A date that "
     "cannot be parsed is kept as emitted (and logged). Source fields are kept.",
+    "licensing_period_start": "Inspection field: ISO date (`YYYY-MM-DD`) the license term stamped on the inspection "
+    "begins. HI copies `hi_licensing_period_start` and ME converts `me_licensed_from` (`09/09/2024`). The period "
+    "is the license term the inspection is associated with, not necessarily the one in force on the inspection "
+    "date: renewal inspections (HI `Annual/Biennial`, ME `Full` / `Provisional`) typically come before the term "
+    "they lead to, so roughly 40-48% of inspections are dated before their period starts (median about 44 days). "
+    "The period is copied as published, with no filtering on the inspection date. When both dates parse and end "
+    "is before start (about 4 ME rows), `licensing_period_start` and `licensing_period_end` are both unset. A date "
+    "that cannot be parsed is kept as emitted (and logged). Source fields are kept.",
+    "licensing_period_end": "Inspection field: ISO date (`YYYY-MM-DD`) the license term stamped on the inspection "
+    "ends. HI copies `hi_licensing_period_end` and ME converts `me_licensed_to`. The period is the license term "
+    "the inspection is associated with, not necessarily the one in force on the inspection date: renewal "
+    "inspections typically come before the term they lead to, so the visit date can precede the start (and, "
+    "rarely, follow the end). The period is copied as published. When both dates parse and end is before start "
+    "(about 4 ME rows), both `licensing_period_start` and `licensing_period_end` are unset. A date that cannot "
+    "be parsed is kept as emitted (and logged). Source fields are kept.",
     "compliance_domains": "Inspection field (MA and NH, which share a licensing platform): per-visit list of "
     'per-domain checklist roll-ups, `[{"domain": str, "compliant": int, "reviewed": int}]`, counts only. '
     "`compliant` / `reviewed` are checklist items in that domain, so any finding means `compliant < reviewed`. "

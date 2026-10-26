@@ -5150,3 +5150,97 @@ def test_accreditation_existing_shapes_unchanged():
 def test_accreditation_value_trims_before_matching():
     assert cf.accreditation_value("  n/a ") is None
     assert cf.accreditation_value(" NAEYC ") == "NAEYC"
+
+
+# --------------------------------------------------------------------------- #
+# licensing_period_start / licensing_period_end (HI, ME)
+# --------------------------------------------------------------------------- #
+_PERIOD_SOURCES = {
+    "hawaii": ("hi_licensing_period_start", "hi_licensing_period_end"),
+    "maine": ("me_licensed_from", "me_licensed_to"),
+}
+
+
+def _period(state, start, end, **extra):
+    start_key, end_key = _PERIOD_SOURCES[state]
+    return {start_key: start, end_key: end, **extra}
+
+
+def test_licensing_period_hawaii_copied():
+    raw = _period("hawaii", "2024-12-01", "2026-11-30")
+    insp = norm.normalize_inspection(raw, "hawaii")
+    assert insp["licensing_period_start"] == "2024-12-01"
+    assert insp["licensing_period_end"] == "2026-11-30"
+
+
+def test_licensing_period_maine_converted():
+    insp = norm.normalize_inspection(_period("maine", "09/09/2024", "09/08/2026"), "maine")
+    assert insp["licensing_period_start"] == "2024-09-09"
+    assert insp["licensing_period_end"] == "2026-09-08"
+
+
+@pytest.mark.parametrize("state", ["hawaii", "maine"])
+def test_licensing_period_inspection_before_period_still_populated(state):
+    raw = _period(state, "2024-12-01", "2026-11-30", date="2024-10-15")
+    insp = norm.normalize_inspection(raw, state)
+    assert insp["licensing_period_start"] == "2024-12-01"
+    assert insp["licensing_period_end"] == "2026-11-30"
+
+
+@pytest.mark.parametrize("state", ["hawaii", "maine"])
+def test_licensing_period_end_before_start_both_unset(state):
+    insp = norm.normalize_inspection(_period(state, "2024-12-01", "2024-11-30"), state)
+    assert "licensing_period_start" not in insp
+    assert "licensing_period_end" not in insp
+
+
+@pytest.mark.parametrize("state", ["hawaii", "maine"])
+def test_licensing_period_end_equal_start_kept(state):
+    insp = norm.normalize_inspection(_period(state, "2024-12-01", "2024-12-01"), state)
+    assert insp["licensing_period_start"] == insp["licensing_period_end"] == "2024-12-01"
+
+
+@pytest.mark.parametrize("state", ["hawaii", "maine"])
+@pytest.mark.parametrize("empty", [None, "", "   ", "N/A"])
+def test_licensing_period_empty_values_unset(state, empty):
+    insp = norm.normalize_inspection(_period(state, empty, empty), state)
+    assert not insp.get("licensing_period_start")
+    assert not insp.get("licensing_period_end")
+
+
+@pytest.mark.parametrize("state", ["hawaii", "maine"])
+def test_licensing_period_one_side_missing_fills_the_other(state):
+    insp = norm.normalize_inspection(_period(state, "2024-12-01", None), state)
+    assert insp["licensing_period_start"] == "2024-12-01"
+    assert not insp.get("licensing_period_end")
+
+
+@pytest.mark.parametrize("state", ["hawaii", "maine"])
+def test_licensing_period_unparseable_kept_as_emitted(state):
+    insp = norm.normalize_inspection(_period(state, "someday", "2026-11-30"), state)
+    assert insp["licensing_period_start"] == "someday"
+    assert insp["licensing_period_end"] == "2026-11-30"
+
+
+@pytest.mark.parametrize("state", ["hawaii", "maine"])
+def test_licensing_period_does_not_overwrite_existing(state):
+    raw = _period(
+        state, "2024-12-01", "2026-11-30", licensing_period_start="2020-01-02", licensing_period_end="2022-01-02"
+    )
+    insp = norm.normalize_inspection(raw, state)
+    assert insp["licensing_period_start"] == "2020-01-02"
+    assert insp["licensing_period_end"] == "2022-01-02"
+
+
+@pytest.mark.parametrize("state", ["hawaii", "maine"])
+def test_licensing_period_source_fields_kept(state):
+    start_key, end_key = _PERIOD_SOURCES[state]
+    raw = _period(state, "2024-12-01", "2026-11-30")
+    insp = norm.normalize_inspection(raw, state)
+    assert insp[start_key] == "2024-12-01"
+    assert insp[end_key] == "2026-11-30"
+
+
+def test_licensing_period_not_applied_to_other_states():
+    insp = norm.normalize_inspection(_period("maine", "09/09/2024", "09/08/2026"), "ohio")
+    assert "licensing_period_start" not in insp

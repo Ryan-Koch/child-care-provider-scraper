@@ -168,6 +168,8 @@ INSPECTION_DATE_FIELDS = (
     "ms_end_date",
     "mo_disposition_date",
     "correction_date",
+    "licensing_period_start",
+    "licensing_period_end",
 )
 
 # strptime patterns tried in order for purely numeric dates.

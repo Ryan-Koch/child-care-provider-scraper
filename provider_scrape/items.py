@@ -21,6 +21,8 @@ class InspectionItem(scrapy.Item):
     items_reviewed = scrapy.Field()  # int, denominator; items (MA/RI/NH), areas (OK), regulations (KS)
     regulation_cited = scrapy.Field()  # rule/code section cited on a one-citation-per-row inspection, as emitted
     correction_date = scrapy.Field()  # ISO date the cited issue was corrected (AZ, IN, WV Achieved only)
+    licensing_period_start = scrapy.Field()  # ISO start of the license term stamped on the visit (HI, ME)
+    licensing_period_end = scrapy.Field()  # ISO end of that term; both unset when end < start
     va_shsi = scrapy.Field()
     va_complaint_related = scrapy.Field()
     va_violations = scrapy.Field()

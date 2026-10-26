@@ -102,7 +102,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `wheelchair_accessible` | Whitespace cleanup; Field collapse from state-specific source (transforms: coerce_bool, has_list_token(WHEELCHAIR ACCESSIBLE)) | Whether the facility is wheelchair accessible (True/False/None). CT bool, TN Yes/No; NH from the WHEELCHAIR ACCESSIBLE token in its environment checklist (token present -> True, absent -> None, never False). |
 | `year_round` | Whitespace cleanup; Field collapse from state-specific source (transforms: vocab(nd_year_round), vocab(vt_year_round)) | Whether the provider operates all 12 months (bool). GA/MS/WI: True when all 12 months are listed, else False. SD (`12 Months` True; `School Year Only`/`Summer Only` False; `Other` unset), ND (`Full calendar year` True; `School year only` False), VT (`School Year Only`/`Summer Only` False; `In-Service Days` and blank unset -- never assumed True) and OK (`Year Round` in `ok_care_types` True; else `School Year Only`/`Summer Only`/`School Vacation Only` False; else unset) use explicit case-insensitive lookups; unknown labels are logged and leave it unset. |
 
-> Inspections are normalized too: every string value gets whitespace cleanup, and the date fields (`date`, `status_updated`, `az_date_resolved`, `in_correction_date`, `ms_end_date`, `mo_disposition_date`, `correction_date`) are converted to ISO 8601. The `status` vocabulary does not apply to inspections.
+> Inspections are normalized too: every string value gets whitespace cleanup, and the date fields (`date`, `status_updated`, `az_date_resolved`, `in_correction_date`, `ms_end_date`, `mo_disposition_date`, `correction_date`, `licensing_period_start`, `licensing_period_end`) are converted to ISO 8601. The `status` vocabulary does not apply to inspections.
 
 > Tracking fields (`inspections`, `provider_url`, `source_state`) are passed through unchanged.
 
@@ -207,8 +207,10 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `connecticut` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
 | `delaware` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
 | `hawaii` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
+| `hawaii` | inspection | `hi_licensing_period_start`, `hi_licensing_period_end` | `licensing_period_start`, `licensing_period_end` | Copy the stamped license term as ISO dates; end < start -> both unset. |
 | `kansas` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
 | `kansas` | inspection | `ks_regulations_reviewed` | `items_reviewed` | Copy `ks_regulations_reviewed` to items_reviewed only; items_compliant is never derived from findings. |
+| `maine` | inspection | `me_licensed_from`, `me_licensed_to` | `licensing_period_start`, `licensing_period_end` | Copy the stamped license term as ISO dates; end < start -> both unset. |
 | `massachusetts` | inspection | `ma_domain_counts` | `compliance_domains` | Roll `ma_domain_counts` ({domain: {status: n}}) up to compliant (Compliant + Complete) / reviewed per domain. |
 | `massachusetts` | inspection | `ma_level_of_compliance` | `items_compliant`, `items_reviewed` | Split the visit-level `x / y` compliance ratio into items_compliant / items_reviewed; bad ratio -> unset. |
 | `nevada` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
