@@ -5927,3 +5927,59 @@ def test_accepts_diapered_never_overwrites_existing_value():
 def test_accepts_diapered_nc_special_features_not_mapped():
     value, _ = _diapers("north_carolina", nc_special_features=["Provides Diapers and Wipes"])
     assert value is None
+
+
+# --------------------------------------------------------------------------- #
+# State region label
+# --------------------------------------------------------------------------- #
+_REGION_SOURCES = [
+    ("iowa", "ia_region", "Region 4"),
+    ("nevada", "nv_region", "South"),
+    ("new_york", "ny_region_code", "NYCDOH"),
+    ("new_york", "ny_region_code", "LIRO"),
+    ("california", "ca_regional_office", "07"),
+    ("arizona", "az_regionalpartnership", "North Pima"),
+    ("hawaii", "hi_island", "Oahu"),
+]
+
+
+def _region(state, **source):
+    item = norm.normalize_item(dict(source), state)
+    return item.get("region"), item
+
+
+@pytest.mark.parametrize(("state", "source", "expected"), _REGION_SOURCES)
+def test_region_copies_state_label(state, source, expected):
+    value, item = _region(state, **{source: expected})
+    assert value == expected
+    # collapse is additive: the source field stays
+    assert item[source] == expected
+
+
+def test_region_trims_whitespace():
+    value, _ = _region("iowa", ia_region="  Region 2 ")
+    assert value == "Region 2"
+
+
+def test_region_california_keeps_leading_zero_string():
+    value, _ = _region("california", ca_regional_office="07")
+    assert value == "07"
+    assert isinstance(value, str)
+
+
+def test_region_massachusetts_office_address_never_sets_region():
+    value, item = _region("massachusetts", ma_regional_office_address="1 Ashburton Pl, Boston, MA 02108")
+    assert value is None
+    assert item["ma_regional_office_address"] == "1 Ashburton Pl, Boston, MA 02108"
+
+
+@pytest.mark.parametrize(("state", "source", "_expected"), _REGION_SOURCES)
+@pytest.mark.parametrize("blank", [None, "", "   ", "N/A", "None"])
+def test_region_blank_and_sentinel_stay_unset(state, source, _expected, blank):
+    value, _ = _region(state, **{source: blank})
+    assert value is None
+
+
+def test_region_never_overwrites_existing_value():
+    value, _ = _region("iowa", ia_region="Region 4", region="Existing")
+    assert value == "Existing"

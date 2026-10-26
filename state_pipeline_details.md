@@ -79,6 +79,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `provider_type` | Whitespace cleanup; Preserved (drives facility_category) | The raw state license category, preserved exactly. It drives the derived facility_category facet. |
 | `provider_website` | Whitespace cleanup | Provider website URL (whitespace-cleaned only). |
 | `rates` | Whitespace cleanup | Published tuition: list of rows `{age_group, unit, period, amount}` in source order. `age_group` is the state's own label (state-specific; no cross-state band mapping). `unit` full_time/part_time/None; `period` hour/day/week/month/None (an unknown period is kept as None, never guessed); `amount` is a float with `$`/`,` stripped. Rows with a blank, unparseable (logged) or <= 0 amount are dropped. Optional keys: `schedule_type` (MA) and `care_type` (TN, WY; the state's label when it is not a unit/period). From CT (one row per `{unit}_{period}` column; age_group `Infant (0-17 Months)`), GA (weekly full day), KY and PA (the period `day` is inferred from the amounts, not stated by the source), TN (`unit_of_care` Full/Part-time -> unit, Weekly/Daily/Monthly -> period, any other descriptor -> `care_type` with period week; `$0.00` skipped), MA (`rate_type` parsed, `Other Full/Part Time` -> unit only, period None; ONE schedule type per provider chosen with the same pick as `weekly_schedule`: Full Year, else School Year, else Summer, else first), NJ (16 `nj_tuition_*` columns, `0.0` skipped) and WY (program name as age_group). NH is skipped (`nh_rates` is free text and is left alone). Empty -> unset. The `xx_` sources are kept. |
+| `region` | Whitespace cleanup; Field collapse from state-specific source (transforms: none_if_sentinel) | The state's own region label for the provider (string), copied as published and trimmed; blank or sentinel -> unset. Values are state-specific labels that only mean something within a state, so they suit per-state filters, not cross-state comparison. Sources: IA `ia_region` (`Region 4`), NV `nv_region` (`South`), NY `ny_region_code` and CA `ca_regional_office` (office codes such as `NYCDOH`, `LIRO`, `07`, copied unexpanded; CA keeps its leading zero), AZ `az_regionalpartnership` (a First Things First regional partnership: a funding region, not a licensing office), HI `hi_island` (the island, e.g. `Oahu`). MA is excluded because its source, `ma_regional_office_address`, is an office address rather than a region name. |
 | `registration_fee` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_float) | One-time enrollment/registration fee in dollars (float); 0.0 = no fee. From GA (`ga_registration_fee`, `$`/`,` stripped; `$0.00` -> 0.0, null -> unset) and WY (`wy_registration_fee`; the spider only sets it when a fee is charged, so absence is None, not 0.0). NJ is not mapped (`nj_fees` holds fee types only, no amount). The `xx_` sources are kept. |
 | `scholarships_accepted` | Whitespace cleanup; Field collapse from state-specific source (transforms: has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP)), scholarships_flag) | Whether the provider accepts child-care subsidies/scholarships: bool-or-None. States that emit "Yes"/"No" or NM's "Accepted"/"Not Accepted" are coerced via the shared strict token rule (bug_06); an unparseable token becomes None rather than a guessed True. |
 | `school` | Whitespace cleanup | Whether the provider serves school-age children: bool-or-None. See infant. |
@@ -157,6 +158,7 @@ Each common field is populated from a single populated source field (additive â€
 | `phone_suppressed` | `fl_display_phone_on_web` (invert), `ma_contact_redacted` (to_bool) |
 | `profit_status` | `de_profit_status` (vocab(de_profit_status)) |
 | `program_description` | `nd_philosophy` (description_text), `vt_program_description` (description_text) |
+| `region` | `az_regionalpartnership` (none_if_sentinel), `ca_regional_office` (none_if_sentinel), `hi_island` (none_if_sentinel), `ia_region` (none_if_sentinel), `nv_region` (none_if_sentinel), `ny_region_code` (none_if_sentinel) |
 | `registration_fee` | `ga_registration_fee` (to_float), `wy_registration_fee` (to_float) |
 | `scholarships_accepted` | `fl_is_offering_school_readiness` (scholarships_flag), `nh_financial_assistance` (has_list_token(STATE CC ASSISTANCE (SCHOLARSHIP))), `va_current_subsidy_provider` (scholarships_flag), `wa_subsidy` (scholarships_flag) |
 | `school_district` | `co_school_district`, `ct_school_districts`, `ny_school_district_name`, `pa_school_district`, `ut_school_district`, `wa_school_district` |
@@ -428,7 +430,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `az_license_type` -> collapses into `license_type`
 - `az_operatinghourid` -> pass-through
 - `az_quality_rating` -> pass-through
-- `az_regionalpartnership` -> pass-through
+- `az_regionalpartnership` -> collapses into `region` (via none_if_sentinel)
 - `az_regulation` -> pass-through
 - `az_shiftcomment` -> pass-through
 - `az_status_label` -> pass-through
@@ -447,7 +449,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ca_other_typeb` -> pass-through
 - `ca_other_visit_dates` -> pass-through
 - `ca_poc_dates` -> pass-through
-- `ca_regional_office` -> pass-through
+- `ca_regional_office` -> collapses into `region` (via none_if_sentinel)
 
 ### Colorado (CO)
 
@@ -608,7 +610,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `hi_area_code` -> pass-through
 - `hi_demonstration_project` -> pass-through
 - `hi_diapered_children_accepted` -> collapses into `accepts_diapered_children` (via to_bool)
-- `hi_island` -> pass-through
+- `hi_island` -> collapses into `region` (via none_if_sentinel)
 - `hi_license_history` -> feeds adapter, fills `license_history`
 - `hi_license_type` -> collapses into `license_type`
 - `hi_licensing_period_end` -> pass-through
@@ -636,7 +638,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ia_openings_by_age` -> feeds adapter, fills `vacancies_infant`, `vacancies_preschool`, `vacancies_school_age`, `vacancies_toddler`
 - `ia_padded_license_id` -> pass-through
 - `ia_referral_listed` -> pass-through
-- `ia_region` -> pass-through
+- `ia_region` -> collapses into `region` (via none_if_sentinel)
 - `ia_regulation_checklist_count` -> pass-through
 - `ia_serves_special_needs` -> collapses into `serves_special_needs` (via to_bool)
 - `ia_total_openings` -> collapses into `total_vacancies` (via to_int)
@@ -1036,7 +1038,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nv_rating_period_name` -> pass-through
 - `nv_rating_period_start` -> pass-through
 - `nv_rating_priority` -> pass-through
-- `nv_region` -> pass-through
+- `nv_region` -> collapses into `region` (via none_if_sentinel)
 - `nv_site_characteristic` -> feeds adapter, fills `state_prek`, `state_prek_program`
 - `nv_star_rating` -> pass-through
 
@@ -1052,7 +1054,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `ny_facility_opened_date` -> collapses into `original_license_date` (via to_iso_date)
 - `ny_phone_extension` -> collapses into `phone_extension` (via phone_extension_digits)
 - `ny_phone_number_omitted` -> feeds adapter, fills `address_suppressed`, `phone_suppressed`
-- `ny_region_code` -> pass-through
+- `ny_region_code` -> collapses into `region` (via none_if_sentinel)
 - `ny_school_district_name` -> collapses into `school_district`
 
 ### Ohio (OH)

@@ -363,6 +363,13 @@ FIELD_DOCS = {
     "licensing_specialist": "State staff member assigned to oversee the provider's license, as `First Last` "
     "(ALL-CAPS Title-cased; SC's `Last, First` flipped; `N/A` -> empty). Collapsed from AK, MA, ME, OK, SC, TN, "
     "WV; VA's packed `Name: phone` string is split by an adapter.",
+    "region": "The state's own region label for the provider (string), copied as published and trimmed; blank or "
+    "sentinel -> unset. Values are state-specific labels that only mean something within a state, so they suit "
+    "per-state filters, not cross-state comparison. Sources: IA `ia_region` (`Region 4`), NV `nv_region` (`South`), "
+    "NY `ny_region_code` and CA `ca_regional_office` (office codes such as `NYCDOH`, `LIRO`, `07`, copied "
+    "unexpanded; CA keeps its leading zero), AZ `az_regionalpartnership` (a First Things First regional "
+    "partnership: a funding region, not a licensing office), HI `hi_island` (the island, e.g. `Oahu`). MA is "
+    "excluded because its source, `ma_regional_office_address`, is an office address rather than a region name.",
     "inspector": "Inspection field: the staff member who ran the visit, as `First Last` (ALL-CAPS Title-cased; MO's "
     "`Last, First M` flipped; blank/`N/A` -> unset). Collapsed from AK, MA (licensor on routine visits, investigator "
     "on investigation rows), MO, MT, NH, RI. If a row carried two populated sources it would stay unset.",

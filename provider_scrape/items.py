@@ -399,6 +399,7 @@ class ProviderItem(scrapy.Item):
     licensing_specialist = scrapy.Field()
     licensing_specialist_phone = scrapy.Field()
     licensing_specialist_email = scrapy.Field()
+    region = scrapy.Field()  # str: state's own region label, no cross-state vocabulary; see FIELD_DOCS
     # Open slots per age band (int; 0 = full, None = not reported). Bands are the
     # state's own definitions; unrelated to the infant/toddler/... age-served flags.
     vacancies_infant = scrapy.Field()

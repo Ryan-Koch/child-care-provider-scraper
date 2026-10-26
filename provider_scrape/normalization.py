@@ -1398,6 +1398,16 @@ FIELD_COLLAPSE_MAP = {
         ("sc_licensing_specialist_phone", none_if_sentinel),
     ],
     "licensing_specialist_email": [("me_licensing_specialist_email", lower_email)],
+    # The state's own region label, copied as published (trimmed). No cross-state vocabulary.
+    # ma_regional_office_address is deliberately not mapped: it is an address, not a region name.
+    "region": [
+        ("ia_region", none_if_sentinel),
+        ("nv_region", none_if_sentinel),
+        ("ny_region_code", none_if_sentinel),
+        ("ca_regional_office", none_if_sentinel),  # keep as a string: "07" has a leading zero
+        ("az_regionalpartnership", none_if_sentinel),
+        ("hi_island", none_if_sentinel),
+    ],
     # Open slots per age band (the state's own band definitions).
     # IA, ND and DC are adapters in common_fields.py (one list -> four fields).
     "vacancies_infant": [
