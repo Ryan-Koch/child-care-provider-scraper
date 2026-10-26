@@ -208,7 +208,9 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `alaska` | inspection | `original_status` | `violation_found` | Read violation_found from the `original_status` text via an explicit table; unmatched -> unset. |
 | `connecticut` | inspection | `type` | `announced` | Read announced (True) / unannounced (False) from the `type` text; neither word -> unset. |
 | `connecticut` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
+| `connecticut` | inspection | `ct_violations` | `violations` | Map the state's per-violation rows to canonical `violations` rows (source order; empty rows dropped). |
 | `delaware` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
+| `delaware` | inspection | `de_violations` | `violations` | Map the state's per-violation rows to canonical `violations` rows (source order; empty rows dropped). |
 | `hawaii` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
 | `hawaii` | inspection | `hi_licensing_period_start`, `hi_licensing_period_end` | `licensing_period_start`, `licensing_period_end` | Copy the stamped license term as ISO dates; end < start -> both unset. |
 | `kansas` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
@@ -217,17 +219,24 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `massachusetts` | inspection | `ma_domain_counts` | `compliance_domains` | Roll `ma_domain_counts` ({domain: {status: n}}) up to compliant (Compliant + Complete) / reviewed per domain. |
 | `massachusetts` | inspection | `ma_level_of_compliance` | `items_compliant`, `items_reviewed` | Split the visit-level `x / y` compliance ratio into items_compliant / items_reviewed; bad ratio -> unset. |
 | `massachusetts` | inspection | `ma_visit_reason`, `type` | `visit_reason` | Copy the state's visit-reason field; when unset fall back to `type`. |
+| `massachusetts` | inspection | `ma_violations` | `violations` | Map the state's per-violation rows to canonical `violations` rows (source order; empty rows dropped). |
+| `missouri` | inspection | `mo_violations` | `violations` | Map the state's per-violation rows to canonical `violations` rows (source order; empty rows dropped). |
 | `nevada` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
 | `new_hampshire` | inspection | `nh_domains` | `compliance_domains` | Split each `nh_domains` `level_of_compliance` ("19 / 20") into compliant / reviewed ints per domain. |
 | `new_hampshire` | inspection | `nh_level_of_compliance` | `items_compliant`, `items_reviewed` | Split the visit-level `x / y` compliance ratio into items_compliant / items_reviewed; bad ratio -> unset. |
+| `new_hampshire` | inspection | `nh_violations` | `violations` | Map the state's per-violation rows to canonical `violations` rows (source order; empty rows dropped). |
 | `north_carolina` | inspection | `type` | `announced` | Read announced (True) / unannounced (False) from the `type` text; neither word -> unset. |
+| `north_carolina` | inspection | `nc_violations` | `violations` | Map the state's per-violation rows to canonical `violations` rows (source order; empty rows dropped). |
 | `oklahoma` | inspection | `ok_compliance_count`, `ok_compliance_total` | `items_compliant`, `items_reviewed` | Copy `ok_compliance_count` / `ok_compliance_total` (areas in compliance / reviewed); invalid pair -> unset. |
 | `oklahoma` | inspection | `ok_visit_purpose`, `type` | `visit_reason` | Copy the state's visit-reason field; when unset fall back to `type`. |
+| `oklahoma` | inspection | `ok_allegations` | `violations` | Map the state's per-violation rows to canonical `violations` rows (source order; empty rows dropped). |
 | `rhode_island` | inspection | `type` | `announced` | Read announced (True) / unannounced (False) from the `type` text; neither word -> unset. |
 | `rhode_island` | inspection | `ri_compliance` | `items_compliant`, `items_reviewed` | Split the visit-level `x / y` compliance ratio into items_compliant / items_reviewed; bad ratio -> unset. |
 | `south_carolina` | inspection | `violation_count` | `violation_found` | Derive violation_found = violation_count > 0; no count -> unset. |
+| `south_carolina` | inspection | `sc_deficiencies` | `violations` | Map the state's per-violation rows to canonical `violations` rows (source order; empty rows dropped). |
 | `west_virginia` | inspection | `wv_issue_completed_date`, `wv_outcome_code` | `correction_date` | WV `wv_issue_completed_date` as ISO, only when `wv_outcome_code` is exactly `Achieved`. |
 | `wisconsin` | inspection | `original_status` | `violation_found` | Read violation_found from the `original_status` text via an explicit table; unmatched -> unset. |
+| `wyoming` | inspection | `wy_violations` | `violations` | Map the state's per-violation rows to canonical `violations` rows (source order; empty rows dropped). |
 | `alabama` | provider | `al_nighttime_hours` | `night_care`, `evening_care`, `weekend_care`, `nontraditional_hours` | `al_nighttime_hours` any time range -> `night_care` True; `N/A - N/A` -> False; blank -> unset. |
 | `colorado` | provider | `co_special_needs` | `serves_special_needs`, `special_needs_types` | CO `co_special_needs` (`;`-separated) -> `serves_special_needs` + `special_needs_types`; `None` -> False. |
 | `connecticut` | provider | `ct_schedule` | `weekly_schedule`, `days_of_operation` | CT `ct_schedule` rows (already 24h `open`/`close`) -> `weekly_schedule`; days derived. |

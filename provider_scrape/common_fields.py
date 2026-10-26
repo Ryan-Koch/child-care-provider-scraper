@@ -1013,6 +1013,157 @@ _register_visit_reason("oklahoma", "ok_visit_purpose")
 
 
 # --------------------------------------------------------------------------- #
+# Structured violations (CT, DE, MA, NH, MO, WY, NC, SC, OK)
+# --------------------------------------------------------------------------- #
+# One canonical row per violation, keys in this order. Each state maps its own
+# row keys onto them; `category`, `severity` and `status` stay the state's own
+# labels (no vocabulary). Text is trimmed and otherwise verbatim; blanks and
+# sentinels (`N/A`...) leave a key out, a row with no key is dropped, and an
+# inspection with no rows leaves `violations` unset (never `[]`).
+VIOLATION_KEYS = (
+    "regulation",
+    "regulation_description",
+    "finding_text",
+    "category",
+    "severity",
+    "status",
+    "corrected_date",
+)
+
+# state -> (source field on the inspection, {canonical key: key in the state's row})
+VIOLATION_KEY_MAPS = {
+    "connecticut": (
+        "ct_violations",
+        {"regulation": "regulation", "regulation_description": "statute", "category": "category"},
+    ),
+    "delaware": (
+        "de_violations",
+        {
+            "regulation": "regulation_code",
+            "regulation_description": "description",
+            "status": "correction_status",
+            "corrected_date": "corrected_date",
+        },
+    ),
+    "massachusetts": ("ma_violations", {"regulation": "regulation", "finding_text": "statement"}),
+    "missouri": ("mo_violations", {"regulation": "rule", "regulation_description": "description"}),
+    # WY publishes citation and rule text as one string; it is not split.
+    "wyoming": (
+        "wy_violations",
+        {"regulation_description": "regulation", "corrected_date": "compliance_achieved_date"},
+    ),
+    "south_carolina": (
+        "sc_deficiencies",
+        {
+            "category": "deficiency_type",
+            "severity": "severity",
+            "status": "resolved",
+            "corrected_date": "date_resolved",
+        },
+    ),
+    "oklahoma": (
+        "ok_allegations",
+        {
+            "regulation": "requirement",
+            "regulation_description": "requirement_description",
+            "finding_text": "noncompliance_observed",
+            "status": "findings",
+        },
+    ),
+}
+
+_BRACKETED_RE = re.compile(r"^\[(.*)\]$", re.DOTALL)
+_NC_RULE_PREFIX_RE = re.compile(r"^Rule Violated:", re.IGNORECASE)
+
+
+def _violation_text(value):
+    """Trimmed string, or ``None`` for blanks, sentinels and non-strings."""
+    cleaned = none_if_sentinel(value)
+    return cleaned if isinstance(cleaned, str) and cleaned else None
+
+
+def _violation_date(value):
+    """ISO date for a row's ``corrected_date``; unparseable text is kept as emitted (and logged)."""
+    text = _violation_text(value)
+    return to_iso_date(text) if text else None
+
+
+def _strip_brackets(value):
+    """CT publishes the citation as ``[19a-79-10(d)(1)]``; drop the surrounding brackets."""
+    text = _violation_text(value)
+    if text is None:
+        return None
+    match = _BRACKETED_RE.match(text)
+    return _violation_text(match.group(1)) if match else text
+
+
+def _violation_row(entry, key_map, transforms=None):
+    """Build one canonical row from a state row dict; non-dicts give an empty row."""
+    if not isinstance(entry, dict):
+        return {}
+    transforms = transforms or {}
+    row = {}
+    for key in VIOLATION_KEYS:
+        if key not in key_map:
+            continue
+        transform = transforms.get(key, _violation_text)
+        value = transform(entry.get(key_map[key]))
+        if value:
+            row[key] = value
+    return row
+
+
+def _nh_violation_row(entry):
+    """NH row: citations joined with ``"; "`` and rule texts with a blank line (non-blank only)."""
+    if not isinstance(entry, dict):
+        return {}
+    regulations = [r for r in entry.get("regulations") or [] if isinstance(r, dict)]
+    row = {}
+    for key, value in (
+        ("regulation", "; ".join(t for t in (_violation_text(r.get("citation")) for r in regulations) if t)),
+        ("regulation_description", "\n\n".join(t for t in (_violation_text(r.get("text")) for r in regulations) if t)),
+        ("finding_text", _violation_text(entry.get("observations"))),
+        ("category", _violation_text(entry.get("domain"))),
+        ("status", _violation_text(entry.get("result"))),
+    ):
+        if value:
+            row[key] = value
+    return row
+
+
+def _nc_violation_row(entry):
+    """NC row from a ``Rule Violated: <narrative>`` string; the prefix is dropped when present."""
+    text = _violation_text(entry)
+    if text is None:
+        return {}
+    text = _violation_text(_NC_RULE_PREFIX_RE.sub("", text))
+    return {"finding_text": text} if text else {}
+
+
+def _register_violations(state, source, build_row):
+    @register_adapter(state, level=INSPECTION_LEVEL, sources=[source], fills=["violations"])
+    def violations(record):
+        """Map the state's per-violation rows to canonical `violations` rows (source order; empty rows dropped)."""
+        entries = record.get(source)
+        if not isinstance(entries, (list, tuple)):
+            return {}
+        rows = [row for row in (build_row(entry) for entry in entries) if row]
+        return {"violations": rows} if rows else {}
+
+    violations.__name__ = f"{state}_violations"
+    return violations
+
+
+for _state, (_source, _key_map) in VIOLATION_KEY_MAPS.items():
+    _transforms = {"corrected_date": _violation_date}
+    if _state == "connecticut":
+        _transforms["regulation"] = _strip_brackets
+    _register_violations(_state, _source, lambda entry, _m=_key_map, _t=_transforms: _violation_row(entry, _m, _t))
+_register_violations("new_hampshire", "nh_violations", _nh_violation_row)
+_register_violations("north_carolina", "nc_violations", _nc_violation_row)
+
+
+# --------------------------------------------------------------------------- #
 # Vacancies by age band (IA, ND, DC)
 # --------------------------------------------------------------------------- #
 # Each state labels its age bands differently (and defines them differently:

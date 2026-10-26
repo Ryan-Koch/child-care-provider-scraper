@@ -5464,3 +5464,194 @@ def test_regulation_description_keeps_case_and_long_text():
     text = "A CHILD CARE CENTER SHALL ENSURE THAT children are supervised at all times."
     insp = norm.normalize_inspection({"wv_non_compliance_code": text}, "west_virginia")
     assert insp["regulation_description"] == text
+
+
+# --------------------------------------------------------------------------- #
+# violations (CT, DE, MA, NH, MO, WY, NC, SC, OK)
+# --------------------------------------------------------------------------- #
+_VIOLATION_CASES = [
+    (
+        "connecticut",
+        "ct_violations",
+        {"regulation": " [19a-87b-10(b)(2)] ", "statute": " Health record required ", "category": " Child Health "},
+        {
+            "regulation": "19a-87b-10(b)(2)",
+            "regulation_description": "Health record required",
+            "category": "Child Health",
+        },
+    ),
+    (
+        "delaware",
+        "de_violations",
+        {
+            "regulation_code": "R-1",
+            "description": "Ratios",
+            "corrective_action": "ignored",
+            "correction_status": "Corrected",
+            "corrected_date": "2024-05-01",
+        },
+        {
+            "regulation": "R-1",
+            "regulation_description": "Ratios",
+            "status": "Corrected",
+            "corrected_date": "2024-05-01",
+        },
+    ),
+    (
+        "massachusetts",
+        "ma_violations",
+        {"regulation": "7.10(05)(j)", "result": "Non Compliant", "statement": " Supervision lapsed "},
+        {"regulation": "7.10(05)(j)", "finding_text": "Supervision lapsed"},
+    ),
+    (
+        "missouri",
+        "mo_violations",
+        {"rule": "19 CSR 30-61.105", "description": "Sanitation"},
+        {"regulation": "19 CSR 30-61.105", "regulation_description": "Sanitation"},
+    ),
+    (
+        "wyoming",
+        "wy_violations",
+        {"regulation": "Rule 5 Section 2 - Staff ratio", "compliance_achieved_date": "3/4/2024"},
+        {"regulation_description": "Rule 5 Section 2 - Staff ratio", "corrected_date": "2024-03-04"},
+    ),
+    (
+        "south_carolina",
+        "sc_deficiencies",
+        {"severity": "High", "deficiency_type": "Staff Records", "resolved": "Yes", "date_resolved": "8/28/2024"},
+        {"category": "Staff Records", "severity": "High", "status": "Yes", "corrected_date": "2024-08-28"},
+    ),
+    (
+        "oklahoma",
+        "ok_allegations",
+        {
+            "requirement": "110:30-3-1",
+            "requirement_description": "Supervision",
+            "noncompliance_observed": "Staff left room",
+            "plan_to_correct": "ignored",
+            "findings": "Substantiated",
+        },
+        {
+            "regulation": "110:30-3-1",
+            "regulation_description": "Supervision",
+            "finding_text": "Staff left room",
+            "status": "Substantiated",
+        },
+    ),
+]
+
+
+@pytest.mark.parametrize(("state", "source", "raw", "expected"), _VIOLATION_CASES)
+def test_violations_mapping_per_state(state, source, raw, expected):
+    insp = norm.normalize_inspection({source: [raw]}, state)
+    assert insp["violations"] == [expected]
+    assert insp[source] == [raw]  # source kept
+
+
+def test_violations_nh_multiple_citations_joined():
+    raw = {
+        "domain": "Health",
+        "item": "ignored",
+        "result": "Non-Compliant",
+        "regulations": [
+            {"citation": " 7.1(a) ", "text": "First rule text"},
+            {"citation": None, "text": ""},
+            {"citation": "7.2(b)", "text": None},
+            {"citation": "7.3", "text": "Third rule text"},
+        ],
+        "observations": " Seen at visit ",
+    }
+    insp = norm.normalize_inspection({"nh_violations": [raw]}, "new_hampshire")
+    assert insp["violations"] == [
+        {
+            "regulation": "7.1(a); 7.2(b); 7.3",
+            "regulation_description": "First rule text\n\nThird rule text",
+            "finding_text": "Seen at visit",
+            "category": "Health",
+            "status": "Non-Compliant",
+        }
+    ]
+
+
+def test_violations_nh_one_row_per_violation_without_regulations():
+    insp = norm.normalize_inspection(
+        {"nh_violations": [{"domain": "A", "observations": "x", "regulations": []}, {"domain": "B"}]},
+        "new_hampshire",
+    )
+    assert insp["violations"] == [{"category": "A", "finding_text": "x"}, {"category": "B"}]
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("Rule Violated: Children were unsupervised.", "Children were unsupervised."),
+        ("  rule violated:   lowercase prefix ", "lowercase prefix"),
+        ("Staff were not trained.", "Staff were not trained."),
+    ],
+)
+def test_violations_nc_prefix_stripped_only_when_present(raw, expected):
+    insp = norm.normalize_inspection({"nc_violations": [raw]}, "north_carolina")
+    assert insp["violations"] == [{"finding_text": expected}]
+
+
+def test_violations_nc_bare_prefix_dropped():
+    insp = norm.normalize_inspection({"nc_violations": ["Rule Violated:"]}, "north_carolina")
+    assert "violations" not in insp
+
+
+def test_violations_ct_only_surrounding_brackets_stripped():
+    rows = [{"regulation": "[A(1)]"}, {"regulation": "B[2]"}, {"regulation": "[unclosed"}, {"regulation": "[ ]"}]
+    insp = norm.normalize_inspection({"ct_violations": rows}, "connecticut")
+    assert insp["violations"] == [{"regulation": "A(1)"}, {"regulation": "B[2]"}, {"regulation": "[unclosed"}]
+
+
+def test_violations_sc_na_severity_unset():
+    rows = [{"severity": "N/A", "deficiency_type": "Health", "resolved": "N/A"}]
+    insp = norm.normalize_inspection({"sc_deficiencies": rows}, "south_carolina")
+    assert insp["violations"] == [{"category": "Health"}]
+
+
+def test_violations_unparseable_date_kept_as_emitted(caplog):
+    with caplog.at_level(logging.WARNING):
+        insp = norm.normalize_inspection({"wy_violations": [{"compliance_achieved_date": "soonish"}]}, "wyoming")
+    assert insp["violations"] == [{"corrected_date": "soonish"}]
+
+
+def test_violations_empty_rows_dropped_and_order_kept():
+    rows = [{"rule": "B"}, {"rule": "N/A", "description": "  "}, {}, {"rule": "A"}]
+    insp = norm.normalize_inspection({"mo_violations": rows}, "missouri")
+    assert insp["violations"] == [{"regulation": "B"}, {"regulation": "A"}]
+
+
+@pytest.mark.parametrize(
+    ("state", "source"), [(c[0], c[1]) for c in _VIOLATION_CASES] + [("north_carolina", "nc_violations")]
+)
+@pytest.mark.parametrize("raw", [None, [], [{}], [None, 5, "x", []], "text", 7, {"a": 1}])
+def test_violations_unset_when_nothing_usable(state, source, raw):
+    insp = norm.normalize_inspection({source: raw}, state)
+    if state == "north_carolina" and raw == [None, 5, "x", []]:
+        assert insp["violations"] == [{"finding_text": "x"}]  # a bare string is NC's valid shape
+    else:
+        assert "violations" not in insp
+
+
+def test_violations_garbage_entries_skipped_without_crash():
+    rows = [None, "text", 3, ["list"], {"rule": "R1"}]
+    insp = norm.normalize_inspection({"mo_violations": rows}, "missouri")
+    assert insp["violations"] == [{"regulation": "R1"}]
+    insp = norm.normalize_inspection(
+        {"nh_violations": [{"regulations": "bad"}, {"regulations": [None, 1]}]}, "new_hampshire"
+    )
+    assert "violations" not in insp
+
+
+def test_violations_do_not_overwrite_existing():
+    insp = norm.normalize_inspection(
+        {"mo_violations": [{"rule": "R1"}], "violations": [{"regulation": "Preset"}]}, "missouri"
+    )
+    assert insp["violations"] == [{"regulation": "Preset"}]
+
+
+def test_violations_not_emitted_for_other_states():
+    insp = norm.normalize_inspection({"mo_violations": [{"rule": "R1"}]}, "kansas")
+    assert "violations" not in insp

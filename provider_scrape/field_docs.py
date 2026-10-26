@@ -425,6 +425,28 @@ FIELD_DOCS = {
     "`MONITOR VISIT COMPLETED; NO ISSUES` (matched whole, ignoring case; other wordings are kept). An empty or "
     "all-blank OK list, blanks and sentinels (`N/A`) are unset. About 1,286 IN narratives repeat the rule text "
     "(`in_rule_description`) verbatim; they are copied as published. Source fields are kept.",
+    "violations": 'Inspection field: per-visit list of structured violation rows, `[{"regulation": str, '
+    '"regulation_description": str, "finding_text": str, "category": str, "severity": str, "status": str, '
+    '"corrected_date": str}]`, one row per violation in source order. Keys: `regulation` is the rule or code '
+    "cited; `regulation_description` the rule's text or title; `finding_text` the inspector's narrative; "
+    "`category`, `severity` and `status` are the state's own labels, verbatim, with no shared vocabulary; "
+    "`corrected_date` is ISO (`YYYY-MM-DD`; an unparseable date is kept as emitted and logged). The first "
+    "four keys mirror the visit-level `regulation_cited`, `regulation_description`, `finding_text` and "
+    "`correction_date`, but those describe a one-citation-per-row visit while this list carries every violation "
+    "on the visit. Sources: CT `ct_violations` (`regulation` with its surrounding `[ ]` stripped, `statute` as "
+    "the description, `category`), DE `de_violations` (`regulation_code`, `description`, `correction_status`, "
+    "`corrected_date`), MA `ma_violations` (`regulation`, `statement` as the finding; `result` is always `Non "
+    "Compliant` and is not mapped), NH `nh_violations` (one row per violation; citations joined with `; ` and "
+    "rule texts with a blank line, non-blank only; `observations` as the finding, `domain` as the category, "
+    "`result` as the status), MO `mo_violations` (`rule`, `description`), WY `wy_violations` (the combined "
+    "citation-and-text `regulation` string goes to `regulation_description` and is not split; "
+    "`compliance_achieved_date`), NC `nc_violations` (strings: a leading `Rule Violated: ` prefix is removed, "
+    "ignoring case, and the narrative becomes `finding_text`; strings without the prefix are kept as is), SC "
+    "`sc_deficiencies` (`deficiency_type` as the category, `severity` with `N/A` unset, `resolved` as the "
+    "status, `date_resolved`) and OK `ok_allegations` (`requirement`, `requirement_description`, "
+    "`noncompliance_observed`, `findings` as the status). Text is trimmed and otherwise verbatim; blanks and "
+    "placeholders (`N/A`) leave a key out, a row with no key is dropped, and a visit with no rows leaves "
+    "`violations` unset (never `[]`). Source fields are kept.",
     "compliance_domains": "Inspection field (MA and NH, which share a licensing platform): per-visit list of "
     'per-domain checklist roll-ups, `[{"domain": str, "compliant": int, "reviewed": int}]`, counts only. '
     "`compliant` / `reviewed` are checklist items in that domain, so any finding means `compliant < reviewed`. "
