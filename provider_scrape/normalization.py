@@ -1566,6 +1566,16 @@ INSPECTION_FIELD_COLLAPSE_MAP = {
         ("ok_noncompliances", finding_text_list),
         ("de_investigation_conclusion", none_if_sentinel),
     ],
+    # Text or summary of the cited rule, trimmed and otherwise verbatim.
+    # Granularity differs: WI is a short title ("Supervision Of Children"), IN
+    # is mostly full rule text with some short titles, WV is full rule text
+    # (despite the field name wv_non_compliance_code). Pairs with
+    # regulation_cited. Each source field is state-prefixed.
+    "regulation_description": [
+        ("in_rule_description", none_if_sentinel),
+        ("wi_rule_summary", none_if_sentinel),
+        ("wv_non_compliance_code", none_if_sentinel),
+    ],
 }
 
 

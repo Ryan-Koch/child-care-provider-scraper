@@ -5427,3 +5427,40 @@ def test_finding_text_ok_drops_blank_entries():
 def test_finding_text_unset_without_a_source_field():
     insp = norm.normalize_inspection({"type": "Complaint", "notes": "x"}, "ohio")
     assert "finding_text" not in insp
+
+
+# --------------------------------------------------------------------------- #
+# regulation_description (IN, WI, WV)
+# --------------------------------------------------------------------------- #
+_REGULATION_DESCRIPTION_SOURCES = [
+    ("indiana", "in_rule_description"),
+    ("wisconsin", "wi_rule_summary"),
+    ("west_virginia", "wv_non_compliance_code"),
+]
+_RULE_TEXT = "Supervision Of Children"
+
+
+@pytest.mark.parametrize(("state", "source"), _REGULATION_DESCRIPTION_SOURCES)
+def test_regulation_description_copied_trimmed_and_verbatim(state, source):
+    insp = norm.normalize_inspection({source: f"  {_RULE_TEXT} "}, state)
+    assert insp["regulation_description"] == _RULE_TEXT
+    assert insp[source] == _RULE_TEXT  # source kept
+
+
+@pytest.mark.parametrize(("state", "source"), _REGULATION_DESCRIPTION_SOURCES)
+@pytest.mark.parametrize("empty", [None, "", "   ", "N/A"])
+def test_regulation_description_blanks_and_sentinels_unset(state, source, empty):
+    insp = norm.normalize_inspection({source: empty}, state)
+    assert "regulation_description" not in insp
+
+
+@pytest.mark.parametrize(("state", "source"), _REGULATION_DESCRIPTION_SOURCES)
+def test_regulation_description_does_not_overwrite_existing(state, source):
+    insp = norm.normalize_inspection({source: _RULE_TEXT, "regulation_description": "Preset"}, state)
+    assert insp["regulation_description"] == "Preset"
+
+
+def test_regulation_description_keeps_case_and_long_text():
+    text = "A CHILD CARE CENTER SHALL ENSURE THAT children are supervised at all times."
+    insp = norm.normalize_inspection({"wv_non_compliance_code": text}, "west_virginia")
+    assert insp["regulation_description"] == text

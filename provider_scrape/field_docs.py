@@ -409,6 +409,13 @@ FIELD_DOCS = {
     "Labels are state-specific and not a canonical vocabulary, so values cannot be compared across states "
     "without mapping them. `type` is unchanged. Blank and placeholder values (`N/A`) count as unset. Source "
     "fields are kept.",
+    "regulation_description": "Inspection field: the text or summary of the rule cited on the row, trimmed and "
+    "otherwise kept verbatim (blanks and `N/A`-style sentinels -> unset). IN copies `in_rule_description`, WI "
+    "copies `wi_rule_summary` and WV copies `wv_non_compliance_code`. Granularity differs: WI is a short rule "
+    "title (`Supervision Of Children`) and only on Violation rows; IN is mostly full rule text with some short "
+    "titles; WV is full rule text despite the source field's name. Pairs with `regulation_cited` (IN and WI also "
+    "publish a code there; WV has no code). The wording is state-specific and not comparable across states. "
+    "Source fields are kept.",
     "finding_text": "Inspection field: the inspector's narrative of what was found, trimmed and otherwise kept "
     "verbatim (no re-casing or truncation). MD copies `md_finding`, IN copies `in_noncompliance`, WI copies "
     "`wi_description`, AZ copies `az_decision_correction`, OK joins the entries of `ok_noncompliances` with a "
