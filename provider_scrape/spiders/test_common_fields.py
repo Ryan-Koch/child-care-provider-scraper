@@ -167,7 +167,7 @@ def test_inspection_collapse_map_defaults_to_noop():
 # Round-1 regression: byte-identical collapse behaviour
 # --------------------------------------------------------------------------- #
 # Frozen copy of the original collapse implementation and map (sources only). Fields
-# whose collapse later gained transforms or sources (accreditation) are tested
+# whose collapse later gained transforms or sources (accreditation, curriculum) are tested
 # on their own below.
 _LEGACY_MAP = {
     "license_type": [
@@ -186,7 +186,6 @@ _LEGACY_MAP = {
         "co_head_start", "az_headstart", "wa_head_start", "ri_head_start", "fl_is_head_start",
         "ct_head_start", "nh_head_start",
     ],
-    "curriculum": ["ga_curriculum", "nj_curriculum"],
 }  # fmt: skip
 
 
@@ -5863,6 +5862,101 @@ def test_faith_based_never_overwrites_existing_value():
     assert value is False
     value, _ = _faith("florida", fl_is_faith_based=True, faith_based=False)
     assert value is False
+
+
+def test_faith_based_id_faith_based_entry():
+    for raw in (
+        "Faith Based",
+        "Creative Curriculum, Faith Based, Creative Curriculum",
+        " faith based ",
+        ["Montessori", "Faith Based"],
+    ):
+        value, item = _faith("idaho", id_program_philosophy=raw)
+        assert value is True
+        assert item["id_program_philosophy"]  # source kept
+    for raw in ("Creative Curriculum, Other", "Faith Basedness", "Religious", "", None):
+        value, _ = _faith("idaho", id_program_philosophy=raw)
+        assert value is None  # true-only, never False
+
+
+def test_faith_based_id_never_overwrites_existing_value():
+    value, _ = _faith("idaho", id_program_philosophy="Faith Based", faith_based=False)
+    assert value is False
+
+
+# --------------------------------------------------------------------------- #
+# curriculum: GA/NJ copied, ID/WI allow-list
+# --------------------------------------------------------------------------- #
+def _curriculum(state, **fields):
+    item = norm.normalize_item(dict(fields), state)
+    return item.get("curriculum"), item
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("Montessori", "Montessori"),
+        ("Creative Curriculum, Faith Based, Creative Curriculum", "Creative Curriculum"),
+        ("Montessori, Creative Curriculum, Montessori", "Montessori; Creative Curriculum"),
+        ("Waldorf,Montessori,High Scope,Reggio Emilio", "Waldorf; Montessori; HighScope; Reggio Emilia"),
+        ("Reggio Emilio", "Reggio Emilia"),
+        ("Reggio Emilia, Reggio Emilio", "Reggio Emilia"),
+        ("high scope", "HighScope"),
+        ("MONTESSORI", "Montessori"),
+        ("Montessori School", None),  # whole entry must match
+        ("Other, Faith Based, No Philosophy Curriculum, Parent Co-Op", None),
+        ("Cognitive Based Philosophy", None),
+        ("", None),
+        (None, None),
+    ],
+)
+def test_curriculum_id_allow_list(raw, expected):
+    value, item = _curriculum("idaho", id_program_philosophy=raw)
+    assert value == expected
+    assert item["id_program_philosophy"] == raw or raw in ("", None)  # source kept
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("Montessori", "Montessori"),
+        ("Cognitive Based Philosophy Montessori Reggio Emilia", "Montessori; Reggio Emilia"),
+        ("Reggio Emilia Cognitive Based Philosophy Parent Co-Op Religious Waldorf", "Reggio Emilia; Waldorf"),
+        ("High Scope Creative Curriculum Montessori Montessori", "HighScope; Creative Curriculum; Montessori"),
+        ("Cognitive Based Philosophy", None),
+        ("Parent Co-Op", None),
+        ("Religious", None),
+        ("None Reported.", None),
+        ("Other No Philosophy Curriculum", None),
+        ("Nonmontessori", None),
+        (["Cognitive Based Philosophy", "Waldorf"], "Waldorf"),
+        ("", None),
+        (None, None),
+    ],
+)
+def test_curriculum_wi_allow_list(raw, expected):
+    value, item = _curriculum("wisconsin", wi_program_philosophy=raw)
+    assert value == expected
+    assert item["wi_program_philosophy"] == raw or raw in ("", None)  # source kept
+
+
+@pytest.mark.parametrize(("state", "field"), [("georgia", "ga_curriculum"), ("new_jersey", "nj_curriculum")])
+def test_curriculum_ga_nj_free_text_unchanged(state, field):
+    raw = "High Scope, Highscope; Other (our own)"
+    value, _ = _curriculum(state, **{field: raw})
+    assert value == raw
+
+
+def test_curriculum_multiple_populated_sources_still_unset():
+    value, _ = _curriculum("new_jersey", nj_curriculum="Montessori", id_program_philosophy="Waldorf")
+    assert value is None
+
+
+def test_curriculum_never_overwrites_existing_value():
+    value, _ = _curriculum("idaho", id_program_philosophy="Montessori", curriculum="Own")
+    assert value == "Own"
+    value, _ = _curriculum("wisconsin", wi_program_philosophy="Montessori", curriculum="Own")
+    assert value == "Own"
 
 
 # --------------------------------------------------------------------------- #

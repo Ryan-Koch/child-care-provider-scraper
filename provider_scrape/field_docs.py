@@ -119,9 +119,10 @@ FIELD_DOCS = {
     "faith_based": "Whether the provider is faith-based or offers religious programming (bool). The meaning of "
     "True differs by state: FL is a faith-based operator (`fl_is_faith_based`), VT offers religious activity "
     "(`vt_religious_activity`), WI lists a religious philosophy (the whole word `Religious` in "
-    "`wi_program_philosophy`), VA is a religious-exempt center (`provider_type` `Religious Exempt Child Day "
+    "`wi_program_philosophy`), ID lists a faith-based philosophy (the comma-separated entry `Faith Based` in "
+    "`id_program_philosophy`), VA is a religious-exempt center (`provider_type` `Religious Exempt Child Day "
     "Center`) and IN is a registered ministry (`provider_type` `Unlicensed Registered Ministry`). Only FL and VT "
-    "can emit False (their source says no); WI, VA and IN are true-only, so any other value leaves it unset, "
+    "can emit False (their source says no); WI, ID, VA and IN are true-only, so any other value leaves it unset, "
     "never False. Blank VT is unset.",
     "accepts_diapered_children": "Whether the provider takes children who are not toilet-trained (bool; True = "
     "diapered children accepted). NM has inverted polarity: `nm_potty_training` `Not Required` -> True and "
@@ -144,7 +145,14 @@ FIELD_DOCS = {
     "False.",
     "phone_suppressed": "True = the state deliberately withheld the phone number. FL inverted from displayPhoneOnWeb; "
     "NY `Y` -> True, blank -> False; MA's single contact-redacted flag feeds this too.",
-    "curriculum": "Curriculum, collapsed from a single populated state source (VPK-specific curriculum is excluded).",
+    "curriculum": "Curriculum. GA and NJ free text is copied as published (spellings vary). ID "
+    "(`id_program_philosophy`, comma-joined) and WI (`wi_program_philosophy`, space-joined) mix curricula with "
+    "other values, so only a fixed allow-list is kept, under canonical names joined with '; ' (de-duplicated, "
+    "source order): Creative Curriculum, Montessori, HighScope (`High Scope`), Reggio Emilia (also the ID typo "
+    "`Reggio Emilio`) and Waldorf. Excluded as not a curriculum: `Cognitive Based Philosophy`, `Parent Co-Op`, "
+    "`Religious`, `Faith Based` (these feed `faith_based`), `Other`, `No Philosophy Curriculum`, "
+    "`None Reported.`; a record with none of the allow-listed names leaves it unset. VPK-specific curriculum "
+    "is excluded.",
     # Pass-through common fields (whitespace cleanup only)
     "phone": "Contact phone number (whitespace-cleaned only).",
     "phone_extension": "Extension that goes with `phone`, digits only, kept as a string (leading zeros survive). NJ, "

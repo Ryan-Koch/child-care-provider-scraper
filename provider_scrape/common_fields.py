@@ -2022,6 +2022,73 @@ def north_dakota_special_needs(record):
 
 
 # --------------------------------------------------------------------------- #
+# Program philosophy -> curriculum (ID, WI)
+# --------------------------------------------------------------------------- #
+# ID and WI publish a "program philosophy" checklist that mixes curricula with other values
+# (`Cognitive Based Philosophy`, `Parent Co-Op`, `Religious`, `Faith Based`, `Other`,
+# `No Philosophy Curriculum`, `None Reported.`). Only a fixed allow-list of curriculum names is
+# kept, emitted under one canonical spelling; everything else contributes nothing. Keys are the
+# lowercased source names (`Reggio Emilio` is an ID typo for `Reggio Emilia`).
+CURRICULUM_ALLOW_LIST = {
+    "creative curriculum": "Creative Curriculum",
+    "montessori": "Montessori",
+    "high scope": "HighScope",
+    "reggio emilio": "Reggio Emilia",
+    "reggio emilia": "Reggio Emilia",
+    "waldorf": "Waldorf",
+}
+CURRICULUM_JOIN = "; "
+# WI joins names with a space and no delimiter, so the allow-list names are found by
+# whole-phrase matching; spaces inside a name match any run of whitespace.
+CURRICULUM_NAME_PATTERN = re.compile(
+    r"\b(?:" + "|".join(name.replace(" ", r"\s+") for name in CURRICULUM_ALLOW_LIST) + r")\b",
+    re.IGNORECASE,
+)
+# ID lists the faith-based philosophy as one comma-separated entry.
+FAITH_BASED_PHILOSOPHY = "faith based"
+
+
+def _philosophy_texts(value):
+    """Source text pieces: a string, or the elements of a list (None/blank dropped)."""
+    items = value if isinstance(value, (list, tuple)) else [value]
+    return [item for item in items if isinstance(item, str) and item.strip()]
+
+
+def _join_curriculum(names):
+    """De-duplicate canonical names keeping first-seen order; ``None`` when empty."""
+    unique = list(dict.fromkeys(names))
+    return CURRICULUM_JOIN.join(unique) if unique else None
+
+
+def id_curriculum(value):
+    """ID `id_program_philosophy` (comma-joined, repeats) -> allow-listed curricula joined '; '."""
+    names = []
+    for text in _philosophy_texts(value):
+        for part in text.split(","):
+            canonical = CURRICULUM_ALLOW_LIST.get(" ".join(part.lower().split()))
+            if canonical:
+                names.append(canonical)
+    return _join_curriculum(names)
+
+
+def wi_curriculum(value):
+    """WI `wi_program_philosophy` (space-joined, no delimiter) -> allow-listed curricula joined '; '."""
+    names = []
+    for text in _philosophy_texts(value):
+        for match in CURRICULUM_NAME_PATTERN.finditer(text):
+            names.append(CURRICULUM_ALLOW_LIST[" ".join(match.group(0).lower().split())])
+    return _join_curriculum(names)
+
+
+def id_faith_based(value):
+    """ID `id_program_philosophy` listing `Faith Based` -> True; otherwise unset (never False)."""
+    for text in _philosophy_texts(value):
+        if any(" ".join(part.lower().split()) == FAITH_BASED_PHILOSOPHY for part in text.split(",")):
+            return True
+    return None
+
+
+# --------------------------------------------------------------------------- #
 # USDA food program (CACFP)
 # --------------------------------------------------------------------------- #
 # One shared, case-insensitive phrase for every list/text source: DE

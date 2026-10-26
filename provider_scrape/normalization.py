@@ -37,6 +37,8 @@ from provider_scrape.common_fields import (
     food_program_token,
     has_list_token,
     has_token,
+    id_curriculum,
+    id_faith_based,
     invert,
     is_present,
     last_first_name,
@@ -56,6 +58,7 @@ from provider_scrape.common_fields import (
     to_iso_date,
     vocab,
     vt_year_round,
+    wi_curriculum,
     wi_total_vacancies,
     wi_vacancies_updated_date,
 )
@@ -1251,11 +1254,13 @@ FIELD_COLLAPSE_MAP = {
         ("wy_services", food_program_token),
     ],
     # FL/VT are bool and Yes/No sources (False is real; blank -> unset). WI lists philosophy names in one
-    # space-joined string: the whole word `Religious` -> True, otherwise unset (never False). VA/IN read
+    # space-joined string: the whole word `Religious` -> True, otherwise unset (never False). ID lists
+    # `Faith Based` as one comma-separated entry (true-only too). VA/IN read
     # the common `provider_type` and are state-scoped adapters in common_fields.py.
     "faith_based": [
         ("fl_is_faith_based", to_bool),
         ("vt_religious_activity", to_bool),
+        ("id_program_philosophy", id_faith_based),
         ("wi_program_philosophy", has_token(r"\bReligious\b")),
     ],
     # NM `nm_potty_training` is inverted: `Not Required` -> True, `Required` -> False (explicit
@@ -1387,7 +1392,14 @@ FIELD_COLLAPSE_MAP = {
         ("nj_phone_extension", phone_extension_digits),
         ("ny_phone_extension", phone_extension_digits),
     ],
-    "curriculum": ["ga_curriculum", "nj_curriculum"],
+    # GA/NJ are free text copied as published. ID/WI program philosophy mixes curricula with other
+    # values, so only allow-listed names are kept (canonical spelling, joined "; "); see common_fields.py.
+    "curriculum": [
+        "ga_curriculum",
+        "nj_curriculum",
+        ("id_program_philosophy", id_curriculum),
+        ("wi_program_philosophy", wi_curriculum),
+    ],
     # Assigned licensing specialist. VA (va_inspector packs name +
     # phone) is an adapter in common_fields.py. ma_licensor is the provider-level
     # field only; the inspection-level one is the inspector field.
