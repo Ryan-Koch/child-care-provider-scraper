@@ -91,7 +91,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `temporarily_closed` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_bool) | Whether a licensed provider is temporarily not operating: bool-or-None. From ME `me_temporarily_closed` (Yes/No) and IN `in_is_temporarily_closed`; IN only ever reports True (key absent otherwise -> None, never False). NH `nh_covid_closure` and MA `ma_temporary_status` are COVID-era and not mapped. The `xx_` sources are kept; `status` is untouched. |
 | `toddler` | Whitespace cleanup | Whether the provider serves toddlers: bool-or-None. See infant. |
 | `total_vacancies` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int, wi_total_vacancies) | Total open slots the provider reports (int; `0` = full, empty = not reported). Only what the state publishes -- never summed from the per-age `vacancies_*`. IA, ID, ND, TN, UT, VT, WA, WI; WI's prose (`0 vacancies have been reported...`) is parsed for the leading count and `None Reported.` is empty. |
-| `transportation` | Whitespace cleanup; Field collapse from state-specific source | Transportation offered, collapsed from a single populated state source. |
+| `transportation` | Whitespace cleanup; Field collapse from state-specific source (transforms: has_list_token(Provides transportation)) | Whether transportation is offered; the type is mixed by state. KY/SD/WY write a bool; NH/VT/TN/LA/ND/IA/NE set a string directly; GA/CT/MA/NJ collapse a list or label text from their own source field (single populated source only). NC is True when `nc_special_features` has the `Provides transportation` entry, else unset (never False). |
 | `vacancies_infant` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots the provider reports for the infant age band (int; `0` = full, empty = not reported). Bands are each state's OWN age definitions (e.g. ND infant = 0-17 months, DC = 0-12 months, IA = 0-23 months). Not the infant age-served flag. CO, DC, IA, ME, ND, NH, VT; IA sums full-time + part-time openings. |
 | `vacancies_preschool` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots for the preschool age band (int; `0` = full, empty = not reported). State-defined band; IA sums its 3-year-old and 4-5-year-old rows. See `vacancies_infant`. |
 | `vacancies_school_age` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Open slots for the school-age band (int; `0` = full, empty = not reported). State-defined band; IA sums its before/after-school and school-age rows. See `vacancies_infant`. |
@@ -160,7 +160,7 @@ Each common field is populated from a single populated source field (additive â€
 | `source_provider_id` | `ak_facility_gen_id` (to_id_string), `az_facility_id` (to_id_string), `ct_provider_id` (to_id_string), `hi_service_id` (to_id_string), `il_provider_id` (to_id_string), `in_provider_id` (to_id_string), `ky_provider_id` (to_id_string), `la_unique_id` (to_id_string), `ma_program_number` (to_id_string), `ms_facility_id` (to_id_string), `nd_program_id` (to_id_string), `ne_resource_id` (to_id_string), `nh_account_id` (to_id_string), `nj_unique_program_id` (to_id_string), `nv_operation_id` (to_id_string), `ny_facility_id` (to_id_string), `sc_provider_id` (to_id_string), `tn_provider_id` (to_id_string), `tx_operation_id` (to_id_string), `va_ID` (to_id_string), `wa_provider_id` (to_id_string), `wi_facility_number` (to_id_string), `wy_facility_id` (to_id_string) |
 | `temporarily_closed` | `in_is_temporarily_closed` (to_bool), `me_temporarily_closed` (to_bool) |
 | `total_vacancies` | `ia_total_openings` (to_int), `id_number_of_openings` (to_int), `nd_total_vacancies` (to_int), `tn_vacancy` (to_int), `ut_vacancies` (to_int), `vt_current_vacancy` (to_int), `wa_available_slots` (to_int), `wi_vacancies` (wi_total_vacancies) |
-| `transportation` | `ct_transportation`, `ga_transportation`, `nj_transportation_labels` |
+| `transportation` | `ct_transportation`, `ga_transportation`, `nc_special_features` (has_list_token(Provides transportation)), `nj_transportation_labels` |
 | `vacancies_infant` | `co_infant_openings` (to_int), `me_infant_slots` (to_int), `nh_infant_openings` (to_int), `vt_infant_vacancies` (to_int) |
 | `vacancies_preschool` | `co_preschool_openings` (to_int), `me_preschool_slots` (to_int), `nh_preschool_openings` (to_int), `vt_preschool_vacancies` (to_int) |
 | `vacancies_school_age` | `co_school_age_openings` (to_int), `me_school_age_slots` (to_int), `nh_school_age_openings` (to_int), `vt_school_age_vacancies` (to_int) |
@@ -856,7 +856,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `nc_sanitation_classification` -> pass-through
 - `nc_sanitation_inspection_date` -> pass-through
 - `nc_sanitation_score` -> pass-through
-- `nc_special_features` -> collapses into `serves_special_needs` (via has_list_token(Will enroll children with special needs))
+- `nc_special_features` -> collapses into `transportation` (via has_list_token(Provides transportation))
 - `nc_staff_child_ratios` -> pass-through
 - `nc_star_rating_max_points` -> pass-through
 - `nc_star_rating_total_points` -> pass-through

@@ -1302,8 +1302,12 @@ FIELD_COLLAPSE_MAP = {
         "ga_accepting_new_children",
         "ct_accepting_referrals",
     ],
-    # bug_07: nj_transportation renamed to resolved nj_transportation_labels.
-    "transportation": ["ga_transportation", "nj_transportation_labels", "ct_transportation"],
+    "transportation": [
+        "ga_transportation",
+        "nj_transportation_labels",
+        "ct_transportation",
+        ("nc_special_features", has_list_token("Provides transportation")),
+    ],
     # Every head_start source is coerced to a boolean.
     "head_start": [
         (source, _coerce_bool)

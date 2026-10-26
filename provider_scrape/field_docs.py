@@ -102,7 +102,10 @@ FIELD_DOCS = {
     "MD/NH string, CT/ID list of names, HI list of dicts).",
     "meals": "Meals / food program, collapsed from a single populated state source.",
     "accepting_new_children": "Whether the provider is accepting new children, collapsed from a single state source.",
-    "transportation": "Transportation offered, collapsed from a single populated state source.",
+    "transportation": "Whether transportation is offered; the type is mixed by state. KY/SD/WY write a bool; "
+    "NH/VT/TN/LA/ND/IA/NE set a string directly; GA/CT/MA/NJ collapse a list or label text from their own "
+    "source field (single populated source only). NC is True when `nc_special_features` has the "
+    "`Provides transportation` entry, else unset (never False).",
     "head_start": "Head Start participation, collapsed from a single state source and coerced to a boolean.",
     "early_head_start": "Early Head Start participation (federal infant/toddler program), coerced to a boolean. "
     "MS, NH, WA. Distinct from `head_start`: EHS sources never feed it.",

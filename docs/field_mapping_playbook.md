@@ -108,7 +108,7 @@ maintained in `items.py`; this table is the human-readable gloss.
 | `accreditation` | Accreditation(s) | String/list (collapsed) |
 | `meals` | Meals / food program | String (collapsed) |
 | `accepting_new_children` | Open enrollment flag | As emitted (collapsed) |
-| `transportation` | Transportation offered | String (collapsed) |
+| `transportation` | Transportation offered | Mixed: bool (KY/SD/WY; NC `True` on the `Provides transportation` token, else unset), string/list/label text elsewhere |
 | `head_start` | Head Start program | **Boolean** (collapsed + coerced) |
 | `early_head_start` | Early Head Start program (separate from `head_start`) | **Boolean** (collapsed MS/NH/WA, coerced via `_coerce_bool`) |
 | `wheelchair_accessible` | Wheelchair-accessible facility | **Boolean** (collapsed CT/TN via `_coerce_bool`; NH from `nh_environment` token, absent -> None not False) |

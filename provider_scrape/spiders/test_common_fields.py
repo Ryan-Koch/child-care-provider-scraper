@@ -182,7 +182,6 @@ _LEGACY_MAP = {
     "mailing_address": ["al_mailing_address", "ga_mailing_address", "hi_mailing_address"],
     "meals": ["ut_meals", "ga_meals", "hi_meals", "nm_meals", "nj_meal_options_labels", "pa_meal_options"],
     "accepting_new_children": ["co_accepting_new_children", "ga_accepting_new_children", "ct_accepting_referrals"],
-    "transportation": ["ga_transportation", "nj_transportation_labels", "ct_transportation"],
     "head_start": [
         "co_head_start", "az_headstart", "wa_head_start", "ri_head_start", "fl_is_head_start",
         "ct_head_start", "nh_head_start",
@@ -2583,6 +2582,36 @@ def test_special_needs_north_carolina_token_absent_is_unset(raw):
     item = norm.normalize_item({"nc_special_features": raw}, "north_carolina")
     assert "serves_special_needs" not in item
     assert "special_needs_types" not in item
+
+
+# --------------------------------------------------------------------------- #
+# transportation
+# --------------------------------------------------------------------------- #
+def test_transportation_north_carolina_token():
+    features = ["Provides transportation", "Will enroll children with special needs"]
+    item = norm.normalize_item({"nc_special_features": list(features)}, "north_carolina")
+    assert item["transportation"] is True
+    assert item["nc_special_features"] == features  # additive: source kept
+
+
+@pytest.mark.parametrize(
+    "raw", [["Will enroll children with special needs"], ["Provides transportation services"], [], None]
+)
+def test_transportation_north_carolina_token_absent_is_unset(raw):
+    item = norm.normalize_item({"nc_special_features": raw}, "north_carolina")
+    assert "transportation" not in item
+
+
+def test_transportation_north_carolina_does_not_overwrite_spider_value():
+    item = norm.normalize_item(
+        {"nc_special_features": ["Provides transportation"], "transportation": "Yes"}, "north_carolina"
+    )
+    assert item["transportation"] == "Yes"
+
+
+def test_transportation_other_states_still_collapse():
+    item = norm.normalize_item({"ga_transportation": ["School Pickup"]}, "georgia")
+    assert item["transportation"] == ["School Pickup"]
 
 
 def test_special_needs_colorado_mapped_labels():
