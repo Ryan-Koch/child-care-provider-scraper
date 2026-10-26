@@ -6115,3 +6115,142 @@ def test_publicly_listed_never_overwrites_existing_value():
     assert value is False
     value, _ = _listed("delaware", de_portal_listed=True, publicly_listed=False)
     assert value is False
+
+
+# --------------------------------------------------------------------------- #
+# enforcement_type / penalty_amount (WI, KS, AZ, MS)
+# --------------------------------------------------------------------------- #
+WI_LABELS = [
+    ("Forfeiture", "fine"),
+    ("Forfeiture: $200", "fine"),
+    ("Warning Letter", "warning"),
+    ("Orders Letter", "order"),
+    ("Second Probationary License Due to Noncompliance", "probation"),
+    ("Suspension", "suspension"),
+    ("Revocation", "revocation"),
+    ("Denial", "denial"),
+]
+KS_LABELS = [
+    ("Intent to Assess Civil Fine", "fine"),
+    ("Consent Order", "order"),
+    ("Intent to Suspend", "suspension"),
+    ("Intent to Suspend & Penalty", "suspension"),
+    ("Emergency Order of Suspension", "suspension"),
+    ("Intent to Revoke", "revocation"),
+    ("Intent to Deny An Application", "denial"),
+]
+
+
+@pytest.mark.parametrize(("label", "expected"), WI_LABELS)
+def test_enforcement_type_wisconsin_labels(label, expected):
+    insp = norm.normalize_inspection({"wi_enforcement_type": label}, "wisconsin")
+    assert insp["enforcement_type"] == expected
+    assert insp["wi_enforcement_type"] == label
+
+
+@pytest.mark.parametrize(("label", "expected"), KS_LABELS)
+def test_enforcement_type_kansas_labels(label, expected):
+    insp = norm.normalize_inspection({"ks_order_type": label, "type": "Administrative Order"}, "kansas")
+    assert insp["enforcement_type"] == expected
+    assert insp["ks_order_type"] == label
+    assert insp["type"] == "Administrative Order"
+    assert "penalty_amount" not in insp
+
+
+@pytest.mark.parametrize(
+    ("state", "field", "label"),
+    [
+        ("wisconsin", "wi_enforcement_type", "  WARNING LETTER "),
+        ("kansas", "ks_order_type", "  intent to revoke\n"),
+    ],
+)
+def test_enforcement_type_case_and_whitespace_tolerant(state, field, label):
+    insp = norm.normalize_inspection({field: label}, state)
+    assert insp["enforcement_type"] == ("warning" if state == "wisconsin" else "revocation")
+
+
+@pytest.mark.parametrize(("state", "field"), [("wisconsin", "wi_enforcement_type"), ("kansas", "ks_order_type")])
+def test_enforcement_type_unknown_label_logged_and_unset(state, field, caplog):
+    with caplog.at_level(logging.WARNING):
+        insp = norm.normalize_inspection({field: "Mystery Action"}, state)
+    assert "enforcement_type" not in insp
+    assert "Mystery Action" in caplog.text
+
+
+@pytest.mark.parametrize(("state", "field"), [("wisconsin", "wi_enforcement_type"), ("kansas", "ks_order_type")])
+def test_enforcement_type_no_source_value_unset(state, field):
+    assert "enforcement_type" not in norm.normalize_inspection({}, state)
+    assert "enforcement_type" not in norm.normalize_inspection({field: None}, state)
+    assert "enforcement_type" not in norm.normalize_inspection({field: ""}, state)
+
+
+@pytest.mark.parametrize(("raw", "expected"), [(100.0, 100.0), ("250.50", 250.5), (5, 5.0), ("$1,000", 1000.0)])
+def test_enforcement_arizona_positive_penalty_is_fine(raw, expected):
+    insp = norm.normalize_inspection({"az_civil_penalty": raw, "type": "Enforcement"}, "arizona")
+    assert insp["enforcement_type"] == "fine"
+    assert insp["penalty_amount"] == expected
+    assert insp["az_civil_penalty"] == raw
+    assert insp["type"] == "Enforcement"
+
+
+@pytest.mark.parametrize("raw", [0, 0.0, "0", "0.0", "", None])
+def test_enforcement_arizona_zero_or_blank_unset(raw):
+    insp = norm.normalize_inspection({"az_civil_penalty": raw}, "arizona")
+    assert "enforcement_type" not in insp
+    assert "penalty_amount" not in insp
+
+
+def test_enforcement_mississippi_monetary_penalty_is_fine_without_amount():
+    insp = norm.normalize_inspection({"type": "Monetary Penalty"}, "mississippi")
+    assert insp["enforcement_type"] == "fine"
+    assert "penalty_amount" not in insp
+    assert insp["type"] == "Monetary Penalty"
+
+
+@pytest.mark.parametrize("type_", ["Investigation", "Site Visit", "", None])
+def test_enforcement_mississippi_other_types_unset(type_):
+    insp = norm.normalize_inspection({"type": type_}, "mississippi")
+    assert "enforcement_type" not in insp
+
+
+@pytest.mark.parametrize("state", ["ohio", "kansas", "wisconsin", "arizona", "maryland"])
+def test_enforcement_monetary_penalty_type_ignored_outside_mississippi(state):
+    insp = norm.normalize_inspection({"type": "Monetary Penalty"}, state)
+    assert "enforcement_type" not in insp
+
+
+@pytest.mark.parametrize(
+    ("label", "amount"),
+    [
+        ("Forfeiture: $200", 200.0),
+        ("Forfeiture: $1,000", 1000.0),
+        ("Forfeiture: $12.50", 12.5),
+        ("forfeiture:$75", 75.0),
+    ],
+)
+def test_penalty_amount_wisconsin_parsed(label, amount):
+    insp = norm.normalize_inspection({"wi_enforcement_type": label}, "wisconsin")
+    assert insp["enforcement_type"] == "fine"
+    assert insp["penalty_amount"] == amount
+
+
+@pytest.mark.parametrize("label", ["Forfeiture", "Warning Letter", "Suspension"])
+def test_penalty_amount_wisconsin_unset_without_amount_or_fine(label):
+    insp = norm.normalize_inspection({"wi_enforcement_type": label}, "wisconsin")
+    assert "penalty_amount" not in insp
+
+
+def test_penalty_amount_never_set_for_kansas_or_mississippi():
+    ks = norm.normalize_inspection({"ks_order_type": "Intent to Assess Civil Fine"}, "kansas")
+    ms = norm.normalize_inspection({"type": "Monetary Penalty", "az_civil_penalty": 50.0}, "mississippi")
+    assert "penalty_amount" not in ks
+    assert "penalty_amount" not in ms
+
+
+def test_enforcement_never_overwrites_existing_values():
+    insp = norm.normalize_inspection(
+        {"wi_enforcement_type": "Forfeiture: $200", "enforcement_type": "warning", "penalty_amount": 5.0},
+        "wisconsin",
+    )
+    assert insp["enforcement_type"] == "warning"
+    assert insp["penalty_amount"] == 5.0

@@ -25,6 +25,9 @@ class InspectionItem(scrapy.Item):
     licensing_period_start = scrapy.Field()  # ISO start of the license term stamped on the visit (HI, ME)
     licensing_period_end = scrapy.Field()  # ISO end of that term; both unset when end < start
     visit_reason = scrapy.Field()  # purpose of the visit, state's own label (MA, OK, KS); MA/OK fall back to type
+    # formal enforcement action: fine/warning/order/probation/suspension/revocation/denial (WI, KS, AZ, MS)
+    enforcement_type = scrapy.Field()
+    penalty_amount = scrapy.Field()  # float dollar amount of a fine (AZ; WI when `Forfeiture: $N`)
     finding_text = scrapy.Field()  # inspector's narrative of what was found, verbatim (MD, IN, WI, AZ, OK, DE)
     # list of {"regulation", "regulation_description", "finding_text", "category", "severity", "status",
     # "corrected_date"} rows, one per violation; absent keys omitted (CT, DE, MA, NH, MO, WY, NC, SC, OK)

@@ -1013,6 +1013,106 @@ _register_visit_reason("oklahoma", "ok_visit_purpose")
 
 
 # --------------------------------------------------------------------------- #
+# Enforcement type and penalty amount (WI, KS, AZ, MS)
+# --------------------------------------------------------------------------- #
+# Formal enforcement actions recorded as inspection rows, collapsed to a 7-value
+# vocabulary: fine, warning, order, probation, suspension, revocation, denial.
+# KS "Intent to ..." notices map to the threatened action (the exact wording
+# stays in ks_order_type); "Intent to Suspend & Penalty" -> suspension, the more
+# severe outcome. Labels are matched exactly (case-insensitive, trimmed); an
+# unrecognised WI or KS label is logged and leaves the field unset.
+WI_ENFORCEMENT_TYPES = {
+    "Forfeiture": "fine",
+    "Warning Letter": "warning",
+    "Orders Letter": "order",
+    "Second Probationary License Due to Noncompliance": "probation",
+    "Suspension": "suspension",
+    "Revocation": "revocation",
+    "Denial": "denial",
+}
+KS_ORDER_TYPES = {
+    "Intent to Assess Civil Fine": "fine",
+    "Consent Order": "order",
+    "Intent to Suspend": "suspension",
+    "Intent to Suspend & Penalty": "suspension",
+    "Emergency Order of Suspension": "suspension",
+    "Intent to Revoke": "revocation",
+    "Intent to Deny An Application": "denial",
+}
+MS_FINE_TYPE = "Monetary Penalty"  # MS `type` value of a monetary penalty row
+# `Forfeiture: $200`, `Forfeiture: $1,000`, `Forfeiture: $12.50`; the dollar sign is optional.
+_WI_FORFEITURE_RE = re.compile(r"^forfeiture\s*:\s*\$?\s*(?P<amount>\d[\d,]*(?:\.\d+)?)$", re.IGNORECASE)
+_wi_enforcement_vocab = vocab(WI_ENFORCEMENT_TYPES, "wi_enforcement_type")
+_ks_order_vocab = vocab(KS_ORDER_TYPES, "ks_order_type")
+
+
+def _enforcement_result(enforcement_type, amount=None):
+    """Build the adapter result; `penalty_amount` is only ever set for a fine."""
+    if enforcement_type is None:
+        return {}
+    result = {"enforcement_type": enforcement_type}
+    if enforcement_type == "fine" and amount is not None:
+        result["penalty_amount"] = amount
+    return result
+
+
+@register_adapter(
+    "wisconsin",
+    level=INSPECTION_LEVEL,
+    sources=["wi_enforcement_type"],
+    fills=["enforcement_type", "penalty_amount"],
+)
+def wisconsin_enforcement(record):
+    """Map `wi_enforcement_type` to the enforcement vocabulary; parse the `Forfeiture: $N` amount."""
+    raw = record.get("wi_enforcement_type")
+    if not isinstance(raw, str):
+        return {}
+    match = _WI_FORFEITURE_RE.match(raw.strip())
+    if match:
+        return _enforcement_result("fine", to_float(match.group("amount")))
+    return _enforcement_result(_wi_enforcement_vocab(raw))
+
+
+@register_adapter(
+    "kansas",
+    level=INSPECTION_LEVEL,
+    sources=["ks_order_type"],
+    fills=["enforcement_type"],
+)
+def kansas_enforcement(record):
+    """Map `ks_order_type` ("Intent to ..." notices map to the threatened action); no amount is published."""
+    return _enforcement_result(_ks_order_vocab(record.get("ks_order_type")))
+
+
+@register_adapter(
+    "arizona",
+    level=INSPECTION_LEVEL,
+    sources=["az_civil_penalty"],
+    fills=["enforcement_type", "penalty_amount"],
+)
+def arizona_enforcement(record):
+    """A positive `az_civil_penalty` is a fine and its amount; 0.0 and blank are unset."""
+    amount = to_float(record.get("az_civil_penalty"))
+    if amount is None or amount <= 0:
+        return {}
+    return _enforcement_result("fine", amount)
+
+
+@register_adapter(
+    "mississippi",
+    level=INSPECTION_LEVEL,
+    sources=["type"],
+    fills=["enforcement_type"],
+)
+def mississippi_enforcement(record):
+    """MS `type` == `Monetary Penalty` is a fine (no amount published); state-scoped, reads the common `type`."""
+    raw = record.get("type")
+    if isinstance(raw, str) and raw.strip().lower() == MS_FINE_TYPE.lower():
+        return _enforcement_result("fine")
+    return {}
+
+
+# --------------------------------------------------------------------------- #
 # Structured violations (CT, DE, MA, NH, MO, WY, NC, SC, OK)
 # --------------------------------------------------------------------------- #
 # One canonical row per violation, keys in this order. Each state maps its own

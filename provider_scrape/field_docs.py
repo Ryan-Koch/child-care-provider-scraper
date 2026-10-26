@@ -451,6 +451,23 @@ FIELD_DOCS = {
     "Labels are state-specific and not a canonical vocabulary, so values cannot be compared across states "
     "without mapping them. `type` is unchanged. Blank and placeholder values (`N/A`) count as unset. Source "
     "fields are kept.",
+    "enforcement_type": "Inspection field: the kind of formal enforcement action the row records, one of `fine`, "
+    "`warning`, `order`, `probation`, `suspension`, `revocation`, `denial`. Labels are matched exactly, "
+    "case-insensitively after a whitespace trim. WI maps `wi_enforcement_type`: `Forfeiture` and `Forfeiture: $N` "
+    "-> `fine`, `Warning Letter` -> `warning`, `Orders Letter` -> `order`, `Second Probationary License Due to "
+    "Noncompliance` -> `probation`, `Suspension`, `Revocation` and `Denial` to the same-named value. KS maps "
+    "`ks_order_type`: `Intent to Assess Civil Fine` -> `fine`, `Consent Order` -> `order`, `Intent to Suspend`, "
+    "`Intent to Suspend & Penalty` and `Emergency Order of Suspension` -> `suspension`, `Intent to Revoke` -> "
+    '`revocation`, `Intent to Deny An Application` -> `denial`. KS "Intent to..." notices are mapped to the '
+    "threatened action (the exact wording stays in `ks_order_type`), and `Intent to Suspend & Penalty` is "
+    "`suspension` as the more severe outcome. AZ is `fine` when `az_civil_penalty` is greater than 0; `0.0` and "
+    "blank are unset. MS is `fine` when the common `type` is `Monetary Penalty` (a state-scoped rule that never "
+    "applies to another state). An unrecognised WI or KS label is logged and leaves the field unset, as do rows "
+    "with no source value. Pairs with the provider-level `enforcement_action`. Source fields and `type` are kept.",
+    "penalty_amount": "Inspection field: the dollar amount of a fine, as a float, set only when `enforcement_type` "
+    "is `fine`. AZ copies `az_civil_penalty` when greater than 0; WI parses the amount out of `Forfeiture: $N` "
+    "(`$200` -> `200.0`, `$1,000` -> `1000.0`, decimals kept). Unset for a bare WI `Forfeiture`, and never set for "
+    "KS or MS, which publish no amount. Pairs with `enforcement_type`. Source fields are kept.",
     "regulation_description": "Inspection field: the text or summary of the rule cited on the row, trimmed and "
     "otherwise kept verbatim (blanks and `N/A`-style sentinels -> unset). IN copies `in_rule_description`, WI "
     "copies `wi_rule_summary` and WV copies `wv_non_compliance_code`. Granularity differs: WI is a short rule "
