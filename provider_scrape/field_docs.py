@@ -123,6 +123,12 @@ FIELD_DOCS = {
     "Center`) and IN is a registered ministry (`provider_type` `Unlicensed Registered Ministry`). Only FL and VT "
     "can emit False (their source says no); WI, VA and IN are true-only, so any other value leaves it unset, "
     "never False. Blank VT is unset.",
+    "accepts_diapered_children": "Whether the provider takes children who are not toilet-trained (bool; True = "
+    "diapered children accepted). NM has inverted polarity: `nm_potty_training` `Not Required` -> True and "
+    "`Required` -> False (explicit case-insensitive whole-value match after trimming). HI copies the API bool "
+    "`hi_diapered_children_accepted` as-is, so False is a real answer. Blank, missing or unrecognised values "
+    "leave it unset, which means unknown. NC `Provides Diapers and Wipes` is not mapped: supplying diapers is "
+    "not acceptance.",
     "early_head_start": "Early Head Start participation (federal infant/toddler program), coerced to a boolean. "
     "MS, NH, WA. Distinct from `head_start`: EHS sources never feed it.",
     "wheelchair_accessible": "Whether the facility is wheelchair accessible (True/False/None). CT bool, TN Yes/No; NH "

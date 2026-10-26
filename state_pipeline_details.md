@@ -13,6 +13,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | Field | Transformation | Explanation |
 |---|---|---|
 | `accepting_new_children` | Whitespace cleanup; Field collapse from state-specific source | Whether the provider is accepting new children, collapsed from a single state source. |
+| `accepts_diapered_children` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_bool, vocab(nm_potty_training)) | Whether the provider takes children who are not toilet-trained (bool; True = diapered children accepted). NM has inverted polarity: `nm_potty_training` `Not Required` -> True and `Required` -> False (explicit case-insensitive whole-value match after trimming). HI copies the API bool `hi_diapered_children_accepted` as-is, so False is a real answer. Blank, missing or unrecognised values leave it unset, which means unknown. NC `Provides Diapers and Wipes` is not mapped: supplying diapers is not acceptance. |
 | `accreditation` | Whitespace cleanup; Field collapse from state-specific source (transforms: accreditation_list, accreditation_value) | Accreditation(s), collapsed from a single populated state source. Negative answers ('NA', 'No', 'None', 'Not Accredited', 'NOT Nationally Accredited') are dropped, including Maryland's literal 'NA'. Idaho's ', '-joined string becomes a de-duplicated list and New Hampshire's text is added. Kentucky is excluded: its ky_accreditation_available is a bare bool with no accreditor names. Shapes still differ by source (GA '\|'-joined string, MD/NH string, CT/ID list of names, HI list of dicts). |
 | `address` | Whitespace cleanup; Address cleanup; Component parse -> city/state/zip | Full street address; whitespace-cleaned, trailing country (", United States"/", USA") stripped, comma spacing normalized. |
 | `address_suppressed` | Whitespace cleanup; Field collapse from state-specific source (transforms: invert, to_bool) | True = the state deliberately withheld the street address (typically family homes), so a blank address is not a data gap. CT, KS, MA bools; FL inverted from displayAddressOnWeb; NY `Y` -> True, blank -> False. |
@@ -128,6 +129,7 @@ Each common field is populated from a single populated source field (additive â€
 | Common field | Source state-specific fields |
 |---|---|
 | `accepting_new_children` | `co_accepting_new_children`, `ct_accepting_referrals`, `ga_accepting_new_children` |
+| `accepts_diapered_children` | `hi_diapered_children_accepted` (to_bool), `nm_potty_training` (vocab(nm_potty_training)) |
 | `accreditation` | `al_accreditations` (accreditation_value), `ct_accreditations` (accreditation_value), `ga_accreditation` (accreditation_value), `hi_accreditations` (accreditation_value), `id_national_accreditation` (accreditation_list), `md_accreditation` (accreditation_value), `nh_accreditation` (accreditation_value), `nj_accreditation_labels` (accreditation_value) |
 | `address_suppressed` | `ct_address_suppressed` (to_bool), `fl_display_address_on_web` (invert), `ks_address_suppressed` (to_bool), `ma_contact_redacted` (to_bool) |
 | `building_type` | `ia_business_type` (vocab(ia_business_type)), `vt_building_type` (vocab(vt_building_type)) |
@@ -605,7 +607,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `hi_accreditations` -> collapses into `accreditation` (via accreditation_value)
 - `hi_area_code` -> pass-through
 - `hi_demonstration_project` -> pass-through
-- `hi_diapered_children_accepted` -> pass-through
+- `hi_diapered_children_accepted` -> collapses into `accepts_diapered_children` (via to_bool)
 - `hi_island` -> pass-through
 - `hi_license_history` -> feeds adapter, fills `license_history`
 - `hi_license_type` -> collapses into `license_type`
@@ -1014,7 +1016,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 
 - `nm_meals` -> collapses into `meals`
 - `nm_pay_schedules` -> pass-through
-- `nm_potty_training` -> pass-through
+- `nm_potty_training` -> collapses into `accepts_diapered_children` (via vocab(nm_potty_training))
 - `nm_schedule` -> pass-through
 - `nm_snacks` -> pass-through
 - `nm_star_level` -> pass-through

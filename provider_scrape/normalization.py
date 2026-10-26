@@ -44,6 +44,7 @@ from provider_scrape.common_fields import (
     lower_email,
     md_finding_flag,
     nd_year_round,
+    nm_accepts_diapered,
     none_if_sentinel,
     person_name,
     phone_extension_digits,
@@ -1256,6 +1257,12 @@ FIELD_COLLAPSE_MAP = {
         ("fl_is_faith_based", to_bool),
         ("vt_religious_activity", to_bool),
         ("wi_program_philosophy", has_token(r"\bReligious\b")),
+    ],
+    # NM `nm_potty_training` is inverted: `Not Required` -> True, `Required` -> False (explicit
+    # whole-value lookup). HI is an API bool copied as-is (False is real). Unset means unknown.
+    "accepts_diapered_children": [
+        ("nm_potty_training", nm_accepts_diapered),
+        ("hi_diapered_children_accepted", to_bool),
     ],
     "license_type": [
         "va_license_type",

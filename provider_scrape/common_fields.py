@@ -1750,7 +1750,14 @@ VT_YEAR_ROUND_LABELS = {
     "summer only": False,
     "in-service days": None,
 }
+# NM potty-training requirement -> accepts_diapered_children (inverted polarity).
+# Whole-value lookup, so `Not Required` can never be read as `Required`.
+NM_POTTY_TRAINING_LABELS = {
+    "not required": True,
+    "required": False,
+}
 nd_year_round = vocab(ND_YEAR_ROUND_LABELS, name="nd_year_round")
+nm_accepts_diapered = vocab(NM_POTTY_TRAINING_LABELS, name="nm_potty_training")
 vt_year_round = vocab(VT_YEAR_ROUND_LABELS, name="vt_year_round")
 _sd_year_round_label = vocab(SD_YEAR_ROUND_LABELS, name="sd_year_round")
 

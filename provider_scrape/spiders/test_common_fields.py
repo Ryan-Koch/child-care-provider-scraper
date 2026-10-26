@@ -5863,3 +5863,67 @@ def test_faith_based_never_overwrites_existing_value():
     assert value is False
     value, _ = _faith("florida", fl_is_faith_based=True, faith_based=False)
     assert value is False
+
+
+# --------------------------------------------------------------------------- #
+# accepts_diapered_children
+# --------------------------------------------------------------------------- #
+def _diapers(state, **fields):
+    item = norm.normalize_item(dict(fields), state)
+    return item.get("accepts_diapered_children"), item
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("Not Required", True),
+        ("Required", False),
+        ("not required", True),
+        ("REQUIRED", False),
+        ("NOT REQUIRED", True),
+        ("  Not Required  ", True),
+        ("\tRequired\n", False),
+    ],
+)
+def test_accepts_diapered_nm_inverted_lookup(raw, expected):
+    value, item = _diapers("new_mexico", nm_potty_training=raw)
+    assert value is expected
+    assert item["nm_potty_training"] == raw.strip()  # source kept (whitespace trimmed by the pipeline)
+
+
+@pytest.mark.parametrize("raw", ["", "   ", None, "N/A", "None"])
+def test_accepts_diapered_nm_blank_is_unset(raw):
+    value, _ = _diapers("new_mexico", nm_potty_training=raw)
+    assert value is None
+
+
+def test_accepts_diapered_nm_unknown_value_logged_and_unset(caplog):
+    with caplog.at_level(logging.WARNING):
+        value, item = _diapers("new_mexico", nm_potty_training="Sometimes")
+    assert value is None
+    assert "Sometimes" in caplog.text
+    assert item["nm_potty_training"] == "Sometimes"
+
+
+@pytest.mark.parametrize(("raw", "expected"), [(True, True), (False, False)])
+def test_accepts_diapered_hi_copies_bool(raw, expected):
+    value, item = _diapers("hawaii", hi_diapered_children_accepted=raw)
+    assert value is expected  # False is a real answer
+    assert item["hi_diapered_children_accepted"] is raw
+
+
+def test_accepts_diapered_hi_none_is_unset():
+    value, _ = _diapers("hawaii", hi_diapered_children_accepted=None)
+    assert value is None
+
+
+def test_accepts_diapered_never_overwrites_existing_value():
+    value, _ = _diapers("new_mexico", nm_potty_training="Not Required", accepts_diapered_children=False)
+    assert value is False
+    value, _ = _diapers("hawaii", hi_diapered_children_accepted=True, accepts_diapered_children=False)
+    assert value is False
+
+
+def test_accepts_diapered_nc_special_features_not_mapped():
+    value, _ = _diapers("north_carolina", nc_special_features=["Provides Diapers and Wipes"])
+    assert value is None
