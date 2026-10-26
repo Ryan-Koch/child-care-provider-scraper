@@ -3639,3 +3639,29 @@ def washington_license_history(record):
         for entry in _dict_entries(record.get("wa_license_history"), "license_history(washington)")
     ]
     return {"license_history": _license_history(rows)}
+
+
+# --------------------------------------------------------------------------- #
+# Faith-based operator, read from the common `provider_type`
+# --------------------------------------------------------------------------- #
+# `provider_type` is every state's field, so VA and IN get state-scoped adapters
+# with their own exact type. Any other type leaves `faith_based` unset (never False).
+FAITH_BASED_PROVIDER_TYPES = {
+    "virginia": "Religious Exempt Child Day Center",
+    "indiana": "Unlicensed Registered Ministry",
+}
+
+
+def _register_faith_based_from_type(state, faith_type):
+    @register_adapter(state, sources=["provider_type"], fills=["faith_based"])
+    def faith_based_from_type(record):
+        """True when `provider_type` is exactly the state's religious-exempt/ministry type; else unset."""
+        raw = record.get("provider_type")
+        return {"faith_based": True if isinstance(raw, str) and raw.strip() == faith_type else None}
+
+    faith_based_from_type.__name__ = f"{state}_faith_based_from_type"
+    return faith_based_from_type
+
+
+for _state, _faith_type in FAITH_BASED_PROVIDER_TYPES.items():
+    _register_faith_based_from_type(_state, _faith_type)

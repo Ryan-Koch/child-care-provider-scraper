@@ -36,6 +36,7 @@ from provider_scrape.common_fields import (
     finding_text_md,
     food_program_token,
     has_list_token,
+    has_token,
     invert,
     is_present,
     last_first_name,
@@ -1247,6 +1248,14 @@ FIELD_COLLAPSE_MAP = {
         ("de_financial_arrangements", food_program_token),
         ("vt_program_participation", food_program_token),
         ("wy_services", food_program_token),
+    ],
+    # FL/VT are bool and Yes/No sources (False is real; blank -> unset). WI lists philosophy names in one
+    # space-joined string: the whole word `Religious` -> True, otherwise unset (never False). VA/IN read
+    # the common `provider_type` and are state-scoped adapters in common_fields.py.
+    "faith_based": [
+        ("fl_is_faith_based", to_bool),
+        ("vt_religious_activity", to_bool),
+        ("wi_program_philosophy", has_token(r"\bReligious\b")),
     ],
     "license_type": [
         "va_license_type",

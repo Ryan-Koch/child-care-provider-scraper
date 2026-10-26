@@ -116,6 +116,13 @@ FIELD_DOCS = {
     "`Emergency order issued` (`ok_emergency_issued`). AL is excluded: every `al_adverse_actions` entry is a "
     "past corrective action. Labels are state-specific, with no shared vocabulary.",
     "head_start": "Head Start participation, collapsed from a single state source and coerced to a boolean.",
+    "faith_based": "Whether the provider is faith-based or offers religious programming (bool). The meaning of "
+    "True differs by state: FL is a faith-based operator (`fl_is_faith_based`), VT offers religious activity "
+    "(`vt_religious_activity`), WI lists a religious philosophy (the whole word `Religious` in "
+    "`wi_program_philosophy`), VA is a religious-exempt center (`provider_type` `Religious Exempt Child Day "
+    "Center`) and IN is a registered ministry (`provider_type` `Unlicensed Registered Ministry`). Only FL and VT "
+    "can emit False (their source says no); WI, VA and IN are true-only, so any other value leaves it unset, "
+    "never False. Blank VT is unset.",
     "early_head_start": "Early Head Start participation (federal infant/toddler program), coerced to a boolean. "
     "MS, NH, WA. Distinct from `head_start`: EHS sources never feed it.",
     "wheelchair_accessible": "Whether the facility is wheelchair accessible (True/False/None). CT bool, TN Yes/No; NH "

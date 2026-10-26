@@ -37,6 +37,7 @@ To regenerate: `.venv/bin/python scripts/generate_pipeline_details.py`.
 | `enforcement_action` | Whitespace cleanup | The state's own label for the enforcement action currently in force against the license; unset when there is none (never False or ''). An overlay that is independent of `status`, which stays the license standing. DE: `de_enforcement_action`, else `de_intent_to_revoke` (same precedence as status); `Revoked` is kept here even though `status` is `closed`. KY: the `process_type` of each `On-going` entry in `ky_ongoing_processes` (including `Directed Plan of Correction`), joined with '; ' without duplicates. OK: a fixed label per true flag, in this order, joined with '; ': `Revocation sent` (`ok_revocation_sent`), `Denial sent` (`ok_denial_sent`), `Emergency order issued` (`ok_emergency_issued`). AL is excluded: every `al_adverse_actions` entry is a past corrective action. Labels are state-specific, with no shared vocabulary. |
 | `environment_features` | Whitespace cleanup | Facility amenities: list of canonical tokens from a fixed list, de-duplicated, in order: smoke_free, fenced_yard, outdoor_play, air_conditioned, peanut_free, secure_entry, video_surveillance, parent_webcam, pool, sports_facilities, separate_play_areas, field_trips, near_public_transit, no_tv. From GA `ga_environment` (`; `-separated), MA `ma_environment` (list), NH `nh_environment` (`, `-separated UPPERCASE), UT `ut_environment` and VT `vt_area_description` (`,`-separated), and NJ `nj_environmental_features_labels` (resolved labels) by an explicit case-insensitive label table (`ENVIRONMENT_LABELS`). Pet labels and wheelchair/handicap labels belong to other fields and are skipped silently, as are non-amenity labels (approved assistant, mixed age, school bus route, provide your own equipment). NJ codes 6-13 have no known label ("Unknown (code N)") and are skipped silently. An unknown label is logged and dropped. None found is None, never an empty list. The `xx_` sources are kept. |
 | `evening_care` | Whitespace cleanup | Evening / second-shift care (bool). WY `wy_evening_care`; NC second-shift capacity > 0 (0 -> False); OK `Evening Hours` -> True (absent -> unset). The `xx_` sources are kept. For NC, True means licensed second-shift capacity, not confirmed operating hours. |
+| `faith_based` | Whitespace cleanup; Field collapse from state-specific source (transforms: has_token(\bReligious\b), to_bool) | Whether the provider is faith-based or offers religious programming (bool). The meaning of True differs by state: FL is a faith-based operator (`fl_is_faith_based`), VT offers religious activity (`vt_religious_activity`), WI lists a religious philosophy (the whole word `Religious` in `wi_program_philosophy`), VA is a religious-exempt center (`provider_type` `Religious Exempt Child Day Center`) and IN is a registered ministry (`provider_type` `Unlicensed Registered Ministry`). Only FL and VT can emit False (their source says no); WI, VA and IN are true-only, so any other value leaves it unset, never False. Blank VT is unset. |
 | `fatality_count` | Whitespace cleanup; Field collapse from state-specific source (transforms: to_int) | Number of deaths the state reports at the facility (int; `0` = none reported, a real value). Collapsed from MD `md_fatalities` (reporting period unspecified on the page) and DE `de_injuries_report` (adapter; `N facility death(s)` / `No facility deaths reported`). As for `serious_injury_count`, DE counts only the MOST RECENT year listed in the record, which can differ between providers. An unrecognised DE string -> unset. The `xx_` sources are kept. |
 | `food_program` | Whitespace cleanup; Field collapse from state-specific source (transforms: has_token(food program\|CACFP), to_bool) | Whether the provider participates in the USDA food program, CACFP (bool). HI/ID/WA copy their flag (`Yes`/`No` or bool; WA is `Yes` or blank, blank -> unset). DE (`de_financial_arrangements`), VT (`vt_program_participation`), WY (`wy_services`) and UT/PA/DC (the common `meals` text) are matched with one case-insensitive phrase, `food program\|CACFP`: present -> True, absent -> unset (never False). `meals` is unchanged; the `xx_` sources are kept. |
 | `has_pets` | Whitespace cleanup | Whether animals are present at the provider: True = pets present, False = explicitly none, None = not stated (absence is never False). From ID `id_pet_policy` (Pet Free = False; Dogs only / Cats only / Other = True), VT `vt_pets` (any recognised entry = True), GA `ga_environment` and NJ `nj_environmental_features_labels` (`No pets` = False), UT `ut_environment` (`No Pets` = False, `Pets` = True) and NH `nh_environment` (NO PETS = False; PETS / INDOOR PETS / OUTDOOR PETS / DOG / CAT = True). NH NO DOG / NO CAT alone do not set it. Conflicting entries in one record are logged and left None. The `xx_` sources are kept. |
@@ -136,6 +137,7 @@ Each common field is populated from a single populated source field (additive â€
 | `days_of_operation` | `ga_operating_days` (day_names), `ia_days_of_operation` (day_names), `vt_days_of_operation` (day_names) |
 | `doing_business_as` | `fl_dba` (none_if_sentinel), `ok_doing_business_as` (none_if_sentinel) |
 | `early_head_start` | `ms_early_head_start` (coerce_bool), `nh_early_head_start` (coerce_bool), `wa_early_head_start` (coerce_bool) |
+| `faith_based` | `fl_is_faith_based` (to_bool), `vt_religious_activity` (to_bool), `wi_program_philosophy` (has_token(\bReligious\b)) |
 | `fatality_count` | `md_fatalities` (to_int) |
 | `food_program` | `de_financial_arrangements` (has_token(food program\|CACFP)), `hi_usda_food_program` (to_bool), `id_usda_food_program` (to_bool), `vt_program_participation` (has_token(food program\|CACFP)), `wa_food_program` (to_bool), `wy_services` (has_token(food program\|CACFP)) |
 | `head_start` | `az_headstart` (coerce_bool), `co_head_start` (coerce_bool), `ct_head_start` (coerce_bool), `fl_is_head_start` (coerce_bool), `nh_head_start` (coerce_bool), `ri_head_start` (coerce_bool), `wa_head_start` (coerce_bool) |
@@ -267,6 +269,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `indiana` | provider | `in_schedule` | `weekly_schedule`, `days_of_operation` | IN `in_schedule` rows (12h `open`/`close`) -> 24h `weekly_schedule`; days derived. |
 | `indiana` | provider | `in_programs` | `state_prek`, `state_prek_program` | `in_programs` entry `On My Way Pre-K` -> `state_prek` True; absent -> unset (never False). |
 | `indiana` | provider | `in_licensed_ages` | `capacity_by_age` | IN `in_licensed_ages` start/end age -> `Start â€“ End` label (just start when no end); quantity -> capacity. |
+| `indiana` | provider | `provider_type` | `faith_based` | True when `provider_type` is exactly the state's religious-exempt/ministry type; else unset. |
 | `iowa` | provider | `ia_openings_by_age` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Sum IA `fullTime` + `partTime` openings per band across the 7 age labels. |
 | `iowa` | provider | `ia_care_types` | `care_schedules` | Iowa `ia_care_types` (`, `-separated string) -> `care_schedules` via the explicit label table. |
 | `kentucky` | provider | `ky_ongoing_processes`, `ky_ongoing_process` | `enforcement_action` | KY `ky_ongoing_processes`: `process_type` of each `On-going` entry, joined `; `. |
@@ -331,6 +334,7 @@ Adapters (registered in `provider_scrape/common_fields.py`) cover cases a one-to
 | `vermont` | provider | `vt_area_description` | `environment_features` | Vermont `vt_area_description` (`, `-separated string) -> `environment_features` via the explicit label table; pet and wheelchair labels are skipped (they belong to other fields). |
 | `vermont` | provider | `vt_pets` | `has_pets`, `pet_types`, `pets_excluded` | VT `vt_pets` (`, `-separated Dog / Cat / Other ... Animal`) -> `has_pets`, `pet_types`; absent = None, not False. |
 | `virginia` | provider | `va_inspector` | `licensing_specialist`, `licensing_specialist_phone` | Split `va_inspector` ("Name: (555) 555-5555") into specialist name + phone; `N/A` -> None. |
+| `virginia` | provider | `provider_type` | `faith_based` | True when `provider_type` is exactly the state's religious-exempt/ministry type; else unset. |
 | `washington` | provider | `wa_eceap` | `state_prek`, `state_prek_program` | `wa_eceap` (bool/Yes-No) -> `state_prek`; program brand set only when True. |
 | `washington` | provider | `wa_license_history` | `license_history` | WA `wa_license_history` rows; `closure_date` becomes `expiration_date` (a closure, not an expiry). |
 | `washington_dc` | provider | `dc_enrollment` | `vacancies_infant`, `vacancies_toddler`, `vacancies_preschool`, `vacancies_school_age` | Map DC `dc_enrollment` `openings` (text; `Not Applicable` -> None) onto the four vacancy bands. |
@@ -540,7 +544,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `fl_infant_toddler_badge_date` -> pass-through
 - `fl_inspection_id` -> pass-through
 - `fl_is_dll_badge` -> pass-through
-- `fl_is_faith_based` -> pass-through
+- `fl_is_faith_based` -> collapses into `faith_based` (via to_bool)
 - `fl_is_gold_seal` -> pass-through
 - `fl_is_head_start` -> collapses into `head_start` (via coerce_bool)
 - `fl_is_inclusion_badge` -> pass-through
@@ -1182,7 +1186,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `vt_program_description` -> collapses into `program_description` (via description_text)
 - `vt_program_participation` -> collapses into `food_program` (via has_token(food program|CACFP))
 - `vt_provider_id` -> pass-through
-- `vt_religious_activity` -> pass-through
+- `vt_religious_activity` -> collapses into `faith_based` (via to_bool)
 - `vt_school_age_capacity` -> pass-through
 - `vt_school_age_vacancies` -> collapses into `vacancies_school_age` (via to_int)
 - `vt_sibling_discount` -> feeds adapter, fills `discounts`
@@ -1224,7 +1228,7 @@ State-specific fields (matched by the `xx_` prefix) across `ProviderItem` and `I
 - `wi_location_number` -> pass-through
 - `wi_months_open` -> feeds adapter, fills `operating_months`, `year_round`
 - `wi_night_capacity` -> feeds adapter, fills `evening_care`, `night_care`, `nontraditional_hours`, `weekend_care`
-- `wi_program_philosophy` -> pass-through
+- `wi_program_philosophy` -> collapses into `faith_based` (via has_token(\bReligious\b))
 - `wi_rule_number` -> pass-through
 - `wi_rule_summary` -> pass-through
 - `wi_special_care_types` -> feeds adapter, fills `care_schedules`

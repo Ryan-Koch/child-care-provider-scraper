@@ -5790,3 +5790,76 @@ def test_enforcement_action_keeps_source_fields():
 )
 def test_enforcement_action_does_not_cross_fire(state, record):
     assert _enforcement(record, state) is None
+
+
+# --------------------------------------------------------------------------- #
+# faith_based
+# --------------------------------------------------------------------------- #
+def _faith(state, **fields):
+    item = norm.normalize_item(dict(fields), state)
+    return item.get("faith_based"), item
+
+
+@pytest.mark.parametrize(("state", "field"), [("florida", "fl_is_faith_based"), ("vermont", "vt_religious_activity")])
+@pytest.mark.parametrize(("raw", "expected"), [(True, True), (False, False), ("Yes", True), ("No", False)])
+def test_faith_based_fl_vt_copy_true_and_false(state, field, raw, expected):
+    value, item = _faith(state, **{field: raw})
+    assert value is expected
+    assert item[field] == raw  # source kept in place
+
+
+@pytest.mark.parametrize("raw", ["", None, "  "])
+def test_faith_based_vt_blank_is_unset(raw):
+    value, _ = _faith("vermont", vt_religious_activity=raw)
+    assert value is None
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("Religious", True),
+        ("Montessori Religious", True),
+        ("Cognitive Based Philosophy Religious", True),
+        ("religious", True),
+        (["Montessori", "Religious"], True),
+        ("None Reported.", None),
+        ("Montessori", None),
+        ("Irreligious", None),
+        ("Religiously", None),
+        ("", None),
+        (None, None),
+    ],
+)
+def test_faith_based_wi_whole_word_religious(raw, expected):
+    value, item = _faith("wisconsin", wi_program_philosophy=raw)
+    assert value is expected  # never False
+    assert item["wi_program_philosophy"] == raw or raw in ("", None)
+
+
+@pytest.mark.parametrize(
+    ("state", "faith_type"),
+    [("virginia", "Religious Exempt Child Day Center"), ("indiana", "Unlicensed Registered Ministry")],
+)
+def test_faith_based_va_in_provider_type(state, faith_type):
+    value, item = _faith(state, provider_type=faith_type)
+    assert value is True
+    assert item["provider_type"] == faith_type  # provider_type unchanged
+    value, _ = _faith(state, provider_type=f"  {faith_type} ")
+    assert value is True
+    for other in ("Licensed Child Day Center", "Religious Exempt", faith_type.lower(), "", None):
+        value, _ = _faith(state, provider_type=other)
+        assert value is None  # true-only, never False
+
+
+def test_faith_based_provider_type_is_state_scoped():
+    for state, faith_type in cf.FAITH_BASED_PROVIDER_TYPES.items():
+        other = "indiana" if state == "virginia" else "virginia"
+        assert _faith(other, provider_type=faith_type)[0] is None
+        assert _faith("ohio", provider_type=faith_type)[0] is None
+
+
+def test_faith_based_never_overwrites_existing_value():
+    value, _ = _faith("virginia", provider_type="Religious Exempt Child Day Center", faith_based=False)
+    assert value is False
+    value, _ = _faith("florida", fl_is_faith_based=True, faith_based=False)
+    assert value is False
