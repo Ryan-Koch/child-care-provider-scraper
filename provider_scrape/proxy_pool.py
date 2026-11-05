@@ -22,10 +22,13 @@ Proxy URLs carry credentials, so never log them; log the stable, cred-free slot
 id (``proxy_id``) instead.
 """
 
-import itertools
 import os
 import re
 from urllib.parse import quote, unquote, urlsplit, urlunsplit
+
+# Scrapy signal fired with ``message`` and ``spider`` when the pool changes in a
+# way an operator should hear about (a proxy switched away from, or removed).
+proxy_pool_alert = object()
 
 
 def load_env_file(path):
@@ -74,6 +77,18 @@ def redact(proxy_url):
     return urlunsplit((parts.scheme, netloc, parts.path, parts.query, parts.fragment))
 
 
+def proxy_host(proxy_url):
+    """Return a proxy URL's credential-free ``host:port``, or ``"unknown"``."""
+    try:
+        parts = urlsplit(proxy_url or "")
+        port = parts.port
+    except ValueError:
+        return "unknown"
+    if not parts.hostname:
+        return "unknown"
+    return f"{parts.hostname}:{port}" if port else parts.hostname
+
+
 def playwright_proxy(proxy_url):
     """Convert a ``http://user:pass@host:port`` proxy URL into the dict shape
     Playwright's ``browser.new_context(proxy=...)`` expects.
@@ -112,8 +127,9 @@ class ProxyPool:
         self._ids = list(proxy_ids) if proxy_ids else [f"proxy-{i}" for i in range(len(self._urls))]
         if len(self._ids) != len(self._urls):
             raise ValueError("proxy_ids must match proxy_urls in length")
-        self._rotate = itertools.cycle(range(len(self._urls)))
-        self._assign = itertools.cycle(range(len(self._urls)))
+        # Plain counters, taken modulo the live size, so the pool can shrink.
+        self._rotate = 0
+        self._assign = 0
         self._affinity = {}
 
     def __len__(self):
@@ -133,15 +149,34 @@ class ProxyPool:
 
     def next_rotating(self):
         """Return ``(proxy_id, proxy_url)`` for the next proxy, round-robin."""
-        i = next(self._rotate)
+        i = self._rotate % len(self._ids)
+        self._rotate += 1
         return self._ids[i], self._urls[i]
 
     def for_key(self, key):
-        """Return ``(proxy_id, proxy_url)`` pinned to ``key`` (assigned once)."""
+        """Return ``(proxy_id, proxy_url)`` pinned to ``key``.
+
+        Assigned once, unless the pinned proxy is later removed, in which case
+        the key is re-pinned to a remaining proxy.
+        """
         if key not in self._affinity:
-            self._affinity[key] = next(self._assign)
-        i = self._affinity[key]
+            self._affinity[key] = self._ids[self._assign % len(self._ids)]
+            self._assign += 1
+        i = self._ids.index(self._affinity[key])
         return self._ids[i], self._urls[i]
+
+    def remove(self, proxy_id):
+        """Drop a proxy and release its pinned keys; return whether it was removed.
+
+        The last remaining proxy is kept, so assignment always has an answer.
+        """
+        if proxy_id not in self._ids or len(self._ids) == 1:
+            return False
+        i = self._ids.index(proxy_id)
+        del self._ids[i]
+        del self._urls[i]
+        self._affinity = {key: pid for key, pid in self._affinity.items() if pid != proxy_id}
+        return True
 
 
 def build_pool(endpoints, username=None, password=None, id_prefix="proxy"):

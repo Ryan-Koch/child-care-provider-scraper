@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 import scrapy
+from scrapy.exceptions import CloseSpider
 from scrapy.http import HtmlResponse, Request, TextResponse
 from twisted.python.failure import Failure
 
@@ -424,6 +425,63 @@ def test_closed_reports_item_shortfall(spider, caplog):
     assert "INCOMPLETE" in msgs
     assert "scraped 10 items" in msgs
     assert "69 missing" in msgs
+
+
+def test_idle_with_no_items_closes_as_empty_run(spider):
+    spider.crawler = SimpleNamespace(stats=_stats_from({}))
+    with pytest.raises(CloseSpider) as excinfo:
+        spider._close_if_empty()
+    assert excinfo.value.reason == "empty_run"
+
+
+def test_idle_with_items_does_not_close(spider):
+    spider.crawler = SimpleNamespace(stats=_stats_from({"item_scraped_count": 1}))
+    assert spider._close_if_empty() is None
+
+
+def test_closed_empty_run_logs_retryable_error_not_complete(spider, caplog):
+    """A run that never loaded the search page must not read as a clean finish."""
+    spider.crawler = SimpleNamespace(stats=_stats_from({}))
+
+    with caplog.at_level("INFO"):
+        spider.closed("empty_run")
+
+    msgs = "\n".join(r.message for r in caplog.records)
+    assert "Retryable Error: empty run (empty_run)" in msgs  # run_spiders.sh greps for this.
+    assert "Crawl complete" not in msgs
+
+
+def test_closed_empty_run_with_declared_providers_is_also_retryable(spider, caplog):
+    """Providers were listed but none became items: still an empty run."""
+    spider.declared_total_by_county = {"Kent County": 35}
+    spider.found_count_by_county = {"Kent County": 35}
+    spider.crawler = SimpleNamespace(stats=_stats_from({}))
+
+    with caplog.at_level("INFO"):
+        spider.closed("stalled")
+
+    msgs = "\n".join(r.message for r in caplog.records)
+    assert "Retryable Error: empty run (stalled)" in msgs
+    assert "from 1 shards" in msgs
+
+
+def test_closed_manual_shutdown_is_not_retryable(spider, caplog):
+    """Stopping a run on purpose must not make run_spiders.sh restart it."""
+    spider.crawler = SimpleNamespace(stats=_stats_from({}))
+
+    with caplog.at_level("INFO"):
+        spider.closed("shutdown")
+
+    assert "Retryable Error" not in caplog.text
+
+
+def test_closed_with_items_is_not_retryable(spider, caplog):
+    spider.crawler = SimpleNamespace(stats=_stats_from({"item_scraped_count": 5}))
+
+    with caplog.at_level("INFO"):
+        spider.closed("finished")
+
+    assert "Retryable Error" not in caplog.text
 
 
 def test_closed_no_item_shortfall_when_items_meet_declared(spider, caplog):

@@ -9,6 +9,7 @@ from twisted.internet import defer
 
 from provider_scrape import discord_notify
 from provider_scrape.discord_notify import DiscordProgressExtension
+from provider_scrape.proxy_pool import proxy_pool_alert
 
 WEBHOOK = "https://discord.com/api/webhooks/123/secret"
 
@@ -72,6 +73,12 @@ def test_start_progress_and_finish_messages(tmp_path, sent):
     assert "crawl closed (reason: finished)" in sent[3]
     assert "2,500 items" in sent[3]
     assert "3 ERROR log line(s)" in sent[3]
+
+
+def test_proxy_pool_alert_signal_posts_message(tmp_path, sent):
+    ext, spider = _ext(tmp_path)
+    ext.crawler.signals.send_catch_log(proxy_pool_alert, message="removed proxy ws-0", spider=spider)
+    assert sent == ["**maryland**: removed proxy ws-0"]
 
 
 def test_progress_interval_is_configurable(tmp_path, sent):

@@ -10,7 +10,10 @@ from playwright.async_api import Error as PlaywrightError
 
 # useful for handling different item types with a single interface
 from scrapy import signals
+from scrapy.core.downloader.handlers.http11 import TunnelError
 from scrapy.downloadermiddlewares.retry import RetryMiddleware
+
+from provider_scrape.proxy_pool import proxy_host, proxy_pool_alert
 
 
 class VaScrapeSpiderMiddleware:
@@ -148,8 +151,18 @@ class ProxyPoolMiddleware:
     ``meta['proxy_affinity']`` (e.g. a county's ViewState-bound pagination chain)
     stick to one proxy; the rest (session-independent detail/PDF GETs) rotate
     round-robin. Requests to other hosts (e.g. the EXCELS API) are left direct on
-    their own slot. An already-assigned proxy (a retry) is never reassigned, so a
+    their own slot. An already-assigned proxy (a retry) is normally kept, so a
     request rides out its slot's rate-limit cooldown on the same IP.
+
+    The exception is a ``TunnelError``: the proxy itself could not open a tunnel,
+    so the retry is assigned afresh. A rotating request moves to the next proxy;
+    an affinity request keeps its proxy (and session) until that proxy is removed.
+    A proxy is removed from the pool after ``PROXY_POOL_REMOVE_AFTER`` consecutive
+    tunnel failures, but only if another proxy got a response during that streak.
+    Otherwise the fault may be the target or the credentials, and removing proxies
+    would just drain the pool. Timeouts never count: on this target they mostly
+    mean a congested origin, not a bad proxy. Switches and removals are logged and
+    announced through the ``proxy_pool_alert`` signal.
 
     Must run **before** ``HttpProxyMiddleware`` (default order 750) so the proxy
     it sets is honored; register it at a lower order (see settings).
@@ -182,6 +195,12 @@ class ProxyPoolMiddleware:
         self._err_types_last = {}
         self._pool_ids = []
         self._report_task = None
+        self.remove_after = crawler.settings.getint("PROXY_POOL_REMOVE_AFTER", 3) if crawler is not None else 3
+        # Responses received through any pool proxy, and each proxy's current run
+        # of tunnel failures. A response through a proxy ends its streak, so any
+        # growth in the total during a streak came from another proxy.
+        self._responses = 0
+        self._tunnel_streaks = {}
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -220,6 +239,9 @@ class ProxyPoolMiddleware:
         # is enforced independently — this is what buys the parallel throughput.
         request.meta["download_slot"] = proxy_id
         self._count(proxy_id, "req")
+        switched_from = request.meta.pop("proxy_switched_from", None)
+        if switched_from not in (None, proxy_id):
+            self._announce_switch(switched_from, proxy_id, request, spider)
         self.logger.debug(
             "Proxy %s -> %s%s",
             proxy_id,
@@ -231,6 +253,9 @@ class ProxyPoolMiddleware:
     def process_response(self, request, response, spider):
         pid = request.meta.get("download_slot")
         if pid in self._counts:
+            # Any status proves the tunnel opened and the target answered.
+            self._responses += 1
+            self._tunnel_streaks.pop(pid, None)
             if 200 <= response.status < 300:
                 self._count(pid, "ok")
             elif response.status == 403:
@@ -247,7 +272,82 @@ class ProxyPoolMiddleware:
             self._err_types[etype] = self._err_types.get(etype, 0) + 1
             if self.stats is not None:
                 self.stats.inc_value(f"proxy_pool/exception/{etype}")
+            if isinstance(exception, TunnelError):
+                self._handle_tunnel_failure(request, pid, exception, spider)
         return None
+
+    def _handle_tunnel_failure(self, request, pid, exception, spider):
+        """Release the request for reassignment and update the proxy's streak.
+
+        This runs before the retry middleware copies the request, so clearing the
+        assignment here makes ``process_request`` choose a proxy for the retry.
+        """
+        host = proxy_host(request.meta.pop("proxy", None))
+        request.meta.pop("download_slot", None)
+        request.meta["proxy_switched_from"] = pid
+
+        pool = getattr(spider, "proxy_pool", None)
+        if not pool or pid not in pool.ids:
+            return  # Already removed; this request was in flight at the time.
+        streak = self._tunnel_streaks.setdefault(
+            pid,
+            {"count": 0, "responses_at_start": self._responses, "host": host, "alerted": False, "held": False},
+        )
+        streak["count"] += 1
+        self.logger.warning(
+            "[proxy-pool] %s tunnel failure %d of %d before removal: %s",
+            pid,
+            streak["count"],
+            self.remove_after,
+            exception,
+        )
+        if streak["count"] >= self.remove_after:
+            self._try_remove(pool, pid, streak, exception, spider)
+
+    def _try_remove(self, pool, pid, streak, exception, spider):
+        """Remove a failing proxy, unless the evidence or pool size says not to."""
+        if self._responses == streak["responses_at_start"]:
+            if not streak["held"]:
+                streak["held"] = True
+                self.logger.warning(
+                    "[proxy-pool] keeping %s despite %d tunnel failures: no other proxy got a response "
+                    "in that time, so the target or the credentials may be at fault.",
+                    pid,
+                    streak["count"],
+                )
+            return
+        if not pool.remove(pid):
+            if not streak["held"]:
+                streak["held"] = True
+                message = (
+                    f"proxy {pid} ({streak['host']}) is failing but it is the last one left, so it stays: {exception}"
+                )
+                self.logger.error("[proxy-pool] %s", message)
+                self._alert(message, spider)
+            return
+        del self._tunnel_streaks[pid]
+        if self.stats is not None:
+            self.stats.inc_value("proxy_pool/removed")
+        message = (
+            f"removed proxy {pid} ({streak['host']}) from the pool after {streak['count']} consecutive "
+            f"tunnel failures; continuing with {len(pool)} proxies. Last error: {exception}"
+        )
+        self.logger.warning("[proxy-pool] %s", message)
+        self._alert(message, spider)
+
+    def _announce_switch(self, old_pid, new_pid, request, spider):
+        """Log every switch; alert only once per failure streak, to avoid floods."""
+        self.logger.warning("[proxy-pool] switched %s from %s to %s", request.url, old_pid, new_pid)
+        if self.stats is not None:
+            self.stats.inc_value("proxy_pool/switched")
+        streak = self._tunnel_streaks.get(old_pid)
+        if streak is not None and not streak["alerted"]:
+            streak["alerted"] = True
+            self._alert(f"proxy {old_pid} ({streak['host']}) failed to open a tunnel; switched to {new_pid}.", spider)
+
+    def _alert(self, message, spider):
+        if self.crawler is not None:
+            self.crawler.signals.send_catch_log(proxy_pool_alert, message=message, spider=spider)
 
     def _bucket(self, proxy_id):
         return self._counts.setdefault(proxy_id, {"req": 0, "ok": 0, "blk": 0, "oth": 0, "err": 0})

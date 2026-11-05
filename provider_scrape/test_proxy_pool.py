@@ -7,6 +7,7 @@ from provider_scrape.proxy_pool import (
     load_pool,
     parse_endpoints,
     playwright_proxy,
+    proxy_host,
     redact,
 )
 
@@ -101,6 +102,44 @@ def test_rotating_and_sticky_use_independent_cursors():
     pool = build_pool(["a:1", "b:2"], "u", "p")
     pool.for_key("k")  # consumes one from the assign cursor only
     assert [pool.next_rotating()[0] for _ in range(2)] == ["proxy-0", "proxy-1"]
+
+
+def test_remove_takes_proxy_out_of_rotation():
+    pool = build_pool(["a:1", "b:2", "c:3"], "u", "p")
+    assert pool.remove("proxy-1") is True
+    assert len(pool) == 2
+    assert pool.ids == ["proxy-0", "proxy-2"]
+    assert {pool.next_rotating()[0] for _ in range(6)} == {"proxy-0", "proxy-2"}
+
+
+def test_remove_repins_only_keys_on_the_removed_proxy():
+    pool = build_pool(["a:1", "b:2", "c:3"], "u", "p")
+    assert pool.for_key("A")[0] == "proxy-0"
+    assert pool.for_key("B")[0] == "proxy-1"
+    pool.remove("proxy-0")
+    assert pool.for_key("B")[0] == "proxy-1"
+    repinned = pool.for_key("A")
+    assert repinned[0] != "proxy-0"
+    assert pool.for_key("A") == repinned  # Sticky again after the re-pin.
+
+
+def test_remove_keeps_the_last_proxy():
+    pool = build_pool(["a:1", "b:2"], "u", "p")
+    assert pool.remove("proxy-0") is True
+    assert pool.remove("proxy-1") is False
+    assert pool.ids == ["proxy-1"]
+
+
+def test_remove_unknown_proxy_is_a_noop():
+    pool = build_pool(["a:1", "b:2"], "u", "p")
+    assert pool.remove("nope") is False
+    assert len(pool) == 2
+
+
+def test_proxy_host_strips_credentials():
+    assert proxy_host("http://user:pass@1.2.3.4:80") == "1.2.3.4:80"
+    assert proxy_host("http://1.2.3.4") == "1.2.3.4"
+    assert proxy_host(None) == "unknown"
 
 
 def test_redact_masks_credentials():

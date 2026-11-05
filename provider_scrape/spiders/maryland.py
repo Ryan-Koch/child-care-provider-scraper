@@ -8,6 +8,7 @@ import pypdfium2 as pdfium
 import scrapy
 import tesserocr
 from scrapy import signals
+from scrapy.exceptions import CloseSpider
 from twisted.internet import task
 
 from provider_scrape.items import InspectionItem, ProviderItem
@@ -318,7 +319,16 @@ class MarylandSpider(scrapy.Spider):
         # logging is fully configured.
         crawler.signals.connect(spider._log_run_mode, signal=signals.spider_opened)
         crawler.signals.connect(spider._start_stall_watch, signal=signals.spider_opened)
+        crawler.signals.connect(spider._close_if_empty, signal=signals.spider_idle)
         return spider
+
+    def _close_if_empty(self, *args, **kwargs):
+        """Close with a failure reason if the crawl ran out of work with no items.
+
+        Without this, a run where every request failed closes as ``finished``.
+        """
+        if not self.crawler.stats.get_value("item_scraped_count", 0):
+            raise CloseSpider("empty_run")
 
     def _log_run_mode(self, *args, **kwargs):
         """Log single-IP vs proxy-pool mode. Connected to spider_opened (not done
@@ -913,7 +923,7 @@ class MarylandSpider(scrapy.Spider):
             )
             for shard, found, declared in incomplete:
                 self.logger.error(f"  [{shard}] {found}/{declared} ({declared - found} missing)")
-        else:
+        elif n_shards:
             self.logger.info(
                 f"Crawl complete ({reason}): paginated all {total_found} declared providers across {n_shards} shards."
             )
@@ -924,6 +934,15 @@ class MarylandSpider(scrapy.Spider):
         # guardrail was blind to it. Compare items actually scraped against the
         # declared total so a detail-draining shortfall is loud too.
         stats = getattr(getattr(self, "crawler", None), "stats", None)
+        # run_spiders.sh re-runs a spider whose log contains "Retryable Error",
+        # then reports it as failed and skips geocoding. A manual shutdown is
+        # left out so that stopping a run on purpose doesn't restart it.
+        if stats is not None and reason != "shutdown" and not stats.get_value("item_scraped_count", 0):
+            self.logger.error(
+                f"Retryable Error: empty run ({reason}): scraped 0 items from {n_shards} shards. "
+                f"Check the portal and the [proxy-pool] lines above."
+            )
+
         if stats is not None and total_declared:
             scraped = stats.get_value("item_scraped_count", 0) or 0
             if scraped < total_declared:

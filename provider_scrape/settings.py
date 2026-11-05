@@ -73,6 +73,10 @@ DOWNLOADER_MIDDLEWARES = {
 # the final stats dump).
 PROXY_POOL_STATS_INTERVAL = 300.0
 
+# Consecutive tunnel failures before ProxyPoolMiddleware removes a proxy from the
+# pool. High enough that one transient 502 doesn't cost an IP for a multi-day run.
+PROXY_POOL_REMOVE_AFTER = 3
+
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
 EXTENSIONS = {

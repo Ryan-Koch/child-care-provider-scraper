@@ -118,6 +118,16 @@ and logs `proxy pool ENABLED — N egress IPs`. How it works:
 - `RateLimitBackoffMiddleware` cools down **per slot**, so one throttled proxy
   pauses only itself while the others keep flowing.
 - The EXCELS API stays **direct** (separate non-throttling host).
+- **A proxy that can't open a tunnel is routed around.** On a `TunnelError`, a
+  rotating request retries on the next proxy; a pagination chain stays put to keep
+  its session. After `PROXY_POOL_REMOVE_AFTER` (default 3) consecutive tunnel
+  failures the proxy is removed for the rest of the run and its chains re-pin to
+  other proxies, where a stale postback self-heals. It is only removed if another
+  proxy got a response during that streak, so a portal outage or bad credentials
+  can't drain the pool, and the last proxy is never removed. Timeouts don't count.
+  Switches are logged, and Discord hears about the first switch in each failure
+  streak and every removal. `[proxy-pool] removed proxy` names the `host:port` to
+  replace in Webshare.
 
 Toggles:
 
@@ -177,6 +187,17 @@ Diagnosing it: the per-IP report line (`[proxy-pool] last …s per IP
 (ok/blocked/err) … [TimeoutError xN]`) is the tell — **`err` dominated by
 `TimeoutError` with `blocked`/403s at zero means the origin is saturated, so
 *lower* `-a concurrency`, don't add IPs.**
+
+## Empty runs
+
+A run that scrapes 0 items is a failure, not a quiet `finished`. If the crawl runs
+out of work with no items it closes with reason `empty_run`, which also appears in
+the Discord close message. Any close with 0 items, other than a manual shutdown,
+logs `Retryable Error`, so `run_spiders.sh` re-runs the spider up to `MAX_RETRIES`
+times and then reports it as failed, without geocoding.
+
+This does not protect the previous output. `-O` truncates the file when the spider
+opens, so a failed run still leaves `state_output/maryland.json` empty.
 
 ## Running Tests
 

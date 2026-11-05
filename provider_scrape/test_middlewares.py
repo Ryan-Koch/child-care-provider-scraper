@@ -4,8 +4,10 @@ from types import SimpleNamespace
 from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from scrapy import Request, Spider
+from scrapy.core.downloader.handlers.http11 import TunnelError
 from scrapy.http import Response
 from scrapy.settings import Settings
+from scrapy.signalmanager import SignalManager
 from scrapy.statscollectors import StatsCollector
 from scrapy.utils.test import get_crawler
 from twisted.internet.error import TimeoutError as TxTimeoutError
@@ -15,7 +17,7 @@ from provider_scrape.middlewares import (
     ProxyPoolMiddleware,
     RateLimitBackoffMiddleware,
 )
-from provider_scrape.proxy_pool import build_pool
+from provider_scrape.proxy_pool import build_pool, proxy_pool_alert
 
 
 def _spider(pool, domains=("checkccmd.org",)):
@@ -142,6 +144,228 @@ def test_counts_per_proxy_req_ok_blocked_err():
     assert mw._counts["ws-0"]["ok"] == 1
     assert mw._counts["ws-0"]["err"] == 1
     assert mw._counts["ws-1"]["blk"] == 1
+
+
+TUNNEL_502 = TunnelError("Could not open CONNECT tunnel with proxy 1.1.1.1:80 [{'status': 502}]")
+
+
+def _alerting_mw(**settings):
+    """A ProxyPoolMiddleware on a real crawler, plus the alerts it raises."""
+    crawler = SimpleNamespace(settings=Settings(settings), signals=SignalManager())
+    crawler.stats = StatsCollector(crawler)
+    mw = ProxyPoolMiddleware(crawler)
+    alerts = []
+
+    def capture(message, spider):
+        alerts.append(message)
+
+    crawler.signals.connect(capture, signal=proxy_pool_alert, weak=False)
+    return mw, alerts
+
+
+def _send(mw, spider, request=None):
+    """Run a request through process_request and return it."""
+    request = request or Request(DETAIL)
+    mw.process_request(request, spider)
+    return request
+
+
+def _fail(mw, spider, request, exception=TUNNEL_502):
+    """Fail a request, then return its retry as the retry middleware would."""
+    mw.process_exception(request, exception, spider)
+    return _send(mw, spider, request.copy())
+
+
+def _succeed(mw, spider):
+    """Land a response on the next proxy in rotation."""
+    request = _send(mw, spider)
+    mw.process_response(request, Response(DETAIL, status=200, request=request), spider)
+
+
+def _set_rotation_to(pool, proxy_id):
+    """Point the rotating cursor at a proxy so the next request lands on it."""
+    pool._rotate = pool.ids.index(proxy_id)
+
+
+def test_tunnel_failure_moves_rotating_request_to_next_proxy(caplog):
+    mw, alerts = _alerting_mw()
+    spider = _spider(_pool())
+    request = _send(mw, spider)
+    assert request.meta["download_slot"] == "ws-0"
+
+    with caplog.at_level(logging.WARNING):
+        retry = _fail(mw, spider, request)
+
+    assert retry.meta["download_slot"] == "ws-1"
+    assert retry.meta["proxy"].endswith("@2.2.2.2:81")
+    assert "proxy_switched_from" not in retry.meta
+    assert "switched" in caplog.text
+    assert alerts == ["proxy ws-0 (1.1.1.1:80) failed to open a tunnel; switched to ws-1."]
+    assert mw.stats.get_value("proxy_pool/switched") == 1
+
+
+def test_timeout_keeps_the_assigned_proxy():
+    mw, alerts = _alerting_mw()
+    spider = _spider(_pool())
+    request = _send(mw, spider)
+
+    retry = _fail(mw, spider, request, TxTimeoutError("timed out"))
+
+    assert retry.meta["download_slot"] == "ws-0"
+    assert alerts == []
+    assert mw._tunnel_streaks == {}
+
+
+def test_timeout_still_gets_cooldown_retry_on_the_same_proxy():
+    # Exceptions reach the pool middleware (610) first, then the backoff (560).
+    mw, alerts = _alerting_mw()
+    spider = _spider(_pool())
+    request = _send(mw, spider, Request(DETAIL, meta={"timeout_backoff": True}))
+    backoff = _backoff_mw()
+    exception = TxTimeoutError("timed out")
+
+    assert mw.process_exception(request, exception, spider) is None
+    retry = backoff.process_exception(request, exception, _backoff_spider())
+
+    assert retry.meta["timeout_retries"] == 1
+    assert retry.meta["download_slot"] == "ws-0"
+    assert retry.meta["proxy"] == request.meta["proxy"]
+    assert alerts == []
+
+
+def test_rate_limit_403_keeps_the_proxy_and_ends_its_tunnel_streak():
+    mw, alerts = _alerting_mw()
+    spider = _spider(_pool())
+    request = _send(mw, spider, Request(DETAIL, meta={"proxy_affinity": "Howard"}))
+    request = _fail(mw, spider, request)
+    response = Response(DETAIL, status=403, request=request)
+
+    assert mw.process_response(request, response, spider) is response
+    retry = _backoff_mw(RATELIMIT_BACKOFF_HTTP_CODES=[403]).process_response(request, response, _backoff_spider())
+
+    assert retry.meta["ratelimit_retries"] == 1
+    assert retry.meta["download_slot"] == "ws-0"
+    assert mw._tunnel_streaks == {}
+    assert alerts == []
+
+
+def test_affinity_request_keeps_its_proxy_on_tunnel_failure():
+    mw, alerts = _alerting_mw()
+    spider = _spider(_pool())
+    request = _send(mw, spider, Request(DETAIL, meta={"proxy_affinity": "Howard"}))
+
+    retry = _fail(mw, spider, request)
+
+    assert retry.meta["download_slot"] == "ws-0"
+    assert "proxy_switched_from" not in retry.meta
+    assert alerts == []
+
+
+def test_proxy_removed_after_repeated_failures_and_chain_repins():
+    mw, alerts = _alerting_mw(PROXY_POOL_REMOVE_AFTER=2)
+    pool = _pool()
+    spider = _spider(pool)
+    chain = _send(mw, spider, Request(DETAIL, meta={"proxy_affinity": "Howard"}))
+    assert chain.meta["download_slot"] == "ws-0"
+    chain = _fail(mw, spider, chain)  # First failure starts the streak.
+    _set_rotation_to(pool, "ws-1")
+    _succeed(mw, spider)  # Another proxy reaches the target during the streak.
+
+    retry = _fail(mw, spider, chain)
+
+    assert pool.ids == ["ws-1"]
+    assert retry.meta["download_slot"] == "ws-1"
+    assert retry.meta["proxy"].endswith("@2.2.2.2:81")
+    assert mw.stats.get_value("proxy_pool/removed") == 1
+    assert len(alerts) == 1
+    assert alerts[0].startswith("removed proxy ws-0 (1.1.1.1:80) from the pool after 2 consecutive")
+    assert "continuing with 1 proxies" in alerts[0]
+
+
+def test_response_on_the_proxy_resets_its_streak():
+    mw, _alerts = _alerting_mw(PROXY_POOL_REMOVE_AFTER=2)
+    pool = _pool()
+    spider = _spider(pool)
+    chain = _send(mw, spider, Request(DETAIL, meta={"proxy_affinity": "Howard"}))
+    chain = _fail(mw, spider, chain)
+    mw.process_response(chain, Response(DETAIL, status=200, request=chain), spider)
+
+    _fail(mw, spider, chain)
+
+    assert pool.ids == ["ws-0", "ws-1"]
+    assert mw._tunnel_streaks["ws-0"]["count"] == 1
+
+
+def test_no_removal_when_no_proxy_is_getting_responses(caplog):
+    # A target outage or bad credentials fail every proxy. Keep them all.
+    mw, alerts = _alerting_mw(PROXY_POOL_REMOVE_AFTER=2)
+    pool = _pool()
+    spider = _spider(pool)
+    request = _send(mw, spider)
+
+    with caplog.at_level(logging.WARNING):
+        for _ in range(6):
+            request = _fail(mw, spider, request)
+
+    assert pool.ids == ["ws-0", "ws-1"]
+    assert mw.stats.get_value("proxy_pool/removed") is None
+    assert caplog.text.count("no other proxy got a response") == 2  # Once per proxy.
+    # One alert per proxy's streak, however many switches happened.
+    assert len(alerts) == 2
+
+
+def test_last_proxy_is_kept_and_reported_once(caplog):
+    mw, alerts = _alerting_mw(PROXY_POOL_REMOVE_AFTER=2)
+    pool = _pool()
+    spider = _spider(pool)
+    # ws-1 starts failing, ws-0 proves the target is up, then ws-0 is taken out.
+    _set_rotation_to(pool, "ws-1")
+    last = _send(mw, spider, Request(DETAIL))
+    mw.process_exception(last, TUNNEL_502, spider)
+    _set_rotation_to(pool, "ws-0")
+    _succeed(mw, spider)
+    pool.remove("ws-0")
+
+    with caplog.at_level(logging.ERROR):
+        for _ in range(2):
+            last = _send(mw, spider, last.copy())
+            mw.process_exception(last, TUNNEL_502, spider)
+
+    assert pool.ids == ["ws-1"]
+    assert caplog.text.count("it is the last one left") == 1
+    assert len(alerts) == 1
+    assert "it is the last one left" in alerts[0]
+
+
+def test_failure_from_an_already_removed_proxy_still_switches():
+    # A request in flight when its proxy was removed fails later; it must move on.
+    mw, alerts = _alerting_mw()
+    pool = _pool()
+    spider = _spider(pool)
+    request = _send(mw, spider)
+    pool.remove("ws-0")
+
+    retry = _fail(mw, spider, request)
+
+    assert retry.meta["download_slot"] == "ws-1"
+    assert alerts == []
+
+
+def test_alerts_never_contain_proxy_credentials():
+    mw, alerts = _alerting_mw(PROXY_POOL_REMOVE_AFTER=2)
+    pool = _pool()
+    spider = _spider(pool)
+    chain = _send(mw, spider, Request(DETAIL, meta={"proxy_affinity": "Howard"}))
+    chain = _fail(mw, spider, chain)
+    _set_rotation_to(pool, "ws-1")
+    _succeed(mw, spider)
+    _fail(mw, spider, chain)
+
+    rotating = _send(mw, spider)
+    _fail(mw, spider, rotating)
+
+    assert alerts
+    assert not any("u:p@" in alert for alert in alerts)
 
 
 def test_non_pool_response_is_not_counted():
