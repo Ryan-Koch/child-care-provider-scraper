@@ -209,7 +209,7 @@ click:
   down/up, and focus+Tab on the program-name input (a real keystroke event).
   The baseline was raised from ~10s to ~20s after intermittent failures.
 - **`_post_form_jitter`**: a couple more mouse moves + idle after ticking the
-  age-group checkboxes, so the Search click isn't suspiciously adjacent to the
+  program-type checkboxes, so the Search click isn't suspiciously adjacent to the
   form changes.
 - **Retry loop (`_submit_search`)**: v3 scores are non-deterministic, so we retry
   up to `search_retries + 1` times (default 6 — raised from 3 on 2026-08-09 when
