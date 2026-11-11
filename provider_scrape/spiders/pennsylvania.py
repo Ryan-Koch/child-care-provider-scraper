@@ -13,7 +13,17 @@ API flow, per county, for the Child Care Provider (CCP) program:
      (a per-county UUID -- NOT a cookie). Returns ``{"isSuccessful": true}``.
   2. GET ``childcareresults/getchildcareresults`` and POLL: the search runs
      asynchronously, returning ``searchStatusServedByCallBack: false`` until it
-     is ready, then a ``provider`` list.
+     is ready, then a ``provider`` list. The server works through searches
+     roughly SERIALLY (a global queue, ~4s each, shared with real users), so a
+     search's serve time is its queue position: firing all 67 counties at once
+     made the tail wait minutes, and the old fast-fire 15-poll budget silently
+     dropped those counties (``finishing with 0 collected``) -- the prod
+     "finishes early at a random point" bug. So: at most
+     ``SEARCH_CONCURRENCY`` counties are searched at a time (a work queue),
+     polling is paced (``POLL_INTERVAL``) and bounded by wall-clock time
+     (``POLL_TIMEOUT``), and only a search that is truly lost is re-POSTed
+     (``MAX_SEARCH_ATTEMPTS``; a re-POST just adds another queue entry) before
+     the county is abandoned -- loudly (ERROR + ``closed()`` summary).
   3. PAGINATE: each provider row carries a server-assigned ``searchIdentifier``.
      Re-POST the criteria with that id and an incrementing ``groupIdentifier``
      (2, 3, 4, ...); the results GET returns a *cumulative* set. Stop when no new
@@ -26,7 +36,9 @@ The three "No results" counties (27/57/66) simply return an empty served list an
 finish; nothing hangs.
 """
 
+import asyncio
 import json
+import time
 import uuid
 
 import scrapy
@@ -77,7 +89,10 @@ OPENINGS_MAP = {
 # PA has 67 counties, keyed "01".."67" in the search form.
 COUNTIES = [f"{i:02d}" for i in range(1, 68)]
 
-MAX_POLLS = 15  # results GET polls before giving up on a search
+POLL_INTERVAL = 2.0  # seconds between results-GET polls (non-blocking sleep)
+POLL_TIMEOUT = 300  # seconds to wait for one search to be served before re-POSTing it
+SEARCH_CONCURRENCY = 4  # county searches in flight at once (server queues them serially)
+MAX_SEARCH_ATTEMPTS = 3  # summary POSTs per (county, group) before giving up on it
 MAX_GROUPS = 100  # pagination safety cap (Philadelphia needs ~12)
 
 
@@ -120,7 +135,7 @@ class PennsylvaniaSpider(scrapy.Spider):
         ),
     }
 
-    def __init__(self, *args, counties=None, **kwargs):
+    def __init__(self, *args, counties=None, search_concurrency=None, **kwargs):
         super().__init__(*args, **kwargs)
         # Global dedupe of provider locations scheduled for detail fetch, keyed
         # by (providerIdentifier, providerLocationIdentifier).
@@ -131,6 +146,13 @@ class PennsylvaniaSpider(scrapy.Spider):
             self.counties = [c.strip().zfill(2) for c in counties.split(",") if c.strip()]
         else:
             self.counties = COUNTIES
+        # Counties not yet started; fed SEARCH_CONCURRENCY at a time. Optional
+        # ``-a search_concurrency=N`` overrides the in-flight cap.
+        self.pending_counties = list(self.counties)
+        self.search_concurrency = max(1, int(search_concurrency or SEARCH_CONCURRENCY))
+        # county -> description of why its result set is incomplete (a search
+        # that was never served even after re-POSTing). Reported in closed().
+        self.incomplete_counties = {}
 
     # --- request builders ------------------------------------------------- #
 
@@ -253,25 +275,42 @@ class PennsylvaniaSpider(scrapy.Spider):
     # --- crawl flow ------------------------------------------------------- #
 
     def start_requests(self):
-        for county in self.counties:
-            meta = {
-                "county": county,
-                "sid": str(uuid.uuid4()),
-                "group": 1,
-                "search_id": 0,
-                "accum": {},  # (providerId, locationId) -> provider row
-                "prev_count": -1,  # deduped size before this batch
-                "poll": 0,
-            }
-            yield self._summary_request(meta)
+        for _ in range(self.search_concurrency):
+            yield from self._start_next_county()
+
+    def _start_next_county(self):
+        """Start the next queued county's search, if any remain.
+
+        Called once per in-flight slot at startup and again whenever a county
+        finishes (or dies), so at most ``search_concurrency`` searches are ever
+        queued server-side at once.
+        """
+        if not self.pending_counties:
+            return
+        county = self.pending_counties.pop(0)
+        meta = {
+            "county": county,
+            "sid": str(uuid.uuid4()),
+            "group": 1,
+            "search_id": 0,
+            "accum": {},  # (providerId, locationId) -> provider row
+            "prev_count": -1,  # deduped size before this batch
+            "poll": 0,
+            "attempt": 1,  # summary POST attempt for the current group
+        }
+        yield self._summary_request(meta)
 
     def after_summary(self, response):
         # getchildcaresummary just registers the search; kick off result polling.
         meta = dict(response.meta)
         meta["poll"] = 0
+        meta["poll_started"] = time.monotonic()
         yield self._results_request(meta)
 
-    def parse_results(self, response):
+    def _poll_expired(self, meta):
+        return time.monotonic() - meta["poll_started"] >= POLL_TIMEOUT
+
+    async def parse_results(self, response):
         meta = response.meta
         try:
             data = json.loads(response.text)
@@ -279,21 +318,51 @@ class PennsylvaniaSpider(scrapy.Spider):
             data = {}
 
         if not data.get("searchStatusServedByCallBack"):
-            if meta["poll"] < MAX_POLLS:
-                nxt = dict(meta)
-                nxt["poll"] = meta["poll"] + 1
-                yield self._results_request(nxt)
-            else:
-                self.logger.warning(
-                    "County %s group %s: results not served after %d polls; finishing with %d collected",
-                    meta["county"],
-                    meta["group"],
-                    MAX_POLLS,
-                    len(meta["accum"]),
-                )
-                yield from self._finish_or_paginate(meta, grew=False)
+            if not self._poll_expired(meta):
+                # Pace the polls. An awaited sleep in the callback holds no
+                # download slot, so other counties/details keep flowing.
+                await asyncio.sleep(POLL_INTERVAL)
+            for request in self._handle_unserved(meta):
+                yield request
             return
 
+        for request in self._handle_served(meta, data):
+            yield request
+
+    def _handle_unserved(self, meta):
+        """Next step for a search that isn't served yet: poll, re-POST, or give up."""
+        if not self._poll_expired(meta):
+            nxt = dict(meta)
+            nxt["poll"] = meta["poll"] + 1
+            yield self._results_request(nxt)
+            return
+
+        if meta["attempt"] < MAX_SEARCH_ATTEMPTS:
+            self.logger.warning(
+                "County %s group %s: not served after %ds (%d polls); re-POSTing search (attempt %d/%d)",
+                meta["county"],
+                meta["group"],
+                POLL_TIMEOUT,
+                meta["poll"] + 1,
+                meta["attempt"] + 1,
+                MAX_SEARCH_ATTEMPTS,
+            )
+            self.crawler.stats.inc_value("pennsylvania/search_reposted")
+            nxt = dict(meta)
+            nxt["attempt"] = meta["attempt"] + 1
+            yield self._summary_request(nxt)
+            return
+
+        reason = (
+            f"group {meta['group']} never served after {MAX_SEARCH_ATTEMPTS} attempts; "
+            f"kept {len(meta['accum'])} location(s) from earlier groups"
+        )
+        self.incomplete_counties[meta["county"]] = reason
+        self.crawler.stats.inc_value("pennsylvania/county_incomplete")
+        self.logger.error("County %s INCOMPLETE: %s", meta["county"], reason)
+        yield from self._finish_or_paginate(meta, grew=False)
+
+    def _handle_served(self, meta, data):
         providers = data.get("provider") or []
         accum = meta["accum"]
         for p in providers:
@@ -328,6 +397,7 @@ class PennsylvaniaSpider(scrapy.Spider):
             nxt = dict(meta)
             nxt["group"] = meta["group"] + 1
             nxt["poll"] = 0
+            nxt["attempt"] = 1
             yield self._summary_request(nxt)
             return
 
@@ -339,6 +409,8 @@ class PennsylvaniaSpider(scrapy.Spider):
             len(accum),
             meta["group"],
         )
+        # This county's search is done: free its slot for the next county.
+        yield from self._start_next_county()
         for provider in accum.values():
             key = (
                 provider.get("providerIdentifier"),
@@ -416,3 +488,20 @@ class PennsylvaniaSpider(scrapy.Spider):
 
     def on_error(self, failure):
         self.logger.error("Request failed: %s", repr(failure))
+        meta = getattr(failure.request, "meta", None) or {}
+        if "county" in meta:
+            # A search-chain request (summary/results) died after retries, so
+            # this county's pagination and detail fan-out never happen.
+            reason = f"group {meta.get('group')} search request failed: {failure.value!r}"
+            self.incomplete_counties[meta["county"]] = reason
+            self.crawler.stats.inc_value("pennsylvania/county_incomplete")
+            # The county's chain is dead; don't let it hold a search slot.
+            yield from self._start_next_county()
+
+    def closed(self, reason):
+        if self.incomplete_counties:
+            self.logger.error(
+                "%d county search(es) INCOMPLETE -- output is missing providers: %s",
+                len(self.incomplete_counties),
+                "; ".join(f"{c}: {why}" for c, why in sorted(self.incomplete_counties.items())),
+            )
