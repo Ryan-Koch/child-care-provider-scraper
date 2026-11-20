@@ -140,15 +140,18 @@ def _proxy_host(proxy_url):
     return f"{host}:{parts.port}" if parts.port else host
 
 
-# Search pre-filters: ticking every age group satisfies the "at least one
-# criteria" requirement and matches the form's behavior of returning the
-# full provider catalog. We deliberately omit `includeClosedProviders`.
-AGE_GROUPS = [
-    "Infant (6 weeks up to 18 months)",
-    "Toddler (18 months up to 36 months)",
-    "Preschool (3 - 4 yrs)",
-    "Pre-K (4 - 5 yrs)",
-    "School Age (5 yrs and in Kindergarten through 16 yrs)",
+# Search pre-filter: tick program-type checkboxes (input[name="programType"]).
+# The form requires "at least one criteria". We used to tick all 5 age
+# groups, but that filter silently drops programs that don't report an age
+# group -- in practice every Family Child Care home -- so the run came back
+# ~425 centers only. Ticking the Center + Family program types instead
+# returns ~783 (centers AND homes). "Local Education Agencies" is the third
+# option on the form and is deliberately left off. Values are the inputs'
+# `value` attributes (not the visible label text). We deliberately omit
+# `includeClosedProviders`.
+PROGRAM_TYPES = [
+    "Child Care Center",
+    "Family Child Care",
 ]
 
 # Day order used when collapsing scheduleOfOperationData into a string.
@@ -641,8 +644,8 @@ _BASE_CONTEXT_ARGS = {
 class RhodeIslandSpider(scrapy.Spider):
     """Spider for https://earlylearningprograms.dhs.ri.gov/s/.
 
-    Phase 1 (Playwright): load the search page, tick all 5 age-group
-    checkboxes, click Search, capture the providerSearch Aura response.
+    Phase 1 (Playwright): load the search page, tick the Center + Family
+    program-type checkboxes, click Search, capture the providerSearch Aura response.
     The page's reCAPTCHA v3 supplies a token automatically — so long as
     the browser fingerprint scores well enough we don't see the visible
     challenge.
@@ -885,7 +888,7 @@ class RhodeIslandSpider(scrapy.Spider):
                 return
             self.logger.info("RI: attempting search via %s", label)
             await self._humanize_warmup(page)
-            await self._tick_age_groups(page)
+            await self._tick_program_types(page)
             # A short idle after the checkbox interactions, plus a couple of
             # mouse moves, gives reCAPTCHA v3 a few more behavior samples.
             await self._post_form_jitter(page)
@@ -1130,8 +1133,9 @@ class RhodeIslandSpider(scrapy.Spider):
             await asyncio.sleep(random.uniform(0.15, 0.45))
         await asyncio.sleep(random.uniform(1.0, 2.0))
 
-    async def _tick_age_groups(self, page):
-        """Check every `input[name="ageGroup"]` checkbox.
+    async def _tick_program_types(self, page):
+        """Check the `input[name="programType"]` checkboxes whose value is in
+        PROGRAM_TYPES (Center + Family; LEA left unticked).
 
         SLDS hides the real <input> visually and renders a styled
         <span class="slds-checkbox_faux"> inside the <label>. LWC's two-way
@@ -1141,35 +1145,41 @@ class RhodeIslandSpider(scrapy.Spider):
         state" error. So we look up each input's id and click its
         `label[for=...]` instead.
         """
-        await page.wait_for_selector('input[name="ageGroup"]', timeout=30000)
-        checkboxes = page.locator('input[name="ageGroup"]')
+        await page.wait_for_selector('input[name="programType"]', timeout=30000, state="attached")
+        checkboxes = page.locator('input[name="programType"]')
         count = await checkboxes.count()
-        if count != len(AGE_GROUPS):
-            self.logger.warning(
-                "Expected %d ageGroup checkboxes, page has %d",
-                len(AGE_GROUPS),
-                count,
-            )
-        ticked = 0
+        ticked = []
         for i in range(count):
             cb = checkboxes.nth(i)
+            value = await cb.get_attribute("value")
+            if value not in PROGRAM_TYPES:
+                continue
             cb_id = await cb.get_attribute("id")
             if not cb_id:
-                self.logger.warning("ageGroup checkbox %d missing id; skipping", i)
+                self.logger.warning("programType checkbox %r missing id; skipping", value)
                 continue
-            await page.locator(f'label[for="{cb_id}"]').click()
+            if not await cb.is_checked():
+                await page.locator(f'label[for="{cb_id}"]').click()
             if not await cb.is_checked():
                 self.logger.warning(
-                    "ageGroup checkbox %d (id=%s) did not toggle on after label click",
-                    i,
+                    "programType checkbox %r (id=%s) did not toggle on after label click",
+                    value,
                     cb_id,
                 )
                 continue
-            ticked += 1
-        self.logger.info("RI: ticked %d/%d age-group checkboxes", ticked, count)
-        if ticked == 0:
+            ticked.append(value)
+        self.logger.info("RI: ticked program types %s (of %d on page)", ticked, count)
+        missing = [v for v in PROGRAM_TYPES if v not in ticked]
+        if missing:
+            # A missing type means a silently partial dataset (the exact bug
+            # this filter exists to fix), so make it loud.
+            self.logger.error(
+                "RI: could not tick program type(s) %s — results will be incomplete (form markup change?)",
+                missing,
+            )
+        if not ticked:
             raise RuntimeError(
-                "Could not tick any ageGroup checkboxes — search would fail the 'at least one criteria' validation."
+                "Could not tick any programType checkboxes — search would fail the 'at least one criteria' validation."
             )
 
     async def _submit_search(self, page, search_retries=None, allow_manual=True):
@@ -1251,7 +1261,7 @@ class RhodeIslandSpider(scrapy.Spider):
         # Extra cool-down so v3 doesn't see two execute() calls back-to-back.
         await asyncio.sleep(random.uniform(5.0, 9.0))
         await self._humanize_warmup(page)
-        await self._tick_age_groups(page)
+        await self._tick_program_types(page)
         await self._post_form_jitter(page)
 
     async def _click_and_capture(self, page):

@@ -843,7 +843,7 @@ async def test_parse_search_page_full_flow(spider):
     page = MagicMock()
     page.close = AsyncMock()
 
-    spider._tick_age_groups = AsyncMock()
+    spider._tick_program_types = AsyncMock()
     spider._submit_search = AsyncMock(
         return_value=(
             [CHILD_INC_SUMMARY, QUEST_SUMMARY],
@@ -867,7 +867,7 @@ async def test_parse_search_page_full_flow(spider):
     assert items[1]["provider_name"] == "Quest Montessori School"
     assert items[1]["inspections"] == []
 
-    spider._tick_age_groups.assert_awaited_once_with(page)
+    spider._tick_program_types.assert_awaited_once_with(page)
     # search_retries falls back to self.search_retries (2) when meta omits it;
     # a direct (non-proxy) attempt allows the manual-captcha fallthrough.
     spider._submit_search.assert_awaited_once_with(page, search_retries=2, allow_manual=True)
@@ -880,7 +880,7 @@ async def test_parse_search_page_empty_results_aborts(spider):
     page = MagicMock()
     page.close = AsyncMock()
 
-    spider._tick_age_groups = AsyncMock()
+    spider._tick_program_types = AsyncMock()
     spider._submit_search = AsyncMock(return_value=([], None))
     spider._fetch_detail = AsyncMock()
 
@@ -897,7 +897,7 @@ async def test_parse_search_page_results_but_no_context_aborts(spider):
     page = MagicMock()
     page.close = AsyncMock()
 
-    spider._tick_age_groups = AsyncMock()
+    spider._tick_program_types = AsyncMock()
     spider._submit_search = AsyncMock(
         return_value=(
             [CHILD_INC_SUMMARY],
@@ -1049,7 +1049,7 @@ async def test_parse_search_page_max_providers_truncates(spider):
     page = MagicMock()
     page.close = AsyncMock()
 
-    spider._tick_age_groups = AsyncMock()
+    spider._tick_program_types = AsyncMock()
     spider._submit_search = AsyncMock(
         return_value=(
             [CHILD_INC_SUMMARY, QUEST_SUMMARY],
@@ -1289,7 +1289,7 @@ async def test_parse_search_page_failed_proxy_falls_back_to_next_attempt(spider)
             "is_proxy": False,
         },
     ]
-    spider._tick_age_groups = AsyncMock()
+    spider._tick_program_types = AsyncMock()
     spider._submit_search = AsyncMock(return_value=([], None))
     spider._fetch_detail = AsyncMock()
 
@@ -1321,7 +1321,7 @@ async def test_parse_search_page_host_failure_gives_up_without_next(spider):
             "is_proxy": False,
         },
     ]
-    spider._tick_age_groups = AsyncMock()
+    spider._tick_program_types = AsyncMock()
     spider._submit_search = AsyncMock(return_value=([], None))
 
     response = _make_attempt_response(page, index=0, is_proxy=False)
@@ -1348,7 +1348,7 @@ async def test_parse_search_page_proxy_success_yields_items_no_fallback(spider):
             "is_proxy": False,
         },
     ]
-    spider._tick_age_groups = AsyncMock()
+    spider._tick_program_types = AsyncMock()
     spider._submit_search = AsyncMock(return_value=([CHILD_INC_SUMMARY, QUEST_SUMMARY], "ctx"))
     spider._fetch_detail = AsyncMock(side_effect=[CHILD_UNIVERSITY_DETAIL, None])
 
@@ -1361,3 +1361,73 @@ async def test_parse_search_page_proxy_success_yields_items_no_fallback(spider):
     _args, kwargs = spider._submit_search.await_args
     assert kwargs["allow_manual"] is False
     page.context.close.assert_awaited_once()
+
+
+# ---- _tick_program_types ----
+
+
+def _fake_program_type_page(values, broken_ids=()):
+    """Fake page exposing input[name="programType"] checkboxes with the given
+    values (mirrors the live SLDS markup: inputs keyed by id, toggled only by
+    clicking label[for=id]). Ids in `broken_ids` never toggle."""
+    state = {}
+    boxes = []
+    for i, value in enumerate(values):
+        cb_id = f"checkbox-{117 + i}-38"
+        state[cb_id] = False
+        cb = MagicMock()
+        attrs = {"value": value, "id": cb_id}
+        cb.get_attribute = AsyncMock(side_effect=lambda name, a=attrs: a.get(name))
+        cb.is_checked = AsyncMock(side_effect=lambda cid=cb_id: state[cid])
+        boxes.append(cb)
+
+    clicked = []
+
+    def label_locator(selector):
+        loc = MagicMock()
+        if selector.startswith("label[for="):
+            cid = selector.split('"')[1]
+
+            async def click():
+                clicked.append(cid)
+                if cid not in broken_ids:
+                    state[cid] = True
+
+            loc.click = AsyncMock(side_effect=click)
+            return loc
+        assert selector == 'input[name="programType"]'
+        loc.count = AsyncMock(return_value=len(boxes))
+        loc.nth = MagicMock(side_effect=lambda i: boxes[i])
+        return loc
+
+    page = MagicMock()
+    page.wait_for_selector = AsyncMock()
+    page.locator = MagicMock(side_effect=label_locator)
+    return page, state, clicked
+
+
+LIVE_PROGRAM_TYPES = ["Child Care Center", "Family Child Care", "Local Education Agencies"]
+
+
+@pytest.mark.asyncio
+async def test_tick_program_types_ticks_center_and_family_not_lea(spider):
+    page, state, clicked = _fake_program_type_page(LIVE_PROGRAM_TYPES)
+    await spider._tick_program_types(page)
+    assert clicked == ["checkbox-117-38", "checkbox-118-38"]
+    assert state == {"checkbox-117-38": True, "checkbox-118-38": True, "checkbox-119-38": False}
+
+
+@pytest.mark.asyncio
+async def test_tick_program_types_partial_logs_error(spider, caplog):
+    page, state, _ = _fake_program_type_page(LIVE_PROGRAM_TYPES, broken_ids={"checkbox-118-38"})
+    with caplog.at_level("ERROR"):
+        await spider._tick_program_types(page)
+    assert state["checkbox-117-38"] is True
+    assert "Family Child Care" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_tick_program_types_none_raises(spider):
+    page, _, _ = _fake_program_type_page(["Local Education Agencies"])
+    with pytest.raises(RuntimeError):
+        await spider._tick_program_types(page)
