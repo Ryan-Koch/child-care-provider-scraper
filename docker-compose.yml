@@ -32,7 +32,7 @@ services:
       GEOCODE_CACHE: state_output/geocode_cache.sqlite
       # Refresh the Webshare proxy pool at container startup (run_spiders.sh
       # picks this up). It rewrites the writable, bind-mounted webshare.env
-      # below with the account's current ip:port list. No-op if that file
+      # below with the account's current ip:port list and credentials. No-op if that file
       # isn't mounted (single-IP mode). Set to "false" to skip.
       REFRESH_PROXIES: "true"
     volumes:
@@ -49,7 +49,7 @@ services:
       - ./discord.env:/app/discord.env:ro,z
       # Maryland proxy-pool credentials (see webshare.env.example). Mounted
       # WRITABLE (no `ro`) so the REFRESH_PROXIES startup step can rewrite it in
-      # place with the account's current ip:port list; the refreshed file lands
+      # place with the account's current ip:port list and credentials; the refreshed file lands
       # back on the host. The file must exist for the bind mount — comment this
       # line out (and REFRESH_PROXIES above) for single-IP mode. `:z` relabels
       # for SELinux hosts and is ignored elsewhere.
