@@ -25,6 +25,7 @@ id (``proxy_id``) instead.
 import itertools
 import os
 import re
+from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import quote, unquote, urlsplit, urlunsplit
 
 
@@ -56,6 +57,56 @@ def parse_endpoints(raw):
     if not raw:
         return []
     return [p for p in re.split(r"[,\s]+", raw.strip()) if p]
+
+
+# Free, keyless IP-geolocation endpoint. Fetched *through* a proxy, it reports
+# that proxy's egress location (and doubles as a liveness check). ``countryCode``
+# is ISO-3166 alpha-2 and ``region`` the state/province code — so a US California
+# egress is countryCode "US" + region "CA" (countryCode "CA" alone is Canada).
+GEO_IP_URL = "http://ip-api.com/json/?fields=status,message,country,countryCode,region,regionName,city,timezone,query"
+
+
+def proxy_host(proxy_url):
+    """Credential-free ``host:port`` of a proxy URL, for logging (never log creds)."""
+    try:
+        parts = urlsplit(proxy_url)
+    except ValueError:
+        return "?"
+    if not parts.hostname:
+        return "?"
+    return f"{parts.hostname}:{parts.port}" if parts.port else parts.hostname
+
+
+def probe_egress(proxy_url, timeout=12, url=GEO_IP_URL):
+    """Fetch the egress geolocation seen *through* ``proxy_url``.
+
+    Returns the parsed geo dict, or ``None`` if the proxy is unreachable, rejects
+    our credentials (HTTP 407), or the body isn't JSON. Never raises — a dead
+    proxy is simply not a candidate.
+    """
+    import requests  # local: only spiders that probe need it at import time
+
+    try:
+        resp = requests.get(url, proxies={"http": proxy_url, "https": proxy_url}, timeout=timeout)
+        if resp.status_code != 200:
+            return None
+        return resp.json()
+    except Exception:
+        return None
+
+
+def probe_pool(pool, timeout=12, probe=probe_egress, max_workers=10):
+    """Probe every proxy in ``pool`` concurrently.
+
+    Returns ``[(proxy_id, proxy_url, geo_or_None), ...]`` in pool order. ``probe``
+    is injectable so callers' selection logic is unit-testable offline.
+    """
+    entries = pool.entries() if pool else []
+    if not entries:
+        return []
+    with ThreadPoolExecutor(max_workers=min(max_workers, len(entries))) as ex:
+        geos = list(ex.map(lambda e: probe(e[1], timeout), entries))
+    return [(pid, url, geo) for (pid, url), geo in zip(entries, geos, strict=True)]
 
 
 def redact(proxy_url):

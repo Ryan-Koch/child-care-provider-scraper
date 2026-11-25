@@ -27,8 +27,9 @@ UPLOAD_SCRIPT="$(dirname "$0")/scripts/upload_to_huggingface.py"
 # Generates the per-state source-provenance doc shipped with the upload (-u).
 SOURCES_SCRIPT="$(dirname "$0")/scripts/generate_sources.py"
 # Optional pre-run refresh of the Webshare proxy pool: pulls the account's
-# current ip:port list into webshare.env before crawling (Webshare rotates IPs
-# as they lose reputation or go down). No-ops if webshare.env is absent.
+# current ip:port list and shared username/password into webshare.env before
+# crawling (Webshare rotates IPs as they lose reputation or go down, and rotates
+# the credentials too). No-ops if webshare.env is absent.
 # Triggered by the -p flag OR a truthy REFRESH_PROXIES in the environment — the
 # Docker image sets the latter (see docker-compose.yml) so a container run
 # refreshes the writable, bind-mounted webshare.env automatically at startup.
