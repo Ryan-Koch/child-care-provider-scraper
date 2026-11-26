@@ -22,6 +22,14 @@ Details" button) is server-broken -- it resets the connection -- so we never
 use it, though it remains the canonical public per-facility URL we emit as
 ``provider_url``.
 
+Cookies MUST stay off. ``RunQuickSearch`` sets an ``ASP.NET_SessionId``, and
+ASP.NET serializes every request that shares a session (session-state lock).
+With the cookie echoed back, concurrent detail POSTs queue behind each other
+server-side and anything still queued after ~6s has its connection dropped
+(``ConnectionLost`` / ``ResponseNeverReceived``), which burned all retries for
+~half the roster. Cookieless, each request gets its own session and 8 run in
+parallel at ~3s each.
+
 DC exposes no license number, license dates, status, or inspection data; it is
 a directory/quality portal, not a licensing/enforcement one.
 """
@@ -75,6 +83,9 @@ class WashingtonDcSpider(scrapy.Spider):
         "DOWNLOAD_DELAY": 0.25,
         "CONCURRENT_REQUESTS": 8,
         "CONCURRENT_REQUESTS_PER_DOMAIN": 8,
+        # See module docstring: a shared ASP.NET session serializes requests
+        # server-side and the overflow gets its connections dropped.
+        "COOKIES_ENABLED": False,
     }
 
     # --------------------------------------------------------------------- #
