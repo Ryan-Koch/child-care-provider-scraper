@@ -86,6 +86,19 @@ def test_age_field_maps_prefixes():
     assert m("Nonsense") is None
 
 
+# --- settings ---------------------------------------------------------- #
+
+
+def test_cookies_disabled_on_crawler():
+    # A shared ASP.NET_SessionId serializes detail POSTs server-side and the
+    # overflow gets ConnectionLost; cookies must stay off at the crawler level.
+    from scrapy.crawler import Crawler
+    from scrapy.utils.project import get_project_settings
+
+    crawler = Crawler(WashingtonDcSpider, get_project_settings())
+    assert crawler.settings.getbool("COOKIES_ENABLED") is False
+
+
 # --- parse_list -------------------------------------------------------- #
 
 
