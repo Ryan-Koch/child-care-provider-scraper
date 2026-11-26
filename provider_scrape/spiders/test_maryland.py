@@ -310,6 +310,10 @@ def test_parse_results_page(spider):
     for dr in detail_requests:
         assert dr.meta["download_timeout"] == DETAIL_DOWNLOAD_TIMEOUT
         assert dr.meta["timeout_backoff"] is True
+        # Cookieless by default: sharing any one ASP.NET session serializes
+        # details on the origin's session lock. Never the county's pagination jar.
+        assert dr.meta["dont_merge_cookies"] is True
+        assert "cookiejar" not in dr.meta
 
     # One pagination request to page 2, carrying its expected page and a high
     # priority so it isn't starved behind the detail-request backlog.
@@ -627,6 +631,22 @@ def test_single_ip_mode_by_default_when_proxies_off():
     s = MarylandSpider(proxies="off")
     assert s.proxy_pool is None
     assert s.proxy_pool_domains == ["checkccmd.org"]
+
+
+def test_detail_session_shared_restores_shared_jar():
+    """`-a detail_session=shared` is the escape hatch back to one shared jar."""
+    s = MarylandSpider(proxies="off", detail_session="shared")
+    request = Request(url="https://www.checkccmd.org/SearchResults.aspx")
+    response = HtmlResponse(url=request.url, body=RESULTS_HTML, encoding="utf-8", request=request)
+    details = [r for r in s.parse_results(response, county_key="TestCounty") if not isinstance(r, scrapy.FormRequest)]
+    assert details
+    assert all(d.meta["cookiejar"] == DETAIL_COOKIEJAR for d in details)
+    assert not any(d.meta.get("dont_merge_cookies") for d in details)
+
+
+def test_detail_session_rejects_unknown_mode():
+    with pytest.raises(ValueError):
+        MarylandSpider(proxies="off", detail_session="bogus")
 
 
 def test_detail_timeout_arg_flows_to_detail_requests():
@@ -1049,14 +1069,14 @@ def test_parse_detail_drops_loudly_when_unrecoverable(spider, caplog):
 def test_parse_detail_reissues_on_session_bounce(spider, caplog):
     """A detail that bounced to the search page is re-issued, not dropped.
 
-    Simulates the cold-session redirect: the response is the search page, but the
+    Simulates the bounce redirect: the response is the search page, but the
     original detail URL is preserved in ``redirect_urls``. The spider re-issues
-    that fi on the shared detail jar with the SearchResults referer restored.
+    that fi (still cookieless) with the SearchResults referer restored.
     """
     detail_url = "https://www.checkccmd.org/FacilityDetail.aspx?ft=&fn=&sn=&z=&c=&co=&lc=&fi=463466"
     request = Request(
         url="https://www.checkccmd.org/default.aspx",
-        meta={"redirect_urls": [detail_url], "cookiejar": DETAIL_COOKIEJAR},
+        meta={"redirect_urls": [detail_url], "dont_merge_cookies": True},
     )
     response = HtmlResponse(url=request.url, body=b"<html>search</html>", encoding="utf-8", request=request)
 
@@ -1067,7 +1087,8 @@ def test_parse_detail_reissues_on_session_bounce(spider, caplog):
     retry = results[0]
     assert retry.url == detail_url
     assert retry.callback == spider.parse_detail
-    assert retry.meta["cookiejar"] == DETAIL_COOKIEJAR
+    assert retry.meta["dont_merge_cookies"] is True
+    assert "cookiejar" not in retry.meta
     assert retry.meta["detail_reprimes"] == 1
     assert retry.meta["download_timeout"] == DETAIL_DOWNLOAD_TIMEOUT
     assert retry.headers.get("Referer").decode() == SEARCH_RESULTS_REFERER
@@ -1084,7 +1105,7 @@ def test_parse_detail_gives_up_after_max_reprimes(spider, caplog):
         url="https://www.checkccmd.org/default.aspx",
         meta={
             "redirect_urls": [detail_url],
-            "cookiejar": DETAIL_COOKIEJAR,
+            "dont_merge_cookies": True,
             "detail_reprimes": MAX_DETAIL_REPRIMES,
         },
     )

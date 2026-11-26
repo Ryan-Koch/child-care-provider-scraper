@@ -90,20 +90,36 @@ EXCELS_DOWNLOAD_TIMEOUT = 30
 # still spreads the per-IP 403 rate, but total concurrency must be held near the
 # origin's knee. Default deliberately low and good-citizen; tune with
 # ``-a concurrency=<n>`` (off-peak the origin tolerates more). See MARYLAND.md.
-DEFAULT_CONCURRENCY = 5
+#
+# 2026-11-26: much of the "server-side concurrency limit" above was actually
+# the ASP.NET session lock from all details sharing one cookie jar (see
+# DETAIL_COOKIEJAR). With cookieless details the same 5-way run went ~3.5 ->
+# ~8.1 details/min with 58 -> 1 timeouts, so this default is now conservative
+# and worth re-tuning upward with a live pool run.
+DEFAULT_CONCURRENCY = 8
 
-# All provider-detail GETs share one long-lived cookie jar instead of pinning to
-# their county's pagination session. A detail page needs only *any* warm
-# checkccmd session cookie plus the SearchResults referer — the ``fi`` is a
-# global key, not county-scoped (verified live 2026-07-18) — so it does NOT need
-# the session that ran the county search. Pinning details to the county jar was
-# the 2026-07 stall: pagination holds the single 33s slot for many hours, so the
-# huge detail backlog only drains afterwards, by which point every county session
-# has idled out and each detail silently bounced to the search page (~70% of
-# providers dropped, invisibly). One jar used continuously (a detail every ~33s)
-# stays warm for the whole run, and single-flight (concurrency 1 on the host)
-# means sharing it never causes ASP.NET session-lock contention.
+# Provider-detail GETs are sent COOKIELESS by default (``dont_merge_cookies``):
+# they never carry an ``ASP.NET_SessionId``, so each gets its own throwaway
+# server session. The SearchResults referer alone is the access gate — the fi is
+# a global key, and a cookieless GET with that referer is served on the first try
+# (verified live 2026-07-18 and again 2026-11-26, 16/16 with no redirect).
+#
+# Why not share a session: ASP.NET serializes every request on one session
+# (session-state lock). The old design routed all details through one shared jar
+# (``DETAIL_COOKIEJAR``), which was harmless single-IP (single-flight) but in pool
+# mode turned every in-flight detail into a queue on the origin. Measured
+# 2026-11-26 via 8 distinct proxies: 8 parallel details on ONE session completed
+# in a perfect ~15s staircase (15, 29, 46 ... 123s); the same 8 cookieless
+# overlapped and all finished in ~60s. Much of what was diagnosed as the
+# endpoint's "server-side concurrency limit" was this lock. Same bug as DC's
+# identical vendor app (see washington_dc.py).
+#
+# ``-a detail_session=shared`` restores the shared jar (escape hatch, e.g. if the
+# site ever starts requiring a session for details). Never pin details to a
+# county's pagination jar — that was the 2026-07 stall (county sessions idled out
+# before the detail backlog drained, ~70% of details silently bounced).
 DETAIL_COOKIEJAR = "__details__"
+DETAIL_SESSION_MODES = ("cookieless", "shared")
 
 # The referer the licensing site requires on a detail GET (it redirects to the
 # search page otherwise). RefererMiddleware sets it automatically on the normal
@@ -344,6 +360,13 @@ class MarylandSpider(scrapy.Spider):
     # separate, non-throttling host and stays direct on its own fast slot.
     proxy_pool_domains = ["checkccmd.org"]
 
+    def _detail_meta(self, **extra):
+        """Meta for a detail GET: cookie handling per ``detail_session`` plus the
+        fail-fast timeout / saturation backoff shared by every detail request."""
+        shared = self.detail_session == "shared"
+        cookies = {"cookiejar": DETAIL_COOKIEJAR} if shared else {"dont_merge_cookies": True}
+        return {**cookies, "download_timeout": self.detail_timeout, "timeout_backoff": True, **extra}
+
     def __init__(
         self,
         ocr_fallback=True,
@@ -354,6 +377,7 @@ class MarylandSpider(scrapy.Spider):
         stall_close=True,
         concurrency=DEFAULT_CONCURRENCY,
         detail_timeout=DETAIL_DOWNLOAD_TIMEOUT,
+        detail_session="cookieless",
         *args,
         **kwargs,
     ):
@@ -367,6 +391,12 @@ class MarylandSpider(scrapy.Spider):
         # Per-request timeout for detail GETs. The origin is slow (~17-34s
         # baseline, see DETAIL_DOWNLOAD_TIMEOUT); tune with ``-a detail_timeout=``.
         self.detail_timeout = float(detail_timeout)
+        # How detail GETs carry cookies (see DETAIL_COOKIEJAR): "cookieless"
+        # (default; no session => no ASP.NET session-lock serialization) or
+        # "shared" (the old single shared jar).
+        self.detail_session = str(detail_session).lower()
+        if self.detail_session not in DETAIL_SESSION_MODES:
+            raise ValueError(f"detail_session must be one of {DETAIL_SESSION_MODES}, got {detail_session!r}")
         # If the no-progress stall watchdog sees a persistent wedge, force-close
         # the spider rather than let it hang for hours. On by default; disable
         # (leave a dead run hanging, e.g. for debugging) with -a stall_close=off.
@@ -664,14 +694,12 @@ class MarylandSpider(scrapy.Spider):
                 school_name = cols[4].css("::text").get("").strip() if len(cols) > 4 else None
                 program_type = cols[5].css("::text").get("").strip() if len(cols) > 5 else None
 
-                # Details ride one shared, self-warming session jar rather than
-                # this county's pagination session (see DETAIL_COOKIEJAR): the fi
-                # is a global key and a detail needs only a warm session + the
-                # SearchResults referer, so pinning to the county jar bought no
-                # concurrency under single-flight and only created the stall where
-                # details drained after their county session had died.
-                # response.follow sets the referer from this results page
-                # (SearchResults.aspx) automatically.
+                # Details are cookieless by default (see DETAIL_COOKIEJAR): the
+                # fi is a global key gated only by the SearchResults referer, and
+                # sharing any one session would serialize them on the origin's
+                # ASP.NET session lock. Never this county's pagination jar (the
+                # 2026-07 stall). response.follow sets the referer from this
+                # results page (SearchResults.aspx) automatically.
                 yield response.follow(
                     link,
                     callback=self.parse_detail,
@@ -685,11 +713,7 @@ class MarylandSpider(scrapy.Spider):
                     # pause the slot and retry a bounded few times rather than
                     # hammer the concurrency-limited detail endpoint (see
                     # RateLimitBackoffMiddleware / DEFAULT_CONCURRENCY).
-                    meta={
-                        "cookiejar": DETAIL_COOKIEJAR,
-                        "download_timeout": self.detail_timeout,
-                        "timeout_backoff": True,
-                    },
+                    meta=self._detail_meta(),
                 )
 
         # Advance the chain to the next page (sequential, with windowed-pager
@@ -937,12 +961,12 @@ class MarylandSpider(scrapy.Spider):
     def parse_detail(self, response, address=None, school_name=None, program_type=None):
         """Parse a provider detail page.
 
-        A detail GET that redirects away from ``FacilityDetail`` means the shared
-        detail session (``DETAIL_COOKIEJAR``) was cold — the first detail of the
-        run, or a rare mid-run expiry. Rather than silently dropping the provider
-        (the old behavior, which let the 2026-07 stall hide), re-issue it: the
-        bounce itself set a fresh session cookie on the shared jar, so the retry —
-        same fi, SearchResults referer restored — succeeds. Bounded by
+        A detail GET that redirects away from ``FacilityDetail`` means the referer
+        was lost or (with ``-a detail_session=shared``) the shared session was
+        cold. Rather than silently dropping the provider (the old behavior, which
+        let the 2026-07 stall hide), re-issue it with the SearchResults referer
+        restored (in shared mode the bounce also set a fresh session cookie on
+        the jar). Bounded by
         ``MAX_DETAIL_REPRIMES``; an unrecoverable fi is dropped loudly (ERROR).
         """
         if "FacilityDetail" not in response.url:
@@ -1024,10 +1048,11 @@ class MarylandSpider(scrapy.Spider):
             yield from self._address_fallback(item, first_report_url)
 
     def _reissue_bounced_detail(self, response, address, school_name, program_type):
-        """Re-issue a detail GET that bounced to the search page (cold session).
+        """Re-issue a detail GET that bounced to the search page.
 
-        The bounce set a fresh session cookie on the shared detail jar, so the
-        re-issued request (same fi, SearchResults referer restored) succeeds.
+        The re-issued request carries the same fi with the SearchResults referer
+        restored explicitly (and, in shared mode, the fresh session cookie the
+        bounce set on the jar).
         Bounded by ``MAX_DETAIL_REPRIMES``; a genuinely unrecoverable fi is
         dropped loudly rather than silently.
         """
@@ -1053,12 +1078,7 @@ class MarylandSpider(scrapy.Spider):
                 "program_type": program_type,
             },
             headers={"Referer": SEARCH_RESULTS_REFERER},
-            meta={
-                "cookiejar": DETAIL_COOKIEJAR,
-                "download_timeout": self.detail_timeout,
-                "timeout_backoff": True,
-                "detail_reprimes": reprimes + 1,
-            },
+            meta=self._detail_meta(detail_reprimes=reprimes + 1),
             dont_filter=True,
         )
 

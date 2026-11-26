@@ -133,6 +133,29 @@ government data, so that's not a confidentiality concern.
 
 ### Detail-endpoint concurrency limit (the *other* bottleneck)
 
+> **Correction (2026-11-26): most of this "server-side limit" was our own ASP.NET
+> session lock.** Every detail GET used to share one cookie jar, i.e. one
+> `ASP.NET_SessionId`, and ASP.NET serializes all requests on a session. 8
+> parallel details on one session (via 8 different proxies) completed in a
+> ~15s staircase (15, 29, 46 … 123s); the same 8 sent cookieless overlapped
+> and all finished in ~60s. Details are now **cookieless by default**
+> (`dont_merge_cookies`; the SearchResults referer alone is the access gate —
+> no bounces observed). A/B smoke test, pool mode, Caroline + Dorchester
+> (216 providers), concurrency 5, OCR off, run back-to-back:
+>
+> | | shared jar (old) | cookieless (new) |
+> |---|---|---|
+> | wall time | 63.6 min | **28.7 min** |
+> | detail phase | 61.6 min, ~3.5/min | **26.6 min, ~8.1/min** |
+> | detail latency median / p90 / max | 31 / 95 / 119s | 36 / 46 / 57s |
+> | detail timeouts | 58 | **1** |
+> | items / field diffs | 216 | 216 / 0 diffs |
+>
+> The endpoint *is* still genuinely slow (fastest detail ~13–17s either way), so
+> throughput ≈ in-flight details ÷ latency, and `-a concurrency` is now the lever
+> worth re-tuning upward. `-a detail_session=shared` restores the old shared jar
+> as an escape hatch. The historical analysis below predates this finding.
+
 Beating the per-IP 403 wall with a big proxy pool exposes a second, independent
 limit: **checkccmd's `FacilityDetail` endpoint is concurrency-limited on the
 *server* side.** A single detail GET returns in **~1 second**, but a handful
